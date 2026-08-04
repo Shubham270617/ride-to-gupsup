@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80" viewBox="0 0 240 80">
+  <defs>
+    <linearGradient id="rtgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffb073"/>
+      <stop offset="55%" stop-color="#f76b1c"/>
+      <stop offset="100%" stop-color="#8354d1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="none" stroke="url(#rtgGrad)" stroke-width="5"/>
+  <path d="M24 48 L36 26 L44 40 L52 30 L58 48" fill="none" stroke="url(#rtgGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="86" y="34" font-family="Arial, sans-serif" font-weight="800" font-size="22" fill="#fdfbff" letter-spacing="1">RIDE TEA</text>
+  <text x="86" y="58" font-family="Arial, sans-serif" font-weight="800" font-size="22" fill="url(#rtgGrad)" letter-spacing="1">GUPSHUP</text>
+</svg>

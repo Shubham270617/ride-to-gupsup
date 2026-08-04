@@ -1,0 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* RTG Brand — deep purple primary, vibrant orange accent */
+  --color-rtg-purple-950: #0d0518;
+  --color-rtg-purple-900: #150a29;
+  --color-rtg-purple-800: #1e0f3d;
+  --color-rtg-purple-700: #2c1657;
+  --color-rtg-purple-600: #3f1f80;
+  --color-rtg-purple-500: #5b2ba8;
+  --color-rtg-purple-400: #8354d1;
+  --color-rtg-purple-300: #ac8ce5;
+
+  --color-rtg-orange-600: #d94f0e;
+  --color-rtg-orange-500: #f76b1c;
+  --color-rtg-orange-400: #ff8a3d;
+  --color-rtg-orange-300: #ffb073;
+
+  --color-rtg-ink: #0a0612;
+  --color-rtg-mist: #a99fc0;
+  --color-rtg-white: #fdfbff;
+
+  --font-display: "Bebas Neue", "Inter", sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-rtg-ink);
+  color: var(--color-rtg-white);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-rtg-orange-500);
+  color: var(--color-rtg-ink);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-rtg-purple-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-rtg-purple-600);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-rtg-orange-500);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ffb073 0%, #f76b1c 50%, #ac8ce5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.glass {
+  background: rgba(21, 10, 41, 0.55);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(172, 140, 229, 0.15);
+}
