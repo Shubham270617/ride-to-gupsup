@@ -1,5 +1,5 @@
 import { images } from "../data/images";
-import { events } from "../data/content";
+import { useEvents } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import EventCard from "../components/ui/EventCard";
@@ -7,7 +7,8 @@ import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function Events() {
-  const featured = events.find((e) => e.featured);
+  const events = useEvents();
+  const featured = events.find((e) => e.featured) || events[0];
   const rest = events.filter((e) => !e.featured);
 
   return (

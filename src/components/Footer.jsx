@@ -19,6 +19,7 @@ const cols = [
       { to: "/community", label: "Our Community" },
       { to: "/weekly-rides", label: "Weekly Rides" },
       { to: "/gallery", label: "Gallery" },
+      { to: "/community", label: "Volunteer" },
     ],
   },
   {
@@ -27,16 +28,27 @@ const cols = [
       { to: "/events", label: "Events" },
       { to: "/challenges", label: "Challenges" },
       { to: "/race-calendar", label: "Race Calendar" },
-      { to: "/sponsors", label: "Sponsors" },
+      { to: "/race-results", label: "Race Results" },
+      { to: "/sponsors", label: "Sponsor With RTG" },
+      { to: "/contact", label: "Become Chapter Captain" },
     ],
   },
   {
     title: "More",
     links: [
-      { to: "/merchandise", label: "Store" },
-      { to: "/blog", label: "Blog" },
+      { to: "/merchandise", label: "Kit / Store" },
+      { to: "/blog", label: "Resources" },
+      { to: "/safety", label: "Safety" },
       { to: "/faq", label: "FAQ" },
-      { to: "/contact", label: "Contact" },
+      { to: "/contact", label: "Contact / Media" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { to: "/community-guidelines", label: "Community Guidelines" },
+      { to: "/privacy", label: "Privacy Policy" },
+      { to: "/terms", label: "Terms" },
     ],
   },
 ];
@@ -45,7 +57,7 @@ export default function Footer() {
   return (
     <footer className="bg-rtg-purple-950 border-t border-white/10 pt-16 pb-8 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-14">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-10 mb-14">
           <div className="col-span-2">
             <img src={images.logo} alt={brand.name} className="h-10 w-auto mb-4" />
             <p className="text-rtg-mist text-sm leading-relaxed max-w-xs mb-5">
@@ -72,7 +84,7 @@ export default function Footer() {
               <h4 className="font-display text-lg tracking-wide mb-4 text-rtg-orange-400">{c.title}</h4>
               <ul className="space-y-2.5">
                 {c.links.map((l) => (
-                  <li key={l.to}>
+                  <li key={l.label}>
                     <Link to={l.to} className="text-sm text-rtg-mist hover:text-rtg-white transition-colors">
                       {l.label}
                     </Link>

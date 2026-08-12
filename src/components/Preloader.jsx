@@ -6,27 +6,17 @@ import { brand } from "../data/content";
 const IntroScene = lazy(() => import("../three/IntroScene"));
 
 const DURATION = 3200;
-const SESSION_KEY = "rtg_intro_shown";
 
+// Unlike the login panel (which only shows once per session), the intro
+// plays on every fresh page load/refresh by design — no sessionStorage gate.
 export default function Preloader({ onFinish }) {
-  const [visible, setVisible] = useState(() => {
-    try {
-      return sessionStorage.getItem(SESSION_KEY) !== "1";
-    } catch {
-      return true;
-    }
-  });
+  const [visible, setVisible] = useState(true);
   const [progress, setProgress] = useState(0);
   const finishedRef = useRef(false);
 
   const finish = () => {
     if (finishedRef.current) return;
     finishedRef.current = true;
-    try {
-      sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {
-      /* sessionStorage unavailable — non-fatal */
-    }
     setVisible(false);
   };
 

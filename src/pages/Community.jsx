@@ -1,5 +1,5 @@
 import { images } from "../data/images";
-import { communityGroups, brand } from "../data/content";
+import { communityGroups, brand, joinSteps, communityTimeline } from "../data/content";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -18,6 +18,22 @@ export default function Community() {
         title="One Community, Every Sport"
         subtitle="Cyclists, runners, swimmers, triathletes, beginners, veterans, and the volunteers who hold it all together — everyone belongs at RTG."
       />
+
+      <Section eyebrow="Getting Started" title="How to Join RTG" subtitle="Seven steps from stranger to teammate.">
+        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {joinSteps.map((s) => (
+            <StaggerItem key={s.step}>
+              <GlassCard className="h-full">
+                <span className="font-display text-4xl text-rtg-orange-400/60 block mb-3">
+                  {String(s.step).padStart(2, "0")}
+                </span>
+                <h3 className="font-display text-xl mb-2">{s.title}</h3>
+                <p className="text-rtg-mist text-sm leading-relaxed">{s.desc}</p>
+              </GlassCard>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      </Section>
 
       <Section
         eyebrow="Come As You Are"
@@ -72,6 +88,23 @@ export default function Community() {
             </p>
           </div>
           <Button to="/contact" size="lg" className="shrink-0">Become a Volunteer</Button>
+        </div>
+      </Section>
+
+      <Section dark eyebrow="How Far We've Come" title="RTG Timeline">
+        <div className="max-w-2xl mx-auto">
+          {communityTimeline.map((t, i) => (
+            <Reveal key={t.label} delay={i * 0.06} className="flex gap-5 pb-10 last:pb-0">
+              <div className="flex flex-col items-center shrink-0">
+                <span className="w-3.5 h-3.5 rounded-full bg-rtg-orange-500 ring-4 ring-rtg-orange-500/20" />
+                {i < communityTimeline.length - 1 && <span className="w-px flex-1 bg-white/10 mt-1" />}
+              </div>
+              <div>
+                <h3 className="font-display text-xl mb-1">{t.label}</h3>
+                <p className="text-rtg-mist text-sm leading-relaxed">{t.desc}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </Section>
 

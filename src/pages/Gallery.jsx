@@ -2,15 +2,28 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { images } from "../data/images";
+import { useGalleryItems } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import MasonryGallery from "../components/ui/MasonryGallery";
 
-const categories = ["All", "Community Rides", "Group Runs", "Medal Ceremonies", "Finish Line", "Adventure Trips", "Event Highlights"];
+const categories = ["All", "Cycling", "Running", "Swimming", "Events", "Volunteers", "Videos"];
 
 export default function Gallery() {
   const [active, setActive] = useState(null);
-  const gallery = [...images.gallery, ...images.gallery.slice(0, 4)];
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const galleryItems = useGalleryItems();
+
+  const gallery = galleryItems.filter((item) => {
+    if (categoryFilter === "All") return true;
+    if (categoryFilter === "Videos") return item.type === "video";
+    return item.category === categoryFilter;
+  });
+
+  const selectCategory = (c) => {
+    setCategoryFilter(c);
+    setActive(null);
+  };
 
   const close = () => setActive(null);
   const next = (e) => {
@@ -25,7 +38,7 @@ export default function Gallery() {
   return (
     <>
       <PageHero
-        image={images.gallery[4]}
+        image={galleryItems[4]?.url || images.gallery[4]}
         eyebrow="Captured Moments"
         title="Community Gallery"
         subtitle="Sunrise starts, medal ceremonies, finish line joy, and everything in between — from drone footage to phone snaps at the chai stop."
@@ -33,19 +46,24 @@ export default function Gallery() {
 
       <Section>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
-          {categories.map((c, i) => (
-            <span
+          {categories.map((c) => (
+            <button
               key={c}
-              className={`px-4 py-2 rounded-full text-sm font-medium cursor-default ${
-                i === 0 ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-white/75"
+              onClick={() => selectCategory(c)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                categoryFilter === c ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-white/75 hover:text-rtg-white"
               }`}
             >
               {c}
-            </span>
+            </button>
           ))}
         </div>
 
-        <MasonryGallery items={gallery} onSelect={setActive} />
+        {gallery.length === 0 ? (
+          <p className="text-center text-rtg-mist py-16">No {categoryFilter.toLowerCase()} moments yet — check back soon.</p>
+        ) : (
+          <MasonryGallery items={gallery} onSelect={setActive} />
+        )}
       </Section>
 
       <AnimatePresence>
@@ -67,17 +85,32 @@ export default function Gallery() {
             >
               <ChevronLeft size={36} />
             </button>
-            <motion.img
-              key={active}
-              initial={{ opacity: 0, scale: 0.92 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-              src={gallery[active]}
-              alt="RTG gallery moment"
-              className="max-h-[85vh] max-w-full rounded-2xl object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
+            {gallery[active]?.type === "video" ? (
+              <motion.video
+                key={active}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                src={gallery[active]?.url}
+                className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+                controls
+                autoPlay
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <motion.img
+                key={active}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                src={gallery[active]?.url}
+                alt="RTG gallery moment"
+                className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             <button
               className="absolute right-4 md:right-8 text-white/80 hover:text-rtg-orange-400"
               onClick={next}

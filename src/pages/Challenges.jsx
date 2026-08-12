@@ -1,6 +1,6 @@
 import { Flame } from "lucide-react";
 import { images } from "../data/images";
-import { challenges } from "../data/content";
+import { useChallenges } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -8,6 +8,7 @@ import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function Challenges() {
+  const challenges = useChallenges();
   return (
     <>
       <PageHero

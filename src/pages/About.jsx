@@ -1,6 +1,8 @@
-import { Target, Eye } from "lucide-react";
+import { Target, Eye, Flag } from "lucide-react";
 import { images } from "../data/images";
-import { mission, vision, coreValues } from "../data/content";
+import { mission, vision, coreValues, fiveYearGoal } from "../data/content";
+import { useTeamMembers } from "../lib/publicData";
+import { InstagramIcon } from "../components/ui/SocialIcons";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -9,6 +11,7 @@ import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function About() {
+  const teamMembers = useTeamMembers();
   return (
     <>
       <PageHero
@@ -77,6 +80,14 @@ export default function About() {
             </GlassCard>
           </Reveal>
         </div>
+
+        <Reveal delay={0.2} className="mt-6">
+          <GlassCard>
+            <Flag className="text-rtg-orange-400 mb-4" size={36} />
+            <h3 className="font-display text-3xl mb-3">Our 5-Year Goal</h3>
+            <p className="text-rtg-mist leading-relaxed max-w-3xl">{fiveYearGoal}</p>
+          </GlassCard>
+        </Reveal>
       </Section>
 
       <Section eyebrow="What We Stand For" title="Our Core Values">
@@ -86,6 +97,37 @@ export default function About() {
               <GlassCard className="h-full">
                 <h3 className="font-display text-xl mb-2 text-rtg-orange-400">{v.title}</h3>
                 <p className="text-rtg-mist text-sm leading-relaxed">{v.desc}</p>
+              </GlassCard>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      </Section>
+
+      <Section dark eyebrow="The People Behind RTG" title="Our Leadership">
+        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {teamMembers.map((t) => (
+            <StaggerItem key={t.name}>
+              <GlassCard className="text-center h-full">
+                <img
+                  src={t.image}
+                  alt={t.name}
+                  className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-rtg-orange-400"
+                />
+                <h3 className="font-display text-xl mb-1">{t.name}</h3>
+                <p className="text-rtg-orange-400 text-sm font-semibold mb-3">{t.role}</p>
+                <p className="text-rtg-mist text-xs mb-4">
+                  {[t.city, t.sport].filter(Boolean).join(" · ")}
+                </p>
+                {t.instagramUrl && (
+                  <a
+                    href={t.instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-rtg-mist hover:text-rtg-orange-400 transition-colors"
+                  >
+                    <InstagramIcon size={13} /> Follow
+                  </a>
+                )}
               </GlassCard>
             </StaggerItem>
           ))}

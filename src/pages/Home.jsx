@@ -1,16 +1,9 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { lazy, Suspense, useRef } from "react";
-import { ChevronDown, MapPin } from "lucide-react";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
 import { images } from "../data/images";
-import {
-  brand,
-  stats,
-  whyJoin,
-  weeklyActivities,
-  events,
-  products,
-  testimonials,
-} from "../data/content";
+import { brand, stats, whyJoin, weeklyActivities, heroSlides } from "../data/content";
+import { useEvents, useProducts, useTestimonials, useGalleryItems } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -27,6 +20,8 @@ import useIsMobile from "../hooks/useIsMobile";
 
 const HeroScene = lazy(() => import("../three/HeroScene"));
 
+const HERO_SLIDE_DURATION = 6000;
+
 function Hero() {
   const isMobile = useIsMobile();
   const ref = useRef(null);
@@ -34,10 +29,37 @@ function Hero() {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "35%"]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  const [slide, setSlide] = useState(0);
+  const total = heroSlides.length;
+  const current = heroSlides[slide];
+
+  const goTo = (i) => setSlide(((i % total) + total) % total);
+
+  // Auto-advance — the effect re-runs (and so the timer restarts) whenever
+  // `slide` changes, whether that change came from the timer itself or a
+  // manual arrow click, so manually navigating never gets immediately
+  // undone by an auto-advance a moment later.
+  useEffect(() => {
+    const t = setTimeout(() => goTo(slide + 1), HERO_SLIDE_DURATION);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slide]);
+
   return (
     <section ref={ref} className="relative h-svh min-h-[640px] w-full overflow-hidden flex items-end">
       <motion.div style={{ y }} className="absolute inset-0 scale-110">
-        <img src={images.homeHero} alt="RTG endurance athletes" className="w-full h-full object-cover" />
+        <AnimatePresence mode="sync">
+          <motion.img
+            key={slide}
+            src={images[current.imageKey]}
+            alt={current.tag}
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: "easeInOut" }}
+          />
+        </AnimatePresence>
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-rtg-ink via-rtg-ink/50 to-rtg-purple-950/40" />
       <div className="absolute inset-0 bg-gradient-to-r from-rtg-purple-950/60 via-transparent to-transparent" />
@@ -60,25 +82,25 @@ function Hero() {
           <MapPin size={14} /> {brand.members} Athletes · 8+ Indian Cities
         </motion.span>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="font-display text-6xl sm:text-7xl md:text-9xl leading-[0.9] mb-6 max-w-5xl"
-        >
-          Ride Together.<br />
-          Run Together.<br />
-          <span className="text-gradient">Grow Together.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.55 }}
-          className="text-rtg-mist text-base md:text-xl max-w-xl mb-10 leading-relaxed"
-        >
-          {brand.sub}
-        </motion.p>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={slide}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
+              {current.tag} · Community · Adventure
+            </span>
+            <h1 className="font-display text-6xl sm:text-7xl md:text-9xl leading-[0.9] mb-6 max-w-5xl">
+              {current.title}
+              <br />
+              <span className="text-gradient">{current.accent}</span>
+            </h1>
+            <p className="text-rtg-mist text-base md:text-xl max-w-xl mb-10 leading-relaxed">{current.subtitle}</p>
+          </motion.div>
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -86,8 +108,83 @@ function Hero() {
           transition={{ duration: 0.7, delay: 0.7 }}
           className="flex flex-col sm:flex-row gap-4"
         >
-          <Button to="/community" size="lg">Join Community</Button>
-          <Button to="/events" variant="secondary" size="lg">Explore Events</Button>
+          <Button to="/community" size="lg" icon={ArrowUpRight}>Join Community</Button>
+          <Button to="/events" variant="secondary" size="lg" icon={ArrowDown}>Explore Events</Button>
+        </motion.div>
+
+        {/* Slide navigation — numbered tabs with an animated progress line
+            (mirrors the auto-advance timer), plus arrows, counter, and dots. */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.85 }}
+          className="mt-10 md:mt-14"
+        >
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 flex-1 max-w-2xl">
+              {heroSlides.map((s, i) => (
+                <button
+                  key={s.tag}
+                  onClick={() => goTo(i)}
+                  className="relative pt-4 text-left"
+                >
+                  <span className="absolute top-0 left-0 right-0 h-[2px] bg-white/15" />
+                  {i === slide && (
+                    <motion.span
+                      key={slide}
+                      className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-rtg-orange-400 to-rtg-purple-400"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: HERO_SLIDE_DURATION / 1000, ease: "linear" }}
+                    />
+                  )}
+                  <span className="block font-mono text-[11px] text-rtg-mist/60 mb-1">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span
+                    className={`block text-xs md:text-sm font-bold tracking-[0.15em] uppercase transition-colors ${
+                      i === slide ? "text-rtg-white" : "text-rtg-mist/40 hover:text-rtg-mist/70"
+                    }`}
+                  >
+                    {s.tag}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="font-mono text-sm text-rtg-mist tracking-wide tabular-nums">
+                {String(slide + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+              </span>
+              <button
+                onClick={() => goTo(slide - 1)}
+                aria-label="Previous slide"
+                className="w-11 h-11 rounded-full border border-white/25 flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <button
+                onClick={() => goTo(slide + 1)}
+                aria-label="Next slide"
+                className="w-11 h-11 rounded-full border border-white/25 flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+              >
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 mt-8">
+            {heroSlides.map((s, i) => (
+              <button
+                key={s.tag}
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === slide ? "w-6 bg-rtg-orange-400" : "w-1.5 bg-white/25 hover:bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
         </motion.div>
       </motion.div>
 
@@ -103,6 +200,10 @@ function Hero() {
 }
 
 export default function Home() {
+  const events = useEvents();
+  const products = useProducts();
+  const testimonials = useTestimonials();
+  const galleryItems = useGalleryItems();
   return (
     <>
       <Hero />
@@ -147,11 +248,11 @@ export default function Home() {
       {/* STATS / 500+ MEMBERS + PRESENCE */}
       <section className="py-20 md:py-28 px-6 md:px-10 relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mb-16">
             {stats.map((s) => (
               <StaggerItem key={s.label}>
                 <div className="text-center">
-                  <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-5xl md:text-7xl text-gradient block" />
+                  <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
                   <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
                 </div>
               </StaggerItem>
@@ -211,7 +312,7 @@ export default function Home() {
 
       {/* GALLERY PREVIEW */}
       <Section eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between.">
-        <MasonryGallery items={images.gallery.slice(0, 8)} />
+        <MasonryGallery items={galleryItems.slice(0, 8)} />
         <div className="text-center mt-10">
           <Button to="/gallery" variant="outline">View Full Gallery</Button>
         </div>

@@ -20,6 +20,38 @@ export const brand = {
   },
 };
 
+// Home hero — 4-slide auto-advancing carousel (Cycling/Running/Swimming/Community)
+export const heroSlides = [
+  {
+    tag: "Cycling",
+    title: "Ride Together.",
+    accent: "Go Further.",
+    subtitle: "Weekend rides, mountain adventures, and welcoming wheels for every pace — because the best rides are shared.",
+    imageKey: "heroCycling",
+  },
+  {
+    tag: "Running",
+    title: "Run Together.",
+    accent: "Find Your Pace.",
+    subtitle: "From sunrise 5Ks to marathon training blocks — every pace has a place in our run club.",
+    imageKey: "heroRunning",
+  },
+  {
+    tag: "Swimming",
+    title: "Swim Together.",
+    accent: "Move Stronger.",
+    subtitle: "Pool sessions and open-water swims, coached and community-powered from your very first lap.",
+    imageKey: "heroSwimming",
+  },
+  {
+    tag: "Community",
+    title: "Grow Together.",
+    accent: "Belong Here.",
+    subtitle: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.",
+    imageKey: "heroCommunity",
+  },
+];
+
 export const mission =
   "Build India's most loved endurance sports community where athletes learn together, grow together, and inspire one another.";
 
@@ -37,10 +69,14 @@ export const coreValues = [
 ];
 
 export const stats = [
-  { label: "Community Members", value: 500, suffix: "+" },
+  { label: "Active Members", value: 500, suffix: "+" },
   { label: "Cities Across India", value: 8, suffix: "+" },
-  { label: "Weekly Sessions", value: 3, suffix: "" },
-  { label: "KM Covered Together", value: 120000, suffix: "+" },
+  { label: "Total Cycling KM", value: 850000, suffix: "+" },
+  { label: "Total Running KM", value: 210000, suffix: "+" },
+  { label: "Elevation Climbed (m)", value: 320000, suffix: "+" },
+  { label: "Marathons Completed", value: 65, suffix: "+" },
+  { label: "Ironman Finishers", value: 9, suffix: "" },
+  { label: "BRM Finishers", value: 22, suffix: "" },
 ];
 
 export const whyJoin = [
@@ -118,7 +154,7 @@ export const events = [
     date: "June 2027",
     type: "Pan India Virtual Endurance Challenge",
     categories: ["Cycling", "Running"],
-    prize: "Prize Pool Worth ₹5 Lakhs",
+    prize: 500000,
     featured: true,
     imgKey: "eventFeatured",
     desc: "India's biggest virtual endurance challenge returns. Log your distance, climb the leaderboard, win big.",
@@ -160,15 +196,18 @@ export const calendarCategories = [
 ];
 
 export const calendarEvents = [
-  { date: "2027-01-15", title: "Resolution Challenge Kickoff", cat: "running" },
-  { date: "2027-02-08", title: "Chandigarh Community Ride", cat: "community" },
-  { date: "2027-03-22", title: "Dehradun Hill Climb (MTB)", cat: "mtb" },
-  { date: "2027-04-12", title: "Jaipur Sprint Triathlon", cat: "triathlon" },
-  { date: "2027-05-05", title: "Shimla Adventure Tour", cat: "adventure" },
-  { date: "2027-06-06", title: "Endurance League Vol. 2 Opens", cat: "cycling" },
-  { date: "2027-07-19", title: "Pune Monsoon Ride", cat: "cycling" },
-  { date: "2027-09-14", title: "Mumbai Coastal Run", cat: "running" },
+  { date: "2027-01-15", title: "Resolution Challenge Kickoff", cat: "running", city: "Delhi", difficulty: "Beginner" },
+  { date: "2027-02-08", title: "Chandigarh Community Ride", cat: "community", city: "Chandigarh", difficulty: "Beginner" },
+  { date: "2027-03-22", title: "Dehradun Hill Climb (MTB)", cat: "mtb", city: "Dehradun", difficulty: "Advanced" },
+  { date: "2027-04-12", title: "Jaipur Sprint Triathlon", cat: "triathlon", city: "Jaipur", difficulty: "Intermediate" },
+  { date: "2027-05-05", title: "Shimla Adventure Tour", cat: "adventure", city: "Shimla", difficulty: "Advanced" },
+  { date: "2027-06-06", title: "Endurance League Vol. 2 Opens", cat: "cycling", city: "Delhi", difficulty: "Intermediate" },
+  { date: "2027-07-19", title: "Pune Monsoon Ride", cat: "cycling", city: "Pune", difficulty: "Beginner" },
+  { date: "2027-09-14", title: "Mumbai Coastal Run", cat: "running", city: "Mumbai", difficulty: "Intermediate" },
 ];
+
+export const calendarCities = ["Delhi", "Chandigarh", "Dehradun", "Jaipur", "Shimla", "Pune", "Mumbai"];
+export const calendarDifficulties = ["Beginner", "Intermediate", "Advanced"];
 
 export const blogPosts = [
   { id: "cycling-tips-beginners", title: "5 Cycling Tips Every Beginner Should Know", category: "Cycling Tips", imgKey: "blogCycling", excerpt: "From bike fit to pacing — start your cycling journey the right way." },
@@ -207,3 +246,101 @@ export const sponsorOpportunities = [
 ];
 
 export const instagramPlaceholderCount = 8;
+
+// ---- Community: "How to Join" flow + founding timeline ----
+
+export const joinSteps = [
+  { step: 1, title: "Choose City", desc: "Pick the RTG chapter nearest you — 8+ cities and growing." },
+  { step: 2, title: "Choose Sport", desc: "Cycling, running, swimming, or triathlon — or all of them." },
+  { step: 3, title: "Join WhatsApp", desc: "Get added to your city's group for ride announcements and updates." },
+  { step: 4, title: "Fill Form", desc: "A two-minute sign-up so we know your pace, goals, and experience." },
+  { step: 5, title: "Show Up on Friday", desc: "Come to Friday Bricks at Nehru Park — no registration needed." },
+  { step: 6, title: "Find Your People", desc: "Ride, run, and share chai with athletes at your pace." },
+  { step: 7, title: "Grow Together", desc: "Train consistently, chase new distances, and mentor the next beginner." },
+];
+
+export const communityTimeline = [
+  { label: "RTG Started", desc: "A handful of friends met for a Friday sunrise ride at Nehru Park." },
+  { label: "100 Members", desc: "Word spread — the WhatsApp group crossed 100 riders." },
+  { label: "First Event", desc: "RTG's first organized community ride outside Delhi." },
+  { label: "Running Added", desc: "Friday Bricks became cycling + running, and the community followed." },
+  { label: "Endurance League Launched", desc: "RTG's first pan-India virtual endurance challenge." },
+  { label: "500+ Members", desc: "Across 8+ cities, and still growing every week." },
+];
+
+// ---- About: Leadership (fallback shown until real team members are added
+// via the admin Team screen — see src/lib/publicData.js useTeamMembers) ----
+
+export const teamMembers = [
+  { name: "Founder & Head Coach", role: "Founder & Head Coach", city: "Delhi", sport: "Cycling & Triathlon", avatarKey: "avatar1", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Running Lead", role: "Running Lead", city: "Delhi", sport: "Ultra & Trail Running", avatarKey: "avatar2", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Swim Coach", role: "Swim Coach", city: "Pune", sport: "Open Water & Pool", avatarKey: "avatar3", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+];
+
+export const fiveYearGoal =
+  "By 2032, we want RTG in 25+ Indian cities with 5,000+ active athletes, running a full calendar of RTG-organized races, and having produced 100+ first-time marathon, century-ride, and triathlon finishers who never thought they could.";
+
+// ---- Race Results (fallback shown until real results are added via the
+// admin Race Results screen) ----
+
+export const raceResults = [
+  { eventName: "Endurance League Vol. 1", athleteName: "Rohit Malhotra", category: "Cycling — Open", finishTime: "4:12:08", position: "1st", year: "2026" },
+  { eventName: "Endurance League Vol. 1", athleteName: "Ananya Sharma", category: "Running — Women", finishTime: "1:52:44", position: "1st", year: "2026" },
+  { eventName: "Delhi Cycling Festival", athleteName: "Karan Vij", category: "Cycling — 100km", finishTime: "3:08:21", position: "3rd", year: "2026" },
+  { eventName: "Himalayan Adventure Ride", athleteName: "Simran Kaur", category: "Cycling — Open", finishTime: "—", position: "Finisher", year: "2025" },
+];
+
+// ---- Sponsors: pricing tiers ----
+
+export const sponsorTiers = [
+  {
+    name: "Title Sponsor",
+    price: "₹5,00,000/year",
+    perks: ["Logo on all jerseys", "Event naming rights", "Social media features", "Email newsletter placement", "Booth at all events"],
+  },
+  {
+    name: "Gold Sponsor",
+    price: "₹2,00,000/year",
+    perks: ["Logo on event jerseys", "Social media features", "Email newsletter placement", "Booth at major events"],
+  },
+  {
+    name: "Community Sponsor",
+    price: "₹50,000/year",
+    perks: ["Logo on website", "Social media shoutout", "Community newsletter feature"],
+  },
+];
+
+// ---- Merchandise: size guide, reviews, policies ----
+
+export const sizeGuide = [
+  { size: "S", chest: "36–38 in", length: "27 in" },
+  { size: "M", chest: "39–41 in", length: "28 in" },
+  { size: "L", chest: "42–44 in", length: "29 in" },
+  { size: "XL", chest: "45–47 in", length: "30 in" },
+];
+
+export const merchReviews = [
+  { name: "Ananya S.", product: "RTG Jersey", rating: 5, quote: "Fits true to size, breathes well even in Delhi summer rides. Worth every rupee." },
+  { name: "Rohit M.", product: "Hoodie", rating: 5, quote: "Warm enough for winter Friday Bricks and doesn't look like typical sportswear — wear it everywhere." },
+  { name: "Karan V.", product: "Cap", rating: 4, quote: "Solid quality, adjustable strap fits well. Would love more colour options." },
+];
+
+export const shippingInfo = {
+  shipping: "Free shipping on orders above ₹2,000. Delivery in 5–7 business days across India.",
+  returns: "Not happy with the fit? Returns accepted within 7 days of delivery, unworn and with tags attached.",
+  memberDiscount: "RTG members get 10% off all merchandise — log in before checkout to apply your discount automatically.",
+};
+
+// ---- Safety page (general guidelines — see rideSafety above for the
+// Friday Bricks–specific checklist) ----
+
+export const generalSafety = [
+  { title: "Helmets, always", desc: "Non-negotiable on every ride, every distance, every pace." },
+  { title: "Ride/run in groups", desc: "Never head out alone on unfamiliar routes — buddy up." },
+  { title: "Share your location", desc: "Let someone know your route and expected return time." },
+  { title: "Follow traffic rules", desc: "Signal turns, stop at signals, ride single-file on main roads." },
+  { title: "Carry ID", desc: "Always carry ID and an emergency contact, digital or physical." },
+  { title: "Know your limits", desc: "It's community sport, not a race — regroup often and pace to the slowest rider." },
+  { title: "First aid basics", desc: "Every ride captain carries a basic first-aid kit and knows the nearest hospital en route." },
+  { title: "Report incidents", desc: "Flag any safety concern to a ride captain or via the Contact page immediately." },
+];

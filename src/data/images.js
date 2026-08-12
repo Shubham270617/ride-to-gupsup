@@ -25,7 +25,8 @@ const unsplash = (id, w = 1600) =>
 
 export const images = {
   // ---- Brand ----
-  logo: "/images/rtg-logo.svg", // replace with the real RTG logo (svg/png, transparent bg)
+  logo: "/images/rtg-logo-horizontal.png", // navbar/footer lockup (icon + wordmark, one line)
+  logoIcon: "/images/rtg-logo-square.png", // stacked icon+wordmark — used where a compact/square mark fits better
 
   // ---- INTRO / PRELOADER ----
   // introPoster shows instantly while /videos/rtg-intro.mp4 loads (also the
@@ -36,6 +37,11 @@ export const images = {
 
   // ---- HOME ----
   homeHero: unsplash("1517649763962-0c623066013b", 2000), // sunrise cyclist
+  // Home hero carousel slides (Cycling/Running/Swimming/Community)
+  heroCycling: unsplash("1517649763962-0c623066013b", 2000),
+  heroRunning: unsplash("1461896836934-ffe607ba8211", 2000),
+  heroSwimming: unsplash("1519315901367-f34ff9154487", 2000),
+  heroCommunity: unsplash("1541625602330-2277a4c46182", 2000),
   homeAbout: unsplash("1541625602330-2277a4c46182", 1400), // group of cyclists
   homeWhyJoin: unsplash("1476480862126-209bfaa8edc8", 1400), // runner
   homeWeekly: unsplash("1461896836934-ffe607ba8211", 1600), // group runners
@@ -118,6 +124,12 @@ export const images = {
 
   // ---- FAQ ----
   faqHero: unsplash("1517931524326-bdd55a541177", 2000),
+
+  // ---- RACE RESULTS ----
+  raceResultsHero: unsplash("1546519638-68e109498ffc", 2000),
+
+  // ---- SAFETY ----
+  safetyHero: unsplash("1517931524326-bdd55a541177", 2000),
 
   // ---- MERCHANDISE (product photos) ----
   productJersey: unsplash("1517649763962-0c623066013b", 1000),

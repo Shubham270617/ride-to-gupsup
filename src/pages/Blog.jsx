@@ -1,5 +1,5 @@
 import { images } from "../data/images";
-import { blogPosts } from "../data/content";
+import { useBlogPosts } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -8,6 +8,7 @@ import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Blog() {
+  const blogPosts = useBlogPosts();
   return (
     <>
       <PageHero
@@ -24,7 +25,7 @@ export default function Blog() {
               <GlassCard className="p-0 overflow-hidden h-full group cursor-pointer" hover>
                 <div className="h-52 overflow-hidden">
                   <motion.img
-                    src={images[p.imgKey]}
+                    src={p.image || images[p.imgKey]}
                     alt={p.title}
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.1 }}

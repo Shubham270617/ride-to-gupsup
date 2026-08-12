@@ -39,7 +39,7 @@ export default function TestimonialSlider({ items, autoPlay = true, interval = 6
           >
             <p className="text-lg md:text-2xl font-medium leading-relaxed mb-8 text-rtg-white">"{t.quote}"</p>
             <img
-              src={images[t.avatarKey]}
+              src={t.image || images[t.avatarKey]}
               alt={t.name}
               className="w-14 h-14 rounded-full object-cover border-2 border-rtg-orange-400 mb-3"
             />
