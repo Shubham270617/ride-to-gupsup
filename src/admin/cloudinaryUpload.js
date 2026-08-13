@@ -78,7 +78,8 @@ function xhrUpload(url, formData, onProgress) {
 export async function uploadToCloudinary(file, folder = "uploads", onProgress) {
   if (file.type.startsWith("video/") && file.size > CLOUDINARY_VIDEO_LIMIT) {
     throw new Error(
-      `This video is ${formatMB(file.size)} — the maximum is ${formatMB(CLOUDINARY_VIDEO_LIMIT)}. Compress it first, then try again.`
+      `This video is ${formatMB(file.size)} — the maximum is ${formatMB(CLOUDINARY_VIDEO_LIMIT)}. ` +
+        "Compress it first (free tool: HandBrake at handbrake.fr, or your phone's built-in \"share as smaller video\" option), then try uploading again."
     );
   }
 
