@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Upload, Loader2, Check } from "lucide-react";
 import { uploadToCloudinary } from "../cloudinaryUpload";
+import UploadProgressModal from "./UploadProgressModal";
 
 export default function ImageUploadField({ label, value, onChange, folder = "uploads", accept = "image/*,video/*" }) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
 
   const handleFile = async (e) => {
@@ -11,9 +14,11 @@ export default function ImageUploadField({ label, value, onChange, folder = "upl
     e.target.value = "";
     if (!file) return;
     setUploading(true);
+    setFileName(file.name);
+    setProgress(0);
     setError("");
     try {
-      const { url } = await uploadToCloudinary(file, folder);
+      const { url } = await uploadToCloudinary(file, folder, setProgress);
       onChange(url);
     } catch (err) {
       setError(err.message || "Upload failed");
@@ -26,6 +31,7 @@ export default function ImageUploadField({ label, value, onChange, folder = "upl
 
   return (
     <div>
+      <UploadProgressModal active={uploading} fileName={fileName} index={1} total={1} progress={progress} />
       {label && <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-2">{label}</label>}
       <div className="flex items-center gap-4">
         <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">

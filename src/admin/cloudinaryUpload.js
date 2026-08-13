@@ -7,8 +7,13 @@ import { supabase } from "../lib/supabaseClient";
 // for those, and re-encoding video in the browser is a much heavier problem
 // than this needs to solve).
 const CLOUDINARY_IMAGE_LIMIT = 10 * 1024 * 1024;
+const CLOUDINARY_VIDEO_LIMIT = 100 * 1024 * 1024;
 const RESIZE_TRIGGER_BYTES = 9 * 1024 * 1024;
 const MAX_DIMENSION = 2400;
+
+function formatMB(bytes) {
+  return `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
+}
 
 async function resizeImageIfNeeded(file) {
   if (!file.type.startsWith("image/") || file.size <= RESIZE_TRIGGER_BYTES) return file;
@@ -35,11 +40,48 @@ async function resizeImageIfNeeded(file) {
   return new File([blob], newName, { type: "image/jpeg" });
 }
 
+// Does the actual browser-to-Cloudinary transfer via XMLHttpRequest instead
+// of fetch() — fetch has no upload-progress event, XHR does, and that's what
+// powers the live progress bar in the admin UI.
+function xhrUpload(url, formData, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(e.loaded / e.total);
+      };
+    }
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+        else reject(new Error(data.error?.message || "Upload to Cloudinary failed."));
+      } catch {
+        reject(new Error("Upload to Cloudinary failed."));
+      }
+    };
+    // Fires on a genuine network failure (dropped connection, CORS block,
+    // DNS error) — this is what a raw "Failed to fetch" was surfacing before
+    // with no explanation, usually really a doomed-from-the-start oversized
+    // upload rather than an actual connectivity problem.
+    xhr.onerror = () => reject(new Error("Upload failed — check your connection and try again."));
+    xhr.send(formData);
+  });
+}
+
 // Uploads a file straight to Cloudinary from the browser — the file itself
 // never passes through our server, only a short-lived signature does (see
 // api/cloudinary/sign.js). Works for both images and videos (resource_type
-// "auto" lets Cloudinary figure out which).
-export async function uploadToCloudinary(file, folder = "uploads") {
+// "auto" lets Cloudinary figure out which). onProgress (0..1) is optional,
+// for driving a progress bar in the UI.
+export async function uploadToCloudinary(file, folder = "uploads", onProgress) {
+  if (file.type.startsWith("video/") && file.size > CLOUDINARY_VIDEO_LIMIT) {
+    throw new Error(
+      `This video is ${formatMB(file.size)} — the maximum is ${formatMB(CLOUDINARY_VIDEO_LIMIT)}. Compress it first, then try again.`
+    );
+  }
+
   const uploadFile = await resizeImageIfNeeded(file);
   if (uploadFile.type.startsWith("image/") && uploadFile.size > CLOUDINARY_IMAGE_LIMIT) {
     throw new Error("This image is too large even after compression — try a smaller photo.");
@@ -74,16 +116,6 @@ export async function uploadToCloudinary(file, folder = "uploads") {
   formData.append("signature", signature);
   formData.append("folder", signedFolder);
 
-  const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!uploadRes.ok) {
-    const err = await uploadRes.json().catch(() => ({}));
-    throw new Error(err.error?.message || "Upload to Cloudinary failed.");
-  }
-
-  const data = await uploadRes.json();
+  const data = await xhrUpload(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, formData, onProgress);
   return { url: data.secure_url, resourceType: data.resource_type };
 }

@@ -3,6 +3,7 @@ import { Upload, Trash2, Loader2 } from "lucide-react";
 import { uploadToCloudinary } from "../cloudinaryUpload";
 import useTable from "../useTable";
 import { useConfirm } from "../components/ConfirmDialog";
+import UploadProgressModal from "../components/UploadProgressModal";
 
 const CATEGORIES = ["Cycling", "Running", "Swimming", "Events", "Volunteers"];
 
@@ -10,6 +11,7 @@ export default function GalleryAdmin() {
   const confirm = useConfirm();
   const { rows, loading, insert, remove } = useTable("gallery_items", { orderBy: "sort_order" });
   const [uploading, setUploading] = useState(false);
+  const [progressState, setProgressState] = useState({ fileName: "", index: 0, total: 0, progress: 0 });
   const [error, setError] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
 
@@ -21,9 +23,13 @@ export default function GalleryAdmin() {
     setError("");
     try {
       let nextSort = rows.length ? Math.max(...rows.map((r) => r.sort_order || 0)) + 1 : 0;
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setProgressState({ fileName: file.name, index: i + 1, total: files.length, progress: 0 });
         const mediaType = file.type.startsWith("video") ? "video" : "image";
-        const { url } = await uploadToCloudinary(file, "gallery");
+        const { url } = await uploadToCloudinary(file, "gallery", (p) =>
+          setProgressState((prev) => ({ ...prev, progress: p }))
+        );
         await insert({ media_url: url, media_type: mediaType, category, sort_order: nextSort, published: true });
         nextSort += 1;
       }
@@ -42,6 +48,7 @@ export default function GalleryAdmin() {
 
   return (
     <div>
+      <UploadProgressModal active={uploading} {...progressState} />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-3xl">Gallery</h1>
         <div className="flex items-center gap-2">
