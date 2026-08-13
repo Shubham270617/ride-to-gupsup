@@ -1,10 +1,50 @@
 import { supabase } from "../lib/supabaseClient";
 
+// Cloudinary's free plan caps a single image upload at 10MB. Raw camera
+// photos routinely blow past that (and would be needlessly slow to load on
+// the actual site anyway), so shrink oversized images in the browser before
+// they're sent — videos are left untouched (Cloudinary allows up to 100MB
+// for those, and re-encoding video in the browser is a much heavier problem
+// than this needs to solve).
+const CLOUDINARY_IMAGE_LIMIT = 10 * 1024 * 1024;
+const RESIZE_TRIGGER_BYTES = 9 * 1024 * 1024;
+const MAX_DIMENSION = 2400;
+
+async function resizeImageIfNeeded(file) {
+  if (!file.type.startsWith("image/") || file.size <= RESIZE_TRIGGER_BYTES) return file;
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, width, height);
+
+  let quality = 0.85;
+  let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  while (blob && blob.size > RESIZE_TRIGGER_BYTES && quality > 0.4) {
+    quality -= 0.15;
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
+  if (!blob) return file;
+
+  const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], newName, { type: "image/jpeg" });
+}
+
 // Uploads a file straight to Cloudinary from the browser — the file itself
 // never passes through our server, only a short-lived signature does (see
 // api/cloudinary/sign.js). Works for both images and videos (resource_type
 // "auto" lets Cloudinary figure out which).
 export async function uploadToCloudinary(file, folder = "uploads") {
+  const uploadFile = await resizeImageIfNeeded(file);
+  if (uploadFile.type.startsWith("image/") && uploadFile.size > CLOUDINARY_IMAGE_LIMIT) {
+    throw new Error("This image is too large even after compression — try a smaller photo.");
+  }
+
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error("You're not logged in.");
@@ -28,7 +68,7 @@ export async function uploadToCloudinary(file, folder = "uploads") {
   const { signature, timestamp, apiKey, cloudName, folder: signedFolder } = await signRes.json();
 
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", uploadFile);
   formData.append("api_key", apiKey);
   formData.append("timestamp", timestamp);
   formData.append("signature", signature);
