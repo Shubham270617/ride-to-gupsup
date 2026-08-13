@@ -3,7 +3,10 @@ import { providers, isProviderConfigured } from "../../lib/providers.js";
 import { serializeCookie } from "../../lib/cookies.js";
 
 export default async function handler(req, res) {
-  const { provider } = req.query;
+  // Vercel's [provider] folder convention puts this in req.query; Express's
+  // :provider route param (used by the Hostinger/server.js deployment
+  // target) puts it in req.params instead — support both.
+  const provider = req.query.provider || req.params?.provider;
   const config = providers[provider];
 
   if (!config) {

@@ -3,7 +3,11 @@ import { getSupabaseAdmin } from "../../lib/supabaseAdmin.js";
 import { parseCookies } from "../../lib/cookies.js";
 
 export default async function handler(req, res) {
-  const { provider, code, state, error: providerError } = req.query;
+  const { code, state, error: providerError } = req.query;
+  // Vercel's [provider] folder convention puts this in req.query; Express's
+  // :provider route param (used by the Hostinger/server.js deployment
+  // target) puts it in req.params instead — support both.
+  const provider = req.query.provider || req.params?.provider;
   const config = providers[provider];
   const frontend = process.env.FRONTEND_URL || "/";
 
