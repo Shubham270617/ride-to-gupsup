@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { ShieldCheck, ShieldOff, Search, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
+import { useConfirm } from "../components/ConfirmDialog";
 
 export default function AdminsAdmin() {
   const { user } = useAdminSession();
+  const confirm = useConfirm();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -68,7 +70,12 @@ export default function AdminsAdmin() {
   };
 
   const revokeAdmin = async (admin) => {
-    if (!window.confirm(`Remove admin access for ${admin.email || admin.full_name}?`)) return;
+    const ok = await confirm({
+      title: "Remove admin access?",
+      message: `${admin.email || admin.full_name} will lose access to the admin dashboard.`,
+      confirmLabel: "Remove access",
+    });
+    if (!ok) return;
     setBusyId(admin.id);
     setError("");
     try {

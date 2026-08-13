@@ -73,15 +73,6 @@ function Hero() {
       )}
 
       <motion.div style={{ opacity }} className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 pb-16 md:pb-24 w-full">
-        <motion.span
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full text-xs md:text-sm font-semibold text-rtg-orange-300 mb-6"
-        >
-          <MapPin size={14} /> {brand.members} Athletes · 8+ Indian Cities
-        </motion.span>
-
         <AnimatePresence mode="wait">
           <motion.div
             key={slide}

@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Upload, Trash2, Loader2 } from "lucide-react";
 import { uploadToCloudinary } from "../cloudinaryUpload";
 import useTable from "../useTable";
+import { useConfirm } from "../components/ConfirmDialog";
 
 const CATEGORIES = ["Cycling", "Running", "Swimming", "Events", "Volunteers"];
 
 export default function GalleryAdmin() {
+  const confirm = useConfirm();
   const { rows, loading, insert, remove } = useTable("gallery_items", { orderBy: "sort_order" });
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +35,8 @@ export default function GalleryAdmin() {
   };
 
   const handleDelete = async (row) => {
-    if (!window.confirm("Delete this gallery item? This can't be undone.")) return;
+    const ok = await confirm({ title: "Delete this gallery item?", message: "This can't be undone." });
+    if (!ok) return;
     await remove(row.id);
   };
 

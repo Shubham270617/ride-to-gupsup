@@ -101,16 +101,16 @@ export default function Navbar() {
 
       <div className="max-w-7xl mx-auto px-5 md:px-8 h-18 flex items-center justify-between py-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={images.logo} alt={brand.name} className="h-9 md:h-10 w-auto" />
+          <img src={images.logo} alt={brand.name} className="h-10 md:h-11 w-auto" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden xl:flex items-center gap-0.5">
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
-                `px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
+                `px-2.5 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
                   isActive ? "text-rtg-orange-400" : "text-rtg-white/85 hover:text-rtg-orange-300"
                 }`
               }
@@ -120,7 +120,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-3">
           <button
             onClick={() => requestLogin("login")}
             className="text-sm font-semibold text-rtg-white/90 hover:text-rtg-orange-400 transition-colors"
@@ -134,7 +134,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="lg:hidden text-rtg-white p-2"
+          className="xl:hidden text-rtg-white p-2"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -149,7 +149,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="lg:hidden glass overflow-hidden"
+            className="xl:hidden glass overflow-hidden"
           >
             <nav className="flex flex-col px-6 py-4 gap-1">
               {links.map((l) => (

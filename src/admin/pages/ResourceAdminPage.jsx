@@ -4,8 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import useTable from "../useTable";
 import ResourceTable from "../components/ResourceTable";
 import ResourceForm from "../components/ResourceForm";
+import { useConfirm } from "../components/ConfirmDialog";
 
 export default function ResourceAdminPage({ resource }) {
+  const confirm = useConfirm();
   const { rows, loading, error, insert, update, remove } = useTable(resource.table, {
     orderBy: resource.orderBy,
     ascending: resource.ascending ?? true,
@@ -25,7 +27,11 @@ export default function ResourceAdminPage({ resource }) {
   };
 
   const handleDelete = async (row) => {
-    if (!window.confirm(`Delete "${row.title || row.name}"? This can't be undone.`)) return;
+    const ok = await confirm({
+      title: `Delete "${row.title || row.name}"?`,
+      message: "This can't be undone.",
+    });
+    if (!ok) return;
     await remove(row.id);
   };
 

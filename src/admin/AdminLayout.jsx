@@ -19,6 +19,7 @@ import { supabase } from "../lib/supabaseClient";
 import { images } from "../data/images";
 import { brand } from "../data/content";
 import useAdminSession from "./useAdminSession";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 
 const links = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -45,6 +46,7 @@ export default function AdminLayout() {
   };
 
   return (
+    <ConfirmProvider>
     <div className="min-h-svh bg-rtg-ink flex">
       <aside className="w-60 shrink-0 border-r border-white/10 flex flex-col">
         <div className="p-5 border-b border-white/10">
@@ -94,5 +96,6 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
+    </ConfirmProvider>
   );
 }
