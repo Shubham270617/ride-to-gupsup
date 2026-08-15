@@ -11,18 +11,12 @@ import { useAuthGate } from "../lib/AuthGateContext";
 import { supabase } from "../lib/supabaseClient";
 
 const links = [
-  { to: "/about", label: "About" },
   { to: "/community", label: "Community" },
-  { to: "/weekly-rides", label: "Weekly Rides" },
   { to: "/events", label: "Events" },
-  { to: "/challenges", label: "Challenges" },
   { to: "/race-calendar", label: "Calendar" },
-  { to: "/merchandise", label: "Store" },
-  { to: "/blog", label: "Blog" },
+  { to: "/merchandise", label: "Merchandise" },
+  { to: "/about", label: "About" },
   { to: "/gallery", label: "Gallery" },
-  { to: "/sponsors", label: "Sponsors" },
-  { to: "/faq", label: "FAQ" },
-  { to: "/contact", label: "Contact" },
 ];
 
 function AccountIndicator({ className = "" }) {
@@ -104,7 +98,7 @@ export default function Navbar() {
           <img src={images.logo} alt={brand.name} className="h-10 md:h-11 w-auto" />
         </Link>
 
-        <nav className="hidden xl:flex items-center gap-0.5">
+        <nav className="hidden lg:flex items-center gap-0.5">
           {links.map((l) => (
             <NavLink
               key={l.to}
@@ -120,7 +114,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden xl:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
           <button
             onClick={() => requestLogin("login")}
             className="text-sm font-semibold text-rtg-white/90 hover:text-rtg-orange-400 transition-colors"
@@ -134,7 +128,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="xl:hidden text-rtg-white p-2"
+          className="lg:hidden text-rtg-white p-2"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -149,7 +143,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="xl:hidden glass overflow-hidden"
+            className="lg:hidden glass overflow-hidden"
           >
             <nav className="flex flex-col px-6 py-4 gap-1">
               {links.map((l) => (

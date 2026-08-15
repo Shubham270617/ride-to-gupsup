@@ -5,7 +5,7 @@ import { X, Mail, Lock, User, Loader2, Zap, Calendar, ArrowRight } from "lucide-
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
-import { useEvents } from "../lib/publicData";
+import { useUpcomingEvent } from "../lib/publicData";
 import { brand } from "../data/content";
 
 const SESSION_KEY = "rtg_authgate_shown";
@@ -57,8 +57,7 @@ export default function AuthGate() {
 
   // Purely presentational — the "what's happening" preview shown above the
   // login form. Doesn't touch any auth state or handlers.
-  const events = useEvents();
-  const featuredEvent = events.find((e) => e.featured) || events[0];
+  const featuredEvent = useUpcomingEvent();
 
   const shouldShow = !sessionLoading && !dismissed && !session;
 

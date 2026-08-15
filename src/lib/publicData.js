@@ -39,28 +39,35 @@ function useSupabaseList(table, { staticFallback, mapRow, orderBy = "sort_order"
   return items;
 }
 
+const mapEventRow = (r) => ({
+  id: r.id,
+  slug: r.slug,
+  title: r.title,
+  date: r.event_date,
+  type: r.event_type,
+  categories: r.categories || [],
+  prize: r.prize_pool,
+  desc: r.description,
+  image: r.cover_image_url,
+  featured: r.featured,
+  route: r.route_info,
+  routeMapQuery: r.route_map_query,
+  elevation: r.elevation_gain,
+  gpxUrl: r.gpx_url,
+  results: r.results_summary,
+  previousEdition: r.previous_edition_summary,
+});
+
 export function useEvents() {
-  return useSupabaseList("events", {
-    staticFallback: staticEvents,
-    mapRow: (r) => ({
-      id: r.id,
-      slug: r.slug,
-      title: r.title,
-      date: r.event_date,
-      type: r.event_type,
-      categories: r.categories || [],
-      prize: r.prize_pool,
-      desc: r.description,
-      image: r.cover_image_url,
-      featured: r.featured,
-      route: r.route_info,
-      routeMapQuery: r.route_map_query,
-      elevation: r.elevation_gain,
-      gpxUrl: r.gpx_url,
-      results: r.results_summary,
-      previousEdition: r.previous_edition_summary,
-    }),
-  });
+  return useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow });
+}
+
+// Used only for the "Upcoming Event" teaser in the login popup — unlike
+// useEvents(), this never falls back to placeholder content, so the teaser
+// simply doesn't render until a real event exists in the database.
+export function useUpcomingEvent() {
+  const events = useSupabaseList("events", { staticFallback: [], mapRow: mapEventRow });
+  return events.find((e) => e.featured) || events[0] || null;
 }
 
 /** Find one event by slug/id — used by the event detail page. Falls back to

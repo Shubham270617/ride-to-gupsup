@@ -3,15 +3,29 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, Tag } from "lucide-react";
 import { images } from "../../data/images";
 import { formatPrize } from "../../lib/format";
+import useSession from "../../lib/useSession";
+import { useAuthGate } from "../../lib/AuthGateContext";
 import GlassCard from "./GlassCard";
 
 export default function EventCard({ event, featured = false }) {
   const img = event.image || images[event.imgKey];
   const to = `/events/${event.slug || event.id}`;
+  const { user } = useSession();
+  const { requestLogin } = useAuthGate();
+
+  // Event details are gated behind an account — visitors who aren't signed
+  // in get the login popup instead of the page itself. This never touches
+  // the login/signup logic, only whether the click navigates at all.
+  const handleClick = (e) => {
+    if (!user) {
+      e.preventDefault();
+      requestLogin("login");
+    }
+  };
 
   if (featured) {
     return (
-      <Link to={to} className="block">
+      <Link to={to} onClick={handleClick} className="block">
         <motion.div
           className="relative rounded-3xl overflow-hidden group cursor-pointer"
           whileHover="hover"
@@ -51,7 +65,7 @@ export default function EventCard({ event, featured = false }) {
   }
 
   return (
-    <Link to={to} className="block h-full">
+    <Link to={to} onClick={handleClick} className="block h-full">
       <GlassCard className="p-0 overflow-hidden group cursor-pointer h-full" hover>
         <div className="relative overflow-hidden h-52">
           <motion.img
