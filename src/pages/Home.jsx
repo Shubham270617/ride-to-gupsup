@@ -81,7 +81,7 @@ function Hero() {
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
+            <span className="hidden sm:block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
               {current.tag} · Community · Adventure
             </span>
             <h1 className="font-display text-6xl sm:text-7xl md:text-9xl leading-[0.9] mb-6 max-w-5xl">
@@ -112,7 +112,7 @@ function Hero() {
           className="mt-10 md:mt-14"
         >
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 flex-1 max-w-2xl">
+            <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-5 flex-1 max-w-2xl">
               {heroSlides.map((s, i) => (
                 <button
                   key={s.tag}

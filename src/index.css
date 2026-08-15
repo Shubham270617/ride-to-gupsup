@@ -40,10 +40,13 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
+  width: 100%;
   background: var(--color-rtg-ink);
   color: var(--color-rtg-white);
   font-family: var(--font-sans);
@@ -56,18 +59,14 @@ body {
   color: var(--color-rtg-ink);
 }
 
+/* Scroll still works everywhere — just the visible scrollbar track/thumb is
+   hidden, for a cleaner, more app-like feel. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
 ::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-rtg-purple-950);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-rtg-purple-600);
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-rtg-orange-500);
+  display: none;
 }
 
 .font-display {
