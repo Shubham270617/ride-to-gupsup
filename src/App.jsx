@@ -92,6 +92,8 @@ export default function App() {
           <Route path="challenges" element={<ResourceAdminPage resource={resources.challenges} />} />
           <Route path="team" element={<ResourceAdminPage resource={resources.team} />} />
           <Route path="race-results" element={<ResourceAdminPage resource={resources.raceResults} />} />
+          <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarEvents} />} />
+          <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />

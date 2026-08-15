@@ -13,6 +13,7 @@ function humanize(key) {
 
 export default function SiteImagesAdmin() {
   const [overrides, setOverrides] = useState({});
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,22 +21,32 @@ export default function SiteImagesAdmin() {
       setLoading(false);
       return;
     }
-    supabase
-      .from("site_images")
-      .select("key,url")
-      .then(({ data }) => {
-        const map = {};
-        (data || []).forEach((r) => {
-          map[r.key] = r.url;
-        });
-        setOverrides(map);
-        setLoading(false);
+    Promise.all([
+      supabase.from("site_images").select("key,url"),
+      supabase.from("site_settings").select("key,value"),
+    ]).then(([imagesRes, settingsRes]) => {
+      const map = {};
+      (imagesRes.data || []).forEach((r) => {
+        map[r.key] = r.url;
       });
+      setOverrides(map);
+      const settingsMap = {};
+      (settingsRes.data || []).forEach((r) => {
+        settingsMap[r.key] = r.value;
+      });
+      setSettings(settingsMap);
+      setLoading(false);
+    });
   }, []);
 
   const handleChange = async (key, url) => {
     setOverrides((prev) => ({ ...prev, [key]: url }));
     await supabase.from("site_images").upsert({ key, url, label: humanize(key) });
+  };
+
+  const handleSettingChange = async (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+    await supabase.from("site_settings").upsert({ key, value, label: humanize(key) });
   };
 
   return (
@@ -49,18 +60,33 @@ export default function SiteImagesAdmin() {
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {KEYS.map((key) => (
-            <div key={key} className="glass rounded-2xl p-5">
-              <ImageUploadField
-                label={humanize(key)}
-                value={overrides[key] || staticImages[key]}
-                onChange={(url) => handleChange(key, url)}
-                folder="site"
-              />
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="glass rounded-2xl p-5 mb-8 max-w-md">
+            <ImageUploadField
+              label="Sponsor Deck (PDF)"
+              value={settings.sponsor_deck_url || ""}
+              onChange={(url) => handleSettingChange("sponsor_deck_url", url)}
+              folder="documents"
+              accept="application/pdf"
+            />
+            <p className="mt-2 text-xs text-rtg-mist">
+              Uploaded here becomes the file behind "Download Sponsor Deck" on the Sponsors and Contact pages.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {KEYS.map((key) => (
+              <div key={key} className="glass rounded-2xl p-5">
+                <ImageUploadField
+                  label={humanize(key)}
+                  value={overrides[key] || staticImages[key]}
+                  onChange={(url) => handleChange(key, url)}
+                  folder="site"
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Loader2, User, MapPin, Activity, Save, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
+import { useUpcomingEvent, useRaceResults } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
@@ -29,6 +31,8 @@ function LoggedOutPrompt() {
 
 export default function Dashboard() {
   const { user, loading: sessionLoading } = useSession();
+  const upcomingEvent = useUpcomingEvent();
+  const raceResults = useRaceResults();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ full_name: "", city: "", sport: "", bio: "" });
@@ -90,8 +94,52 @@ export default function Dashboard() {
   const inputClass =
     "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
 
+  const myResults = form.full_name
+    ? raceResults.filter((r) => r.athleteName.trim().toLowerCase() === form.full_name.trim().toLowerCase())
+    : [];
+
   return (
-    <Section eyebrow="Athlete Profile" title={`Welcome, ${form.full_name || "Athlete"}`}>
+    <Section eyebrow="Member Dashboard" title={`Welcome, ${form.full_name || "Athlete"}`}>
+      <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-8">
+        {upcomingEvent && (
+          <Link to={`/events/${upcomingEvent.slug || upcomingEvent.id}`} className="group">
+            <GlassCard className="h-full hover:border-rtg-orange-400/40 transition-colors">
+              <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-rtg-orange-400 font-semibold mb-2">
+                <Calendar size={13} /> Upcoming Event
+              </span>
+              <p className="font-display text-xl mb-1">{upcomingEvent.title}</p>
+              <p className="text-rtg-mist text-sm mb-3">{upcomingEvent.date}</p>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-white group-hover:text-rtg-orange-400 transition-colors">
+                View details <ArrowRight size={12} />
+              </span>
+            </GlassCard>
+          </Link>
+        )}
+        <Link to="/race-results" className="group">
+          <GlassCard className="h-full hover:border-rtg-orange-400/40 transition-colors">
+            <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-rtg-orange-400 font-semibold mb-2">
+              <Trophy size={13} /> Your Race Results
+            </span>
+            {myResults.length > 0 ? (
+              <>
+                <p className="font-display text-xl mb-1">{myResults.length} result{myResults.length > 1 ? "s" : ""} on record</p>
+                <p className="text-rtg-mist text-sm mb-3">
+                  Latest: {myResults[0].eventName} — {myResults[0].position || myResults[0].finishTime || "—"}
+                </p>
+              </>
+            ) : (
+              <p className="text-rtg-mist text-sm mb-3">
+                No results under "{form.full_name || "your name"}" yet — they'll show up here once RTG posts them.
+              </p>
+            )}
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-white group-hover:text-rtg-orange-400 transition-colors">
+              View all results <ArrowRight size={12} />
+            </span>
+          </GlassCard>
+        </Link>
+      </div>
+
+      <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">Athlete Profile</h2>
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <GlassCard className="md:col-span-1 text-center">
           <img

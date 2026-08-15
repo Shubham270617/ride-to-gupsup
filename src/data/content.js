@@ -13,10 +13,10 @@ export const brand = {
   cities: ["Delhi", "Chandigarh", "Dehradun", "Jaipur", "Shimla", "Punjab", "Pune", "Mumbai"],
   members: "500+",
   social: {
-    instagram: { handle: "RideTeaGupShup", url: "https://instagram.com/RideTeaGupShup" },
-    facebook: { handle: "RideTeaGupShup", url: "https://facebook.com/RideTeaGupShup" },
+    instagram: { handle: "RideTeaGupShup", url: "https://www.instagram.com/rideteagupshup?igsh=MXQwaHZuZHBsdzVzag%3D%3D&utm_source=qr" },
+    facebook: { handle: "RideTeaGupShup", url: "https://www.facebook.com/share/1DV6yBmEF7/?mibextid=wwXIfr" },
     youtube: { handle: "RideTeaGupShup", url: "https://youtube.com/@RideTeaGupShup" },
-    strava: { handle: "RideTeaGupShup", url: "https://strava.com/clubs/RideTeaGupShup" },
+    strava: { handle: "RideTeaGupShup", url: "https://strava.app.link/kPmiHdMRC5b" },
   },
 };
 
@@ -110,6 +110,56 @@ export const weeklyActivities = [
   { day: "Friday", name: "Friday Bricks", detail: "30km Cycling + 5km Run · Nehru Park, Delhi · 5:00–5:30 AM" },
   { day: "Sunday", name: "Long Ride", detail: "60–100km road ride for all levels" },
   { day: "Wednesday", name: "Evening Run Club", detail: "5–10km tempo & easy run" },
+];
+
+// Full weekly schedule shown on /weekly-rides — DB-backed via the admin's
+// "Weekly Sessions" screen, this is just the fallback shown before any real
+// rows exist.
+export const weeklySessions = [
+  {
+    day: "Friday",
+    name: "Friday Bricks",
+    time: "5:00 – 5:30 AM",
+    location: "Nehru Park, Delhi",
+    format: "30km Cycling + 5km Run",
+    difficulty: "All Levels",
+    paceGroup: "A (fast) / B (moderate) / C (social)",
+    cost: "Free",
+    description: "RTG's flagship session — cycling straight into a run, back to back, no rest.",
+  },
+  {
+    day: "Sunday",
+    name: "Sunday Long Ride",
+    time: "6:00 AM",
+    location: "Varies (announced weekly)",
+    format: "60–120km · Intermediate to Advanced",
+    difficulty: "Intermediate",
+    paceGroup: "A (fast) / B (moderate)",
+    cost: "Free",
+    description: "A different route every week — hills, highways, and long flat stretches for building base miles.",
+  },
+  {
+    day: "Wednesday",
+    name: "Wednesday Run Club",
+    time: "6:30 AM",
+    location: "Lodhi Garden, Delhi",
+    format: "5–10km · All Levels",
+    difficulty: "Beginner",
+    paceGroup: "All paces welcome — we regroup often",
+    cost: "Free",
+    description: "An easy-to-tempo run through the city's greenest park, followed by chai.",
+  },
+  {
+    day: "Saturday",
+    name: "Saturday Swim Clinic",
+    time: "7:00 AM",
+    location: "DLF Fort Pool, Delhi",
+    format: "1–3km · Beginner to Intermediate",
+    difficulty: "Beginner",
+    paceGroup: "Coached — grouped by comfort in water",
+    cost: "Free",
+    description: "Pool-based technique work for stroke, breathing, and open-water confidence.",
+  },
 ];
 
 export const communityGroups = [
@@ -225,6 +275,10 @@ export const testimonials = [
   { name: "Rohit Malhotra", role: "Cyclist, Chandigarh", avatarKey: "avatar2", quote: "I've never felt judged for my pace here. Everyone waits, everyone cheers. That's rare in cycling groups." },
   { name: "Simran Kaur", role: "Triathlete, Jaipur", avatarKey: "avatar3", quote: "From my first open-water swim to finishing a sprint triathlon — RTG's guidance made it possible." },
   { name: "Karan Vij", role: "Beginner, Pune", avatarKey: "avatar4", quote: "Joined knowing nothing about cycling. Six months later I did my first 100km ride with the club." },
+  { name: "Priya Nair", role: "Swimmer, Mumbai", avatarKey: "avatar5", quote: "I was terrified of open water. The RTG swim crew got me through my first sea swim, one Saturday at a time." },
+  { name: "Arjun Mehta", role: "Marathoner, Dehradun", avatarKey: "avatar6", quote: "Trained for my first full marathon entirely through RTG's Sunday long runs. Crossed the line in under 4 hours." },
+  { name: "Neha Kapoor", role: "Cyclist, Shimla", avatarKey: "avatar7", quote: "The hill climbs here are no joke, but so is the support. Someone always drops back to ride with you." },
+  { name: "Vikram Rathore", role: "Triathlete, Jaipur", avatarKey: "avatar8", quote: "Finished my first Ironman 70.3 this year. RTG's brick sessions were the single biggest reason I was ready." },
 ];
 
 export const faqs = [

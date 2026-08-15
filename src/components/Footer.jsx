@@ -36,11 +36,13 @@ const cols = [
   {
     title: "More",
     links: [
-      { to: "/merchandise", label: "Kit / Store" },
+      { to: "/merchandise", label: "Store" },
+      { to: "/merchandise", label: "Kit" },
       { to: "/blog", label: "Resources" },
       { to: "/safety", label: "Safety" },
       { to: "/faq", label: "FAQ" },
-      { to: "/contact", label: "Contact / Media" },
+      { to: "/contact", label: "Contact" },
+      { to: "/contact", label: "Media" },
     ],
   },
   {

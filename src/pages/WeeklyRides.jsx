@@ -1,6 +1,7 @@
-import { MapPin, Clock, Bike, CheckCircle2 } from "lucide-react";
+import { MapPin, Clock, Bike, CheckCircle2, Gauge, IndianRupee } from "lucide-react";
 import { images } from "../data/images";
-import { rideSafety, whatToBring, rideFaqs } from "../data/content";
+import { rideSafety, whatToBring, rideFaqs, brand } from "../data/content";
+import { useWeeklySessions } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -8,13 +9,22 @@ import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import FAQAccordion from "../components/ui/FAQAccordion";
 import Button from "../components/ui/Button";
 
-const infoCards = [
-  { icon: MapPin, label: "Location", value: "Nehru Park, Delhi" },
-  { icon: Clock, label: "Time", value: "5:00 AM – 5:30 AM" },
-  { icon: Bike, label: "Format", value: "30km Cycling + 5km Run" },
-];
+function mapEmbedUrl(query) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
 
 export default function WeeklyRides() {
+  const sessions = useWeeklySessions();
+  // The hero info cards mirror the real "Friday Bricks" row from Weekly
+  // Sessions (admin-editable) instead of a separate hardcoded copy, so
+  // editing it there can't silently fall out of sync with what's shown here.
+  const fridayBricks = sessions.find((s) => s.name === "Friday Bricks");
+  const infoCards = [
+    { icon: MapPin, label: "Location", value: fridayBricks?.location || "Nehru Park, Delhi" },
+    { icon: Clock, label: "Time", value: fridayBricks?.time || "5:00 – 5:30 AM" },
+    { icon: Bike, label: "Format", value: fridayBricks?.format || "30km Cycling + 5km Run" },
+  ];
+
   return (
     <>
       <PageHero
@@ -52,12 +62,71 @@ export default function WeeklyRides() {
               Whether you're training for your first triathlon or you're a seasoned athlete chasing a new
               personal best, the group regroups often and rides/runs at a pace that includes everyone.
             </p>
-            <Button href="https://strava.com/clubs/RideTeaGupShup" size="lg">Join This Ride</Button>
+            <Button href={brand.social.strava.url} size="lg">Join This Ride</Button>
           </Reveal>
         </div>
       </Section>
 
-      <Section dark eyebrow="Ride Prepared" title="Safety Guidelines">
+      <Section dark eyebrow="More Sessions" title="Weekly Schedule">
+        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {sessions.map((s) => (
+            <StaggerItem key={`${s.day}-${s.name}`}>
+              <GlassCard className="h-full flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-rtg-orange-400">{s.day}</span>
+                  {s.difficulty && (
+                    <span className="text-[10px] uppercase tracking-wide bg-white/5 px-2 py-0.5 rounded-full text-rtg-mist">
+                      {s.difficulty}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-display text-xl mb-2">{s.name}</h3>
+                {s.description && <p className="text-rtg-mist text-sm leading-relaxed mb-4 flex-1">{s.description}</p>}
+                <div className="space-y-1.5 text-xs text-rtg-mist">
+                  {s.time && (
+                    <p className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-rtg-orange-400 shrink-0" /> {s.time}
+                    </p>
+                  )}
+                  {s.location && (
+                    <p className="flex items-center gap-1.5">
+                      <MapPin size={12} className="text-rtg-orange-400 shrink-0" /> {s.location}
+                    </p>
+                  )}
+                  {s.format && (
+                    <p className="flex items-center gap-1.5">
+                      <Bike size={12} className="text-rtg-orange-400 shrink-0" /> {s.format}
+                    </p>
+                  )}
+                  {s.paceGroup && (
+                    <p className="flex items-center gap-1.5">
+                      <Gauge size={12} className="text-rtg-orange-400 shrink-0" /> {s.paceGroup}
+                    </p>
+                  )}
+                  {s.cost && (
+                    <p className="flex items-center gap-1.5">
+                      <IndianRupee size={12} className="text-rtg-orange-400 shrink-0" /> {s.cost}
+                    </p>
+                  )}
+                </div>
+                {s.routeMapQuery && (
+                  <div className="mt-4 rounded-xl overflow-hidden h-32 border border-white/10">
+                    <iframe
+                      title={`${s.name} route map`}
+                      src={mapEmbedUrl(s.routeMapQuery)}
+                      className="w-full h-full border-0 grayscale invert-[0.92] contrast-[1.1]"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                )}
+              </GlassCard>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      </Section>
+
+      <Section eyebrow="Ride Prepared" title="Safety Guidelines">
         <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 max-w-4xl mx-auto">
           {rideSafety.map((s) => (
             <Reveal key={s} className="flex items-start gap-3">
@@ -87,7 +156,7 @@ export default function WeeklyRides() {
           <FAQAccordion items={rideFaqs} />
         </div>
         <div className="text-center mt-12">
-          <Button href="https://strava.com/clubs/RideTeaGupShup" size="lg">Join Ride</Button>
+          <Button href={brand.social.strava.url} size="lg">Join Ride</Button>
         </div>
       </Section>
     </>

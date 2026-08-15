@@ -14,6 +14,7 @@ export default function GalleryAdmin() {
   const [progressState, setProgressState] = useState({ fileName: "", index: 0, total: 0, progress: 0 });
   const [error, setError] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
+  const [eventSlug, setEventSlug] = useState("");
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -30,7 +31,14 @@ export default function GalleryAdmin() {
         const { url } = await uploadToCloudinary(file, "gallery", (p) =>
           setProgressState((prev) => ({ ...prev, progress: p }))
         );
-        await insert({ media_url: url, media_type: mediaType, category, sort_order: nextSort, published: true });
+        await insert({
+          media_url: url,
+          media_type: mediaType,
+          category,
+          event_slug: eventSlug.trim() || null,
+          sort_order: nextSort,
+          published: true,
+        });
         nextSort += 1;
       }
     } catch (err) {
@@ -63,6 +71,14 @@ export default function GalleryAdmin() {
               </option>
             ))}
           </select>
+          <input
+            type="text"
+            value={eventSlug}
+            onChange={(e) => setEventSlug(e.target.value)}
+            placeholder="Event slug (optional)"
+            title="Matches an Event's URL slug so these photos show on that event's page too"
+            className="w-44 rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
+          />
           <label className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors cursor-pointer">
             {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {uploading ? "Uploading…" : "Upload"}

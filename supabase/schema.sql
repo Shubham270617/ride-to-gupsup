@@ -262,12 +262,69 @@ create table if not exists race_results (
   created_at timestamptz not null default now()
 );
 
+-- Finisher certificate (a PDF/image an admin uploads per result row) shown
+-- as a "Download Certificate" button on the public Race Results page.
+alter table race_results add column if not exists certificate_url text;
+
 create table if not exists site_images (
   key text primary key,
   url text not null,
   label text,
   updated_at timestamptz not null default now()
 );
+
+-- Small generic key/value table for one-off site settings that don't need
+-- their own table (e.g. the downloadable sponsor deck link).
+create table if not exists site_settings (
+  key text primary key,
+  value text,
+  label text,
+  updated_at timestamptz not null default now()
+);
+
+-- Real, admin-manageable calendar of races/rides — replaces the old
+-- hardcoded content.js list so "Register" can deep-link to a real event
+-- when one exists, and so a real `date` column (not free text like the
+-- `events` table's event_date) can drive genuine "is this today" checks
+-- for the login popup's Live Events section.
+create table if not exists calendar_events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  event_date date not null,
+  category text,
+  city text,
+  difficulty text,
+  event_slug text references events(slug) on delete set null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Real, admin-manageable weekly session schedule — replaces the old
+-- hardcoded 3-day content.js list so the Weekly Rides page can show a full
+-- schedule with pace groups, difficulty, and route maps per session.
+create table if not exists weekly_sessions (
+  id uuid primary key default gen_random_uuid(),
+  day text not null,
+  name text not null,
+  time text,
+  location text,
+  format text,
+  difficulty text,
+  pace_group text,
+  route_map_query text,
+  cost text,
+  description text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Event-specific photos/videos: lets "View Event Gallery" on an event's
+-- detail page show only that event's media instead of the whole gallery.
+-- A slug reference (not a uuid FK) so admins can type it directly in the
+-- Gallery upload form, same pattern as calendar_events.event_slug above.
+alter table gallery_items add column if not exists event_slug text references events(slug) on delete set null;
 
 -- Same RLS pattern on every content table: public can read, only admins
 -- (rows in admin_profiles) can write.
@@ -276,7 +333,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings']
   loop
     execute format('alter table %I enable row level security', t);
 

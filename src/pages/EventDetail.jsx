@@ -1,6 +1,6 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Calendar, Tag, Mountain, Route as RouteIcon, ImageIcon, Trophy, History } from "lucide-react";
-import { useEvent } from "../lib/publicData";
+import { useEvent, useEventGallery } from "../lib/publicData";
 import { whatToBring } from "../data/content";
 import { formatPrize } from "../lib/format";
 import PageHero from "../components/ui/PageHero";
@@ -8,11 +8,13 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Reveal from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
+import MasonryGallery from "../components/ui/MasonryGallery";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function EventDetail() {
   const { slug } = useParams();
   const event = useEvent(slug);
+  const eventGallery = useEventGallery(slug);
 
   if (!event) {
     return <Navigate to="/events" replace />;
@@ -132,12 +134,21 @@ export default function EventDetail() {
           </Reveal>
         </div>
 
+        {eventGallery.length > 0 && (
+          <Reveal className="mb-14">
+            <h3 className="font-display text-2xl mb-5 text-center flex items-center justify-center gap-2">
+              <ImageIcon size={20} className="text-rtg-orange-400" /> Event Gallery
+            </h3>
+            <MasonryGallery items={eventGallery.slice(0, 8)} />
+          </Reveal>
+        )}
+
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/gallery"
             className="inline-flex items-center gap-2 text-sm font-semibold text-rtg-white hover:text-rtg-orange-400 transition-colors"
           >
-            <ImageIcon size={16} /> View Event Gallery
+            <ImageIcon size={16} /> {eventGallery.length > 0 ? "View Full Gallery" : "View Event Gallery"}
           </Link>
           {event.gpxUrl && (
             <a

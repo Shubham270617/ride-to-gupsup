@@ -2,6 +2,8 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarDays,
+  CalendarRange,
+  CalendarClock,
   Images,
   ShoppingBag,
   Newspaper,
@@ -24,6 +26,8 @@ import { ConfirmProvider } from "./components/ConfirmDialog";
 const links = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/events", label: "Events", icon: CalendarDays },
+  { to: "/admin/calendar", label: "Race Calendar", icon: CalendarRange },
+  { to: "/admin/weekly-sessions", label: "Weekly Sessions", icon: CalendarClock },
   { to: "/admin/gallery", label: "Gallery", icon: Images },
   { to: "/admin/products", label: "Merchandise", icon: ShoppingBag },
   { to: "/admin/blog", label: "Blog", icon: Newspaper },

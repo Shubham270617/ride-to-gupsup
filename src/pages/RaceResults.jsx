@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, Download } from "lucide-react";
 import { images } from "../data/images";
 import { useRaceResults } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
@@ -48,12 +48,13 @@ export default function RaceResults() {
                 <th className="px-4 py-3 font-semibold">Time</th>
                 <th className="px-4 py-3 font-semibold">Position</th>
                 <th className="px-4 py-3 font-semibold">Year</th>
+                <th className="px-4 py-3 font-semibold">Certificate</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-rtg-mist">
+                  <td colSpan={7} className="px-4 py-10 text-center text-rtg-mist">
                     No results for this event yet.
                   </td>
                 </tr>
@@ -70,6 +71,20 @@ export default function RaceResults() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-rtg-mist">{r.year}</td>
+                  <td className="px-4 py-3">
+                    {r.certificateUrl ? (
+                      <a
+                        href={r.certificateUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors"
+                      >
+                        <Download size={13} /> Download
+                      </a>
+                    ) : (
+                      <span className="text-rtg-mist text-xs">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

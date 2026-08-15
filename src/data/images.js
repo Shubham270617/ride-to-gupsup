@@ -145,6 +145,10 @@ export const images = {
   avatar2: unsplash("1546519638-68e109498ffc", 300),
   avatar3: unsplash("1523875194681-bedd468c58bf", 300),
   avatar4: unsplash("1508898578281-774ac4893c0c", 300),
+  avatar5: unsplash("1517649763962-0c623066013b", 300),
+  avatar6: unsplash("1461896836934-ffe607ba8211", 300),
+  avatar7: unsplash("1519315901367-f34ff9154487", 300),
+  avatar8: unsplash("1541625602330-2277a4c46182", 300),
 };
 
 export default images;

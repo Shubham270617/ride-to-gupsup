@@ -5,7 +5,7 @@ import { X, Mail, Lock, User, Loader2, Zap, Calendar, ArrowRight } from "lucide-
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
-import { useUpcomingEvent } from "../lib/publicData";
+import { useLiveActivity } from "../lib/publicData";
 import { brand } from "../data/content";
 
 const SESSION_KEY = "rtg_authgate_shown";
@@ -56,8 +56,13 @@ export default function AuthGate() {
   const [providerStatus, setProviderStatus] = useState({ strava: true, xfitconnect: false });
 
   // Purely presentational — the "what's happening" preview shown above the
-  // login form. Doesn't touch any auth state or handlers.
-  const featuredEvent = useUpcomingEvent();
+  // login form. Doesn't touch any auth state or handlers. "Live" is a real
+  // data check (a weekly session on today's weekday, or a calendar entry
+  // dated today), not a hardcoded label.
+  const { todaysSession, todaysCalendarEvent, upcomingEvent, nextCalendarEvent } = useLiveActivity();
+  const hasLive = Boolean(todaysSession || todaysCalendarEvent);
+  const showNextCalendarEvent = nextCalendarEvent && nextCalendarEvent.title !== upcomingEvent?.title;
+  const hasUpcoming = Boolean(upcomingEvent || showNextCalendarEvent);
 
   const shouldShow = !sessionLoading && !dismissed && !session;
 
@@ -184,28 +189,86 @@ export default function AuthGate() {
               <p className="text-rtg-mist text-sm">Log in or create your free RTG account.</p>
             </div>
 
-            {featuredEvent && (
-              <Link
-                to="/events"
-                onClick={dismiss}
-                className="flex items-center gap-3 glass rounded-2xl px-4 py-3 mb-5 hover:border-rtg-orange-400/50 transition-colors group"
-              >
-                <span className="w-9 h-9 rounded-full bg-rtg-orange-500/15 flex items-center justify-center shrink-0">
-                  <Calendar size={16} className="text-rtg-orange-400" />
-                </span>
-                <span className="flex-1 min-w-0 text-left">
-                  <span className="block text-[10px] uppercase tracking-wide text-rtg-orange-400 font-semibold">
-                    Upcoming Event
+            {hasLive && (
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rtg-orange-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rtg-orange-400" />
                   </span>
-                  <span className="block text-sm text-rtg-white truncate">
-                    {featuredEvent.title} — {featuredEvent.date}
-                  </span>
+                  <span className="text-[10px] uppercase tracking-wide text-rtg-orange-400 font-semibold">Live Today</span>
+                </div>
+                <div className="space-y-2">
+                  {todaysSession && (
+                    <div className="flex items-center gap-3 glass rounded-2xl px-4 py-2.5">
+                      <span className="w-8 h-8 rounded-full bg-rtg-orange-500/15 flex items-center justify-center shrink-0">
+                        <Zap size={14} className="text-rtg-orange-400" />
+                      </span>
+                      <span className="flex-1 min-w-0 text-left">
+                        <span className="block text-[10px] uppercase tracking-wide text-rtg-mist">Today's Ride</span>
+                        <span className="block text-sm text-rtg-white truncate">
+                          {todaysSession.name}{todaysSession.time ? ` — ${todaysSession.time}` : ""}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                  {todaysCalendarEvent && (
+                    <div className="flex items-center gap-3 glass rounded-2xl px-4 py-2.5">
+                      <span className="w-8 h-8 rounded-full bg-rtg-orange-500/15 flex items-center justify-center shrink-0">
+                        <Calendar size={14} className="text-rtg-orange-400" />
+                      </span>
+                      <span className="flex-1 min-w-0 text-left">
+                        <span className="block text-[10px] uppercase tracking-wide text-rtg-mist">Ongoing Event</span>
+                        <span className="block text-sm text-rtg-white truncate">{todaysCalendarEvent.title}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {hasUpcoming && (
+              <div className="mb-5">
+                <span className="block text-[10px] uppercase tracking-wide text-rtg-mist font-semibold mb-2">
+                  Upcoming Events
                 </span>
-                <ArrowRight
-                  size={16}
-                  className="text-rtg-mist group-hover:text-rtg-orange-400 group-hover:translate-x-0.5 transition-all shrink-0"
-                />
-              </Link>
+                <div className="space-y-2 mb-2">
+                  {upcomingEvent && (
+                    <Link
+                      to={`/events/${upcomingEvent.slug || upcomingEvent.id}`}
+                      onClick={dismiss}
+                      className="flex items-center gap-3 glass rounded-2xl px-4 py-2.5 hover:border-rtg-orange-400/50 transition-colors group"
+                    >
+                      <span className="flex-1 min-w-0 text-left">
+                        <span className="block text-sm text-rtg-white truncate">{upcomingEvent.title}</span>
+                        <span className="block text-xs text-rtg-mist">{upcomingEvent.date}</span>
+                      </span>
+                      <ArrowRight
+                        size={14}
+                        className="text-rtg-mist group-hover:text-rtg-orange-400 group-hover:translate-x-0.5 transition-all shrink-0"
+                      />
+                    </Link>
+                  )}
+                  {showNextCalendarEvent && (
+                    <div className="flex items-center gap-3 glass rounded-2xl px-4 py-2.5">
+                      <span className="flex-1 min-w-0 text-left">
+                        <span className="block text-sm text-rtg-white truncate">{nextCalendarEvent.title}</span>
+                        <span className="block text-xs text-rtg-mist">
+                          {new Date(nextCalendarEvent.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          {nextCalendarEvent.city ? ` · ${nextCalendarEvent.city}` : ""}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <Link
+                  to="/race-calendar"
+                  onClick={dismiss}
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-rtg-orange-500/15 text-rtg-orange-300 text-xs font-semibold py-2 hover:bg-rtg-orange-500/25 transition-colors"
+                >
+                  Register Now <ArrowRight size={12} />
+                </Link>
+              </div>
             )}
 
             <div className="flex gap-2 mb-3">

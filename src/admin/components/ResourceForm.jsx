@@ -136,6 +136,34 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
             />
           )}
 
+          {f.type === "date" && (
+            <input
+              type="date"
+              required={f.required}
+              value={values[f.name]}
+              onChange={(e) => setField(f.name, e.target.value)}
+              className={inputClass}
+            />
+          )}
+
+          {f.type === "select" && (
+            <select
+              required={f.required}
+              value={values[f.name]}
+              onChange={(e) => setField(f.name, e.target.value)}
+              className={inputClass}
+            >
+              <option value="" className="bg-rtg-ink">
+                {f.placeholder || "Select…"}
+              </option>
+              {(f.options || []).map((o) => (
+                <option key={o} value={o} className="bg-rtg-ink">
+                  {o}
+                </option>
+              ))}
+            </select>
+          )}
+
           {f.type === "slug" && (
             <>
               <input

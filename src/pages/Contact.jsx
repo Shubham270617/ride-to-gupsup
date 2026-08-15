@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Send, CheckCircle2 } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle2, FileDown, HeartHandshake } from "lucide-react";
 import { images } from "../data/images";
 import { brand } from "../data/content";
+import { useSiteSettings } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Reveal from "../components/ui/Reveal";
+import Button from "../components/ui/Button";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, StravaIcon } from "../components/ui/SocialIcons";
 
 const socials = [
@@ -16,8 +18,11 @@ const socials = [
   { platform: "strava", icon: StravaIcon, ...brand.social.strava },
 ];
 
+const subjects = ["General Question", "Volunteering", "Sponsorship / Partnership", "Media / Press", "Chapter Captain"];
+
 export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const settings = useSiteSettings();
+  const [form, setForm] = useState({ name: "", email: "", subject: subjects[0], message: "" });
   const [sent, setSent] = useState(false);
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -72,6 +77,18 @@ export default function Contact() {
                       className="rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
                     />
                   </div>
+                  <select
+                    name="subject"
+                    value={form.subject}
+                    onChange={handleChange}
+                    className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 transition-colors"
+                  >
+                    {subjects.map((s) => (
+                      <option key={s} value={s} className="bg-rtg-ink">
+                        {s}
+                      </option>
+                    ))}
+                  </select>
                   <textarea
                     required
                     name="message"
@@ -134,6 +151,21 @@ export default function Contact() {
                 ))}
               </div>
             </GlassCard>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                href={settings.sponsor_deck_url}
+                to={settings.sponsor_deck_url ? undefined : "/sponsors"}
+                variant="secondary"
+                size="md"
+                icon={FileDown}
+              >
+                {settings.sponsor_deck_url ? "Download Sponsor Deck" : "Sponsorship Info"}
+              </Button>
+              <Button to="/community" variant="secondary" size="md" icon={HeartHandshake}>
+                Become a Volunteer
+              </Button>
+            </div>
 
             <div className="rounded-3xl overflow-hidden h-64">
               <iframe

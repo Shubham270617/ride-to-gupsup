@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { images } from "../data/images";
-import { calendarCategories, calendarEvents, calendarCities, calendarDifficulties } from "../data/content";
+import { calendarCategories, calendarCities, calendarDifficulties } from "../data/content";
+import { useCalendarEvents } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import Reveal from "../components/ui/Reveal";
@@ -21,6 +22,7 @@ function buildMonthGrid(year, month) {
 }
 
 export default function RaceCalendar() {
+  const calendarEvents = useCalendarEvents();
   const [cursor, setCursor] = useState(new Date(2027, 0, 1));
   const [activeFilters, setActiveFilters] = useState([]);
   const [search, setSearch] = useState("");
@@ -42,7 +44,7 @@ export default function RaceCalendar() {
       const passesDifficulty = difficultyFilter === "All" || e.difficulty === difficultyFilter;
       return inMonth && passesCategory && passesSearch && passesCity && passesDifficulty;
     });
-  }, [year, month, activeFilters, search, cityFilter, difficultyFilter]);
+  }, [calendarEvents, year, month, activeFilters, search, cityFilter, difficultyFilter]);
 
   const eventsByDay = useMemo(() => {
     const map = {};
@@ -199,7 +201,9 @@ export default function RaceCalendar() {
                 <span className="text-sm text-rtg-mist">
                   {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
-                <Button to="/contact" size="md" className="!px-4 !py-1.5 !text-xs">Register</Button>
+                <Button to={e.slug ? `/events/${e.slug}` : "/contact"} size="md" className="!px-4 !py-1.5 !text-xs">
+                  Register
+                </Button>
               </div>
             </div>
           ))}

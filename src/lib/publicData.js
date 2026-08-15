@@ -8,6 +8,8 @@ import {
   testimonials as staticTestimonials,
   teamMembers as staticTeamMembers,
   raceResults as staticRaceResults,
+  calendarEvents as staticCalendarEvents,
+  weeklySessions as staticWeeklySessions,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
 
@@ -101,6 +103,17 @@ export function useChallenges() {
   });
 }
 
+// Never falls back to placeholder company names — showing fake "sponsors"
+// would misrepresent real partnerships, so this section only renders once
+// an admin has added at least one real sponsor.
+export function useSponsors() {
+  return useSupabaseList("sponsors", {
+    staticFallback: [],
+    filterPublished: false,
+    mapRow: (r) => ({ name: r.name, logo: r.logo_url, tier: r.tier, website: r.website_url }),
+  });
+}
+
 export function useTestimonials() {
   return useSupabaseList("testimonials", {
     staticFallback: staticTestimonials,
@@ -144,6 +157,121 @@ export function useRaceResults() {
       finishTime: r.finish_time,
       position: r.position,
       year: r.year,
+      certificateUrl: r.certificate_url,
     }),
   });
+}
+
+// Real, admin-manageable race calendar — replaces the old hardcoded list so
+// the "Register" button can deep-link to a real event page when the admin
+// has linked one, and so a genuine `date` column can drive "is this today"
+// checks (see useLiveActivity below).
+export function useCalendarEvents() {
+  const staticFallback = staticCalendarEvents.map((e) => ({ ...e, slug: null }));
+  return useSupabaseList("calendar_events", {
+    staticFallback,
+    orderBy: "event_date",
+    mapRow: (r) => ({
+      date: r.event_date,
+      title: r.title,
+      cat: (r.category || "").toLowerCase(),
+      city: r.city,
+      difficulty: r.difficulty,
+      slug: r.event_slug,
+    }),
+  });
+}
+
+// Real, admin-manageable weekly session schedule for the Weekly Rides page.
+export function useWeeklySessions() {
+  const staticFallback = staticWeeklySessions;
+  return useSupabaseList("weekly_sessions", {
+    staticFallback,
+    mapRow: (r) => ({
+      day: r.day,
+      name: r.name,
+      time: r.time,
+      location: r.location,
+      format: r.format,
+      difficulty: r.difficulty,
+      paceGroup: r.pace_group,
+      routeMapQuery: r.route_map_query,
+      cost: r.cost,
+      description: r.description,
+    }),
+  });
+}
+
+// Small generic key/value settings table (see api/.env-free equivalent:
+// admin-editable, no code changes needed). Currently just the sponsor deck
+// download link, but built to hold any future one-off setting too.
+export function useSiteSettings() {
+  const [settings, setSettings] = useState({});
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+    supabase
+      .from("site_settings")
+      .select("key,value")
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const map = {};
+        data.forEach((r) => {
+          map[r.key] = r.value;
+        });
+        setSettings(map);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return settings;
+}
+
+// Gallery items tagged to a specific event (via the Gallery admin's optional
+// "Event" field) — used by the event detail page's "View Event Gallery"
+// link so it shows only that event's photos/videos instead of the whole
+// site gallery.
+export function useEventGallery(eventSlug) {
+  const [items, setItems] = useState([]);
+  useEffect(() => {
+    if (!isSupabaseConfigured || !eventSlug) return;
+    let cancelled = false;
+    supabase
+      .from("gallery_items")
+      .select("*")
+      .eq("event_slug", eventSlug)
+      .eq("published", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setItems(data.map((r) => ({ url: r.media_url, type: r.media_type, caption: r.caption, category: r.category })));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventSlug]);
+  return items;
+}
+
+// Drives the login popup's "Live" vs "Upcoming" sections. LIVE means a real
+// weekly session falls on today's weekday, or a real calendar entry is
+// dated today — genuine data checks, not a fake/hardcoded "today" label.
+export function useLiveActivity() {
+  const sessions = useWeeklySessions();
+  const calendarEvents = useCalendarEvents();
+  const upcomingEvent = useUpcomingEvent();
+
+  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const todaysSession = sessions.find((s) => s.day === todayName) || null;
+  const todaysCalendarEvent = calendarEvents.find((e) => e.date === todayIso) || null;
+
+  const nextCalendarEvent =
+    calendarEvents
+      .filter((e) => e.date >= todayIso)
+      .sort((a, b) => (a.date > b.date ? 1 : -1))[0] || null;
+
+  return { todaysSession, todaysCalendarEvent, upcomingEvent, nextCalendarEvent };
 }

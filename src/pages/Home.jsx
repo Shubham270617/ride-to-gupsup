@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
 import { images } from "../data/images";
 import { brand, stats, whyJoin, weeklyActivities, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems } from "../lib/publicData";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -190,14 +190,37 @@ function Hero() {
   );
 }
 
+const GALLERY_PREVIEW_CATEGORIES = ["All", "Cycling", "Running", "Swimming", "Events", "Volunteers", "Videos"];
+
 export default function Home() {
   const events = useEvents();
   const products = useProducts();
   const testimonials = useTestimonials();
   const galleryItems = useGalleryItems();
+  const sponsors = useSponsors();
+  const [galleryFilter, setGalleryFilter] = useState("All");
+  const filteredGallery = galleryItems.filter((item) => {
+    if (galleryFilter === "All") return true;
+    if (galleryFilter === "Videos") return item.type === "video";
+    return item.category === galleryFilter;
+  });
   return (
     <>
       <Hero />
+
+      {/* WHY RTG EXISTS */}
+      <Section eyebrow="Our Why" title="Why RTG Exists">
+        <Reveal className="max-w-3xl mx-auto text-center">
+          <p className="text-rtg-mist text-lg leading-relaxed mb-6">
+            Ride Tea GupShup began with a simple observation: endurance sports in India were full of
+            talented, motivated people who had nowhere to learn, train, and grow together. Cyclists rode
+            alone. Runners trained without guidance. Beginners felt intimidated before they even started.
+            We built RTG to fix that — no egos, no pace-shaming, just chai, community, and the shared pursuit
+            of going further than we thought possible.
+          </p>
+          <Button to="/about" variant="outline">Read Our Full Story</Button>
+        </Reveal>
+      </Section>
 
       {/* ABOUT RTG */}
       <Section eyebrow="About RTG" title="More Than a Club. A Movement." center={false}>
@@ -303,7 +326,24 @@ export default function Home() {
 
       {/* GALLERY PREVIEW */}
       <Section eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between.">
-        <MasonryGallery items={galleryItems.slice(0, 8)} />
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          {GALLERY_PREVIEW_CATEGORIES.map((c) => (
+            <button
+              key={c}
+              onClick={() => setGalleryFilter(c)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                galleryFilter === c ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-white/75 hover:text-rtg-white"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        {filteredGallery.length === 0 ? (
+          <p className="text-center text-rtg-mist py-10">No {galleryFilter.toLowerCase()} moments yet — check back soon.</p>
+        ) : (
+          <MasonryGallery items={filteredGallery.slice(0, 8)} />
+        )}
         <div className="text-center mt-10">
           <Button to="/gallery" variant="outline">View Full Gallery</Button>
         </div>
@@ -324,20 +364,33 @@ export default function Home() {
       </Section>
 
       {/* SPONSORS */}
-      <Section eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement.">
-        <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
-          {["Endurance Fuel Co.", "TrailTech Bikes", "Hydra Sports", "PulseWear", "SummitGear"].map((n) => (
-            <StaggerItem key={n}>
-              <div className="glass px-8 py-6 rounded-2xl text-rtg-white/60 font-display text-xl tracking-wide hover:text-rtg-orange-400 transition-colors">
-                {n}
-              </div>
-            </StaggerItem>
-          ))}
-        </StaggerGroup>
-        <div className="text-center mt-10">
-          <Button to="/sponsors" variant="outline">Become a Sponsor</Button>
-        </div>
-      </Section>
+      {sponsors.length > 0 && (
+        <Section eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement.">
+          <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
+            {sponsors.map((s) => (
+              <StaggerItem key={s.name}>
+                {s.logo ? (
+                  <a
+                    href={s.website || "/sponsors"}
+                    target={s.website ? "_blank" : undefined}
+                    rel={s.website ? "noopener noreferrer" : undefined}
+                    className="glass px-6 py-4 rounded-2xl flex items-center justify-center hover:border-rtg-orange-400/40 transition-colors"
+                  >
+                    <img src={s.logo} alt={s.name} className="h-10 w-auto object-contain" />
+                  </a>
+                ) : (
+                  <div className="glass px-8 py-6 rounded-2xl text-rtg-white/60 font-display text-xl tracking-wide hover:text-rtg-orange-400 transition-colors">
+                    {s.name}
+                  </div>
+                )}
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
+          <div className="text-center mt-10">
+            <Button to="/sponsors" variant="outline">Become a Sponsor</Button>
+          </div>
+        </Section>
+      )}
 
       {/* TESTIMONIALS */}
       <Section eyebrow="Athlete Voices" title="What Our Community Says" dark>

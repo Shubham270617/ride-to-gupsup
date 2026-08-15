@@ -2,7 +2,7 @@
 // ResourceTable + ResourceForm so Events/Products/Blog/Sponsors/Testimonials/
 // Challenges don't each need their own hand-built CRUD page.
 //
-// field.type: "text" | "textarea" | "number" | "boolean" | "tags" | "image" | "slug" | "map"
+// field.type: "text" | "textarea" | "number" | "boolean" | "tags" | "image" | "slug" | "map" | "date" | "select"
 
 export const resources = {
   events: {
@@ -136,7 +136,46 @@ export const resources = {
       { name: "finish_time", label: "Finish Time", type: "text", placeholder: "e.g. 4:12:08" },
       { name: "position", label: "Position", type: "text", placeholder: "e.g. 1st, Finisher" },
       { name: "year", label: "Year", type: "text", placeholder: "e.g. 2027" },
+      { name: "certificate_url", label: "Finisher Certificate", type: "image", folder: "certificates", hint: "Optional — upload a certificate image and a \"Download Certificate\" button appears for this result." },
       { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+    ],
+  },
+  calendarEvents: {
+    table: "calendar_events",
+    title: "Race Calendar",
+    singular: "Calendar Entry",
+    orderBy: "event_date",
+    listColumns: ["title", "event_date", "city", "published"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true },
+      { name: "event_date", label: "Date", type: "date", required: true },
+      { name: "category", label: "Category", type: "select", options: ["Cycling", "Running", "MTB", "Triathlon", "Community", "Adventure"] },
+      { name: "city", label: "City", type: "text", placeholder: "e.g. Delhi" },
+      { name: "difficulty", label: "Difficulty", type: "select", options: ["Beginner", "Intermediate", "Advanced"] },
+      { name: "event_slug", label: "Linked Event (optional)", type: "text", placeholder: "e.g. endurance-league-2", hint: "If this matches an Event's URL slug exactly, the calendar's Register button links straight to that event's page instead of the contact form." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  weeklySessions: {
+    table: "weekly_sessions",
+    title: "Weekly Sessions",
+    singular: "Session",
+    orderBy: "sort_order",
+    listColumns: ["day", "name", "difficulty", "published"],
+    fields: [
+      { name: "day", label: "Day", type: "select", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], required: true },
+      { name: "name", label: "Session Name", type: "text", required: true, placeholder: "e.g. Friday Bricks" },
+      { name: "time", label: "Time", type: "text", placeholder: "e.g. 5:00 – 6:30 AM" },
+      { name: "location", label: "Location", type: "text", placeholder: "e.g. Nehru Park, Delhi" },
+      { name: "route_map_query", label: "Route Map", type: "map", placeholder: "e.g. Nehru Park, New Delhi" },
+      { name: "format", label: "Format", type: "text", placeholder: "e.g. 30km Cycling + 5km Run" },
+      { name: "difficulty", label: "Difficulty", type: "select", options: ["Beginner", "Intermediate", "Advanced", "All Levels"] },
+      { name: "pace_group", label: "Pace Group", type: "text", placeholder: "e.g. A (fast) / B (moderate) / C (social)" },
+      { name: "cost", label: "Cost", type: "text", placeholder: "e.g. Free" },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+      { name: "published", label: "Published", type: "boolean", default: true },
     ],
   },
 };
