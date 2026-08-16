@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LogIn, LogOut } from "lucide-react";
+import { Menu, X, LogIn, LogOut, User } from "lucide-react";
 import { images } from "../data/images";
 import { brand } from "../data/content";
 import Button from "./ui/Button";
@@ -34,11 +34,11 @@ function AccountIndicator({ className = "" }) {
     );
   }
 
-  const name = user.user_metadata?.full_name || user.email?.split("@")[0] || "Athlete";
-
   return (
-    <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      Hi, {name}
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 hover:text-rtg-orange-400 transition-colors">
+        <User size={13} /> My Profile
+      </Link>
       <button
         onClick={() => supabase?.auth.signOut()}
         className="hover:text-rtg-orange-400 transition-colors"
@@ -47,6 +47,29 @@ function AccountIndicator({ className = "" }) {
         <LogOut size={13} />
       </button>
     </span>
+  );
+}
+
+// Circular profile icon shown in the main nav bar once someone is logged
+// in, replacing the Login/Sign Up buttons.
+function ProfileIcon({ className = "" }) {
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <Link
+        to="/dashboard"
+        aria-label="My Profile"
+        className="w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+      >
+        <User size={18} />
+      </Link>
+      <button
+        onClick={() => supabase?.auth.signOut()}
+        aria-label="Log out"
+        className="w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+      >
+        <LogOut size={16} />
+      </button>
+    </div>
   );
 }
 
@@ -69,6 +92,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { requestLogin } = useAuthGate();
+  const { user } = useSession();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -85,12 +109,9 @@ export default function Navbar() {
         scrolled ? "glass shadow-lg shadow-black/20" : "bg-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center justify-between text-[11px] md:text-xs text-rtg-mist py-1.5 border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <LiveClock />
-          <AccountIndicator className="hidden sm:inline-flex" />
-        </div>
-        <span className="hidden sm:inline">{brand.cities.slice(0, 3).join(" · ")} · Expanding Across India</span>
+      <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-4 text-[11px] md:text-xs text-rtg-mist py-1.5 border-b border-white/5">
+        <LiveClock />
+        <AccountIndicator className="hidden sm:inline-flex" />
       </div>
 
       <div className="max-w-7xl mx-auto px-5 md:px-8 h-18 flex items-center justify-between py-3">
@@ -115,15 +136,21 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <button
-            onClick={() => requestLogin("login")}
-            className="text-sm font-semibold text-rtg-white/90 hover:text-rtg-orange-400 transition-colors"
-          >
-            Login
-          </button>
-          <Button onClick={() => requestLogin("signup")} size="md">
-            Sign Up
-          </Button>
+          {user ? (
+            <ProfileIcon />
+          ) : (
+            <>
+              <button
+                onClick={() => requestLogin("login")}
+                className="text-sm font-semibold text-rtg-white/90 hover:text-rtg-orange-400 transition-colors"
+              >
+                Login
+              </button>
+              <Button onClick={() => requestLogin("signup")} size="md">
+                Sign Up
+              </Button>
+            </>
+          )}
           <HiddenAdminLink />
         </div>
 
@@ -163,17 +190,19 @@ export default function Navbar() {
                 <AccountIndicator />
                 <HiddenAdminLink />
               </div>
-              <div className="mt-4 mb-2 flex gap-2">
-                <button
-                  onClick={() => requestLogin("login")}
-                  className="flex-1 rounded-full glass py-3 text-sm font-semibold text-rtg-white"
-                >
-                  Login
-                </button>
-                <Button onClick={() => requestLogin("signup")} size="md" className="flex-1">
-                  Sign Up
-                </Button>
-              </div>
+              {!user && (
+                <div className="mt-4 mb-2 flex gap-2">
+                  <button
+                    onClick={() => requestLogin("login")}
+                    className="flex-1 rounded-full glass py-3 text-sm font-semibold text-rtg-white"
+                  >
+                    Login
+                  </button>
+                  <Button onClick={() => requestLogin("signup")} size="md" className="flex-1">
+                    Sign Up
+                  </Button>
+                </div>
+              )}
             </nav>
           </motion.div>
         )}
