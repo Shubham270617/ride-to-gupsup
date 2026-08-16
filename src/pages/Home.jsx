@@ -209,7 +209,7 @@ export default function Home() {
       <Hero />
 
       {/* WHY RTG EXISTS */}
-      <Section eyebrow="Our Why" title="Why RTG Exists">
+      <Section eyebrow="Our Why" title="Why RTG Exists" light>
         <Reveal className="max-w-3xl mx-auto text-center">
           <p className="text-rtg-mist text-lg leading-relaxed mb-6">
             Ride Tea GupShup began with a simple observation: endurance sports in India were full of
@@ -223,7 +223,7 @@ export default function Home() {
       </Section>
 
       {/* ABOUT RTG */}
-      <Section eyebrow="About RTG" title="More Than a Club. A Movement." center={false}>
+      <Section eyebrow="About RTG" title="More Than a Club. A Movement." center={false} light>
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal direction="right">
             <div className="rounded-3xl overflow-hidden">
@@ -290,7 +290,7 @@ export default function Home() {
       </section>
 
       {/* WEEKLY ACTIVITIES */}
-      <Section eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks.">
+      <Section eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." light>
         <div className="grid md:grid-cols-3 gap-6 mb-10">
           {weeklyActivities.map((a) => (
             <Reveal key={a.name}>
@@ -325,7 +325,7 @@ export default function Home() {
       </Section>
 
       {/* GALLERY PREVIEW */}
-      <Section eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between.">
+      <Section eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." light>
         <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
           {GALLERY_PREVIEW_CATEGORIES.map((c) => (
             <button
@@ -365,7 +365,7 @@ export default function Home() {
 
       {/* SPONSORS */}
       {sponsors.length > 0 && (
-        <Section eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement.">
+        <Section eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement." light>
           <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
             {sponsors.map((s) => (
               <StaggerItem key={s.name}>
