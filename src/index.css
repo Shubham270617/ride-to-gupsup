@@ -111,7 +111,16 @@ html {
   --color-rtg-purple-950: #efe8f7;
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(93, 60, 145, 0.14);
-  background: var(--color-rtg-ink);
+  /* A soft blended edge at the top/bottom instead of a hard line where this
+     section meets the dark one above/below it — the color change reads as
+     a gradual wash rather than a flat block switching on all at once. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-rtg-ink) 0%, transparent) 0%,
+    var(--color-rtg-ink) 12%,
+    var(--color-rtg-ink) 88%,
+    color-mix(in srgb, var(--color-rtg-ink) 0%, transparent) 100%
+  );
   /* Re-declaring color here (not just the custom property above) matters:
      `color` is inherited as an already-computed value, so a descendant with
      no color class of its own (e.g. a plain <h3> inside a GlassCard) would

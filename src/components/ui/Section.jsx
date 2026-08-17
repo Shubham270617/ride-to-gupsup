@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, useAnimationControls } from "framer-motion";
 import Reveal from "./Reveal";
 
 export default function Section({
@@ -19,9 +19,23 @@ export default function Section({
   // the entrance animations elsewhere on the site).
   const [lit, setLit] = useState(false);
 
+  // A soft blur pulse plays exactly when the theme flips, so the color
+  // change reads as coming into focus rather than an abrupt flat swap.
+  // useAnimationControls + useEffect (rather than putting the keyframe
+  // array straight on `animate`) means this only fires on an actual `lit`
+  // change, not on every unrelated re-render.
+  const controls = useAnimationControls();
+  useEffect(() => {
+    controls.start({
+      filter: ["blur(0px)", "blur(10px)", "blur(0px)"],
+      transition: { duration: 0.9, ease: "easeInOut" },
+    });
+  }, [lit, controls]);
+
   return (
     <motion.section
       id={id}
+      animate={controls}
       onViewportEnter={() => light && setLit(true)}
       onViewportLeave={() => light && setLit(false)}
       viewport={{ margin: "-35% 0px -35% 0px" }}

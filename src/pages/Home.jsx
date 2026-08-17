@@ -11,6 +11,7 @@ import AnimatedCounter from "../components/ui/AnimatedCounter";
 import EventCard from "../components/ui/EventCard";
 import ProductCard from "../components/ui/ProductCard";
 import MasonryGallery from "../components/ui/MasonryGallery";
+import RotatingPhotoWheel from "../components/ui/RotatingPhotoWheel";
 import TestimonialSlider from "../components/ui/TestimonialSlider";
 import Newsletter from "../components/sections/Newsletter";
 import InstagramFeed from "../components/sections/InstagramFeed";
@@ -208,39 +209,26 @@ export default function Home() {
     <>
       <Hero />
 
-      {/* WHY RTG EXISTS */}
-      <Section eyebrow="Our Why" title="Why RTG Exists" light>
-        <Reveal className="max-w-3xl mx-auto text-center">
-          <p className="text-rtg-mist text-lg leading-relaxed mb-6">
-            Ride Tea GupShup began with a simple observation: endurance sports in India were full of
-            talented, motivated people who had nowhere to learn, train, and grow together. Cyclists rode
-            alone. Runners trained without guidance. Beginners felt intimidated before they even started.
-            We built RTG to fix that — no egos, no pace-shaming, just chai, community, and the shared pursuit
-            of going further than we thought possible.
-          </p>
-          <Button to="/about" variant="outline">Read Our Full Story</Button>
-        </Reveal>
-      </Section>
-
       {/* ABOUT RTG */}
-      <Section eyebrow="About RTG" title="More Than a Club. A Movement." center={false} light>
+      <Section center={false} light>
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal direction="right">
-            <div className="rounded-3xl overflow-hidden">
-              <img src={images.homeAbout} alt="RTG community riding together" className="w-full h-full object-cover aspect-[4/5]" />
-            </div>
+            <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
+              This Is RTG
+            </span>
+            <h2 className="font-display text-rtg-white text-4xl md:text-6xl leading-[0.95] mb-4">
+              More Than Miles.
+              <br />
+              <span className="text-gradient">More Than Sport.</span>
+            </h2>
+            <p className="text-rtg-mist text-lg leading-relaxed mb-8 max-w-lg">
+              Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move,
+              connect, learn, and create experiences worth remembering.
+            </p>
+            <Button to="/about" variant="outline">Discover Our Story</Button>
           </Reveal>
           <Reveal direction="left" delay={0.1}>
-            <p className="text-rtg-mist text-lg leading-relaxed mb-6">
-              Ride Tea GupShup is more than a sports club — it's a growing movement that brings together
-              cyclists, runners, swimmers, triathletes, and outdoor enthusiasts from across India. RTG was
-              created to solve the lack of motivation, guidance, and community in endurance sports.
-            </p>
-            <p className="text-rtg-mist text-lg leading-relaxed mb-8">
-              Our goal is to make sports fun, welcoming, educational, and rewarding for everyone — from
-              beginners to experienced athletes. Everyone is welcome, regardless of age or fitness level.
-            </p>
-            <Button to="/about" variant="outline">Our Full Story</Button>
+            <RotatingPhotoWheel photos={galleryItems} />
           </Reveal>
         </div>
       </Section>
