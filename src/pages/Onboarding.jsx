@@ -153,7 +153,7 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6 py-12">
-      <div className="glass rounded-3xl p-8 md:p-10 w-full max-w-lg">
+      <div className="glass rounded-3xl p-8 md:p-12 w-full max-w-2xl">
         <div className="text-center mb-8">
           <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs mb-3">
             RTG Community Registration
@@ -268,16 +268,29 @@ export default function Onboarding() {
           <RadioGroup label="How often do you ride?" options={RIDE_FREQUENCIES} value={rideFrequency} onChange={setRideFrequency} />
           <RadioGroup label="Do you have a Strava profile?" options={["Yes", "No"]} value={hasStrava} onChange={setHasStrava} />
 
-          <div className="relative">
-            <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-            <input
-              type="text"
-              required
-              value={instagramId}
-              onChange={(e) => setInstagramId(e.target.value)}
-              placeholder="Your Instagram ID"
-              className={inputClass}
-            />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="relative">
+              <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <input
+                type="text"
+                required
+                value={instagramId}
+                onChange={(e) => setInstagramId(e.target.value)}
+                placeholder="Your Instagram ID"
+                className={inputClass}
+              />
+            </div>
+            <div className="relative">
+              <Droplet size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <input
+                type="text"
+                required
+                value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+                placeholder="Blood Group"
+                className={inputClass}
+              />
+            </div>
           </div>
 
           <div className="relative">
@@ -301,18 +314,6 @@ export default function Onboarding() {
               value={medicalConditions}
               onChange={(e) => setMedicalConditions(e.target.value)}
               className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60 resize-y"
-            />
-          </div>
-
-          <div className="relative">
-            <Droplet size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-            <input
-              type="text"
-              required
-              value={bloodGroup}
-              onChange={(e) => setBloodGroup(e.target.value)}
-              placeholder="Blood Group"
-              className={inputClass}
             />
           </div>
 
