@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Lock, Phone, Cake } from "lucide-react";
+import { Loader2, Lock, Phone, Cake, MapPin, AtSign, ShieldAlert, Droplet, MessageCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import ImageUploadField from "../admin/components/ImageUploadField";
@@ -8,25 +8,67 @@ import ImageUploadField from "../admin/components/ImageUploadField";
 const COUNTRY_CODE = "+91";
 const toE164 = (localNumber) => `${COUNTRY_CODE}${localNumber.replace(/\D/g, "")}`;
 
-// One-time page shown right after a fresh signup (Google or email/phone —
-// see the redirects in AuthCallback.jsx and AuthGate.jsx) to collect the
-// handful of things the main signup form doesn't: a Google sign-in has no
-// password yet (needed so they can also log in by phone later, since phone
-// login checks a password — see /api/auth/phone-login), and neither flow
-// asks for age or a profile photo.
+const RIDE_FREQUENCIES = ["Daily", "4-5 times a week", "Weekends only", "Occasionally (1-2 times a week)", "Rarely (just starting)"];
+
+const inputClass =
+  "w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60";
+
+function RadioGroup({ label, options, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-2">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+              value === opt
+                ? "bg-rtg-orange-500 border-rtg-orange-500 text-rtg-ink"
+                : "bg-white/5 border-white/10 text-rtg-mist hover:border-rtg-orange-400/40"
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One-time page shown right after a fresh signup — Google or email/phone,
+// see the redirects in AuthCallback.jsx and AuthGate.jsx — carrying the
+// same questions as RTG's real community registration form (city, DOB,
+// age, gender, rider/runner, ride frequency, Strava, Instagram, emergency
+// contact, medical conditions, blood group, why join), plus a photo and,
+// for Google sign-ins only, a password so they can also log in by phone
+// afterward (phone login checks a password — see /api/auth/phone-login).
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user, loading: sessionLoading } = useSession();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [age, setAge] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [city, setCity] = useState("");
+  const [dob, setDob] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [riderType, setRiderType] = useState("");
+  const [rideFrequency, setRideFrequency] = useState("");
+  const [hasStrava, setHasStrava] = useState("");
+  const [instagramId, setInstagramId] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [medicalConditions, setMedicalConditions] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("");
+  const [joinReason, setJoinReason] = useState("");
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -36,7 +78,7 @@ export default function Onboarding() {
     }
     supabase
       .from("profiles")
-      .select("phone, age, avatar_url, onboarding_complete")
+      .select("*")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -45,8 +87,8 @@ export default function Onboarding() {
           return;
         }
         setProfile(data);
-        setAge(data?.age ? String(data.age) : "");
         setAvatarUrl(data?.avatar_url || "");
+        setCity(data?.city || "");
         setLoading(false);
       });
   }, [user, sessionLoading, navigate]);
@@ -69,6 +111,10 @@ export default function Onboarding() {
       setError("Passwords don't match.");
       return;
     }
+    if (!gender || !riderType || !rideFrequency || !hasStrava) {
+      setError("Please answer every required question.");
+      return;
+    }
     setSubmitting(true);
     try {
       if (needsPassword) {
@@ -77,8 +123,19 @@ export default function Onboarding() {
       }
 
       const updates = {
-        age: age ? Number(age) : null,
         avatar_url: avatarUrl || null,
+        city,
+        dob: dob || null,
+        age: age ? Number(age) : null,
+        gender,
+        rider_type: riderType,
+        ride_frequency: rideFrequency,
+        has_strava: hasStrava === "Yes",
+        instagram_id: instagramId,
+        emergency_contact: emergencyContact,
+        medical_conditions: medicalConditions || null,
+        blood_group: bloodGroup,
+        join_reason: joinReason || null,
         onboarding_complete: true,
       };
       if (needsPhone) updates.phone = toE164(phone);
@@ -96,18 +153,18 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6 py-12">
-      <div className="glass rounded-3xl p-8 md:p-10 w-full max-w-md">
+      <div className="glass rounded-3xl p-8 md:p-10 w-full max-w-lg">
         <div className="text-center mb-8">
           <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs mb-3">
-            Almost there
+            RTG Community Registration
           </span>
           <h1 className="font-display text-3xl md:text-4xl leading-none mb-2">
             Complete Your <span className="text-gradient">Profile</span>
           </h1>
-          <p className="text-rtg-mist text-sm">Just a few more details before you're all set.</p>
+          <p className="text-rtg-mist text-sm">A few details so RTG knows who's joining the ride.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="flex justify-center">
             <ImageUploadField
               label="Profile Photo"
@@ -130,7 +187,7 @@ export default function Onboarding() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 placeholder="Phone number — 98765 43210"
-                className="w-full rounded-full bg-white/5 border border-white/10 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                className={`${inputClass} pl-[4.5rem]`}
               />
             </div>
           )}
@@ -146,7 +203,7 @@ export default function Onboarding() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
-                  className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                  className={inputClass}
                 />
               </div>
               <div className="relative">
@@ -158,25 +215,116 @@ export default function Onboarding() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
-                  className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                  className={inputClass}
                 />
               </div>
-              <p className="text-xs text-rtg-mist -mt-2 px-1">
+              <p className="text-xs text-rtg-mist -mt-3 px-1">
                 Lets you log in with your phone number next time, not just Google.
               </p>
             </>
           )}
 
           <div className="relative">
-            <Cake size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
             <input
-              type="number"
-              min={10}
-              max={100}
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="Age (optional)"
-              className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+              type="text"
+              required
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="City / Area"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Date of Birth</label>
+              <input
+                type="date"
+                required
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+              />
+            </div>
+            <div className="relative">
+              <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Age</label>
+              <Cake size={16} className="absolute left-4 top-[2.6rem] text-rtg-mist" />
+              <input
+                type="number"
+                required
+                min={10}
+                max={100}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Age"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <RadioGroup label="Gender" options={["Male", "Female"]} value={gender} onChange={setGender} />
+          <RadioGroup label="Are you a rider, runner, or both?" options={["Rider", "Runner", "Both"]} value={riderType} onChange={setRiderType} />
+          <RadioGroup label="How often do you ride?" options={RIDE_FREQUENCIES} value={rideFrequency} onChange={setRideFrequency} />
+          <RadioGroup label="Do you have a Strava profile?" options={["Yes", "No"]} value={hasStrava} onChange={setHasStrava} />
+
+          <div className="relative">
+            <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+            <input
+              type="text"
+              required
+              value={instagramId}
+              onChange={(e) => setInstagramId(e.target.value)}
+              placeholder="Your Instagram ID"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="relative">
+            <ShieldAlert size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+            <input
+              type="text"
+              required
+              value={emergencyContact}
+              onChange={(e) => setEmergencyContact(e.target.value)}
+              placeholder="Emergency Contact — Name & Number"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">
+              Any medical conditions we should know? (optional)
+            </label>
+            <textarea
+              rows={2}
+              value={medicalConditions}
+              onChange={(e) => setMedicalConditions(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60 resize-y"
+            />
+          </div>
+
+          <div className="relative">
+            <Droplet size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+            <input
+              type="text"
+              required
+              value={bloodGroup}
+              onChange={(e) => setBloodGroup(e.target.value)}
+              placeholder="Blood Group"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">
+              <MessageCircle size={13} /> Why do you want to join RTG? (optional)
+            </label>
+            <textarea
+              rows={3}
+              value={joinReason}
+              onChange={(e) => setJoinReason(e.target.value)}
+              className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60 resize-y"
             />
           </div>
 

@@ -9,6 +9,7 @@ import LiveClock from "./ui/LiveClock";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { supabase } from "../lib/supabaseClient";
+import useAdminSession from "../admin/useAdminSession";
 
 const links = [
   { to: "/community", label: "Community" },
@@ -94,6 +95,11 @@ export default function Navbar() {
   const location = useLocation();
   const { requestLogin } = useAuthGate();
   const { user } = useSession();
+  // The hidden admin-panel link is only for RTG staff — a logged-in
+  // regular member should never see or be able to reach it, only admins
+  // (or a logged-out visitor who might be staff about to log in).
+  const { isAdmin } = useAdminSession();
+  const showAdminLink = !user || isAdmin;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
@@ -152,7 +158,7 @@ export default function Navbar() {
               </Button>
             </>
           )}
-          <HiddenAdminLink />
+          {showAdminLink && <HiddenAdminLink />}
         </div>
 
         <button
@@ -189,7 +195,7 @@ export default function Navbar() {
               ))}
               <div className="py-3 border-b border-white/5 text-sm text-rtg-white/85 flex items-center justify-between">
                 <AccountIndicator />
-                <HiddenAdminLink />
+                {showAdminLink && <HiddenAdminLink />}
               </div>
               {!user && (
                 <div className="mt-4 mb-2 flex gap-2">

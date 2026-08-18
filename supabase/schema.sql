@@ -37,11 +37,24 @@ alter table profiles add column if not exists bio text;
 -- the matching email and checks the password against that instead.
 alter table profiles add column if not exists phone text;
 
--- Filled in on the one-time post-signup /onboarding page (age, avatar,
--- and — for Google sign-ins, which don't come with a password — a
--- phone + password so they can log in by phone too afterward).
+-- Filled in on the one-time post-signup /onboarding page — mirrors RTG's
+-- real paper/Google-Form registration questions (city, DOB, age, gender,
+-- rider/runner, ride frequency, Strava, Instagram, emergency contact,
+-- medical conditions, blood group, why join), plus avatar and — for
+-- Google sign-ins, which don't come with a password — a phone + password
+-- so they can log in by phone too afterward.
 alter table profiles add column if not exists age int;
 alter table profiles add column if not exists onboarding_complete boolean not null default false;
+alter table profiles add column if not exists dob date;
+alter table profiles add column if not exists gender text;
+alter table profiles add column if not exists rider_type text;        -- 'Rider' | 'Runner' | 'Both'
+alter table profiles add column if not exists ride_frequency text;
+alter table profiles add column if not exists has_strava boolean;
+alter table profiles add column if not exists instagram_id text;
+alter table profiles add column if not exists emergency_contact text;
+alter table profiles add column if not exists medical_conditions text;
+alter table profiles add column if not exists blood_group text;
+alter table profiles add column if not exists join_reason text;
 
 alter table profiles enable row level security;
 
