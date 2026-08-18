@@ -1,4 +1,4 @@
-import { images } from "../data/images";
+import { useSiteImages } from "../lib/publicData";
 import { faqs } from "../data/content";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -6,6 +6,7 @@ import FAQAccordion from "../components/ui/FAQAccordion";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function FAQ() {
+  const images = useSiteImages();
   return (
     <>
       <PageHero

@@ -32,6 +32,17 @@ create table if not exists profiles (
 alter table profiles add column if not exists sport text;
 alter table profiles add column if not exists bio text;
 
+-- Collected at signup. Contact info only, not a Supabase Auth identity:
+-- logging in by phone works through /api/auth/phone-login, which looks up
+-- the matching email and checks the password against that instead.
+alter table profiles add column if not exists phone text;
+
+-- Filled in on the one-time post-signup /onboarding page (age, avatar,
+-- and — for Google sign-ins, which don't come with a password — a
+-- phone + password so they can log in by phone too afterward).
+alter table profiles add column if not exists age int;
+alter table profiles add column if not exists onboarding_complete boolean not null default false;
+
 alter table profiles enable row level security;
 
 drop policy if exists "profiles self read" on profiles;
@@ -60,8 +71,8 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, full_name, auth_provider)
-  values (new.id, new.email, new.raw_user_meta_data->>'full_name', 'email')
+  insert into public.profiles (id, email, full_name, phone, auth_provider)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'phone', 'email')
   on conflict (id) do nothing;
 
   if not exists (select 1 from public.admin_profiles) then
@@ -78,6 +89,15 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
+
+-- ----------------------------------------------------------------------------
+-- No email/SMS verification on signup by design — one manual check in the
+-- Supabase dashboard, no SQL needed: Authentication > Providers > Email >
+-- make sure "Confirm email" stays OFF. With it off, signUp() returns a
+-- session immediately and the new-account flow finishes on /onboarding
+-- (phone, password, age, photo) instead of waiting on a code. See
+-- AuthGate.jsx, admin/pages/AdminLogin.jsx, pages/Onboarding.jsx.
+-- ----------------------------------------------------------------------------
 
 -- ============================================================================
 -- PART B — Admin-managed site content

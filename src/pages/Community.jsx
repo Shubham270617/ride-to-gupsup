@@ -1,6 +1,5 @@
-import { images } from "../data/images";
 import { communityGroups, brand, joinSteps, communityTimeline } from "../data/content";
-import { useTeamMembers, useWeeklySessions } from "../lib/publicData";
+import { useTeamMembers, useWeeklySessions, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -19,6 +18,7 @@ const volunteerHighlights = [
 ];
 
 export default function Community() {
+  const images = useSiteImages();
   const teamMembers = useTeamMembers();
   const weeklySessions = useWeeklySessions();
   const hasDelhiSchedule = weeklySessions.length > 0;
@@ -32,7 +32,7 @@ export default function Community() {
         subtitle="Cyclists, runners, swimmers, triathletes, beginners, veterans, and the volunteers who hold it all together — everyone belongs at RTG."
       />
 
-      <Section eyebrow="Getting Started" title="How to Join RTG" subtitle="Seven steps from stranger to teammate.">
+      <Section contentKey="community.howToJoin" eyebrow="Getting Started" title="How to Join RTG" subtitle="Seven steps from stranger to teammate.">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {joinSteps.map((s) => (
             <StaggerItem key={s.step}>
@@ -49,6 +49,7 @@ export default function Community() {
       </Section>
 
       <Section
+        contentKey="community.welcome"
         eyebrow="Come As You Are"
         title="Everyone Is Welcome"
         subtitle="Regardless of age or fitness level, there's a place for you in the RTG community. We believe endurance sport should be accessible, not intimidating."
@@ -74,7 +75,7 @@ export default function Community() {
         </StaggerGroup>
       </Section>
 
-      <Section dark eyebrow="Where We Ride" title="RTG Across India">
+      <Section contentKey="community.acrossIndia" dark eyebrow="Where We Ride" title="RTG Across India">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
           {brand.cities.map((c) => {
             const captain = teamMembers.find((t) => t.city === c);
@@ -117,7 +118,7 @@ export default function Community() {
         </Reveal>
       </Section>
 
-      <Section eyebrow="Get Involved" title="Volunteer With RTG" center={false}>
+      <Section contentKey="community.volunteer" eyebrow="Get Involved" title="Volunteer With RTG" center={false}>
         <div className="glass rounded-3xl p-10 md:p-14 mb-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10">
             <div>
@@ -141,7 +142,7 @@ export default function Community() {
         </div>
       </Section>
 
-      <Section dark eyebrow="How Far We've Come" title="RTG Timeline">
+      <Section contentKey="community.timeline" dark eyebrow="How Far We've Come" title="RTG Timeline">
         <div className="max-w-2xl mx-auto">
           {communityTimeline.map((t, i) => (
             <Reveal key={t.label} delay={i * 0.06} className="flex gap-5 pb-10 last:pb-0">

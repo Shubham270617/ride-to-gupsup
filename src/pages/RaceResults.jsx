@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Trophy, Download } from "lucide-react";
-import { images } from "../data/images";
-import { useRaceResults } from "../lib/publicData";
+import { useRaceResults, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import Reveal from "../components/ui/Reveal";
 
 export default function RaceResults() {
+  const images = useSiteImages();
   const results = useRaceResults();
   const [eventFilter, setEventFilter] = useState("All");
 
@@ -23,7 +23,7 @@ export default function RaceResults() {
         height="h-[45vh] md:h-[50vh]"
       />
 
-      <Section eyebrow="Results Archive" title="Past Race Results">
+      <Section contentKey="raceResults.hero" eyebrow="Results Archive" title="Past Race Results">
         <Reveal className="flex flex-wrap items-center justify-center gap-3 mb-10">
           {eventNames.map((name) => (
             <button

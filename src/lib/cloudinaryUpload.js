@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "./supabaseClient";
 
 // Cloudinary's free plan caps a single image upload at 10MB. Raw camera
 // photos routinely blow past that (and would be needlessly slow to load on
@@ -75,7 +75,7 @@ function xhrUpload(url, formData, onProgress) {
 // api/cloudinary/sign.js). Works for both images and videos (resource_type
 // "auto" lets Cloudinary figure out which). onProgress (0..1) is optional,
 // for driving a progress bar in the UI.
-export async function uploadToCloudinary(file, folder = "uploads", onProgress) {
+export async function uploadToCloudinary(file, folder = "uploads", onProgress, signEndpoint = "/api/cloudinary/sign") {
   if (file.type.startsWith("video/") && file.size > CLOUDINARY_VIDEO_LIMIT) {
     throw new Error(
       `This video is ${formatMB(file.size)} — the maximum is ${formatMB(CLOUDINARY_VIDEO_LIMIT)}. ` +
@@ -92,7 +92,7 @@ export async function uploadToCloudinary(file, folder = "uploads", onProgress) {
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error("You're not logged in.");
 
-  const signRes = await fetch("/api/cloudinary/sign", {
+  const signRes = await fetch(signEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ folder }),

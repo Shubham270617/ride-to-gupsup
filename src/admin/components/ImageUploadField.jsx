@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { Upload, Loader2, Check } from "lucide-react";
-import { uploadToCloudinary } from "../cloudinaryUpload";
+import { uploadToCloudinary } from "../../lib/cloudinaryUpload";
 import UploadProgressModal from "./UploadProgressModal";
 
-export default function ImageUploadField({ label, value, onChange, folder = "uploads", accept = "image/*,video/*" }) {
+export default function ImageUploadField({
+  label,
+  value,
+  onChange,
+  folder = "uploads",
+  accept = "image/*,video/*",
+  signEndpoint = "/api/cloudinary/sign",
+}) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState("");
@@ -18,7 +25,7 @@ export default function ImageUploadField({ label, value, onChange, folder = "upl
     setProgress(0);
     setError("");
     try {
-      const { url } = await uploadToCloudinary(file, folder, setProgress);
+      const { url } = await uploadToCloudinary(file, folder, setProgress, signEndpoint);
       onChange(url);
     } catch (err) {
       setError(err.message || "Upload failed");

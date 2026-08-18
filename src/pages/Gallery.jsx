@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import { images } from "../data/images";
-import { useGalleryItems } from "../lib/publicData";
+import { useGalleryItems, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import MasonryGallery from "../components/ui/MasonryGallery";
@@ -10,6 +9,7 @@ import MasonryGallery from "../components/ui/MasonryGallery";
 const categories = ["All", "Cycling", "Running", "Swimming", "Events", "Volunteers", "Videos"];
 
 export default function Gallery() {
+  const images = useSiteImages();
   const [active, setActive] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const galleryItems = useGalleryItems();

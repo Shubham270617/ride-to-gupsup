@@ -1,6 +1,5 @@
-import { images } from "../data/images";
 import { sponsorOpportunities, sponsorTiers, brand } from "../data/content";
-import { useSiteSettings, useSponsors } from "../lib/publicData";
+import { useSiteSettings, useSponsors, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -16,6 +15,7 @@ const whySponsorStats = [
 ];
 
 export default function Sponsors() {
+  const images = useSiteImages();
   const settings = useSiteSettings();
   const sponsors = useSponsors();
   return (
@@ -27,7 +27,7 @@ export default function Sponsors() {
         subtitle="Reach 500+ engaged endurance athletes across India through events, merchandise, and digital campaigns."
       />
 
-      <Section eyebrow="Why Sponsor RTG" title="Put Your Brand in Front of India's Endurance Athletes">
+      <Section contentKey="sponsors.why" eyebrow="Why Sponsor RTG" title="Put Your Brand in Front of India's Endurance Athletes">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
           {whySponsorStats.map((s) => (
             <StaggerItem key={s.label}>
@@ -42,7 +42,7 @@ export default function Sponsors() {
       </Section>
 
       {sponsors.length > 0 && (
-        <Section eyebrow="Current Partners" title="Brands Backing RTG">
+        <Section contentKey="sponsors.current" eyebrow="Current Partners" title="Brands Backing RTG">
           <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
             {sponsors.map((s) => (
               <StaggerItem key={s.name}>
@@ -65,7 +65,7 @@ export default function Sponsors() {
         </Section>
       )}
 
-      <Section eyebrow="Sponsorship Opportunities" title="Ways to Partner">
+      <Section contentKey="sponsors.opportunities" eyebrow="Sponsorship Opportunities" title="Ways to Partner">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
           {sponsorOpportunities.map((s) => (
             <StaggerItem key={s.title}>
@@ -78,7 +78,7 @@ export default function Sponsors() {
         </StaggerGroup>
       </Section>
 
-      <Section dark eyebrow="Investment Tiers" title="Sponsorship Packages">
+      <Section contentKey="sponsors.packages" dark eyebrow="Investment Tiers" title="Sponsorship Packages">
         <StaggerGroup className="grid md:grid-cols-3 gap-6 mb-16">
           {sponsorTiers.map((tier, i) => (
             <StaggerItem key={tier.name}>

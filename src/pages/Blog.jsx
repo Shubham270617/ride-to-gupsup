@@ -1,5 +1,4 @@
-import { images } from "../data/images";
-import { useBlogPosts } from "../lib/publicData";
+import { useBlogPosts, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -8,6 +7,7 @@ import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Blog() {
+  const images = useSiteImages();
   const blogPosts = useBlogPosts();
   return (
     <>
@@ -18,7 +18,7 @@ export default function Blog() {
         subtitle="Tips, guides, and stories to help you train smarter and go further."
       />
 
-      <Section eyebrow="Latest" title="From the Journal">
+      <Section contentKey="blog.hero" eyebrow="Latest" title="From the Journal">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((p) => (
             <StaggerItem key={p.id}>

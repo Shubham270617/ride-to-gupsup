@@ -98,39 +98,11 @@ html {
   transition: background-color 0.6s ease, border-color 0.6s ease;
 }
 
-/* Scoped "light" theme — used by <Section light> to smoothly flip a
-   section from the site's usual dark background to a warm off-white one
-   as it scrolls into view. Because every color utility (text-rtg-white,
-   text-rtg-mist, bg-rtg-ink, bg-rtg-purple-950, .glass) is built on these
-   same CSS custom properties, redefining them here is enough to re-theme
-   everything nested inside — no per-page color classes to touch. */
-.theme-light {
-  --color-rtg-ink: #f7f3ee;
-  --color-rtg-white: #1d1726;
-  --color-rtg-mist: #5c5468;
-  --color-rtg-purple-950: #efe8f7;
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(93, 60, 145, 0.14);
-  /* A soft blended edge at the top/bottom instead of a hard line where this
-     section meets the dark one above/below it — the color change reads as
-     a gradual wash rather than a flat block switching on all at once. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-rtg-ink) 0%, transparent) 0%,
-    var(--color-rtg-ink) 12%,
-    var(--color-rtg-ink) 88%,
-    color-mix(in srgb, var(--color-rtg-ink) 0%, transparent) 100%
-  );
-  /* Re-declaring color here (not just the custom property above) matters:
-     `color` is inherited as an already-computed value, so a descendant with
-     no color class of its own (e.g. a plain <h3> inside a GlassCard) would
-     otherwise keep inheriting the dark theme's white from <body> instead of
-     picking up the new scoped value. Setting it fresh at this scope fixes
-     every such element at once, not just ones with an explicit text-rtg-white class. */
-  color: var(--color-rtg-white);
-}
-
-.theme-light,
-.theme-light * {
-  transition: background-color 0.6s ease, color 0.6s ease, border-color 0.6s ease;
-}
+/* The "light" scroll effect (<Section light>) no longer uses a class swap —
+   Section.jsx animates --color-rtg-ink/-white/-mist/-purple-950 and
+   --glass-bg/-border directly via framer-motion, continuously tied to
+   scroll position instead of flipping at a viewport-enter threshold. Every
+   color utility (text-rtg-white, text-rtg-mist, bg-rtg-ink, bg-rtg-purple-950,
+   .glass) is built on these same custom properties, so animating them at the
+   section root re-themes everything nested inside with no per-page classes
+   to touch — same mechanism as before, just driven continuously now. */

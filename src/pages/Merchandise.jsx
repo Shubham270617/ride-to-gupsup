@@ -1,6 +1,5 @@
 import { Star, Truck, RotateCcw, Percent } from "lucide-react";
-import { images } from "../data/images";
-import { useProducts } from "../lib/publicData";
+import { useProducts, useSiteImages } from "../lib/publicData";
 import { sizeGuide, merchReviews, shippingInfo } from "../data/content";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -11,6 +10,7 @@ import Reveal from "../components/ui/Reveal";
 import Newsletter from "../components/sections/Newsletter";
 
 export default function Merchandise() {
+  const images = useSiteImages();
   const products = useProducts();
   return (
     <>
@@ -21,7 +21,7 @@ export default function Merchandise() {
         subtitle="Premium kit designed for the road, the trail, and everywhere in between."
       />
 
-      <Section eyebrow="Shop" title="All Merchandise" subtitle="Free community pride, premium quality — order yours today.">
+      <Section contentKey="merch.hero" eyebrow="Shop" title="All Merchandise" subtitle="Free community pride, premium quality — order yours today.">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map((p) => (
             <StaggerItem key={p.id}>
@@ -31,14 +31,14 @@ export default function Merchandise() {
         </StaggerGroup>
       </Section>
 
-      <Section dark eyebrow="Member Perks" title="Members Save 10%">
+      <Section contentKey="merch.perks" dark eyebrow="Member Perks" title="Members Save 10%">
         <Reveal className="max-w-2xl mx-auto text-center glass rounded-3xl p-8 md:p-10">
           <Percent className="text-rtg-orange-400 mx-auto mb-3" size={30} />
           <p className="text-rtg-mist leading-relaxed">{shippingInfo.memberDiscount}</p>
         </Reveal>
       </Section>
 
-      <Section eyebrow="Fit Guide" title="Size Chart">
+      <Section contentKey="merch.sizeChart" eyebrow="Fit Guide" title="Size Chart">
         <Reveal className="max-w-2xl mx-auto overflow-x-auto rounded-2xl border border-white/10">
           <table className="w-full text-sm text-center">
             <thead>
@@ -61,7 +61,7 @@ export default function Merchandise() {
         </Reveal>
       </Section>
 
-      <Section dark eyebrow="Athlete Reviews" title="What Riders Say About Our Gear">
+      <Section contentKey="merch.reviews" dark eyebrow="Athlete Reviews" title="What Riders Say About Our Gear">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {merchReviews.map((r) => (
             <StaggerItem key={r.name}>

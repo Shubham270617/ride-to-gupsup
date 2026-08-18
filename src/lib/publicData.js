@@ -228,6 +228,48 @@ export function useSiteSettings() {
   return settings;
 }
 
+// Reads a single site_settings value with a static fallback — the piece
+// that actually makes text edited in the admin's Site Content page show up
+// on the live site. Key convention: "text.<page>.<field>", e.g.
+// "text.home.heroTitle". For a page that reads several text fields, prefer
+// calling useSiteSettings() once and using pickText() per field instead —
+// avoids one Supabase round-trip per field.
+export function useSiteText(key, fallback) {
+  const settings = useSiteSettings();
+  return pickText(settings, key, fallback);
+}
+
+export function pickText(settings, key, fallback) {
+  return settings[key] ?? fallback;
+}
+
+// Every image on the site is defined in data/images.js — this merges in any
+// admin-uploaded replacement from the site_images table, keyed the same way
+// (see admin/pages/SiteImagesAdmin.jsx). Starts from the static defaults so
+// pages never show a blank image while this loads.
+export function useSiteImages() {
+  const [overrides, setOverrides] = useState({});
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+    supabase
+      .from("site_images")
+      .select("key,url")
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const map = {};
+        data.forEach((r) => {
+          map[r.key] = r.url;
+        });
+        setOverrides(map);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return { ...staticImages, ...overrides };
+}
+
 // Gallery items tagged to a specific event (via the Gallery admin's optional
 // "Event" field) — used by the event detail page's "View Event Gallery"
 // link so it shows only that event's photos/videos instead of the whole

@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { images } from "../data/images";
+import { useSiteImages } from "../lib/publicData";
 import { generalSafety, rideSafety } from "../data/content";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -9,6 +9,7 @@ import Reveal from "../components/ui/Reveal";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function Safety() {
+  const images = useSiteImages();
   return (
     <>
       <PageHero
@@ -19,7 +20,7 @@ export default function Safety() {
         height="h-[45vh] md:h-[50vh]"
       />
 
-      <Section eyebrow="Every Session, Every Time" title="General Safety Guidelines">
+      <Section contentKey="safety.guidelines" eyebrow="Every Session, Every Time" title="General Safety Guidelines">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {generalSafety.map((s) => (
             <StaggerItem key={s.title}>
@@ -33,7 +34,7 @@ export default function Safety() {
         </StaggerGroup>
       </Section>
 
-      <Section dark eyebrow="Friday Bricks" title="Weekly Session Checklist">
+      <Section contentKey="safety.checklist" dark eyebrow="Friday Bricks" title="Weekly Session Checklist">
         <Reveal className="max-w-2xl mx-auto">
           <ul className="space-y-3">
             {rideSafety.map((item) => (

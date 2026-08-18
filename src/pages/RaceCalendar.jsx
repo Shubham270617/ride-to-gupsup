@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
-import { images } from "../data/images";
 import { calendarCategories, calendarCities, calendarDifficulties } from "../data/content";
-import { useCalendarEvents } from "../lib/publicData";
+import { useCalendarEvents, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import Reveal from "../components/ui/Reveal";
@@ -22,6 +21,7 @@ function buildMonthGrid(year, month) {
 }
 
 export default function RaceCalendar() {
+  const images = useSiteImages();
   const calendarEvents = useCalendarEvents();
   const [cursor, setCursor] = useState(new Date(2027, 0, 1));
   const [activeFilters, setActiveFilters] = useState([]);

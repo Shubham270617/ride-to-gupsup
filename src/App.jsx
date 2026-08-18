@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import Preloader from "./components/Preloader";
 import AuthGate from "./components/AuthGate";
 import AuthCallback from "./pages/AuthCallback";
+import Onboarding from "./pages/Onboarding";
 import { AuthGateProvider } from "./lib/AuthGateContext";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -37,6 +38,7 @@ const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const ResourceAdminPage = lazy(() => import("./admin/pages/ResourceAdminPage"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
+const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
 
 function AdminFallback() {
@@ -50,7 +52,7 @@ function AdminFallback() {
 // Routes that manage their own full-screen UI and should never be covered by
 // the video intro / login prompt (an in-progress OAuth callback, and later
 // the /admin dashboard).
-const INTRO_EXEMPT_PREFIXES = ["/auth/callback", "/admin"];
+const INTRO_EXEMPT_PREFIXES = ["/auth/callback", "/onboarding", "/admin"];
 
 export default function App() {
   const location = useLocation();
@@ -64,6 +66,7 @@ export default function App() {
       {!exempt && introDone && <AuthGate />}
       <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/onboarding" element={<Onboarding />} />
 
         <Route
           path="/admin/login"
@@ -96,6 +99,7 @@ export default function App() {
           <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
+          <Route path="site-content" element={<SiteContentAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />
         </Route>
 

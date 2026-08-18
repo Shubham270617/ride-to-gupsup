@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, LogIn, LogOut, User } from "lucide-react";
-import { images } from "../data/images";
+import { useSiteImages } from "../lib/publicData";
 import { brand } from "../data/content";
 import Button from "./ui/Button";
 import LiveClock from "./ui/LiveClock";
@@ -88,6 +88,7 @@ function HiddenAdminLink({ className = "" }) {
 }
 
 export default function Navbar() {
+  const images = useSiteImages();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const location = useLocation();

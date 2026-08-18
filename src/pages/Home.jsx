@@ -1,9 +1,8 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
-import { images } from "../data/images";
 import { brand, stats, whyJoin, weeklyActivities, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors } from "../lib/publicData";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -24,6 +23,7 @@ const HeroScene = lazy(() => import("../three/HeroScene"));
 const HERO_SLIDE_DURATION = 6000;
 
 function Hero() {
+  const images = useSiteImages();
   const isMobile = useIsMobile();
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
@@ -194,6 +194,9 @@ function Hero() {
 const GALLERY_PREVIEW_CATEGORIES = ["All", "Cycling", "Running", "Swimming", "Events", "Volunteers", "Videos"];
 
 export default function Home() {
+  const images = useSiteImages();
+  const settings = useSiteSettings();
+  const t = (key, fallback) => pickText(settings, key, fallback);
   const events = useEvents();
   const products = useProducts();
   const testimonials = useTestimonials();
@@ -214,18 +217,20 @@ export default function Home() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal direction="right">
             <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
-              This Is RTG
+              {t("text.home.aboutEyebrow", "This Is RTG")}
             </span>
             <h2 className="font-display text-rtg-white text-4xl md:text-6xl leading-[0.95] mb-4">
-              More Than Miles.
+              {t("text.home.aboutTitleLine1", "More Than Miles.")}
               <br />
-              <span className="text-gradient">More Than Sport.</span>
+              <span className="text-gradient">{t("text.home.aboutTitleLine2", "More Than Sport.")}</span>
             </h2>
             <p className="text-rtg-mist text-lg leading-relaxed mb-8 max-w-lg">
-              Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move,
-              connect, learn, and create experiences worth remembering.
+              {t(
+                "text.home.aboutBody",
+                "Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move, connect, learn, and create experiences worth remembering."
+              )}
             </p>
-            <Button to="/about" variant="outline">Discover Our Story</Button>
+            <Button to="/about" variant="outline">{t("text.home.aboutButtonLabel", "Discover Our Story")}</Button>
           </Reveal>
           <Reveal direction="left" delay={0.1}>
             <RotatingPhotoWheel photos={galleryItems} />
@@ -234,7 +239,7 @@ export default function Home() {
       </Section>
 
       {/* WHY JOIN */}
-      <Section eyebrow="Why RTG" title="Why Athletes Join RTG" subtitle="Six reasons endurance athletes across India call RTG home." dark>
+      <Section contentKey="home.whyJoin" eyebrow="Why RTG" title="Why Athletes Join RTG" subtitle="Six reasons endurance athletes across India call RTG home." dark>
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {whyJoin.map((w) => (
             <StaggerItem key={w.title}>
@@ -278,7 +283,7 @@ export default function Home() {
       </section>
 
       {/* WEEKLY ACTIVITIES */}
-      <Section eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." light>
+      <Section contentKey="home.weeklyActivities" eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." light>
         <div className="grid md:grid-cols-3 gap-6 mb-10">
           {weeklyActivities.map((a) => (
             <Reveal key={a.name}>
@@ -296,7 +301,7 @@ export default function Home() {
       </Section>
 
       {/* UPCOMING EVENTS */}
-      <Section eyebrow="Don't Miss Out" title="Upcoming Events" dark>
+      <Section contentKey="home.upcomingEvents" eyebrow="Don't Miss Out" title="Upcoming Events" dark>
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           <Reveal className="md:col-span-2">
             <EventCard event={events[0]} featured />
@@ -313,7 +318,7 @@ export default function Home() {
       </Section>
 
       {/* GALLERY PREVIEW */}
-      <Section eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." light>
+      <Section contentKey="home.gallery" eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." light>
         <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
           {GALLERY_PREVIEW_CATEGORIES.map((c) => (
             <button
@@ -338,7 +343,7 @@ export default function Home() {
       </Section>
 
       {/* MERCH PREVIEW */}
-      <Section eyebrow="RTG Store" title="Gear Up Like a Pro" dark>
+      <Section contentKey="home.store" eyebrow="RTG Store" title="Gear Up Like a Pro" dark>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {products.slice(0, 4).map((p) => (
             <Reveal key={p.id}>
@@ -353,7 +358,7 @@ export default function Home() {
 
       {/* SPONSORS */}
       {sponsors.length > 0 && (
-        <Section eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement." light>
+        <Section contentKey="home.sponsors" eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement." light>
           <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
             {sponsors.map((s) => (
               <StaggerItem key={s.name}>
@@ -381,7 +386,7 @@ export default function Home() {
       )}
 
       {/* TESTIMONIALS */}
-      <Section eyebrow="Athlete Voices" title="What Our Community Says" dark>
+      <Section contentKey="home.testimonials" eyebrow="Athlete Voices" title="What Our Community Says" dark>
         <TestimonialSlider items={testimonials} />
       </Section>
 

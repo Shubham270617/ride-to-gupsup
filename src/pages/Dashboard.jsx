@@ -8,6 +8,7 @@ import { useUpcomingEvent, useRaceResults } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
+import { uploadToCloudinary } from "../lib/cloudinaryUpload";
 
 const StravaMark = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={16} height={16} {...props}>
@@ -35,10 +36,12 @@ export default function Dashboard() {
   const raceResults = useRaceResults();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ full_name: "", city: "", sport: "", bio: "" });
+  const [form, setForm] = useState({ full_name: "", city: "", sport: "", bio: "", avatar_url: "" });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured) {
@@ -58,11 +61,29 @@ export default function Dashboard() {
             city: data.city || "",
             sport: data.sport || "",
             bio: data.bio || "",
+            avatar_url: data.avatar_url || "",
           });
         }
         setLoading(false);
       });
   }, [user]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setAvatarUploading(true);
+    setAvatarError("");
+    try {
+      const { url } = await uploadToCloudinary(file, "avatar", null, "/api/cloudinary/sign-avatar");
+      setForm((f) => ({ ...f, avatar_url: url }));
+      await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+    } catch (err) {
+      setAvatarError(err.message || "Upload failed");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -142,11 +163,18 @@ export default function Dashboard() {
       <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">Athlete Profile</h2>
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <GlassCard className="md:col-span-1 text-center">
-          <img
-            src={profile?.avatar_url || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(form.full_name || user.email)}&backgroundColor=f76b1c`}
-            alt={form.full_name}
-            className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-2 border-rtg-orange-400"
-          />
+          <label className="relative inline-block cursor-pointer group mb-4">
+            <img
+              src={form.avatar_url || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(form.full_name || user.email)}&backgroundColor=f76b1c`}
+              alt={form.full_name}
+              className="w-24 h-24 rounded-full object-cover border-2 border-rtg-orange-400"
+            />
+            <span className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-white transition-opacity">
+              {avatarUploading ? <Loader2 size={16} className="animate-spin" /> : "Change"}
+            </span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
+          </label>
+          {avatarError && <p className="text-xs text-rtg-orange-400 mb-2">{avatarError}</p>}
           <p className="font-semibold text-rtg-white mb-1">{form.full_name || "Athlete"}</p>
           <p className="text-xs text-rtg-mist mb-4">{profile?.email || user.email}</p>
           <div className="flex items-center justify-center gap-2 text-xs text-rtg-mist">

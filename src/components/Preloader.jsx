@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { images } from "../data/images";
+import { useSiteImages } from "../lib/publicData";
 import { brand } from "../data/content";
 
 const IntroScene = lazy(() => import("../three/IntroScene"));
@@ -10,6 +10,7 @@ const DURATION = 3200;
 // Unlike the login panel (which only shows once per session), the intro
 // plays on every fresh page load/refresh by design — no sessionStorage gate.
 export default function Preloader({ onFinish }) {
+  const images = useSiteImages();
   const [visible, setVisible] = useState(true);
   const [progress, setProgress] = useState(0);
   const finishedRef = useRef(false);

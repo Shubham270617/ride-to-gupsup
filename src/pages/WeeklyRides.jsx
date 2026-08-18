@@ -1,7 +1,6 @@
 import { MapPin, Clock, Bike, CheckCircle2, Gauge, IndianRupee } from "lucide-react";
-import { images } from "../data/images";
 import { rideSafety, whatToBring, rideFaqs, brand } from "../data/content";
-import { useWeeklySessions } from "../lib/publicData";
+import { useWeeklySessions, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -14,6 +13,7 @@ function mapEmbedUrl(query) {
 }
 
 export default function WeeklyRides() {
+  const images = useSiteImages();
   const sessions = useWeeklySessions();
   // The hero info cards mirror the real "Friday Bricks" row from Weekly
   // Sessions (admin-editable) instead of a separate hardcoded copy, so
@@ -67,7 +67,7 @@ export default function WeeklyRides() {
         </div>
       </Section>
 
-      <Section dark eyebrow="More Sessions" title="Weekly Schedule">
+      <Section contentKey="weeklyRides.schedule" dark eyebrow="More Sessions" title="Weekly Schedule">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {sessions.map((s) => (
             <StaggerItem key={`${s.day}-${s.name}`}>
@@ -126,7 +126,7 @@ export default function WeeklyRides() {
         </StaggerGroup>
       </Section>
 
-      <Section eyebrow="Ride Prepared" title="Safety Guidelines">
+      <Section contentKey="weeklyRides.safety" eyebrow="Ride Prepared" title="Safety Guidelines">
         <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 max-w-4xl mx-auto">
           {rideSafety.map((s) => (
             <Reveal key={s} className="flex items-start gap-3">
@@ -137,7 +137,7 @@ export default function WeeklyRides() {
         </div>
       </Section>
 
-      <Section eyebrow="Pack Smart" title="What to Bring">
+      <Section contentKey="weeklyRides.packList" eyebrow="Pack Smart" title="What to Bring">
         <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 max-w-4xl mx-auto mb-10">
           {whatToBring.map((s) => (
             <Reveal key={s} className="flex items-start gap-3">
@@ -151,7 +151,7 @@ export default function WeeklyRides() {
         </div>
       </Section>
 
-      <Section dark eyebrow="Questions" title="Frequently Asked Questions" className="pb-32">
+      <Section contentKey="weeklyRides.faq" dark eyebrow="Questions" title="Frequently Asked Questions" className="pb-32">
         <div className="max-w-3xl mx-auto">
           <FAQAccordion items={rideFaqs} />
         </div>

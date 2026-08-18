@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, CheckCircle2, FileDown, HeartHandshake } from "lucide-react";
-import { images } from "../data/images";
 import { brand } from "../data/content";
-import { useSiteSettings } from "../lib/publicData";
+import { useSiteSettings, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -21,6 +20,7 @@ const socials = [
 const subjects = ["General Question", "Volunteering", "Sponsorship / Partnership", "Media / Press", "Chapter Captain"];
 
 export default function Contact() {
+  const images = useSiteImages();
   const settings = useSiteSettings();
   const [form, setForm] = useState({ name: "", email: "", subject: subjects[0], message: "" });
   const [sent, setSent] = useState(false);

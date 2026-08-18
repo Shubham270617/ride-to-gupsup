@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Mail, Phone } from "lucide-react";
-import { images } from "../data/images";
+import { useSiteImages } from "../lib/publicData";
 import { brand } from "../data/content";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, StravaIcon } from "./ui/SocialIcons";
 
@@ -56,6 +56,7 @@ const cols = [
 ];
 
 export default function Footer() {
+  const images = useSiteImages();
   return (
     <footer className="bg-rtg-purple-950 border-t border-white/10 pt-16 pb-8 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">

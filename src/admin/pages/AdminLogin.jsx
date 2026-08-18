@@ -1,15 +1,31 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, User, Loader2, X } from "lucide-react";
+import { Lock, Mail, User, Loader2, X, Phone } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../../lib/supabaseClient";
+import { signInWithPhone } from "../../lib/phoneAuth";
 import { images } from "../../data/images";
 import { brand } from "../../data/content";
+
+const COUNTRY_CODE = "+91";
+const toE164 = (localNumber) => `${COUNTRY_CODE}${localNumber.replace(/\D/g, "")}`;
+
+const GoogleMark = (props) => (
+  <svg viewBox="0 0 48 48" width={18} height={18} {...props}>
+    <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+    <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+    <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+    <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+  </svg>
+);
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("login");
+  const [method, setMethod] = useState("email"); // "email" | "phone" — login only
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -20,10 +36,25 @@ export default function AdminLogin() {
   const switchMode = (newMode) => {
     setMode(newMode);
     setEmail("");
+    setPhone("");
     setPassword("");
     setFullName("");
     setError("");
     setNotice("");
+    setMethod("email");
+  };
+
+  const handleGoogle = async () => {
+    setError("");
+    if (!isSupabaseConfigured) {
+      setError("The database isn't connected yet.");
+      return;
+    }
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?admin=1` },
+    });
+    if (oauthError) setError(oauthError.message || "Couldn't start Google sign-in. Please try again.");
   };
 
   const handleSubmit = async (e) => {
@@ -40,28 +71,33 @@ export default function AdminLogin() {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: { data: { full_name: fullName, phone: toE164(phone) } },
         });
         if (signUpError) throw signUpError;
         setEmail("");
+        setPhone("");
         setPassword("");
         setFullName("");
         setNotice(
           data.session
             ? "Account created. Ask an existing admin to grant you access from the Admins screen."
-            : "Check your inbox to confirm your email, then ask an existing admin to grant you access from the Admins screen."
+            : "Account created — please log in, then ask an existing admin to grant you access from the Admins screen."
         );
-        setMode("login");
+        switchMode("login");
         return;
       }
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: signInError } =
+        method === "email"
+          ? await supabase.auth.signInWithPassword({ email, password })
+          : await signInWithPhone(toE164(phone), password);
       if (signInError) throw signInError;
 
+      const { data: userData } = await supabase.auth.getUser();
       const { data: profile } = await supabase
         .from("admin_profiles")
         .select("id")
-        .eq("id", data.user.id)
+        .eq("id", (data?.user || userData?.user)?.id)
         .maybeSingle();
 
       if (!profile) {
@@ -92,7 +128,21 @@ export default function AdminLogin() {
         <h1 className="font-display text-3xl text-center mb-1">Admin</h1>
         <p className="text-rtg-mist text-sm text-center mb-8">Manage RTG's events, gallery, store, and more.</p>
 
-        <div className="flex glass rounded-full p-1 mb-5">
+        <button
+          type="button"
+          onClick={handleGoogle}
+          className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white text-rtg-ink hover:bg-white/90 transition-colors mb-5"
+        >
+          <GoogleMark /> Continue with Google
+        </button>
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs text-rtg-mist uppercase tracking-wide">or continue with</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <div className="flex glass rounded-full p-1 mb-3">
           <button
             onClick={() => switchMode("login")}
             className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
@@ -111,6 +161,29 @@ export default function AdminLogin() {
           </button>
         </div>
 
+        {mode === "login" && (
+          <div className="flex gap-4 mb-5 text-sm justify-center">
+            <button
+              type="button"
+              onClick={() => setMethod("email")}
+              className={`pb-1 border-b-2 transition-colors ${
+                method === "email" ? "border-rtg-orange-400 text-rtg-white" : "border-transparent text-rtg-mist"
+              }`}
+            >
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => setMethod("phone")}
+              className={`pb-1 border-b-2 transition-colors ${
+                method === "phone" ? "border-rtg-orange-400 text-rtg-white" : "border-transparent text-rtg-mist"
+              }`}
+            >
+              Phone Number
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === "signup" && (
             <div className="relative">
@@ -125,17 +198,37 @@ export default function AdminLogin() {
               />
             </div>
           )}
-          <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
-            />
-          </div>
+
+          {(mode === "signup" || method === "phone") && (
+            <div className="relative">
+              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <span className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-rtg-mist">{COUNTRY_CODE}</span>
+              <input
+                type="tel"
+                required
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                placeholder="98765 43210"
+                className="w-full rounded-full bg-white/5 border border-white/10 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+              />
+            </div>
+          )}
+
+          {(mode === "signup" || method === "email") && (
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+              />
+            </div>
+          )}
+
           <div className="relative">
             <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
             <input

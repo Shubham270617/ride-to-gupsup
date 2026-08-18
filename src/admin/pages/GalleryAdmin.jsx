@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload, Trash2, Loader2 } from "lucide-react";
-import { uploadToCloudinary } from "../cloudinaryUpload";
+import { uploadToCloudinary } from "../../lib/cloudinaryUpload";
 import useTable from "../useTable";
 import { useConfirm } from "../components/ConfirmDialog";
 import UploadProgressModal from "../components/UploadProgressModal";

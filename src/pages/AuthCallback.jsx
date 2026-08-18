@@ -41,12 +41,44 @@ export default function AuthCallback() {
     const finish = async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;
-      if (data.session) {
-        setStatus("success");
-        setTimeout(() => navigate("/", { replace: true }), 900);
-      } else {
+      if (!data.session) {
         setStatus("error");
+        return;
       }
+
+      // Google sign-in started from /admin/login carries this flag through
+      // so the callback (shared with the member popup) knows to check for
+      // admin access instead of just dropping them on the homepage.
+      if (params.get("admin") === "1") {
+        const { data: adminRow } = await supabase
+          .from("admin_profiles")
+          .select("id")
+          .eq("id", data.session.user.id)
+          .maybeSingle();
+        if (!adminRow) {
+          await supabase.auth.signOut();
+          setStatus("not_admin");
+          return;
+        }
+        setStatus("success");
+        setTimeout(() => navigate("/admin", { replace: true }), 900);
+        return;
+      }
+
+      // Any provider (Google, Strava, XFitConnect) can land a brand-new
+      // account here with no phone/password/photo yet — send them to
+      // finish that on /onboarding instead of straight to the homepage.
+      // Returning users who already did this just have the flag set, so
+      // they skip straight through.
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("onboarding_complete")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+
+      setStatus("success");
+      const destination = profileRow && !profileRow.onboarding_complete ? "/onboarding" : "/";
+      setTimeout(() => navigate(destination, { replace: true }), 900);
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -89,6 +121,22 @@ export default function AuthCallback() {
               className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
             >
               Back to RTG
+            </button>
+          </>
+        )}
+        {status === "not_admin" && (
+          <>
+            <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
+            <p className="font-display text-2xl mb-2">Not an admin yet</p>
+            <p className="text-rtg-mist text-sm mb-6">
+              That Google account isn't set up as an admin. Ask an existing admin to grant you access from the
+              Admins screen, then try again.
+            </p>
+            <button
+              onClick={() => navigate("/admin/login", { replace: true })}
+              className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+            >
+              Back to Admin Login
             </button>
           </>
         )}

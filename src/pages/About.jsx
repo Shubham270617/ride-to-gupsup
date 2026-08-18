@@ -1,7 +1,6 @@
 import { Target, Eye, Flag } from "lucide-react";
-import { images } from "../data/images";
 import { mission, vision, coreValues, fiveYearGoal, communityTimeline } from "../data/content";
-import { useTeamMembers } from "../lib/publicData";
+import { useTeamMembers, useSiteImages } from "../lib/publicData";
 import { InstagramIcon } from "../components/ui/SocialIcons";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -11,6 +10,7 @@ import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import JoinCTA from "../components/sections/JoinCTA";
 
 export default function About() {
+  const images = useSiteImages();
   const teamMembers = useTeamMembers();
   return (
     <>
@@ -21,7 +21,7 @@ export default function About() {
         subtitle="The story of how a small group of friends turned early morning chai stops into India's fastest-growing endurance community."
       />
 
-      <Section title="Why RTG Exists" center={false}>
+      <Section contentKey="about.whyExists" title="Why RTG Exists" center={false}>
         <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
           <Reveal direction="right">
             <p className="text-rtg-mist text-lg leading-relaxed mb-6">
@@ -63,7 +63,7 @@ export default function About() {
         </div>
       </Section>
 
-      <Section dark eyebrow="What Drives Us" title="Mission & Vision">
+      <Section contentKey="about.missionVision" dark eyebrow="What Drives Us" title="Mission & Vision">
         <div className="grid md:grid-cols-2 gap-6">
           <Reveal>
             <GlassCard className="h-full">
@@ -90,7 +90,7 @@ export default function About() {
         </Reveal>
       </Section>
 
-      <Section eyebrow="What We Stand For" title="Our Core Values">
+      <Section contentKey="about.coreValues" eyebrow="What We Stand For" title="Our Core Values">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {coreValues.map((v) => (
             <StaggerItem key={v.title}>
@@ -103,7 +103,7 @@ export default function About() {
         </StaggerGroup>
       </Section>
 
-      <Section dark eyebrow="How Far We've Come" title="RTG Timeline">
+      <Section contentKey="about.timeline" dark eyebrow="How Far We've Come" title="RTG Timeline">
         <div className="max-w-2xl mx-auto">
           {communityTimeline.map((t, i) => (
             <Reveal key={t.label} delay={i * 0.06} className="flex gap-5 pb-10 last:pb-0">
@@ -120,7 +120,7 @@ export default function About() {
         </div>
       </Section>
 
-      <Section eyebrow="The People Behind RTG" title="Our Leadership">
+      <Section contentKey="about.leadership" eyebrow="The People Behind RTG" title="Our Leadership">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {teamMembers.map((t) => (
             <StaggerItem key={t.name}>
