@@ -56,6 +56,11 @@ alter table profiles add column if not exists medical_conditions text;
 alter table profiles add column if not exists blood_group text;
 alter table profiles add column if not exists join_reason text;
 
+-- Kept in sync from auth.users.last_sign_in_at by the trigger below — lets
+-- the admin Members screen show "last logged in" without needing access to
+-- the auth schema directly (Supabase doesn't expose it over the API).
+alter table profiles add column if not exists last_login_at timestamptz;
+
 alter table profiles enable row level security;
 
 drop policy if exists "profiles self read" on profiles;
@@ -103,6 +108,27 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
 
+-- Mirrors auth.users.last_sign_in_at into profiles.last_login_at every time
+-- someone logs in (Supabase Auth updates that column on every sign-in),
+-- purely so the admin Members screen can show it.
+create or replace function sync_last_login()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if new.last_sign_in_at is distinct from old.last_sign_in_at then
+    update public.profiles set last_login_at = new.last_sign_in_at where id = new.id;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_login on auth.users;
+create trigger on_auth_user_login
+  after update on auth.users
+  for each row execute function sync_last_login();
+
 -- ----------------------------------------------------------------------------
 -- No email/SMS verification on signup by design — one manual check in the
 -- Supabase dashboard, no SQL needed: Authentication > Providers > Email >
@@ -121,6 +147,15 @@ create table if not exists admin_profiles (
   full_name text,
   created_at timestamptz not null default now()
 );
+
+-- A second FK on the same column, alongside the auth.users one above —
+-- Postgres allows both since profiles.id is always a subset of
+-- auth.users.id. This is what makes deleting someone's profiles row (from
+-- the Supabase Table Editor, or anywhere) immediately revoke their admin
+-- access too, not just deleting the underlying auth user.
+alter table admin_profiles drop constraint if exists admin_profiles_profile_fk;
+alter table admin_profiles
+  add constraint admin_profiles_profile_fk foreign key (id) references profiles(id) on delete cascade;
 
 alter table admin_profiles enable row level security;
 drop policy if exists "admin_profiles self read" on admin_profiles;
@@ -159,6 +194,31 @@ create policy "admin_profiles admin delete" on admin_profiles
 drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
+
+-- Lets the admin seat recover itself if it ever goes empty (e.g. the only
+-- admin's profiles row got deleted, which — via the cascade above — took
+-- their admin_profiles row with it). Called from the client on every
+-- /admin/login attempt that isn't already an admin (see AdminLogin.jsx);
+-- SECURITY DEFINER is what lets a non-admin caller insert into
+-- admin_profiles at all, but the emptiness check keeps this from ever
+-- being usable to self-promote while a real admin already exists.
+create or replace function claim_admin_if_unclaimed()
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.admin_profiles) then
+    insert into public.admin_profiles (id, full_name)
+    select id, full_name from public.profiles where id = auth.uid()
+    on conflict (id) do nothing;
+    return true;
+  end if;
+  return false;
+end;
+$$;
+
+grant execute on function claim_admin_if_unclaimed() to authenticated;
 
 create table if not exists events (
   id uuid primary key default gen_random_uuid(),
@@ -421,7 +481,14 @@ create policy "rtg-media admin delete" on storage.objects
 -- Bootstrapping your FIRST admin: fully automatic, no SQL needed. The very
 -- first person to ever sign up (via /admin/login's Sign Up tab, or the
 -- public site) is auto-promoted to admin by the handle_new_user() trigger
--- above. Every admin after that one is added from the app's Admins screen.
+-- above. Every admin after that one is added from the app's Members screen.
+--
+-- If the admin seat ever goes empty again (the only admin's profiles row
+-- got deleted — which, via admin_profiles_profile_fk above, also removes
+-- their admin_profiles row), it doesn't need re-bootstrapping by hand
+-- either: claim_admin_if_unclaimed() runs on every /admin/login attempt
+-- and auto-promotes whoever logs in next, exactly like the very first
+-- signup did, for exactly as long as admin_profiles is actually empty.
 --
 -- Caution before this site goes live publicly: whoever signs up FIRST on
 -- the production database becomes the founding admin. Make sure that's you

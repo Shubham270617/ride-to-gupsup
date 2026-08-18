@@ -56,9 +56,15 @@ export default function AuthCallback() {
           .eq("id", data.session.user.id)
           .maybeSingle();
         if (!adminRow) {
-          await supabase.auth.signOut();
-          setStatus("not_admin");
-          return;
+          // The admin seat might just be empty right now (e.g. the last
+          // admin's profile was deleted) — try to claim it. Only actually
+          // promotes this account if admin_profiles is truly empty.
+          const { data: claimed } = await supabase.rpc("claim_admin_if_unclaimed");
+          if (!claimed) {
+            await supabase.auth.signOut();
+            setStatus("not_admin");
+            return;
+          }
         }
         setStatus("success");
         setTimeout(() => navigate("/admin", { replace: true }), 900);

@@ -12,11 +12,11 @@ import { supabase } from "../lib/supabaseClient";
 
 const links = [
   { to: "/community", label: "Community" },
-  { to: "/events", label: "Events" },
-  { to: "/race-calendar", label: "Calendar" },
-  { to: "/merchandise", label: "Merchandise" },
   { to: "/about", label: "About" },
+  { to: "/race-calendar", label: "Calendar" },
+  { to: "/events", label: "Events" },
   { to: "/gallery", label: "Gallery" },
+  { to: "/merchandise", label: "Merchandise" },
 ];
 
 function AccountIndicator({ className = "" }) {
