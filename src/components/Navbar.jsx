@@ -9,7 +9,6 @@ import LiveClock from "./ui/LiveClock";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { supabase } from "../lib/supabaseClient";
-import useAdminSession from "../admin/useAdminSession";
 
 const links = [
   { to: "/community", label: "Community" },
@@ -95,11 +94,10 @@ export default function Navbar() {
   const location = useLocation();
   const { requestLogin } = useAuthGate();
   const { user } = useSession();
-  // The hidden admin-panel link is only for RTG staff — a logged-in
-  // regular member should never see or be able to reach it, only admins
-  // (or a logged-out visitor who might be staff about to log in).
-  const { isAdmin } = useAdminSession();
-  const showAdminLink = !user || isAdmin;
+  // The hidden admin-panel link is only ever shown to a logged-out visitor
+  // (RTG staff use it to reach /admin/login). Once anyone is logged in —
+  // admin or not — it disappears; admins go there directly by URL instead.
+  const showAdminLink = !user;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 4);
