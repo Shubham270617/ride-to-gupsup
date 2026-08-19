@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Mail, Phone } from "lucide-react";
-import { useSiteImages } from "../lib/publicData";
+import { useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
 import { brand } from "../data/content";
 import { InstagramIcon, FacebookIcon, YoutubeIcon, StravaIcon } from "./ui/SocialIcons";
 
@@ -57,6 +57,8 @@ const cols = [
 
 export default function Footer() {
   const images = useSiteImages();
+  const settings = useSiteSettings();
+  const t = (key, fallback) => pickText(settings, key, fallback);
   return (
     <footer className="bg-rtg-purple-950 border-t border-white/10 pt-16 pb-8 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">
@@ -64,7 +66,10 @@ export default function Footer() {
           <div className="col-span-2">
             <img src={images.logo} alt={brand.name} className="h-10 w-auto mb-4" />
             <p className="text-rtg-mist text-sm leading-relaxed max-w-xs mb-5">
-              India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.
+              {t(
+                "text.footer.description",
+                "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures."
+              )}
             </p>
             <div className="flex gap-3">
               {socials.map((s) => (
@@ -108,8 +113,10 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-rtg-mist">
-          <p>© {new Date().getFullYear()} Ride Tea GupShup. All rights reserved.</p>
-          <p>Built for athletes, by athletes.</p>
+          <p>
+            © {new Date().getFullYear()} {t("text.footer.copyright", "Ride Tea GupShup. All rights reserved.")}
+          </p>
+          <p>{t("text.footer.tagline", "Built for athletes, by athletes.")}</p>
         </div>
       </div>
     </footer>

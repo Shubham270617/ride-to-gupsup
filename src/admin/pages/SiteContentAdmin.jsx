@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
 // Every <Section contentKey="..."> on the public site reads its
@@ -56,27 +57,42 @@ const SECTIONS = [
   { page: "Weekly Rides", key: "weeklyRides.faq", label: "Frequently Asked Questions", eyebrow: "Questions", title: "Frequently Asked Questions", subtitle: "" },
 ];
 
-// Home's About RTG section has a custom two-line headline + paragraph +
-// button, not the generic eyebrow/title/subtitle shape, so it keeps its
-// own field list (matches the {t("text.home.about...", ...)} calls in
-// src/pages/Home.jsx).
-const HOME_ABOUT_FIELDS = [
-  { key: "text.home.aboutEyebrow", label: "Eyebrow", fallback: "This Is RTG", type: "text" },
-  { key: "text.home.aboutTitleLine1", label: "Headline — line 1", fallback: "More Than Miles.", type: "text" },
-  { key: "text.home.aboutTitleLine2", label: "Headline — line 2 (accent color)", fallback: "More Than Sport.", type: "text" },
-  { key: "text.home.aboutBody", label: "Paragraph", fallback: "Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move, connect, learn, and create experiences worth remembering.", type: "textarea" },
-  { key: "text.home.aboutButtonLabel", label: "Button label", fallback: "Discover Our Story", type: "text" },
-];
+// Custom-shaped groups — not the generic eyebrow/title/subtitle a
+// <Section contentKey> renders, so each keeps its own field list. Home's
+// About RTG headline matches the {t("text.home.about...", ...)} calls in
+// src/pages/Home.jsx; Footer matches the {t("text.footer...", ...)} calls
+// in src/components/Footer.jsx.
+const CUSTOM_GROUPS = {
+  Home: [
+    {
+      heading: "About RTG section",
+      fields: [
+        { key: "text.home.aboutEyebrow", label: "Eyebrow", fallback: "This Is RTG", type: "text" },
+        { key: "text.home.aboutTitleLine1", label: "Headline — line 1", fallback: "More Than Miles.", type: "text" },
+        { key: "text.home.aboutTitleLine2", label: "Headline — line 2 (accent color)", fallback: "More Than Sport.", type: "text" },
+        { key: "text.home.aboutBody", label: "Paragraph", fallback: "Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move, connect, learn, and create experiences worth remembering.", type: "textarea" },
+        { key: "text.home.aboutButtonLabel", label: "Button label", fallback: "Discover Our Story", type: "text" },
+      ],
+    },
+  ],
+  Footer: [
+    {
+      heading: "Footer",
+      fields: [
+        { key: "text.footer.description", label: "Description (under the logo)", fallback: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.", type: "textarea" },
+        { key: "text.footer.copyright", label: "Copyright line (after \"© {year}\")", fallback: "Ride Tea GupShup. All rights reserved.", type: "text" },
+        { key: "text.footer.tagline", label: "Bottom-right tagline", fallback: "Built for athletes, by athletes.", type: "text" },
+      ],
+    },
+  ],
+};
 
-const PAGES = [...new Set(SECTIONS.map((s) => s.page))];
+const PAGES = [...new Set([...SECTIONS.map((s) => s.page), ...Object.keys(CUSTOM_GROUPS)])].sort();
 
-function Field({ label, value, fallback, saved, multiline, onChange }) {
+function Field({ label, value, fallback, multiline, onChange }) {
   return (
     <div>
-      <label className="flex items-center justify-between text-xs text-rtg-mist mb-1.5">
-        {label}
-        {saved && <span className="text-rtg-orange-400">Saved</span>}
-      </label>
+      <label className="block text-xs text-rtg-mist mb-1.5">{label}</label>
       {multiline ? (
         <textarea
           rows={3}
@@ -98,10 +114,25 @@ function Field({ label, value, fallback, saved, multiline, onChange }) {
   );
 }
 
+function SaveButton({ status, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={status === "saving"}
+      className="mt-5 inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+    >
+      {status === "saving" && <Loader2 size={14} className="animate-spin" />}
+      {status === "saved" && <Check size={14} />}
+      {status === "saved" ? "Saved" : "Save"}
+    </button>
+  );
+}
+
 export default function SiteContentAdmin() {
   const [values, setValues] = useState({});
   const [loading, setLoading] = useState(true);
-  const [savedKey, setSavedKey] = useState("");
+  const [status, setStatus] = useState({}); // { [groupKey]: "saving" | "saved" }
   const [page, setPage] = useState(PAGES[0]);
 
   useEffect(() => {
@@ -122,21 +153,28 @@ export default function SiteContentAdmin() {
       });
   }, []);
 
-  const handleChange = async (key, label, value) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    await supabase.from("site_settings").upsert({ key, value, label });
-    setSavedKey(key);
-    setTimeout(() => setSavedKey((k) => (k === key ? "" : k)), 1500);
+  const setField = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
+
+  // Saves every field in one card at once, only when "Save" is clicked —
+  // typing into a field just updates local state until then.
+  const saveGroup = async (groupKey, rows) => {
+    setStatus((s) => ({ ...s, [groupKey]: "saving" }));
+    await Promise.all(
+      rows.map(({ key, label }) => supabase.from("site_settings").upsert({ key, value: values[key] ?? "", label }))
+    );
+    setStatus((s) => ({ ...s, [groupKey]: "saved" }));
+    setTimeout(() => setStatus((s) => (s[groupKey] === "saved" ? { ...s, [groupKey]: "" } : s)), 1500);
   };
 
   const sectionsForPage = SECTIONS.filter((s) => s.page === page);
+  const customGroupsForPage = CUSTOM_GROUPS[page] || [];
 
   return (
     <div>
       <h1 className="font-display text-3xl mb-1">Site Content</h1>
       <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Edit the wording used on the public site, page by page. Changes save automatically and go live
-        immediately — no code, no developer needed.
+        Edit the wording used on the public site, page by page. Make your changes, then hit Save on that section —
+        it goes live immediately, no code, no developer needed.
       </p>
 
       {loading ? (
@@ -159,54 +197,59 @@ export default function SiteContentAdmin() {
           </div>
 
           <div className="space-y-6">
-            {page === "Home" && (
-              <div className="glass rounded-2xl p-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-rtg-mist mb-5">About RTG section</h2>
+            {customGroupsForPage.map((group) => (
+              <div key={group.heading} className="glass rounded-2xl p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-rtg-mist mb-5">{group.heading}</h2>
                 <div className="space-y-4">
-                  {HOME_ABOUT_FIELDS.map((f) => (
+                  {group.fields.map((f) => (
                     <Field
                       key={f.key}
                       label={f.label}
                       value={values[f.key]}
                       fallback={f.fallback}
-                      saved={savedKey === f.key}
                       multiline={f.type === "textarea"}
-                      onChange={(v) => handleChange(f.key, f.label, v)}
+                      onChange={(v) => setField(f.key, v)}
                     />
                   ))}
                 </div>
-              </div>
-            )}
-
-            {sectionsForPage.map((s) => (
-              <div key={s.key} className="glass rounded-2xl p-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-rtg-mist mb-5">{s.label}</h2>
-                <div className="space-y-4">
-                  <Field
-                    label="Eyebrow"
-                    value={values[`text.${s.key}.eyebrow`]}
-                    fallback={s.eyebrow}
-                    saved={savedKey === `text.${s.key}.eyebrow`}
-                    onChange={(v) => handleChange(`text.${s.key}.eyebrow`, `${s.label} — Eyebrow`, v)}
-                  />
-                  <Field
-                    label="Title"
-                    value={values[`text.${s.key}.title`]}
-                    fallback={s.title}
-                    saved={savedKey === `text.${s.key}.title`}
-                    onChange={(v) => handleChange(`text.${s.key}.title`, `${s.label} — Title`, v)}
-                  />
-                  <Field
-                    label="Subtitle"
-                    value={values[`text.${s.key}.subtitle`]}
-                    fallback={s.subtitle}
-                    saved={savedKey === `text.${s.key}.subtitle`}
-                    multiline
-                    onChange={(v) => handleChange(`text.${s.key}.subtitle`, `${s.label} — Subtitle`, v)}
-                  />
-                </div>
+                <SaveButton status={status[group.heading]} onClick={() => saveGroup(group.heading, group.fields)} />
               </div>
             ))}
+
+            {sectionsForPage.map((s) => {
+              const rows = [
+                { key: `text.${s.key}.eyebrow`, label: `${s.label} — Eyebrow` },
+                { key: `text.${s.key}.title`, label: `${s.label} — Title` },
+                { key: `text.${s.key}.subtitle`, label: `${s.label} — Subtitle` },
+              ];
+              return (
+                <div key={s.key} className="glass rounded-2xl p-6">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-rtg-mist mb-5">{s.label}</h2>
+                  <div className="space-y-4">
+                    <Field
+                      label="Eyebrow"
+                      value={values[rows[0].key]}
+                      fallback={s.eyebrow}
+                      onChange={(v) => setField(rows[0].key, v)}
+                    />
+                    <Field
+                      label="Title"
+                      value={values[rows[1].key]}
+                      fallback={s.title}
+                      onChange={(v) => setField(rows[1].key, v)}
+                    />
+                    <Field
+                      label="Subtitle"
+                      value={values[rows[2].key]}
+                      fallback={s.subtitle}
+                      multiline
+                      onChange={(v) => setField(rows[2].key, v)}
+                    />
+                  </div>
+                  <SaveButton status={status[s.key]} onClick={() => saveGroup(s.key, rows)} />
+                </div>
+              );
+            })}
           </div>
         </>
       )}

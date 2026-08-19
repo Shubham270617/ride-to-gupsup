@@ -78,11 +78,14 @@ create policy "profiles self update" on profiles
 
 -- Auto-create a profiles row whenever someone signs up with email/password
 -- directly through Supabase Auth (so every member has exactly one row here,
--- regardless of how they signed up). The very FIRST person to ever sign up
--- (via the public site or the admin Sign Up tab, doesn't matter which) is
--- also auto-promoted to admin — no manual SQL bootstrap step needed.
--- Everyone after that stays a regular member until an existing admin
--- grants them access from the Admins screen.
+-- regardless of how they signed up). The first MAX_AUTO_ADMINS people to
+-- ever sign up (via the public site or the admin Sign Up tab, doesn't
+-- matter which) are also auto-promoted to admin — e.g. the 3 people
+-- actually running RTG can each just sign up and log in, no manual SQL or
+-- "ask an existing admin to grant you access" step needed. Everyone after
+-- that stays a regular member until an existing admin grants them access
+-- from the Members screen. To change the number of auto-admin seats, edit
+-- the "< 3" here AND in claim_admin_if_seats_open() below — keep them equal.
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
@@ -93,7 +96,7 @@ begin
   values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'phone', 'email')
   on conflict (id) do nothing;
 
-  if not exists (select 1 from public.admin_profiles) then
+  if (select count(*) from public.admin_profiles) < 3 then
     insert into public.admin_profiles (id, full_name)
     values (new.id, new.raw_user_meta_data->>'full_name')
     on conflict (id) do nothing;
@@ -195,20 +198,23 @@ drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
 
--- Lets the admin seat recover itself if it ever goes empty (e.g. the only
--- admin's profiles row got deleted, which — via the cascade above — took
--- their admin_profiles row with it). Called from the client on every
--- /admin/login attempt that isn't already an admin (see AdminLogin.jsx);
+-- Covers two cases with the same "< 3" rule as handle_new_user() above:
+-- (1) one of the 3 auto-admin seats is still open (e.g. this person signed
+-- up back when fewer admins existed, or before this feature existed), and
+-- (2) the seat count dropped below 3 later (an admin's profiles row got
+-- deleted, which — via the cascade above — took their admin_profiles row
+-- with it). Called from the client on every /admin/login attempt that
+-- isn't already an admin (see AdminLogin.jsx, AuthCallback.jsx);
 -- SECURITY DEFINER is what lets a non-admin caller insert into
--- admin_profiles at all, but the emptiness check keeps this from ever
--- being usable to self-promote while a real admin already exists.
-create or replace function claim_admin_if_unclaimed()
+-- admin_profiles at all, but the count check keeps this from ever being
+-- usable to self-promote once 3 real admins already exist.
+create or replace function claim_admin_if_seats_open()
 returns boolean
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if not exists (select 1 from public.admin_profiles) then
+  if (select count(*) from public.admin_profiles) < 3 then
     insert into public.admin_profiles (id, full_name)
     select id, full_name from public.profiles where id = auth.uid()
     on conflict (id) do nothing;
@@ -218,7 +224,7 @@ begin
 end;
 $$;
 
-grant execute on function claim_admin_if_unclaimed() to authenticated;
+grant execute on function claim_admin_if_seats_open() to authenticated;
 
 create table if not exists events (
   id uuid primary key default gen_random_uuid(),
@@ -478,22 +484,22 @@ create policy "rtg-media admin delete" on storage.objects
   for delete using (bucket_id = 'rtg-media' and is_admin());
 
 -- ============================================================================
--- Bootstrapping your FIRST admin: fully automatic, no SQL needed. The very
--- first person to ever sign up (via /admin/login's Sign Up tab, or the
--- public site) is auto-promoted to admin by the handle_new_user() trigger
--- above. Every admin after that one is added from the app's Members screen.
+-- Bootstrapping your first admins: fully automatic, no SQL needed. The
+-- first 3 people to ever sign up (via /admin/login's Sign Up tab, or the
+-- public site — via /admin/login's Log In tab too, for existing members,
+-- through claim_admin_if_seats_open()) are auto-promoted to admin. Once 3
+-- exist, everyone after that stays a regular member until an existing
+-- admin grants them access from the Members screen.
 --
--- If the admin seat ever goes empty again (the only admin's profiles row
--- got deleted — which, via admin_profiles_profile_fk above, also removes
--- their admin_profiles row), it doesn't need re-bootstrapping by hand
--- either: claim_admin_if_unclaimed() runs on every /admin/login attempt
--- and auto-promotes whoever logs in next, exactly like the very first
--- signup did, for exactly as long as admin_profiles is actually empty.
+-- If a seat opens back up later (an admin's profiles row got deleted —
+-- which, via admin_profiles_profile_fk above, also removes their
+-- admin_profiles row), it refills the same automatic way: the next 1-3
+-- people to log in claim the open seat(s), no re-bootstrapping by hand.
 --
--- Caution before this site goes live publicly: whoever signs up FIRST on
--- the production database becomes the founding admin. Make sure that's you
--- — sign up on production before sharing the link — or run this once
--- afterward to promote a specific existing account instead:
+-- Caution before this site goes live publicly: the first 3 people who sign
+-- up on the production database become the founding admins. Make sure
+-- that's the right 3 people — or run this to promote a specific existing
+-- account instead (works any time, whether or not the 3 seats are full):
 --   insert into admin_profiles (id, full_name)
 --   select id, full_name from profiles where email = 'the-right-persons-email'
 --   on conflict (id) do nothing;
