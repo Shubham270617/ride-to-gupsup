@@ -12,6 +12,7 @@ import {
   Flame,
   Image as ImageIcon,
   FileText,
+  Mail,
   ShieldCheck,
   Users,
   Trophy,
@@ -39,6 +40,7 @@ const links = [
   { to: "/admin/race-results", label: "Race Results", icon: Trophy },
   { to: "/admin/site-images", label: "Site Photos", icon: ImageIcon },
   { to: "/admin/site-content", label: "Site Content", icon: FileText },
+  { to: "/admin/messages", label: "Messages", icon: Mail },
   { to: "/admin/admins", label: "Members", icon: ShieldCheck },
 ];
 

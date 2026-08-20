@@ -39,6 +39,7 @@ const ResourceAdminPage = lazy(() => import("./admin/pages/ResourceAdminPage"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
+const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
 
 function AdminFallback() {
@@ -100,6 +101,7 @@ export default function App() {
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
+          <Route path="messages" element={<MessagesAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />
         </Route>
 

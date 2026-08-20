@@ -483,6 +483,38 @@ drop policy if exists "rtg-media admin delete" on storage.objects;
 create policy "rtg-media admin delete" on storage.objects
   for delete using (bucket_id = 'rtg-media' and is_admin());
 
+-- Real submissions from the /contact page's form — previously that form
+-- only showed a fake "Message Sent!" confirmation and stored nothing.
+-- Anyone (including logged-out visitors) can submit one; only admins can
+-- read, mark as read, or delete them, via the admin Messages screen.
+create table if not exists contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  subject text,
+  message text not null,
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table contact_messages enable row level security;
+
+drop policy if exists "contact_messages public insert" on contact_messages;
+create policy "contact_messages public insert" on contact_messages
+  for insert with check (true);
+
+drop policy if exists "contact_messages admin read" on contact_messages;
+create policy "contact_messages admin read" on contact_messages
+  for select using (is_admin());
+
+drop policy if exists "contact_messages admin update" on contact_messages;
+create policy "contact_messages admin update" on contact_messages
+  for update using (is_admin());
+
+drop policy if exists "contact_messages admin delete" on contact_messages;
+create policy "contact_messages admin delete" on contact_messages
+  for delete using (is_admin());
+
 -- ============================================================================
 -- Bootstrapping your first admins: fully automatic, no SQL needed. The
 -- first 3 people to ever sign up (via /admin/login's Sign Up tab, or the

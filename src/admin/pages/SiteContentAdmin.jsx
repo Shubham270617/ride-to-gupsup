@@ -74,6 +74,17 @@ const CUSTOM_GROUPS = {
         { key: "text.home.aboutButtonLabel", label: "Button label", fallback: "Discover Our Story", type: "text" },
       ],
     },
+    {
+      heading: "Instagram Feed",
+      fields: [
+        {
+          key: "integration.instagram_embed_url",
+          label: "Embed URL (from a free widget like SnapWidget or LightWidget — leave blank to keep showing sample photos)",
+          fallback: "",
+          type: "text",
+        },
+      ],
+    },
   ],
   Footer: [
     {

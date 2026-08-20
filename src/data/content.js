@@ -8,8 +8,8 @@ export const brand = {
   shortName: "RTG",
   tagline: "Ride Together. Run Together. Grow Together.",
   sub: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.",
-  email: "hello@ridetegupshup.in",
-  phone: "+91 98765 43210",
+  email: "info@rideteagupshup.com",
+  phone: "+91 99901 71239",
   cities: ["Delhi", "Chandigarh", "Dehradun", "Jaipur", "Shimla", "Punjab", "Pune", "Mumbai"],
   members: "500+",
   social: {

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, Send, CheckCircle2, FileDown, HeartHandshake } from "lucide-react";
+import { Mail, Phone, MapPin, Send, CheckCircle2, FileDown, HeartHandshake, Loader2 } from "lucide-react";
 import { brand } from "../data/content";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import { useSiteSettings, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -24,11 +25,27 @@ export default function Contact() {
   const settings = useSiteSettings();
   const [form, setForm] = useState({ name: "", email: "", subject: subjects[0], message: "" });
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
+    setError("");
+    if (!isSupabaseConfigured) {
+      setError("Sorry, messages can't be sent right now — please email us directly instead.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error: insertError } = await supabase.from("contact_messages").insert(form);
+      if (insertError) throw insertError;
+      setSent(true);
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again, or email us directly.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -98,13 +115,24 @@ export default function Contact() {
                     placeholder="How can we help?"
                     className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors resize-none"
                   />
+                  {error && <p className="text-sm text-rtg-orange-400">{error}</p>}
+
                   <motion.button
                     type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-4 flex items-center justify-center gap-2 hover:bg-rtg-orange-400 transition-colors"
+                    disabled={submitting}
+                    whileHover={{ scale: submitting ? 1 : 1.02 }}
+                    whileTap={{ scale: submitting ? 1 : 0.98 }}
+                    className="w-full rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-4 flex items-center justify-center gap-2 hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
                   >
-                    Send Message <Send size={16} />
+                    {submitting ? (
+                      <>
+                        Sending… <Loader2 size={16} className="animate-spin" />
+                      </>
+                    ) : (
+                      <>
+                        Send Message <Send size={16} />
+                      </>
+                    )}
                   </motion.button>
                 </form>
               )}
