@@ -120,3 +120,29 @@ export async function uploadToCloudinary(file, folder = "uploads", onProgress, s
   const data = await xhrUpload(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, formData, onProgress);
   return { url: data.secure_url, resourceType: data.resource_type };
 }
+
+// Deletes a Cloudinary asset immediately (used by explicit "Delete" buttons,
+// not "Replace" — replaced photos are queued for deletion 2 days later
+// instead, see media_pending_deletions in supabase/schema.sql). Only the
+// short-lived admin session token crosses the wire; the actual Cloudinary
+// API secret stays server-side in api/cloudinary/delete.js.
+export async function deleteFromCloudinary(url, deleteEndpoint = "/api/cloudinary/delete") {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("You're not logged in.");
+
+  const res = await fetch(deleteEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ url }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const messages = {
+      not_admin: "Only admins can delete media.",
+      invalid_session: "Your session expired — please log in again.",
+    };
+    throw new Error(messages[err.error] || err.message || "Couldn't delete the file.");
+  }
+}

@@ -1,5 +1,5 @@
 import { communityGroups, brand, joinSteps, communityTimeline } from "../data/content";
-import { useTeamMembers, useWeeklySessions, useSiteImages } from "../lib/publicData";
+import { useTeamMembers, useWeeklySessions, useSiteImages, useCities } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -21,6 +21,7 @@ export default function Community() {
   const images = useSiteImages();
   const teamMembers = useTeamMembers();
   const weeklySessions = useWeeklySessions();
+  const cities = useCities();
   const hasDelhiSchedule = weeklySessions.length > 0;
 
   return (
@@ -77,7 +78,7 @@ export default function Community() {
 
       <Section contentKey="community.acrossIndia" dark eyebrow="Where We Ride" title="RTG Across India">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-          {brand.cities.map((c) => {
+          {cities.map((c) => {
             const captain = teamMembers.find((t) => t.city === c);
             return (
               <StaggerItem key={c}>

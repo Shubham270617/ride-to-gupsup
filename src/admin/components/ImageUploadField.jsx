@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, Loader2, Check } from "lucide-react";
+import { Upload, Loader2, Check, Trash2 } from "lucide-react";
 import { uploadToCloudinary } from "../../lib/cloudinaryUpload";
 import UploadProgressModal from "./UploadProgressModal";
 
@@ -7,6 +7,8 @@ export default function ImageUploadField({
   label,
   value,
   onChange,
+  onDelete,
+  deleting = false,
   folder = "uploads",
   accept = "image/*,video/*",
   signEndpoint = "/api/cloudinary/sign",
@@ -57,6 +59,18 @@ export default function ImageUploadField({
           {uploading ? "Uploading…" : value ? "Replace" : "Upload"}
           <input type="file" accept={accept} className="hidden" onChange={handleFile} disabled={uploading} />
         </label>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={uploading || deleting}
+            aria-label="Delete photo"
+            title="Delete — removes it from Cloudinary and reverts to the default"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full glass text-rtg-mist hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors disabled:opacity-50"
+          >
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          </button>
+        )}
       </div>
       {error && <p className="text-xs text-rtg-orange-400 mt-2">{error}</p>}
     </div>

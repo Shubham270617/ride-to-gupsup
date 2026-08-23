@@ -10,6 +10,7 @@ import {
   raceResults as staticRaceResults,
   calendarEvents as staticCalendarEvents,
   weeklySessions as staticWeeklySessions,
+  brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
 
@@ -269,6 +270,20 @@ export function useSiteText(key, fallback) {
 
 export function pickText(settings, key, fallback) {
   return settings[key] ?? fallback;
+}
+
+// The "Present Across India" city list — edited in one place (Site Content
+// admin, under Home) and shared by every page that shows it (Home, Sponsors,
+// Community), so they can't drift out of sync. Falls back to brand.cities
+// (data/content.js) until an admin sets it.
+export function useCities() {
+  const settings = useSiteSettings();
+  const raw = pickText(settings, "text.home.citiesList", "");
+  const parsed = raw
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  return parsed.length ? parsed : brand.cities;
 }
 
 // Every image on the site is defined in data/images.js — this merges in any

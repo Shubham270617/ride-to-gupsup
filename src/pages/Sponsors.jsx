@@ -1,5 +1,5 @@
 import { sponsorOpportunities, sponsorTiers, brand } from "../data/content";
-import { useSiteSettings, useSponsors, useSiteImages } from "../lib/publicData";
+import { useSiteSettings, useSponsors, useSiteImages, useCities } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -7,17 +7,17 @@ import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
 import { FileDown, Check, Users, TrendingUp, MapPin, Megaphone } from "lucide-react";
 
-const whySponsorStats = [
-  { icon: Users, label: "Audience", value: `${brand.members} active endurance athletes across every RTG channel` },
-  { icon: TrendingUp, label: "Reach", value: "Thousands of monthly impressions across Instagram, WhatsApp, and Strava" },
-  { icon: MapPin, label: "Cities", value: `${brand.cities.length}+ Indian cities and growing every quarter` },
-  { icon: Megaphone, label: "Brand Exposure", value: "Logo placement on jerseys, event banners, email, and social posts" },
-];
-
 export default function Sponsors() {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const sponsors = useSponsors();
+  const cities = useCities();
+  const whySponsorStats = [
+    { icon: Users, label: "Audience", value: `${brand.members} active endurance athletes across every RTG channel` },
+    { icon: TrendingUp, label: "Reach", value: "Thousands of monthly impressions across Instagram, WhatsApp, and Strava" },
+    { icon: MapPin, label: "Cities", value: `${cities.length}+ Indian cities and growing every quarter` },
+    { icon: Megaphone, label: "Brand Exposure", value: "Logo placement on jerseys, event banners, email, and social posts" },
+  ];
   return (
     <>
       <PageHero

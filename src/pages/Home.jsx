@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
-import { brand, stats, whyJoin, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions } from "../lib/publicData";
+import { stats, whyJoin, heroSlides } from "../data/content";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions, useCities } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -196,6 +196,7 @@ export default function Home() {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
+  const cities = useCities();
   const events = useEvents();
   const products = useProducts();
   const testimonials = useTestimonials();
@@ -255,20 +256,23 @@ export default function Home() {
       {/* STATS / 500+ MEMBERS + PRESENCE */}
       <Section light>
         <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mb-16">
-          {stats.map((s) => (
-            <StaggerItem key={s.label}>
-              <div className="text-center">
-                <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
-                <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
-              </div>
-            </StaggerItem>
-          ))}
+          {stats.map((s) => {
+            const value = Number(t(`text.home.stat.${s.key}`, String(s.value))) || 0;
+            return (
+              <StaggerItem key={s.label}>
+                <div className="text-center">
+                  <AnimatedCounter value={value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
+                  <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
+                </div>
+              </StaggerItem>
+            );
+          })}
         </StaggerGroup>
 
         <Reveal className="text-center">
           <h3 className="font-display text-2xl md:text-4xl mb-6">Present Across India</h3>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {brand.cities.map((c) => (
+            {cities.map((c) => (
               <span key={c} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
                 <MapPin size={14} className="text-rtg-orange-400" /> {c}
               </span>

@@ -475,6 +475,27 @@ begin
   end loop;
 end $$;
 
+-- Replacing a Site Photo (SiteImagesAdmin's "Replace" button) doesn't
+-- destroy the old Cloudinary file right away — the old URL lands here
+-- instead, and a daily cron (api/cron/purge-media.js) deletes anything
+-- that's sat for 2+ days, both from Cloudinary and this table. Deleting a
+-- photo outright (the Delete button) skips this queue entirely and destroys
+-- it immediately. No public/admin delete or update policy on purpose — only
+-- the cron (service-role, bypasses RLS) ever removes a row.
+create table if not exists media_pending_deletions (
+  id uuid primary key default gen_random_uuid(),
+  url text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table media_pending_deletions enable row level security;
+
+drop policy if exists "media_pending_deletions admin insert" on media_pending_deletions;
+create policy "media_pending_deletions admin insert" on media_pending_deletions for insert with check (is_admin());
+
+drop policy if exists "media_pending_deletions admin select" on media_pending_deletions;
+create policy "media_pending_deletions admin select" on media_pending_deletions for select using (is_admin());
+
 -- ============================================================================
 -- Storage — one public bucket for all uploaded photos/videos
 -- ============================================================================

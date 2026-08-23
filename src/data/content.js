@@ -69,14 +69,14 @@ export const coreValues = [
 ];
 
 export const stats = [
-  { label: "Active Members", value: 500, suffix: "+" },
-  { label: "Cities Across India", value: 8, suffix: "+" },
-  { label: "Total Cycling KM", value: 850000, suffix: "+" },
-  { label: "Total Running KM", value: 210000, suffix: "+" },
-  { label: "Elevation Climbed (m)", value: 320000, suffix: "+" },
-  { label: "Marathons Completed", value: 65, suffix: "+" },
-  { label: "Ironman Finishers", value: 9, suffix: "" },
-  { label: "BRM Finishers", value: 22, suffix: "" },
+  { key: "activeMembers", label: "Active Members", value: 500, suffix: "+" },
+  { key: "cities", label: "Cities Across India", value: 8, suffix: "+" },
+  { key: "cyclingKm", label: "Total Cycling KM", value: 850000, suffix: "+" },
+  { key: "runningKm", label: "Total Running KM", value: 210000, suffix: "+" },
+  { key: "elevation", label: "Elevation Climbed (m)", value: 320000, suffix: "+" },
+  { key: "marathons", label: "Marathons Completed", value: 65, suffix: "+" },
+  { key: "ironman", label: "Ironman Finishers", value: 9, suffix: "" },
+  { key: "brm", label: "BRM Finishers", value: 22, suffix: "" },
 ];
 
 export const whyJoin = [

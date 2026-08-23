@@ -75,6 +75,20 @@ const CUSTOM_GROUPS = {
       ],
     },
     {
+      heading: "Stats & Presence",
+      fields: [
+        { key: "text.home.stat.activeMembers", label: "Active Members", fallback: "500", type: "text" },
+        { key: "text.home.stat.cities", label: "Cities Across India", fallback: "8", type: "text" },
+        { key: "text.home.stat.cyclingKm", label: "Total Cycling KM", fallback: "850000", type: "text" },
+        { key: "text.home.stat.runningKm", label: "Total Running KM", fallback: "210000", type: "text" },
+        { key: "text.home.stat.elevation", label: "Elevation Climbed (m)", fallback: "320000", type: "text" },
+        { key: "text.home.stat.marathons", label: "Marathons Completed", fallback: "65", type: "text" },
+        { key: "text.home.stat.ironman", label: "Ironman Finishers", fallback: "9", type: "text" },
+        { key: "text.home.stat.brm", label: "BRM Finishers", fallback: "22", type: "text" },
+        { key: "text.home.citiesList", label: "Cities shown in \"Present Across India\" (comma-separated — also used on the Sponsors and Community pages)", fallback: "Delhi, Chandigarh, Dehradun, Jaipur, Shimla, Punjab, Pune, Mumbai", type: "text" },
+      ],
+    },
+    {
       heading: "Instagram Feed",
       fields: [
         {
