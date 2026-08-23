@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
 import WeeklyRides from "./pages/WeeklyRides";
+import WeeklySessionDetail from "./pages/WeeklySessionDetail";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Merchandise from "./pages/Merchandise";
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/about" element={<About />} />
           <Route path="/community" element={<Community />} />
           <Route path="/weekly-rides" element={<WeeklyRides />} />
+          <Route path="/weekly-rides/:slug" element={<WeeklySessionDetail />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events/:slug" element={<EventDetail />} />
           <Route path="/merchandise" element={<Merchandise />} />

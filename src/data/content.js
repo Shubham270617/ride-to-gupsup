@@ -106,19 +106,15 @@ export const whyJoin = [
   },
 ];
 
-export const weeklyActivities = [
-  { day: "Friday", name: "Friday Bricks", detail: "30km Cycling + 5km Run · Nehru Park, Delhi · 5:00–5:30 AM" },
-  { day: "Sunday", name: "Long Ride", detail: "60–100km road ride for all levels" },
-  { day: "Wednesday", name: "Evening Run Club", detail: "5–10km tempo & easy run" },
-];
-
-// Full weekly schedule shown on /weekly-rides — DB-backed via the admin's
+// Full weekly schedule shown on /weekly-rides and Home's Weekly Activities
+// preview — DB-backed via the admin's
 // "Weekly Sessions" screen, this is just the fallback shown before any real
 // rows exist.
 export const weeklySessions = [
   {
     day: "Friday",
     name: "Friday Bricks",
+    slug: "friday-bricks",
     time: "5:00 – 5:30 AM",
     location: "Nehru Park, Delhi",
     format: "30km Cycling + 5km Run",
@@ -130,6 +126,7 @@ export const weeklySessions = [
   {
     day: "Sunday",
     name: "Sunday Long Ride",
+    slug: "sunday-long-ride",
     time: "6:00 AM",
     location: "Varies (announced weekly)",
     format: "60–120km · Intermediate to Advanced",
@@ -141,6 +138,7 @@ export const weeklySessions = [
   {
     day: "Wednesday",
     name: "Wednesday Run Club",
+    slug: "wednesday-run-club",
     time: "6:30 AM",
     location: "Lodhi Garden, Delhi",
     format: "5–10km · All Levels",
@@ -152,6 +150,7 @@ export const weeklySessions = [
   {
     day: "Saturday",
     name: "Saturday Swim Clinic",
+    slug: "saturday-swim-clinic",
     time: "7:00 AM",
     location: "DLF Fort Pool, Delhi",
     format: "1–3km · Beginner to Intermediate",

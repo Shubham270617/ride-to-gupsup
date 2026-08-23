@@ -11,10 +11,53 @@ const socials = [
   { platform: "strava", icon: StravaIcon, ...brand.social.strava },
 ];
 
-const legalLinks = [
-  { to: "/community-guidelines", label: "Community Guidelines" },
-  { to: "/privacy", label: "Privacy Policy" },
-  { to: "/terms", label: "Terms" },
+// The office/contact address shown in the footer is just Delhi — brand.cities
+// (used elsewhere, e.g. Community's "RTG Across India") stays the full
+// multi-city list; this is deliberately narrower, so it's its own constant.
+const CONTACT_CITY = "Delhi";
+
+const cols = [
+  {
+    title: "Community",
+    links: [
+      { to: "/about", label: "About RTG" },
+      { to: "/community", label: "Our Community" },
+      { to: "/weekly-rides", label: "Weekly Rides" },
+      { to: "/gallery", label: "Gallery" },
+      { to: "/community", label: "Volunteer" },
+    ],
+  },
+  {
+    title: "Get Involved",
+    links: [
+      { to: "/events", label: "Events" },
+      { to: "/challenges", label: "Challenges" },
+      { to: "/race-calendar", label: "Race Calendar" },
+      { to: "/race-results", label: "Race Results" },
+      { to: "/sponsors", label: "Sponsor With RTG" },
+      { to: "/contact", label: "Become Chapter Captain" },
+    ],
+  },
+  {
+    title: "More",
+    links: [
+      { to: "/merchandise", label: "Store" },
+      { to: "/merchandise", label: "Kit" },
+      { to: "/blog", label: "Resources" },
+      { to: "/safety", label: "Safety" },
+      { to: "/faq", label: "FAQ" },
+      { to: "/contact", label: "Contact" },
+      { to: "/contact", label: "Media" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { to: "/community-guidelines", label: "Community Guidelines" },
+      { to: "/privacy", label: "Privacy Policy" },
+      { to: "/terms", label: "Terms" },
+    ],
+  },
 ];
 
 export default function Footer() {
@@ -22,10 +65,10 @@ export default function Footer() {
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
   return (
-    <footer className="relative bg-rtg-purple-950 border-t border-white/10 pt-10 pb-6 px-6 md:px-10 overflow-hidden">
+    <footer className="relative bg-rtg-purple-950 border-t border-white/10 pt-14 pb-6 px-6 md:px-10 overflow-hidden">
       <div className="max-w-7xl mx-auto relative">
-        <div className="grid sm:grid-cols-3 gap-8 mb-8">
-          <div className="sm:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-10 mb-10">
+          <div className="col-span-2">
             <img src={images.logo} alt={brand.name} className="h-9 w-auto mb-3" />
             <p className="text-rtg-mist text-sm leading-relaxed max-w-xs mb-4">
               {t(
@@ -49,25 +92,27 @@ export default function Footer() {
             </div>
           </div>
 
+          {cols.map((c) => (
+            <div key={c.title}>
+              <h4 className="font-display text-base tracking-wide mb-3 text-rtg-orange-400">{c.title}</h4>
+              <ul className="space-y-2">
+                {c.links.map((l) => (
+                  <li key={l.label}>
+                    <Link to={l.to} className="text-sm text-rtg-mist hover:text-rtg-white transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
           <div>
             <h4 className="font-display text-base tracking-wide mb-3 text-rtg-orange-400">Contact</h4>
             <ul className="space-y-2 text-sm text-rtg-mist">
               <li className="flex items-start gap-2"><Mail size={15} className="mt-0.5 shrink-0" /> {brand.email}</li>
               <li className="flex items-start gap-2"><Phone size={15} className="mt-0.5 shrink-0" /> {brand.phone}</li>
-              <li className="flex items-start gap-2"><MapPin size={15} className="mt-0.5 shrink-0" /> {brand.cities.join(", ")}</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-display text-base tracking-wide mb-3 text-rtg-orange-400">Legal</h4>
-            <ul className="space-y-2">
-              {legalLinks.map((l) => (
-                <li key={l.label}>
-                  <Link to={l.to} className="text-sm text-rtg-mist hover:text-rtg-white transition-colors">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              <li className="flex items-start gap-2"><MapPin size={15} className="mt-0.5 shrink-0" /> {CONTACT_CITY}</li>
             </ul>
           </div>
         </div>

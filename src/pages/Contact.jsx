@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, CheckCircle2, FileDown, HeartHandshake, Loader2 } from "lucide-react";
 import { brand } from "../data/content";
@@ -18,12 +19,23 @@ const socials = [
   { platform: "strava", icon: StravaIcon, ...brand.social.strava },
 ];
 
-const subjects = ["General Question", "Volunteering", "Sponsorship / Partnership", "Media / Press", "Chapter Captain"];
+const subjects = ["General Question", "Join a Weekly Activity", "Volunteering", "Sponsorship / Partnership", "Media / Press", "Chapter Captain"];
 
 export default function Contact() {
   const images = useSiteImages();
   const settings = useSiteSettings();
-  const [form, setForm] = useState({ name: "", email: "", subject: subjects[0], message: "" });
+  // "Join Now" on a weekly session's page links here with ?activity=<name>
+  // — pre-fills the form so the message arrives with real context instead
+  // of a blank "I'd like to join" the admin has to ask follow-up questions
+  // about.
+  const [searchParams] = useSearchParams();
+  const activity = searchParams.get("activity");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    subject: activity ? "Join a Weekly Activity" : subjects[0],
+    message: activity ? `I'd like to join: ${activity}\n\n` : "",
+  });
   const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -160,7 +172,7 @@ export default function Contact() {
                   <MapPin className="text-rtg-orange-400 shrink-0 mt-0.5" size={20} />
                   <div>
                     <p className="text-xs uppercase tracking-widest text-rtg-mist">Based In</p>
-                    <p className="font-medium">{brand.cities.join(", ")}</p>
+                    <p className="font-medium">Delhi</p>
                   </div>
                 </li>
               </ul>

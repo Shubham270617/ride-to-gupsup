@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
-import { brand, stats, whyJoin, weeklyActivities, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
+import { brand, stats, whyJoin, heroSlides } from "../data/content";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -13,7 +13,6 @@ import MasonryGallery from "../components/ui/MasonryGallery";
 import RotatingPhotoWheel from "../components/ui/RotatingPhotoWheel";
 import TestimonialSlider from "../components/ui/TestimonialSlider";
 import Newsletter from "../components/sections/Newsletter";
-import InstagramFeed from "../components/sections/InstagramFeed";
 import JoinCTA from "../components/sections/JoinCTA";
 import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import useIsMobile from "../hooks/useIsMobile";
@@ -202,6 +201,7 @@ export default function Home() {
   const testimonials = useTestimonials();
   const galleryItems = useGalleryItems();
   const sponsors = useSponsors();
+  const weeklySessions = useWeeklySessions();
   const [galleryFilter, setGalleryFilter] = useState("All");
   const filteredGallery = galleryItems.filter((item) => {
     if (galleryFilter === "All") return true;
@@ -284,19 +284,22 @@ export default function Home() {
 
       {/* WEEKLY ACTIVITIES */}
       <Section contentKey="home.weeklyActivities" eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." light>
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
-          {weeklyActivities.map((a) => (
-            <Reveal key={a.name}>
-              <GlassCard className="h-full text-center">
-                <span className="text-rtg-orange-400 font-display text-xl tracking-wide">{a.day}</span>
-                <h3 className="font-display text-3xl my-3">{a.name}</h3>
-                <p className="text-rtg-mist text-sm leading-relaxed">{a.detail}</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {weeklySessions.slice(0, 4).map((s) => (
+            <Reveal key={s.slug || s.name}>
+              <GlassCard className="h-full text-center flex flex-col">
+                <span className="text-rtg-orange-400 font-display text-xl tracking-wide">{s.day}</span>
+                <h3 className="font-display text-2xl my-3">{s.name}</h3>
+                <p className="text-rtg-mist text-sm leading-relaxed flex-1 mb-5">{s.format || s.description}</p>
+                <Button to={s.slug ? `/weekly-rides/${s.slug}` : "/weekly-rides"} variant="outline">
+                  View Details
+                </Button>
               </GlassCard>
             </Reveal>
           ))}
         </div>
         <div className="text-center">
-          <Button to="/weekly-rides" variant="outline">See Friday Bricks Details</Button>
+          <Button to="/weekly-rides" variant="outline">See Full Weekly Schedule</Button>
         </div>
       </Section>
 
@@ -391,7 +394,7 @@ export default function Home() {
       </Section>
 
       <Newsletter />
-      <InstagramFeed />
+      {/* Instagram feed hidden for now, per request — planned for next sprint. Re-add <InstagramFeed /> here when ready. */}
       <JoinCTA />
     </>
   );

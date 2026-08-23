@@ -14,6 +14,7 @@ export default function InstagramFeed() {
 
   return (
     <Section
+      dark
       eyebrow="Follow Along"
       title={
         <>

@@ -166,6 +166,7 @@ export const resources = {
     fields: [
       { name: "day", label: "Day", type: "select", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], required: true },
       { name: "name", label: "Session Name", type: "text", required: true, placeholder: "e.g. Friday Bricks" },
+      { name: "slug", label: "URL Slug", type: "slug", from: "name", required: true, hint: "Auto-generated from the session name — this becomes its own page address, e.g. rideteagupshup.com/weekly-rides/friday-bricks." },
       { name: "time", label: "Time", type: "text", placeholder: "e.g. 5:00 – 6:30 AM" },
       { name: "location", label: "Location", type: "text", placeholder: "e.g. Nehru Park, Delhi" },
       { name: "route_map_query", label: "Route Map", type: "map", placeholder: "e.g. Nehru Park, New Delhi" },

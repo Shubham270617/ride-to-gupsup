@@ -182,12 +182,16 @@ export function useCalendarEvents() {
   });
 }
 
-// Real, admin-manageable weekly session schedule for the Weekly Rides page.
+// Real, admin-manageable weekly session schedule for the Weekly Rides page
+// and Home's Weekly Activities preview — each session's `slug` gives it its
+// own page at /weekly-rides/<slug> (see useWeeklySession below).
 export function useWeeklySessions() {
   const staticFallback = staticWeeklySessions;
   return useSupabaseList("weekly_sessions", {
     staticFallback,
     mapRow: (r) => ({
+      id: r.id,
+      slug: r.slug,
       day: r.day,
       name: r.name,
       time: r.time,
@@ -200,6 +204,13 @@ export function useWeeklySessions() {
       description: r.description,
     }),
   });
+}
+
+// A single weekly session by slug (or id, as a fallback) — powers the
+// per-activity detail page.
+export function useWeeklySession(slugOrId) {
+  const sessions = useWeeklySessions();
+  return sessions.find((s) => s.slug === slugOrId || s.id === slugOrId);
 }
 
 // Small generic key/value settings table (see api/.env-free equivalent:

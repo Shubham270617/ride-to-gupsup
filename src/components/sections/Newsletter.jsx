@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, CheckCircle2 } from "lucide-react";
 import Reveal from "../ui/Reveal";
+import Section from "../ui/Section";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-10">
+    <Section light>
       <Reveal className="max-w-4xl mx-auto glass rounded-3xl p-10 md:p-16 text-center relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-rtg-orange-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-rtg-purple-500/30 rounded-full blur-3xl" />
@@ -54,6 +55,6 @@ export default function Newsletter() {
           )}
         </div>
       </Reveal>
-    </section>
+    </Section>
   );
 }

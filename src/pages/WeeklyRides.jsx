@@ -1,4 +1,5 @@
-import { MapPin, Clock, Bike, CheckCircle2, Gauge, IndianRupee } from "lucide-react";
+import { MapPin, Clock, Bike, CheckCircle2, Gauge, IndianRupee, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { rideSafety, whatToBring, rideFaqs, brand } from "../data/content";
 import { useWeeklySessions, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
@@ -119,6 +120,14 @@ export default function WeeklyRides() {
                       referrerPolicy="no-referrer-when-downgrade"
                     />
                   </div>
+                )}
+                {s.slug && (
+                  <Link
+                    to={`/weekly-rides/${s.slug}`}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors mt-4"
+                  >
+                    View Details <ArrowRight size={12} />
+                  </Link>
                 )}
               </GlassCard>
             </StaggerItem>

@@ -419,6 +419,13 @@ create table if not exists weekly_sessions (
   created_at timestamptz not null default now()
 );
 
+-- Gives each weekly session its own page at /weekly-rides/<slug> (auto-filled
+-- from the name in the admin form, same pattern as events.slug). Nullable
+-- and unique rather than "not null" since it's being added after the table
+-- already existed — existing rows without one just don't have a detail page
+-- until an admin opens and re-saves them.
+alter table weekly_sessions add column if not exists slug text unique;
+
 -- Event-specific photos/videos: lets "View Event Gallery" on an event's
 -- detail page show only that event's media instead of the whole gallery.
 -- A slug reference (not a uuid FK) so admins can type it directly in the
