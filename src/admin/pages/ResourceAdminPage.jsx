@@ -37,11 +37,11 @@ export default function ResourceAdminPage({ resource }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl">{resource.title}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl">{resource.title}</h1>
         <button
           onClick={() => setEditing({})}
-          className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors self-start sm:self-auto"
         >
           <Plus size={16} /> Add {resource.singular}
         </button>

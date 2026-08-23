@@ -1,4 +1,6 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -18,6 +20,8 @@ import {
   Trophy,
   LogOut,
   ExternalLink,
+  Menu,
+  X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { images } from "../data/images";
@@ -47,59 +51,116 @@ const links = [
 export default function AdminLayout() {
   const { adminName, user } = useAdminSession();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Picking a page from the drawer should close it, not leave it open over
+  // the new screen.
+  useEffect(() => setMobileOpen(false), [location.pathname]);
 
   const handleLogout = async () => {
     await supabase?.auth.signOut();
     navigate("/admin/login", { replace: true });
   };
 
+  const sidebarContent = (
+    <>
+      <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <img src={images.logo} alt={brand.name} className="h-8 w-auto" />
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden text-rtg-mist hover:text-rtg-white transition-colors"
+          aria-label="Close menu"
+        >
+          <X size={22} />
+        </button>
+      </div>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {links.map((l) => (
+          <NavLink
+            key={l.to}
+            to={l.to}
+            end={l.end}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                isActive ? "bg-rtg-orange-500/15 text-rtg-orange-300" : "text-rtg-mist hover:text-rtg-white hover:bg-white/5"
+              }`
+            }
+          >
+            <l.icon size={17} />
+            {l.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="p-3 border-t border-white/10 space-y-1">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-white hover:bg-white/5 transition-colors"
+        >
+          <ExternalLink size={17} /> View Site
+        </a>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-orange-400 hover:bg-white/5 transition-colors"
+        >
+          <LogOut size={17} /> Log Out
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <ConfirmProvider>
-    <div className="min-h-svh bg-rtg-ink flex">
-      <aside className="w-60 shrink-0 border-r border-white/10 flex flex-col">
-        <div className="p-5 border-b border-white/10">
-          <img src={images.logo} alt={brand.name} className="h-8 w-auto" />
-        </div>
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              end={l.end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  isActive ? "bg-rtg-orange-500/15 text-rtg-orange-300" : "text-rtg-mist hover:text-rtg-white hover:bg-white/5"
-                }`
-              }
+    <div className="min-h-svh bg-rtg-ink md:flex">
+      {/* Mobile top bar — replaces the always-visible sidebar below md */}
+      <div className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-white/10 bg-rtg-ink/95 backdrop-blur">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="text-rtg-white p-1 -ml-1"
+          aria-label="Open menu"
+        >
+          <Menu size={22} />
+        </button>
+        <img src={images.logo} alt={brand.name} className="h-6 w-auto" />
+        <span className="w-8" aria-hidden="true" />
+      </div>
+
+      {/* Mobile drawer + backdrop */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              className="md:hidden fixed inset-0 z-40 bg-black/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              className="md:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-rtg-ink border-r border-white/10 flex flex-col"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             >
-              <l.icon size={17} />
-              {l.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="p-3 border-t border-white/10 space-y-1">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-white hover:bg-white/5 transition-colors"
-          >
-            <ExternalLink size={17} /> View Site
-          </a>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-orange-400 hover:bg-white/5 transition-colors"
-          >
-            <LogOut size={17} /> Log Out
-          </button>
-        </div>
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop sidebar — always visible at md and up */}
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-white/10 flex-col">
+        {sidebarContent}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 shrink-0 border-b border-white/10 flex items-center justify-end px-6">
+        <header className="hidden md:flex h-16 shrink-0 border-b border-white/10 items-center justify-end px-6">
           <span className="text-sm text-rtg-mist">{adminName || user?.email}</span>
         </header>
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8">
           <Outlet />
         </main>
       </div>
