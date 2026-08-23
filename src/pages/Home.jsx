@@ -253,37 +253,35 @@ export default function Home() {
       </Section>
 
       {/* STATS / 500+ MEMBERS + PRESENCE */}
-      <section className="py-20 md:py-28 px-6 md:px-10 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mb-16">
-            {stats.map((s) => (
-              <StaggerItem key={s.label}>
-                <div className="text-center">
-                  <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
-                  <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
+      <Section light>
+        <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mb-16">
+          {stats.map((s) => (
+            <StaggerItem key={s.label}>
+              <div className="text-center">
+                <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
+                <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
+              </div>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
 
-          <Reveal className="text-center">
-            <h3 className="font-display text-2xl md:text-4xl mb-6">Present Across India</h3>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              {brand.cities.map((c) => (
-                <span key={c} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
-                  <MapPin size={14} className="text-rtg-orange-400" /> {c}
-                </span>
-              ))}
-              <span className="px-5 py-2.5 rounded-full text-sm font-semibold text-rtg-orange-400 border-2 border-dashed border-rtg-orange-400/40">
-                + Expanding
+        <Reveal className="text-center">
+          <h3 className="font-display text-2xl md:text-4xl mb-6">Present Across India</h3>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {brand.cities.map((c) => (
+              <span key={c} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
+                <MapPin size={14} className="text-rtg-orange-400" /> {c}
               </span>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+            ))}
+            <span className="px-5 py-2.5 rounded-full text-sm font-semibold text-rtg-orange-400 border-2 border-dashed border-rtg-orange-400/40">
+              + Expanding
+            </span>
+          </div>
+        </Reveal>
+      </Section>
 
       {/* WEEKLY ACTIVITIES */}
-      <Section contentKey="home.weeklyActivities" eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." light>
+      <Section contentKey="home.weeklyActivities" eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." dark>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {weeklySessions.slice(0, 4).map((s) => (
             <Reveal key={s.slug || s.name}>
@@ -304,7 +302,7 @@ export default function Home() {
       </Section>
 
       {/* UPCOMING EVENTS */}
-      <Section contentKey="home.upcomingEvents" eyebrow="Don't Miss Out" title="Upcoming Events" dark>
+      <Section contentKey="home.upcomingEvents" eyebrow="Don't Miss Out" title="Upcoming Events" light>
         <div className="grid md:grid-cols-2 gap-8 mb-8">
           <Reveal className="md:col-span-2">
             <EventCard event={events[0]} featured />
@@ -321,7 +319,7 @@ export default function Home() {
       </Section>
 
       {/* GALLERY PREVIEW */}
-      <Section contentKey="home.gallery" eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." light>
+      <Section contentKey="home.gallery" eyebrow="Moments" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." dark>
         <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
           {GALLERY_PREVIEW_CATEGORIES.map((c) => (
             <button
@@ -346,7 +344,7 @@ export default function Home() {
       </Section>
 
       {/* MERCH PREVIEW */}
-      <Section contentKey="home.store" eyebrow="RTG Store" title="Gear Up Like a Pro" dark>
+      <Section contentKey="home.store" eyebrow="RTG Store" title="Gear Up Like a Pro" light>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {products.slice(0, 4).map((p) => (
             <Reveal key={p.id}>
@@ -361,7 +359,7 @@ export default function Home() {
 
       {/* SPONSORS */}
       {sponsors.length > 0 && (
-        <Section contentKey="home.sponsors" eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement." light>
+        <Section contentKey="home.sponsors" eyebrow="Trusted By" title="Our Sponsors & Partners" subtitle="Brands that fuel the RTG movement." dark>
           <StaggerGroup className="flex flex-wrap items-center justify-center gap-6">
             {sponsors.map((s) => (
               <StaggerItem key={s.name}>
@@ -388,12 +386,21 @@ export default function Home() {
         </Section>
       )}
 
-      {/* TESTIMONIALS */}
-      <Section contentKey="home.testimonials" eyebrow="Athlete Voices" title="What Our Community Says" dark>
+      {/* TESTIMONIALS — Sponsors right above only renders once a real
+          sponsor exists, so this flips dark/light to match whichever
+          section actually ended up before it, keeping the alternation
+          correct either way instead of assuming Sponsors is always there. */}
+      <Section
+        contentKey="home.testimonials"
+        eyebrow="Athlete Voices"
+        title="What Our Community Says"
+        light={sponsors.length > 0}
+        dark={sponsors.length === 0}
+      >
         <TestimonialSlider items={testimonials} />
       </Section>
 
-      <Newsletter />
+      <Newsletter dark={sponsors.length > 0} />
       {/* Instagram feed hidden for now, per request — planned for next sprint. Re-add <InstagramFeed /> here when ready. */}
       <JoinCTA />
     </>

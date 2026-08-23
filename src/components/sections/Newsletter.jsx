@@ -4,7 +4,11 @@ import { Send, CheckCircle2 } from "lucide-react";
 import Reveal from "../ui/Reveal";
 import Section from "../ui/Section";
 
-export default function Newsletter() {
+// `dark` lets a page override the default light background when this
+// section needs to continue that page's own light/dark alternation
+// differently (see Home.jsx, where an extra section above it shifted the
+// whole sequence's parity).
+export default function Newsletter({ dark = false }) {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -15,7 +19,7 @@ export default function Newsletter() {
   };
 
   return (
-    <Section light>
+    <Section light={!dark} dark={dark}>
       <Reveal className="max-w-4xl mx-auto glass rounded-3xl p-10 md:p-16 text-center relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-rtg-orange-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-rtg-purple-500/30 rounded-full blur-3xl" />

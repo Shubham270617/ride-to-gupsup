@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Upload, Trash2, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Upload, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { uploadToCloudinary } from "../../lib/cloudinaryUpload";
 import useTable from "../useTable";
 import { useConfirm } from "../components/ConfirmDialog";
 import UploadProgressModal from "../components/UploadProgressModal";
 
 const CATEGORIES = ["Cycling", "Running", "Swimming", "Events", "Volunteers"];
+const PAGE_SIZE = 24;
 
 export default function GalleryAdmin() {
   const confirm = useConfirm();
@@ -15,6 +16,16 @@ export default function GalleryAdmin() {
   const [error, setError] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [eventSlug, setEventSlug] = useState("");
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  // If a delete/upload changes the row count and the current page no longer
+  // exists (e.g. you were on the last page and it emptied out), snap back
+  // to the new last page instead of showing a blank grid.
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -41,6 +52,10 @@ export default function GalleryAdmin() {
         });
         nextSort += 1;
       }
+      // New uploads get the highest sort_order, so they land on the last
+      // page — jump there so they're visible right away instead of looking
+      // like the upload silently did nothing.
+      setPage(Math.max(1, Math.ceil((rows.length + files.length) / PAGE_SIZE)));
     } catch (err) {
       setError(err.message || "Upload failed");
     } finally {
@@ -101,27 +116,61 @@ export default function GalleryAdmin() {
       ) : rows.length === 0 ? (
         <p className="text-rtg-mist text-sm py-10 text-center">No gallery items yet — upload your first photo or video.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {rows.map((row) => (
-            <div key={row.id} className="relative group rounded-xl overflow-hidden aspect-square bg-white/5">
-              {row.media_type === "video" ? (
-                <video src={row.media_url} className="w-full h-full object-cover" muted />
-              ) : (
-                <img src={row.media_url} alt={row.caption || ""} className="w-full h-full object-cover" />
-              )}
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+            {pageRows.map((row) => (
+              <div key={row.id} className="relative group rounded-xl overflow-hidden aspect-square bg-white/5">
+                {row.media_type === "video" ? (
+                  <video src={row.media_url} className="w-full h-full object-cover" muted />
+                ) : (
+                  <img src={row.media_url} alt={row.caption || ""} className="w-full h-full object-cover" />
+                )}
+                <button
+                  onClick={() => handleDelete(row)}
+                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-rtg-ink/80 flex items-center justify-center text-rtg-white opacity-0 group-hover:opacity-100 hover:text-rtg-orange-400 transition-all"
+                  aria-label="Delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+                <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wide bg-rtg-ink/80 px-2 py-0.5 rounded-full text-rtg-mist">
+                  {row.category ? `${row.category} · ${row.media_type}` : row.media_type}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5">
               <button
-                onClick={() => handleDelete(row)}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-rtg-ink/80 flex items-center justify-center text-rtg-white opacity-0 group-hover:opacity-100 hover:text-rtg-orange-400 transition-all"
-                aria-label="Delete"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                aria-label="Previous page"
+                className="w-9 h-9 rounded-full glass flex items-center justify-center text-rtg-mist hover:text-rtg-white transition-colors disabled:opacity-40 disabled:pointer-events-none"
               >
-                <Trash2 size={14} />
+                <ChevronLeft size={16} />
               </button>
-              <span className="absolute bottom-2 left-2 text-[10px] uppercase tracking-wide bg-rtg-ink/80 px-2 py-0.5 rounded-full text-rtg-mist">
-                {row.category ? `${row.category} · ${row.media_type}` : row.media_type}
-              </span>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`w-9 h-9 rounded-full text-sm font-semibold transition-colors ${
+                    n === page ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-mist hover:text-rtg-white"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                aria-label="Next page"
+                className="w-9 h-9 rounded-full glass flex items-center justify-center text-rtg-mist hover:text-rtg-white transition-colors disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
