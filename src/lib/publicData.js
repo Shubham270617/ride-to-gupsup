@@ -18,9 +18,18 @@ import { images as staticImages } from "../data/images";
  * loaded. Starts from the static content.js/images.js values so pages never
  * show a blank/loading state — if Supabase is unreachable or a table is
  * still empty, the static fallback just stays on screen.
+ *
+ * Also reports `loading` (true until the real fetch settles, one way or
+ * another). Most callers only need the list and can ignore it — but a
+ * detail page doing `items.find(slug)` MUST wait for loading to finish
+ * before deciding "not found": on the very first render, `items` is still
+ * just the static fallback, which usually doesn't contain the real slug
+ * being looked up, so redirecting immediately would fire before the real
+ * data — the one that actually has the match — ever gets a chance to load.
  */
 function useSupabaseList(table, { staticFallback, mapRow, orderBy = "sort_order", ascending = true, filterPublished = true }) {
   const [items, setItems] = useState(staticFallback);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -30,15 +39,16 @@ function useSupabaseList(table, { staticFallback, mapRow, orderBy = "sort_order"
 
     let cancelled = false;
     query.then(({ data, error }) => {
-      if (cancelled || error || !data || data.length === 0) return;
-      setItems(data.map(mapRow));
+      if (cancelled) return;
+      if (!error && data && data.length > 0) setItems(data.map(mapRow));
+      setLoading(false);
     });
     return () => {
       cancelled = true;
     };
   }, [table]);
 
-  return items;
+  return { items, loading };
 }
 
 const mapEventRow = (r) => ({
@@ -61,22 +71,25 @@ const mapEventRow = (r) => ({
 });
 
 export function useEvents() {
-  return useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow });
+  return useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow }).items;
 }
 
 // Used only for the "Upcoming Event" teaser in the login popup — unlike
 // useEvents(), this never falls back to placeholder content, so the teaser
 // simply doesn't render until a real event exists in the database.
 export function useUpcomingEvent() {
-  const events = useSupabaseList("events", { staticFallback: [], mapRow: mapEventRow });
+  const { items: events } = useSupabaseList("events", { staticFallback: [], mapRow: mapEventRow });
   return events.find((e) => e.featured) || events[0] || null;
 }
 
-/** Find one event by slug/id — used by the event detail page. Falls back to
- * scanning the same list useEvents() already resolves (DB or static). */
+/** Find one event by slug/id — used by the event detail page. Returns
+ * `loading` too: while it's true, `event` being undefined doesn't yet mean
+ * "no such event," just "the real data hasn't arrived yet" — see the
+ * useSupabaseList comment above for why that distinction matters here. */
 export function useEvent(slugOrId) {
-  const events = useEvents();
-  return events.find((e) => e.slug === slugOrId || e.id === slugOrId);
+  const { items: events, loading } = useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow });
+  const event = events.find((e) => e.slug === slugOrId || e.id === slugOrId);
+  return { event, loading };
 }
 
 export function useProducts() {
@@ -84,7 +97,7 @@ export function useProducts() {
     staticFallback: staticProducts,
     filterPublished: false,
     mapRow: (r) => ({ id: r.id, name: r.name, price: Number(r.price), tag: r.tag, image: r.image_url }),
-  });
+  }).items;
 }
 
 export function useBlogPosts() {
@@ -92,7 +105,7 @@ export function useBlogPosts() {
     staticFallback: staticBlogPosts,
     orderBy: "published_at",
     mapRow: (r) => ({ id: r.id, title: r.title, category: r.category, excerpt: r.excerpt, image: r.cover_image_url }),
-  });
+  }).items;
 }
 
 export function useChallenges() {
@@ -100,7 +113,7 @@ export function useChallenges() {
     staticFallback: staticChallenges,
     filterPublished: false,
     mapRow: (r) => ({ title: r.title, period: r.period, desc: r.description }),
-  });
+  }).items;
 }
 
 // Never falls back to placeholder company names — showing fake "sponsors"
@@ -111,14 +124,14 @@ export function useSponsors() {
     staticFallback: [],
     filterPublished: false,
     mapRow: (r) => ({ name: r.name, logo: r.logo_url, tier: r.tier, website: r.website_url }),
-  });
+  }).items;
 }
 
 export function useTestimonials() {
   return useSupabaseList("testimonials", {
     staticFallback: staticTestimonials,
     mapRow: (r) => ({ name: r.name, role: r.role, quote: r.quote, image: r.avatar_url }),
-  });
+  }).items;
 }
 
 const FALLBACK_GALLERY_CATEGORIES = ["Cycling", "Running", "Events", "Cycling", "Events", "Running", "Cycling", "Swimming", "Running", "Events", "Volunteers", "Cycling"];
@@ -132,7 +145,7 @@ export function useGalleryItems() {
   return useSupabaseList("gallery_items", {
     staticFallback,
     mapRow: (r) => ({ url: r.media_url, type: r.media_type, caption: r.caption, category: r.category }),
-  });
+  }).items;
 }
 
 export function useTeamMembers() {
@@ -140,7 +153,7 @@ export function useTeamMembers() {
   return useSupabaseList("team_members", {
     staticFallback,
     mapRow: (r) => ({ name: r.name, role: r.role, city: r.city, sport: r.sport, instagramUrl: r.instagram_url, image: r.avatar_url }),
-  });
+  }).items;
 }
 
 export function useRaceResults() {
@@ -159,7 +172,7 @@ export function useRaceResults() {
       year: r.year,
       certificateUrl: r.certificate_url,
     }),
-  });
+  }).items;
 }
 
 // Real, admin-manageable race calendar — replaces the old hardcoded list so
@@ -179,38 +192,42 @@ export function useCalendarEvents() {
       difficulty: r.difficulty,
       slug: r.event_slug,
     }),
-  });
+  }).items;
 }
+
+const mapWeeklySessionRow = (r) => ({
+  id: r.id,
+  slug: r.slug,
+  day: r.day,
+  name: r.name,
+  time: r.time,
+  location: r.location,
+  format: r.format,
+  difficulty: r.difficulty,
+  paceGroup: r.pace_group,
+  routeMapQuery: r.route_map_query,
+  cost: r.cost,
+  description: r.description,
+});
 
 // Real, admin-manageable weekly session schedule for the Weekly Rides page
 // and Home's Weekly Activities preview — each session's `slug` gives it its
 // own page at /weekly-rides/<slug> (see useWeeklySession below).
 export function useWeeklySessions() {
-  const staticFallback = staticWeeklySessions;
-  return useSupabaseList("weekly_sessions", {
-    staticFallback,
-    mapRow: (r) => ({
-      id: r.id,
-      slug: r.slug,
-      day: r.day,
-      name: r.name,
-      time: r.time,
-      location: r.location,
-      format: r.format,
-      difficulty: r.difficulty,
-      paceGroup: r.pace_group,
-      routeMapQuery: r.route_map_query,
-      cost: r.cost,
-      description: r.description,
-    }),
-  });
+  return useSupabaseList("weekly_sessions", { staticFallback: staticWeeklySessions, mapRow: mapWeeklySessionRow }).items;
 }
 
 // A single weekly session by slug (or id, as a fallback) — powers the
-// per-activity detail page.
+// per-activity detail page. Returns `loading` for the same reason useEvent
+// does: don't treat "not found yet" as "doesn't exist" until the real
+// fetch has actually settled.
 export function useWeeklySession(slugOrId) {
-  const sessions = useWeeklySessions();
-  return sessions.find((s) => s.slug === slugOrId || s.id === slugOrId);
+  const { items: sessions, loading } = useSupabaseList("weekly_sessions", {
+    staticFallback: staticWeeklySessions,
+    mapRow: mapWeeklySessionRow,
+  });
+  const session = sessions.find((s) => s.slug === slugOrId || s.id === slugOrId);
+  return { session, loading };
 }
 
 // Small generic key/value settings table (see api/.env-free equivalent:

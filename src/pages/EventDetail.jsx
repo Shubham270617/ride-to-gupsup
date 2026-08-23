@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { Calendar, Tag, Mountain, Route as RouteIcon, ImageIcon, Trophy, History } from "lucide-react";
+import { Calendar, Tag, Mountain, Route as RouteIcon, ImageIcon, Trophy, History, Loader2 } from "lucide-react";
 import { useEvent, useEventGallery } from "../lib/publicData";
 import { whatToBring } from "../data/content";
 import { formatPrize } from "../lib/format";
@@ -13,8 +13,19 @@ import JoinCTA from "../components/sections/JoinCTA";
 
 export default function EventDetail() {
   const { slug } = useParams();
-  const event = useEvent(slug);
+  const { event, loading } = useEvent(slug);
   const eventGallery = useEventGallery(slug);
+
+  // Wait for the real fetch to actually finish before deciding this slug
+  // doesn't exist — on first render `event` is only checked against the
+  // static placeholder list, which won't contain a real admin-added event.
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-rtg-orange-400" size={28} />
+      </div>
+    );
+  }
 
   if (!event) {
     return <Navigate to="/events" replace />;

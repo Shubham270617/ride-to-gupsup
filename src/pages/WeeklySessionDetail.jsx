@@ -1,5 +1,5 @@
 import { useParams, Navigate } from "react-router-dom";
-import { Clock, MapPin, Bike, Gauge, IndianRupee, CheckCircle2 } from "lucide-react";
+import { Clock, MapPin, Bike, Gauge, IndianRupee, CheckCircle2, Loader2 } from "lucide-react";
 import { useWeeklySession, useSiteImages } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -13,8 +13,19 @@ function mapEmbedUrl(query) {
 
 export default function WeeklySessionDetail() {
   const { slug } = useParams();
-  const session = useWeeklySession(slug);
+  const { session, loading } = useWeeklySession(slug);
   const images = useSiteImages();
+
+  // Wait for the real fetch to actually finish before deciding this slug
+  // doesn't exist — on first render `session` is only checked against the
+  // static placeholder list, which won't contain a real admin-added session.
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="animate-spin text-rtg-orange-400" size={28} />
+      </div>
+    );
+  }
 
   if (!session) {
     return <Navigate to="/weekly-rides" replace />;

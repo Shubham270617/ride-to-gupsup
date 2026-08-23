@@ -422,9 +422,18 @@ create table if not exists weekly_sessions (
 -- Gives each weekly session its own page at /weekly-rides/<slug> (auto-filled
 -- from the name in the admin form, same pattern as events.slug). Nullable
 -- and unique rather than "not null" since it's being added after the table
--- already existed — existing rows without one just don't have a detail page
--- until an admin opens and re-saves them.
+-- already existed.
 alter table weekly_sessions add column if not exists slug text unique;
+
+-- Backfills a slug for any row that doesn't have one yet — safe to re-run,
+-- only ever touches rows where slug is still null, and matches the same
+-- lowercase-hyphenated format the admin form generates. Means an existing
+-- session (like one created before this column existed) gets a working
+-- detail page automatically, with no need to manually re-open and re-save
+-- it in the admin.
+update weekly_sessions
+set slug = lower(regexp_replace(regexp_replace(trim(name), '[^a-zA-Z0-9]+', '-', 'g'), '^-+|-+$', '', 'g'))
+where slug is null;
 
 -- Event-specific photos/videos: lets "View Event Gallery" on an event's
 -- detail page show only that event's media instead of the whole gallery.
