@@ -71,13 +71,11 @@ export const coreValues = [
 
 export const stats = [
   { key: "activeMembers", label: "Active Members", value: 500, suffix: "+" },
-  { key: "cities", label: "Cities Across India", value: 8, suffix: "+" },
-  { key: "cyclingKm", label: "Total Cycling KM", value: 850000, suffix: "+" },
-  { key: "runningKm", label: "Total Running KM", value: 210000, suffix: "+" },
-  { key: "elevation", label: "Elevation Climbed (m)", value: 320000, suffix: "+" },
-  { key: "marathons", label: "Marathons Completed", value: 65, suffix: "+" },
-  { key: "ironman", label: "Ironman Finishers", value: 9, suffix: "" },
-  { key: "brm", label: "BRM Finishers", value: 22, suffix: "" },
+  { key: "states", label: "States", value: 13, suffix: "+" },
+  { key: "cities", label: "Cities", value: 70, suffix: "+" },
+  { key: "cyclingKm", label: "Total Cycling KM", value: 250000, suffix: "+" },
+  { key: "runningKm", label: "Total Running KM", value: 75000, suffix: "+" },
+  { key: "rewards", label: "Rewards", value: 200, suffix: "+" },
 ];
 
 export const whyJoin = [

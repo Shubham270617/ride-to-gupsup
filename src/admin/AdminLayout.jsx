@@ -132,7 +132,7 @@ export default function AdminLayout() {
 
   return (
     <ConfirmProvider>
-    <div className="min-h-svh bg-rtg-ink md:flex">
+    <div className="h-svh bg-rtg-ink md:flex overflow-hidden">
       {/* Mobile top bar — replaces the always-visible sidebar below md */}
       <div className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-white/10 bg-rtg-ink/95 backdrop-blur">
         <button

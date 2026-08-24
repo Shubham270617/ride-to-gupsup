@@ -255,7 +255,7 @@ export default function Home() {
 
       {/* STATS / 500+ MEMBERS + PRESENCE */}
       <Section light>
-        <StaggerGroup className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mb-16">
+        <StaggerGroup className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 mb-16">
           {stats.map((s) => {
             const value = Number(t(`text.home.stat.${s.key}`, String(s.value))) || 0;
             return (
