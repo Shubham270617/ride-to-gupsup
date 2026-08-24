@@ -50,7 +50,7 @@ function Hero() {
 
   return (
     <section ref={ref} className="relative h-svh min-h-[640px] w-full overflow-hidden flex items-end">
-      <motion.div style={{ y }} className="absolute inset-0 scale-110">
+      <motion.div style={{ y }} className="absolute inset-0 scale-100 sm:scale-110">
         <AnimatePresence mode="sync">
           <motion.img
             key={slide}
