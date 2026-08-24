@@ -102,8 +102,8 @@ function Hero() {
           transition={{ duration: 0.7, delay: 0.7 }}
           className="flex flex-col sm:flex-row gap-4"
         >
-          <Button to="/community" size="lg" icon={ArrowUpRight}>Join Community</Button>
-          <Button to="/events" variant="secondary" size="lg" icon={ArrowDown}>Explore Events</Button>
+          <Button to="/community" size="lg" icon={ArrowUpRight} className="w-full sm:w-auto">Join Community</Button>
+          <Button to="/events" variant="secondary" size="lg" icon={ArrowDown} className="w-full sm:w-auto">Explore Events</Button>
         </motion.div>
 
         {/* Slide navigation — numbered tabs with an animated progress line
