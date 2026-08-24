@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import useTable from "../useTable";
 import ResourceTable from "../components/ResourceTable";
 import ResourceForm from "../components/ResourceForm";
+import Pagination from "../components/Pagination";
 import { useConfirm } from "../components/ConfirmDialog";
+
+const PAGE_SIZE = 20;
 
 export default function ResourceAdminPage({ resource }) {
   const confirm = useConfirm();
@@ -14,6 +17,17 @@ export default function ResourceAdminPage({ resource }) {
   });
   const [editing, setEditing] = useState(null); // null = closed, {} = new, row = editing existing
   const [submitting, setSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+  // Switching resource (e.g. clicking Events → Sponsors in the sidebar)
+  // reuses this same component — reset to page 1 so the new board doesn't
+  // open on whatever page the last one was left on.
+  useEffect(() => setPage(1), [resource.table]);
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSubmit = async (values) => {
     setSubmitting(true);
@@ -52,7 +66,10 @@ export default function ResourceAdminPage({ resource }) {
       ) : error ? (
         <p className="text-rtg-orange-400 text-sm">{error}</p>
       ) : (
-        <ResourceTable rows={rows} columns={resource.listColumns} onEdit={setEditing} onDelete={handleDelete} />
+        <>
+          <ResourceTable rows={pageRows} columns={resource.listColumns} onEdit={setEditing} onDelete={handleDelete} />
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
       )}
 
       <AnimatePresence>

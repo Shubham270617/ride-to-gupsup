@@ -286,6 +286,20 @@ export function useCities() {
   return parsed.length ? parsed : brand.cities;
 }
 
+// The states chip list ("Present Across India" on Home, "RTG Across India"
+// on Community) — separate from useCities() above, which only feeds
+// Sponsors' "X+ Indian cities" reach stat and shouldn't change just because
+// the presence chips switch from city names to state names.
+export function useStates() {
+  const settings = useSiteSettings();
+  const raw = pickText(settings, "text.home.statesList", "");
+  const parsed = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parsed.length ? parsed : brand.states;
+}
+
 // Every image on the site is defined in data/images.js — this merges in any
 // admin-uploaded replacement from the site_images table, keyed the same way
 // (see admin/pages/SiteImagesAdmin.jsx). Starts from the static defaults so

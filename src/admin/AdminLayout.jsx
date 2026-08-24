@@ -53,10 +53,24 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Picking a page from the drawer should close it, not leave it open over
   // the new screen.
   useEffect(() => setMobileOpen(false), [location.pathname]);
+
+  // Small red count badge on the Messages nav icon — the one place across
+  // the admin panel that genuinely needs "something's waiting for you"
+  // surfaced without having to open the page first. Re-checks on every
+  // navigation so replying to a message clears the badge without a reload.
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("read", false)
+      .then(({ count }) => setUnreadMessages(count || 0));
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await supabase?.auth.signOut();
@@ -89,6 +103,11 @@ export default function AdminLayout() {
           >
             <l.icon size={17} />
             {l.label}
+            {l.to === "/admin/messages" && unreadMessages > 0 && (
+              <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rtg-orange-500 text-rtg-ink text-[10px] font-bold">
+                {unreadMessages > 99 ? "99+" : unreadMessages}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

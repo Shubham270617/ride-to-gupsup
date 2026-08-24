@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion"
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
 import { stats, whyJoin, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions, useCities } from "../lib/publicData";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions, useStates } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
@@ -196,7 +196,7 @@ export default function Home() {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
-  const cities = useCities();
+  const states = useStates();
   const events = useEvents();
   const products = useProducts();
   const testimonials = useTestimonials();
@@ -272,9 +272,9 @@ export default function Home() {
         <Reveal className="text-center">
           <h3 className="font-display text-2xl md:text-4xl mb-6">Present Across India</h3>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {cities.map((c) => (
-              <span key={c} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
-                <MapPin size={14} className="text-rtg-orange-400" /> {c}
+            {states.map((s) => (
+              <span key={s} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
+                <MapPin size={14} className="text-rtg-orange-400" /> {s}
               </span>
             ))}
             <span className="px-5 py-2.5 rounded-full text-sm font-semibold text-rtg-orange-400 border-2 border-dashed border-rtg-orange-400/40">

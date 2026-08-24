@@ -85,7 +85,8 @@ const CUSTOM_GROUPS = {
         { key: "text.home.stat.marathons", label: "Marathons Completed", fallback: "65", type: "text" },
         { key: "text.home.stat.ironman", label: "Ironman Finishers", fallback: "9", type: "text" },
         { key: "text.home.stat.brm", label: "BRM Finishers", fallback: "22", type: "text" },
-        { key: "text.home.citiesList", label: "Cities shown in \"Present Across India\" (comma-separated — also used on the Sponsors and Community pages)", fallback: "Delhi, Chandigarh, Dehradun, Jaipur, Shimla, Punjab, Pune, Mumbai", type: "text" },
+        { key: "text.home.statesList", label: "States shown in \"Present Across India\" (comma-separated)", fallback: "Delhi, Haryana, Uttar Pradesh, Uttarakhand, Punjab, Chandigarh, Rajasthan, West Bengal, Maharashtra, Gujarat, Karnataka, Telangana, Assam", type: "textarea" },
+        { key: "text.home.citiesList", label: "Cities (comma-separated — used on the Sponsors page's \"X+ Indian cities\" stat, and on Community's \"RTG Across India\" city captain cards)", fallback: "Delhi, Chandigarh, Dehradun, Jaipur, Shimla, Punjab, Pune, Mumbai", type: "text" },
       ],
     },
     {

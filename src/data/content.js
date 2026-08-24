@@ -11,6 +11,7 @@ export const brand = {
   email: "info@rideteagupshup.com",
   phone: "+91 99901 71239",
   cities: ["Delhi", "Chandigarh", "Dehradun", "Jaipur", "Shimla", "Punjab", "Pune", "Mumbai"],
+  states: ["Delhi", "Haryana", "Uttar Pradesh", "Uttarakhand", "Punjab", "Chandigarh", "Rajasthan", "West Bengal", "Maharashtra", "Gujarat", "Karnataka", "Telangana", "Assam"],
   members: "500+",
   social: {
     instagram: { handle: "RideTeaGupShup", url: "https://www.instagram.com/rideteagupshup?igsh=MXQwaHZuZHBsdzVzag%3D%3D&utm_source=qr" },

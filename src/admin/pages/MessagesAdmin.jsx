@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Mail, MailOpen, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { useConfirm } from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
+
+const PAGE_SIZE = 15;
 
 function formatDate(iso) {
   return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -15,6 +18,7 @@ export default function MessagesAdmin() {
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [page, setPage] = useState(1);
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +50,11 @@ export default function MessagesAdmin() {
   };
 
   const unreadCount = messages.filter((m) => !m.read).length;
+  const totalPages = Math.max(1, Math.ceil(messages.length / PAGE_SIZE));
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+  const pageMessages = messages.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -65,7 +74,7 @@ export default function MessagesAdmin() {
         <p className="text-rtg-mist text-sm py-10 text-center">No messages yet.</p>
       ) : (
         <div className="space-y-2">
-          {messages.map((m) => {
+          {pageMessages.map((m) => {
             const isOpen = openId === m.id;
             return (
               <div key={m.id} className="glass rounded-2xl overflow-hidden">
@@ -111,6 +120,7 @@ export default function MessagesAdmin() {
           })}
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }

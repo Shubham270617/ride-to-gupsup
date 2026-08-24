@@ -75,15 +75,19 @@ function ProfileIcon({ className = "" }) {
 
 // Deliberately unlabeled and near-invisible — RTG staff know it's here,
 // nobody else has a reason to notice it. Opens the separate /admin/login
-// page (not the member Login/Sign Up panel).
+// page (not the member Login/Sign Up panel). The dot itself stays tiny for
+// subtlety, but the tappable area around it is much bigger than the dot —
+// an 8px hit target is nearly impossible to land a thumb on.
 function HiddenAdminLink({ className = "" }) {
   return (
     <Link
       to="/admin/login"
       aria-hidden="true"
       tabIndex={-1}
-      className={`w-2 h-2 rounded-full bg-white/10 hover:bg-white/30 transition-colors ${className}`}
-    />
+      className={`inline-flex items-center justify-center w-9 h-9 -m-2.5 shrink-0 ${className}`}
+    >
+      <span className="w-2 h-2 rounded-full bg-white/10 hover:bg-white/30 transition-colors" />
+    </Link>
   );
 }
 

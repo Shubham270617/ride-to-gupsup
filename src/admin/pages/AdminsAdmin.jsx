@@ -3,6 +3,9 @@ import { ShieldCheck, ShieldOff, Search, Loader2, Users } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import { useConfirm } from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
+
+const PAGE_SIZE = 20;
 
 function formatDate(iso) {
   if (!iso) return "—";
@@ -23,6 +26,7 @@ export default function AdminsAdmin() {
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
 
   const loadAll = async () => {
     setLoading(true);
@@ -82,6 +86,13 @@ export default function AdminsAdmin() {
     ? members.filter((m) => [m.full_name, m.email, m.phone].some((v) => v?.toLowerCase().includes(q)))
     : members;
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  useEffect(() => setPage(1), [query]);
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+  const pageMembers = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
@@ -120,11 +131,11 @@ export default function AdminsAdmin() {
                 <th className="px-5 py-3 font-semibold">Phone</th>
                 <th className="px-5 py-3 font-semibold">Last Login</th>
                 <th className="px-5 py-3 font-semibold">Joined</th>
-                <th className="px-5 py-3 font-semibold text-right">Access</th>
+                <th className="sticky right-0 bg-[var(--glass-bg)] px-5 py-3 font-semibold text-right">Access</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((m) => {
+              {pageMembers.map((m) => {
                 const isAdmin = adminIds.has(m.id);
                 return (
                   <tr key={m.id} className="border-b border-white/5 last:border-0">
@@ -135,7 +146,7 @@ export default function AdminsAdmin() {
                     <td className="px-5 py-3 text-rtg-mist">{m.phone || "—"}</td>
                     <td className="px-5 py-3 text-rtg-mist">{formatDate(m.last_login_at)}</td>
                     <td className="px-5 py-3 text-rtg-mist">{formatDate(m.created_at)}</td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="sticky right-0 bg-[var(--glass-bg)] shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)] px-5 py-3 text-right">
                       {isAdmin ? (
                         m.id === user?.id ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-300">
@@ -174,6 +185,7 @@ export default function AdminsAdmin() {
           </table>
         </div>
       )}
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }
