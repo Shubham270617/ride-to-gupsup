@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 
 // POST /api/cloudinary/sign-avatar — same idea as sign.js, but for any
 // logged-in member uploading their own profile photo (onboarding, or later

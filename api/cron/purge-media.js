@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
-import { destroyCloudinaryAsset } from "../lib/cloudinaryDestroy.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
+import { destroyCloudinaryAsset } from "../../api-lib/cloudinaryDestroy.js";
 
 const GRACE_PERIOD_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 

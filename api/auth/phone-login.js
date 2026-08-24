@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 
 // POST /api/auth/phone-login — lets someone log in with {phone, password}.
 // Supabase Auth itself only recognizes email or an SMS-verified phone as a

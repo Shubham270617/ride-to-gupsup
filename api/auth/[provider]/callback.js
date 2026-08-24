@@ -1,6 +1,6 @@
-import { providers, isProviderConfigured } from "../../lib/providers.js";
-import { getSupabaseAdmin } from "../../lib/supabaseAdmin.js";
-import { parseCookies } from "../../lib/cookies.js";
+import { providers, isProviderConfigured } from "../../../api-lib/providers.js";
+import { getSupabaseAdmin } from "../../../api-lib/supabaseAdmin.js";
+import { parseCookies } from "../../../api-lib/cookies.js";
 
 export default async function handler(req, res) {
   const { code, state, error: providerError } = req.query;

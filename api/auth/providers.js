@@ -1,4 +1,4 @@
-import { providers, isProviderConfigured } from "../lib/providers.js";
+import { providers, isProviderConfigured } from "../../api-lib/providers.js";
 
 // GET /api/auth/providers -> { strava: true, xfitconnect: false }
 // AuthGate.jsx calls this to know which "Continue with X" buttons are live

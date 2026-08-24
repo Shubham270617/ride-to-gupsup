@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 
 // POST /api/cloudinary/sign — called by the admin dashboard before every
 // upload. Verifies the caller is a real logged-in admin (via their Supabase

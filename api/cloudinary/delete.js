@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
-import { destroyCloudinaryAsset } from "../lib/cloudinaryDestroy.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
+import { destroyCloudinaryAsset } from "../../api-lib/cloudinaryDestroy.js";
 
 // POST /api/cloudinary/delete — called when an admin explicitly deletes a
 // photo (Site Photos' Delete button, Gallery's trash icon). Verifies the

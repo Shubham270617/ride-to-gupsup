@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { providers, isProviderConfigured } from "../../lib/providers.js";
-import { serializeCookie } from "../../lib/cookies.js";
+import { providers, isProviderConfigured } from "../../../api-lib/providers.js";
+import { serializeCookie } from "../../../api-lib/cookies.js";
 
 export default async function handler(req, res) {
   // Vercel's [provider] folder convention puts this in req.query; Express's

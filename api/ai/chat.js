@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 
 const MODEL = "claude-haiku-4-5-20251001";
 const MAX_HISTORY_TURNS = 16;
