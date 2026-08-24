@@ -6,7 +6,10 @@ const base =
 
 const sizes = {
   md: "px-6 py-3 text-sm",
-  lg: "px-8 py-4 text-base",
+  // Same footprint as md on phones — "lg" only grows to its full size from
+  // md: up, where there's room for it. Used in 13 places across the site,
+  // so this alone fixes most of the "buttons are huge on mobile" feedback.
+  lg: "px-6 py-3 text-sm md:px-8 md:py-4 md:text-base",
 };
 
 const variants = {

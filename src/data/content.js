@@ -29,6 +29,12 @@ export const heroSlides = [
     accent: "Go Further.",
     subtitle: "Weekend rides, mountain adventures, and welcoming wheels for every pace — because the best rides are shared.",
     imageKey: "heroCycling",
+    // Which part of the photo to keep in frame on a narrow (portrait
+    // mobile) crop — the same wide photo that looks right center-cropped
+    // on desktop can cut off the subject entirely on a phone. If this
+    // photo gets replaced via Site Photos with a differently-composed one,
+    // this may need to be re-picked ("top" / "center" / "bottom").
+    mobileFocus: "top",
   },
   {
     tag: "Running",
@@ -36,6 +42,7 @@ export const heroSlides = [
     accent: "Find Your Pace.",
     subtitle: "From sunrise 5Ks to marathon training blocks — every pace has a place in our run club.",
     imageKey: "heroRunning",
+    mobileFocus: "center",
   },
   {
     tag: "Swimming",
@@ -43,6 +50,7 @@ export const heroSlides = [
     accent: "Move Stronger.",
     subtitle: "Pool sessions and open-water swims, coached and community-powered from your very first lap.",
     imageKey: "heroSwimming",
+    mobileFocus: "bottom",
   },
   {
     tag: "Community",
@@ -50,6 +58,7 @@ export const heroSlides = [
     accent: "Belong Here.",
     subtitle: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.",
     imageKey: "heroCommunity",
+    mobileFocus: "center",
   },
 ];
 

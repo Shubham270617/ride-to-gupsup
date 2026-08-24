@@ -42,6 +42,7 @@ const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
 const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
+const AiAdmin = lazy(() => import("./admin/pages/AiAdmin"));
 
 function AdminFallback() {
   return (
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
           <Route path="messages" element={<MessagesAdmin />} />
+          <Route path="ai" element={<AiAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />
         </Route>
 

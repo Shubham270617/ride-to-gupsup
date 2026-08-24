@@ -140,6 +140,9 @@ export const images = {
   productBottle: unsplash("1530549387789-4c1017266635", 1000),
   productWheelBag: unsplash("1517836357463-d25dfeac3438", 1000),
 
+  // ---- AI ASSISTANT ("Tapri") ----
+  aiAssistant: "/images/ai.jpeg",
+
   // ---- TESTIMONIAL AVATARS ----
   avatar1: unsplash("1502224562085-639556652f33", 300),
   avatar2: unsplash("1546519638-68e109498ffc", 300),

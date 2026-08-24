@@ -35,6 +35,9 @@ function Hero() {
 
   const goTo = (i) => setSlide(((i % total) + total) % total);
 
+  const MOBILE_FOCUS_CLASS = { top: "object-top", center: "object-center", bottom: "object-bottom" };
+  const mobileFocusClass = MOBILE_FOCUS_CLASS[current.mobileFocus] || "object-center";
+
   // Auto-advance — the effect re-runs (and so the timer restarts) whenever
   // `slide` changes, whether that change came from the timer itself or a
   // manual arrow click, so manually navigating never gets immediately
@@ -53,7 +56,7 @@ function Hero() {
             key={slide}
             src={images[current.imageKey]}
             alt={current.tag}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-cover ${mobileFocusClass} sm:object-center`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -84,7 +87,7 @@ function Hero() {
             <span className="hidden sm:block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
               {current.tag} · Community · Adventure
             </span>
-            <h1 className="font-display text-6xl sm:text-7xl md:text-9xl leading-[0.9] mb-6 max-w-5xl">
+            <h1 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl leading-[0.9] mb-6 max-w-5xl">
               {current.title}
               <br />
               <span className="text-gradient">{current.accent}</span>
