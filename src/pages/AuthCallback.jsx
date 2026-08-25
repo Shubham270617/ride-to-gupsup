@@ -21,8 +21,11 @@ export default function AuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState("working");
+  const [noAccountEmail, setNoAccountEmail] = useState("");
 
   const providerError = params.get("error");
+  const isAdminFlow = params.get("admin") === "1";
+  const intent = params.get("intent"); // "login" | "signup" | null
 
   useEffect(() => {
     if (providerError) {
@@ -44,6 +47,27 @@ export default function AuthCallback() {
       if (cancelled) return;
       if (!data.session) {
         setStatus("error");
+        return;
+      }
+
+      // Google OAuth always "succeeds" and silently creates a brand-new
+      // account on first use — unlike password login, there's no native way
+      // for it to fail on an unregistered email. So: if the person
+      // explicitly chose the Log In tab (intent=login) but this sign-in
+      // just created their account for the very first time (created_at and
+      // last_sign_in_at are the same instant, within a few seconds), treat
+      // that as "no account exists" and bounce them to Sign Up instead of
+      // silently letting a brand-new account through a Log In button.
+      const user = data.session.user;
+      const isBrandNewAccount =
+        user.created_at &&
+        user.last_sign_in_at &&
+        Math.abs(new Date(user.last_sign_in_at).getTime() - new Date(user.created_at).getTime()) < 5000;
+
+      if (intent === "login" && isBrandNewAccount) {
+        setNoAccountEmail(user.email || "");
+        await supabase.auth.signOut();
+        setStatus("no_account");
         return;
       }
 
@@ -161,6 +185,22 @@ export default function AuthCallback() {
               className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
             >
               Back to Admin Login
+            </button>
+          </>
+        )}
+        {status === "no_account" && (
+          <>
+            <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
+            <p className="font-display text-2xl mb-2">No account found</p>
+            <p className="text-rtg-mist text-sm mb-6">
+              {noAccountEmail ? <>There's no account for <strong className="text-rtg-white">{noAccountEmail}</strong> yet.</> : "That email isn't registered yet."}{" "}
+              Use Sign Up instead of Log In to create one.
+            </p>
+            <button
+              onClick={() => navigate(isAdminFlow ? "/admin/login" : "/", { replace: true })}
+              className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+            >
+              {isAdminFlow ? "Back to Admin Login" : "Back to RTG"}
             </button>
           </>
         )}

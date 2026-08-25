@@ -112,7 +112,13 @@ export default function AuthGate() {
     }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?intent=${mode}`,
+        // Forces Google's account picker every time, even with only one
+        // Google session active in the browser — otherwise it silently
+        // reuses whichever account was last used.
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (oauthError) setError(oauthError.message || "Couldn't start Google sign-in. Please try again.");
   };

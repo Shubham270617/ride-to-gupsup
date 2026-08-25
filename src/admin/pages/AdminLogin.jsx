@@ -55,7 +55,14 @@ export default function AdminLogin() {
     }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?admin=1` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?admin=1&intent=${mode}`,
+        // Forces Google's account picker every time, even if only one
+        // Google session is active in the browser — without this, Google
+        // silently reuses whichever account was last used, which is what
+        // made it look like the wrong email got "auto-captured".
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (oauthError) setError(oauthError.message || "Couldn't start Google sign-in. Please try again.");
   };
