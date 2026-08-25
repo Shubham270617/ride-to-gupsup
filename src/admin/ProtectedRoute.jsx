@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import useAdminSession from "./useAdminSession";
 
 export default function ProtectedRoute({ children }) {
-  const { isAdmin, loading } = useAdminSession();
+  const { user, isAdmin, loading } = useAdminSession();
   const location = useLocation();
 
   if (loading) {
@@ -14,8 +14,19 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
+  // This check runs again purely for UX (showing the right message) — it is
+  // not the actual security boundary. Every admin table/route is also
+  // enforced server-side (Postgres RLS via is_admin(), or an explicit
+  // backend check in the relevant api/ function), so someone bypassing this
+  // component entirely still can't read or write anything admin-only.
   if (!isAdmin) {
-    return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
+    return (
+      <Navigate
+        to="/admin/login"
+        state={{ from: location.pathname, notAuthorized: Boolean(user) }}
+        replace
+      />
+    );
   }
 
   return children;

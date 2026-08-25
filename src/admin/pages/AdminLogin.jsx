@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, Mail, User, Loader2, X, Phone } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../../lib/supabaseClient";
 import { signInWithPhone } from "../../lib/phoneAuth";
+import { claimBootstrapAdmin } from "../../lib/adminBootstrap";
 import { images } from "../../data/images";
 import { brand } from "../../data/content";
 
@@ -20,6 +21,8 @@ const GoogleMark = (props) => (
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const notAuthorized = Boolean(location.state?.notAuthorized);
   const [mode, setMode] = useState("login");
   const [method, setMethod] = useState("email"); // "email" | "phone" — login only
 
@@ -101,12 +104,18 @@ export default function AdminLogin() {
         .maybeSingle();
 
       if (!profile) {
-        // Up to 3 admin seats auto-fill this way — try to claim one. Only
-        // actually promotes this account if fewer than 3 admins exist.
-        const { data: claimed } = await supabase.rpc("claim_admin_if_seats_open");
-        if (!claimed) {
+        // Only ever succeeds for one of the first 3 people to ever
+        // authenticate through /admin/login — see
+        // api/auth/claim-bootstrap-admin.js. Everyone after that must be
+        // granted access from the Admins screen by an existing admin.
+        const { granted, reason } = await claimBootstrapAdmin();
+        if (!granted) {
           await supabase.auth.signOut();
-          setError("This account isn't set up as an admin yet.");
+          setError(
+            reason === "request_failed"
+              ? "Couldn't reach the server to check admin status — on a local dev server, run `vercel dev` instead of `vite`, or try this on the live site."
+              : "This account isn't authorized as an admin. Ask an existing admin to grant you access."
+          );
           return;
         }
       }
@@ -132,6 +141,16 @@ export default function AdminLogin() {
         <img src={images.logo} alt={brand.name} className="h-10 w-auto mx-auto mb-6" />
         <h1 className="font-display text-3xl text-center mb-1">Admin</h1>
         <p className="text-rtg-mist text-sm text-center mb-8">Manage RTG's events, gallery, store, and more.</p>
+
+        {notAuthorized && (
+          <div className="mb-5 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3 text-center">
+            <p className="text-sm font-semibold text-rtg-orange-300">Access Denied</p>
+            <p className="text-xs text-rtg-mist mt-1">
+              You're signed in, but that account isn't authorized as an admin. Ask an existing admin to grant you
+              access from the Admins screen.
+            </p>
+          </div>
+        )}
 
         <button
           type="button"

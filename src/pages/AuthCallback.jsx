@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { claimBootstrapAdmin } from "../lib/adminBootstrap";
 
 const ERROR_MESSAGES = {
   not_configured: "That sign-in method isn't connected yet — please check back soon.",
@@ -56,12 +57,13 @@ export default function AuthCallback() {
           .eq("id", data.session.user.id)
           .maybeSingle();
         if (!adminRow) {
-          // Up to 3 admin seats auto-fill this way — try to claim one. Only
-          // actually promotes this account if fewer than 3 admins exist.
-          const { data: claimed } = await supabase.rpc("claim_admin_if_seats_open");
-          if (!claimed) {
+          // Only ever succeeds for one of the first 3 people to ever
+          // authenticate through /admin/login — see
+          // api/auth/claim-bootstrap-admin.js.
+          const { granted, reason } = await claimBootstrapAdmin();
+          if (!granted) {
             await supabase.auth.signOut();
-            setStatus("not_admin");
+            setStatus(reason === "request_failed" ? "server_unreachable" : "not_admin");
             return;
           }
         }
@@ -136,6 +138,23 @@ export default function AuthCallback() {
             <p className="text-rtg-mist text-sm mb-6">
               That Google account isn't set up as an admin. Ask an existing admin to grant you access from the
               Admins screen, then try again.
+            </p>
+            <button
+              onClick={() => navigate("/admin/login", { replace: true })}
+              className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+            >
+              Back to Admin Login
+            </button>
+          </>
+        )}
+        {status === "server_unreachable" && (
+          <>
+            <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
+            <p className="font-display text-2xl mb-2">Couldn't verify admin access</p>
+            <p className="text-rtg-mist text-sm mb-6">
+              We couldn't reach the server to check admin status — this happens when testing on a local dev server
+              that isn't running Vercel's functions. Try again on the live site, or run <code>vercel dev</code>{" "}
+              locally instead of <code>vite</code>.
             </p>
             <button
               onClick={() => navigate("/admin/login", { replace: true })}

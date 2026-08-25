@@ -78,14 +78,14 @@ create policy "profiles self update" on profiles
 
 -- Auto-create a profiles row whenever someone signs up with email/password
 -- directly through Supabase Auth (so every member has exactly one row here,
--- regardless of how they signed up). The first MAX_AUTO_ADMINS people to
--- ever sign up (via the public site or the admin Sign Up tab, doesn't
--- matter which) are also auto-promoted to admin — e.g. the 3 people
--- actually running RTG can each just sign up and log in, no manual SQL or
--- "ask an existing admin to grant you access" step needed. Everyone after
--- that stays a regular member until an existing admin grants them access
--- from the Members screen. To change the number of auto-admin seats, edit
--- the "< 3" here AND in claim_admin_if_seats_open() below — keep them equal.
+-- regardless of how they signed up). Deliberately does NOT touch
+-- admin_profiles directly — the actual admin grant happens in
+-- api/auth/claim-bootstrap-admin.js instead (called right after sign-in
+-- from AdminLogin.jsx / AuthCallback.jsx), which is what lets the first 3
+-- people to ever authenticate through /admin/login become admins: doing
+-- the count check server-side, against the real table, at the moment of
+-- granting — rather than baked into this trigger — is what makes that
+-- check race-safe under concurrent signups. See the bottom of this file.
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
@@ -95,12 +95,6 @@ begin
   insert into public.profiles (id, email, full_name, phone, auth_provider)
   values (new.id, new.email, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'phone', 'email')
   on conflict (id) do nothing;
-
-  if (select count(*) from public.admin_profiles) < 3 then
-    insert into public.admin_profiles (id, full_name)
-    values (new.id, new.raw_user_meta_data->>'full_name')
-    on conflict (id) do nothing;
-  end if;
 
   return new;
 end;
@@ -198,33 +192,29 @@ drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
 
--- Covers two cases with the same "< 3" rule as handle_new_user() above:
--- (1) one of the 3 auto-admin seats is still open (e.g. this person signed
--- up back when fewer admins existed, or before this feature existed), and
--- (2) the seat count dropped below 3 later (an admin's profiles row got
--- deleted, which — via the cascade above — took their admin_profiles row
--- with it). Called from the client on every /admin/login attempt that
--- isn't already an admin (see AdminLogin.jsx, AuthCallback.jsx);
--- SECURITY DEFINER is what lets a non-admin caller insert into
--- admin_profiles at all, but the count check keeps this from ever being
--- usable to self-promote once 3 real admins already exist.
-create or replace function claim_admin_if_seats_open()
-returns boolean
+-- Hard cap of 3 simultaneous admins, enforced here at the database level so
+-- it applies no matter which path an insert comes through — an existing
+-- admin granting someone from the Admins screen, or the one-time bootstrap
+-- endpoint (api/auth/claim-bootstrap-admin.js) — and can't be bypassed by
+-- calling the API directly. Not "at signup" anymore: see handle_new_user()
+-- above, and the bootstrapping note at the bottom of this file.
+create or replace function enforce_admin_seat_cap()
+returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if (select count(*) from public.admin_profiles) < 3 then
-    insert into public.admin_profiles (id, full_name)
-    select id, full_name from public.profiles where id = auth.uid()
-    on conflict (id) do nothing;
-    return true;
+  if (select count(*) from public.admin_profiles) >= 3 then
+    raise exception 'Admin seat cap of 3 reached — remove an existing admin first.';
   end if;
-  return false;
+  return new;
 end;
 $$;
 
-grant execute on function claim_admin_if_seats_open() to authenticated;
+drop trigger if exists admin_seat_cap on admin_profiles;
+create trigger admin_seat_cap
+  before insert on admin_profiles
+  for each row execute function enforce_admin_seat_cap();
 
 create table if not exists events (
   id uuid primary key default gen_random_uuid(),
@@ -552,23 +542,35 @@ drop policy if exists "contact_messages admin delete" on contact_messages;
 create policy "contact_messages admin delete" on contact_messages
   for delete using (is_admin());
 
+-- Old, removed RPC — replaced by api/auth/claim-bootstrap-admin.js (same
+-- idea — first 3 signups become admin — moved server-side so it's a real
+-- HTTP endpoint that can be rate-limited/logged/audited later, instead of a
+-- client-callable Postgres RPC).
+drop function if exists claim_admin_if_seats_open();
+
 -- ============================================================================
 -- Bootstrapping your first admins: fully automatic, no SQL needed. The
--- first 3 people to ever sign up (via /admin/login's Sign Up tab, or the
--- public site — via /admin/login's Log In tab too, for existing members,
--- through claim_admin_if_seats_open()) are auto-promoted to admin. Once 3
--- exist, everyone after that stays a regular member until an existing
--- admin grants them access from the Members screen.
+-- first 3 people to ever authenticate through /admin/login — email/password
+-- or Google, Log In tab or Sign Up tab, doesn't matter which — become
+-- admins. No allowlist, no pre-approval: whoever gets there first, up to 3,
+-- is an admin. api/auth/claim-bootstrap-admin.js does the actual grant,
+-- checking admin_profiles' row count server-side at the moment of the
+-- attempt so concurrent signups can't race past the cap; the
+-- admin_seat_cap trigger above enforces the same "at most 3" rule
+-- independently at the database level regardless of which code path an
+-- insert comes through.
 --
--- If a seat opens back up later (an admin's profiles row got deleted —
--- which, via admin_profiles_profile_fk above, also removes their
--- admin_profiles row), it refills the same automatic way: the next 1-3
--- people to log in claim the open seat(s), no re-bootstrapping by hand.
+-- Once 3 admins exist, everyone after that stays a regular member until an
+-- existing admin grants them access from the Admins screen. If a seat opens
+-- back up later (an admin's profiles row got deleted — which, via
+-- admin_profiles_profile_fk above, also removes their admin_profiles row),
+-- it refills the same automatic way: the next people to authenticate
+-- through /admin/login claim the open seat(s), no re-bootstrapping by hand.
 --
--- Caution before this site goes live publicly: the first 3 people who sign
--- up on the production database become the founding admins. Make sure
--- that's the right 3 people — or run this to promote a specific existing
--- account instead (works any time, whether or not the 3 seats are full):
+-- Caution: on a public production site, this means the first 3 people who
+-- ever complete /admin/login — not necessarily the people you intend —
+-- become the founding admins. Get your own 3 admins signed up first, or
+-- promote a specific existing account by hand instead:
 --   insert into admin_profiles (id, full_name)
 --   select id, full_name from profiles where email = 'the-right-persons-email'
 --   on conflict (id) do nothing;

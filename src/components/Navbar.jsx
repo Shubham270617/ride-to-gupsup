@@ -73,11 +73,14 @@ function ProfileIcon({ className = "" }) {
   );
 }
 
-// Deliberately unlabeled and near-invisible — RTG staff know it's here,
-// nobody else has a reason to notice it. Opens the separate /admin/login
-// page (not the member Login/Sign Up panel). The dot itself stays tiny for
-// subtlety, but the tappable area around it is much bigger than the dot —
-// an 8px hit target is nearly impossible to land a thumb on.
+// Genuinely invisible, not just subtle — no resting color, no hover state,
+// nothing that renders differently on mouseover or focus. This is
+// discretion only, never the actual security boundary: whether or not
+// anyone ever finds this link, /admin/login is reachable by typing the URL
+// directly regardless, and every admin-only read/write is separately
+// enforced server-side (Postgres RLS via is_admin(), or an explicit check
+// in the relevant api/ function) — discovering either path grants nothing
+// without a real, authorized admin session.
 function HiddenAdminLink({ className = "" }) {
   return (
     <Link
@@ -86,7 +89,7 @@ function HiddenAdminLink({ className = "" }) {
       tabIndex={-1}
       className={`inline-flex items-center justify-center w-9 h-9 -m-2.5 shrink-0 ${className}`}
     >
-      <span className="w-2 h-2 rounded-full bg-white/10 hover:bg-white/30 transition-colors" />
+      <span className="w-2 h-2 rounded-full bg-transparent" />
     </Link>
   );
 }

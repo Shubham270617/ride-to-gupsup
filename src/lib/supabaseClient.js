@@ -14,4 +14,18 @@ if (!isSupabaseConfigured) {
   );
 }
 
-export const supabase = isSupabaseConfigured ? createClient(url, anonKey) : null;
+// storage: sessionStorage (not the default localStorage) so a session ends
+// when the browser/tab is actually closed, not just left indefinitely
+// active until the refresh token itself expires. Closing without clicking
+// Logout still requires signing in again next visit — persistSession keeps
+// it alive across page reloads/navigation within that same browser
+// session, and autoRefreshToken keeps the access token current while open.
+export const supabase = isSupabaseConfigured
+  ? createClient(url, anonKey, {
+      auth: {
+        storage: window.sessionStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    })
+  : null;
