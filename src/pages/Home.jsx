@@ -16,6 +16,7 @@ import Newsletter from "../components/sections/Newsletter";
 import JoinCTA from "../components/sections/JoinCTA";
 import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import useIsMobile from "../hooks/useIsMobile";
+import { heroSrcSet, heroFallbackSrc } from "../lib/responsiveImage";
 
 const HeroScene = lazy(() => import("../three/HeroScene"));
 
@@ -54,7 +55,9 @@ function Hero() {
         <AnimatePresence mode="sync">
           <motion.img
             key={slide}
-            src={images[current.imageKey]}
+            src={heroFallbackSrc(images[current.imageKey])}
+            srcSet={heroSrcSet(images[current.imageKey])}
+            sizes="100vw"
             alt={current.tag}
             className={`absolute inset-0 w-full h-full object-cover ${mobileFocusClass} sm:object-center`}
             initial={{ opacity: 0 }}

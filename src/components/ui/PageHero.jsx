@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { heroSrcSet, heroFallbackSrc } from "../../lib/responsiveImage";
 
 export default function PageHero({ image, eyebrow, title, subtitle, height = "h-[60vh] md:h-[70vh]" }) {
   return (
@@ -9,7 +10,13 @@ export default function PageHero({ image, eyebrow, title, subtitle, height = "h-
         animate={{ scale: 1 }}
         transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
       >
-        <img src={image} alt={title} className="w-full h-full object-cover" />
+        <img
+          src={heroFallbackSrc(image)}
+          srcSet={heroSrcSet(image)}
+          sizes="100vw"
+          alt={title}
+          className="w-full h-full object-cover"
+        />
       </motion.div>
       <div className="absolute inset-0 bg-gradient-to-t from-rtg-ink via-rtg-ink/60 to-rtg-ink/20" />
       <div className="absolute inset-0 bg-gradient-to-r from-rtg-purple-950/70 via-transparent to-transparent" />
