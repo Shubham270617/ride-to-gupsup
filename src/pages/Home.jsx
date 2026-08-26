@@ -203,6 +203,10 @@ export default function Home() {
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
   const events = useEvents();
+  // Only events an admin has explicitly checked "Featured on homepage" —
+  // this used to just show whatever the first 3 events were, regardless of
+  // that checkbox.
+  const featuredEvents = events.filter((e) => e.featured);
   const products = useProducts();
   const testimonials = useTestimonials();
   const galleryItems = useGalleryItems();
@@ -284,16 +288,22 @@ export default function Home() {
 
       {/* UPCOMING EVENTS */}
       <Section contentKey="home.upcomingEvents" eyebrow="Don't Miss Out" title="Upcoming Events" light>
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          <Reveal className="md:col-span-2">
-            <EventCard event={events[0]} featured />
-          </Reveal>
-          {events.slice(1, 3).map((e) => (
-            <Reveal key={e.id}>
-              <EventCard event={e} />
+        {featuredEvents.length === 0 ? (
+          <p className="text-center text-rtg-mist py-6 mb-2">
+            No events are marked "Featured on homepage" yet — check the Events page for what's coming up.
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <Reveal className="md:col-span-2">
+              <EventCard event={featuredEvents[0]} featured />
             </Reveal>
-          ))}
-        </div>
+            {featuredEvents.slice(1, 3).map((e) => (
+              <Reveal key={e.id}>
+                <EventCard event={e} />
+              </Reveal>
+            ))}
+          </div>
+        )}
         <div className="text-center">
           <Button to="/events" variant="outline">View All Events</Button>
         </div>

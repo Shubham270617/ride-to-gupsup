@@ -211,15 +211,16 @@ export const events = [
     categories: ["Cycling", "Running"],
     prize: 500000,
     featured: true,
+    status: "Flagship",
     imgKey: "eventFeatured",
     desc: "India's biggest virtual endurance challenge returns. Log your distance, climb the leaderboard, win big.",
   },
-  { id: "mtb-championship", title: "MTB Championship", date: "TBA 2027", type: "Off-road Racing", categories: ["MTB"], imgKey: "eventMTB", desc: "Technical trails, timed climbs, and serious bragging rights." },
-  { id: "resolution-challenge", title: "Resolution Challenge", date: "January 2027", type: "Virtual Challenge", categories: ["Cycling", "Running"], imgKey: "eventResolution", desc: "Start the year strong with a community-wide distance goal." },
-  { id: "adventure-rides", title: "Adventure Rides", date: "Ongoing", type: "Outdoor Touring", categories: ["Cycling", "Adventure"], imgKey: "eventAdventure", desc: "Multi-day rides through the hills — Shimla, Dehradun and beyond." },
-  { id: "community-meetups", title: "Community Meetups", date: "Monthly", type: "Social", categories: ["Community"], imgKey: "eventMeetup", desc: "Chai, stories, and planning the next big ride." },
-  { id: "monthly-challenges", title: "Monthly Challenges", date: "Every Month", type: "Virtual Challenge", categories: ["Cycling", "Running"], imgKey: "eventMonthly", desc: "Fresh distance & elevation goals, every single month." },
-  { id: "sports-workshops", title: "Sports Workshops", date: "Quarterly", type: "Education", categories: ["Workshop"], imgKey: "eventWorkshop", desc: "Bike maintenance, nutrition, and injury-prevention sessions." },
+  { id: "mtb-championship", title: "MTB Championship", date: "TBA 2027", type: "Off-road Racing", categories: ["MTB"], status: "Upcoming", imgKey: "eventMTB", desc: "Technical trails, timed climbs, and serious bragging rights." },
+  { id: "resolution-challenge", title: "Resolution Challenge", date: "January 2027", type: "Virtual Challenge", categories: ["Cycling", "Running"], status: "Upcoming", imgKey: "eventResolution", desc: "Start the year strong with a community-wide distance goal." },
+  { id: "adventure-rides", title: "Adventure Rides", date: "Ongoing", type: "Outdoor Touring", categories: ["Cycling", "Adventure"], status: "Upcoming", imgKey: "eventAdventure", desc: "Multi-day rides through the hills — Shimla, Dehradun and beyond." },
+  { id: "community-meetups", title: "Community Meetups", date: "Monthly", type: "Social", categories: ["Community"], status: "Upcoming", imgKey: "eventMeetup", desc: "Chai, stories, and planning the next big ride." },
+  { id: "monthly-challenges", title: "Monthly Challenges", date: "Every Month", type: "Virtual Challenge", categories: ["Cycling", "Running"], status: "Upcoming", imgKey: "eventMonthly", desc: "Fresh distance & elevation goals, every single month." },
+  { id: "sports-workshops", title: "Sports Workshops", date: "Quarterly", type: "Education", categories: ["Workshop"], status: "Past", imgKey: "eventWorkshop", desc: "Bike maintenance, nutrition, and injury-prevention sessions." },
 ];
 
 export const products = [
@@ -331,8 +332,23 @@ export const communityTimeline = [
 // via the admin Team screen — see src/lib/publicData.js useTeamMembers) ----
 
 export const teamMembers = [
-  { name: "Randeep", role: "Owner", city: "Delhi", sport: "Cycling & Triathlon", avatarKey: "avatar1", instagramUrl: "https://instagram.com/RideTeaGupShup" },
-  { name: "Simran", role: "Admin", city: "Delhi", sport: "Running", avatarKey: "avatar2", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Randeep", role: "Founder", city: "Delhi", sport: "Cycling & Triathlon", avatarKey: "avatar1", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Simran", role: "Founder", city: "Delhi", sport: "Running", avatarKey: "avatar2", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Manish Jayal", role: "Head Coach", city: "Delhi", sport: "Cycling & Running", avatarKey: "avatar8", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Hitesh", role: "Core Team", city: "Delhi", sport: "Cycling", avatarKey: "avatar3", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Jasskerat", role: "Core Team", city: "Delhi", sport: "Running", avatarKey: "avatar4", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Harshad", role: "Core Team", city: "Delhi", sport: "Cycling", avatarKey: "avatar5", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Yash", role: "Core Team", city: "Delhi", sport: "Running", avatarKey: "avatar6", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Hojo", role: "Core Team", city: "Delhi", sport: "Cycling", avatarKey: "avatar7", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+];
+
+// Community page's "Ways to Participate" quick-entry cards.
+export const waysToParticipate = [
+  { title: "Join a Ride", desc: "Weekend rides, mountain climbs, and city loops.", to: "/weekly-rides", icon: "bike" },
+  { title: "Join a Run", desc: "Sunrise 5Ks to marathon training blocks.", to: "/weekly-rides", icon: "footprints" },
+  { title: "Take a Challenge", desc: "Pan-India virtual distance and elevation goals.", to: "/challenges", icon: "flame" },
+  { title: "Attend a Meetup", desc: "Chai, stories, and planning the next big ride.", to: "/events", icon: "users" },
+  { title: "Volunteer with RTG", desc: "Marshalling, logistics, photography, and more.", to: "#volunteer", icon: "heart-handshake" },
 ];
 
 export const fiveYearGoal =

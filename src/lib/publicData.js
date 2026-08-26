@@ -63,6 +63,7 @@ const mapEventRow = (r) => ({
   desc: r.description,
   image: r.cover_image_url,
   featured: r.featured,
+  status: r.event_status || "Upcoming",
   route: r.route_info,
   routeMapQuery: r.route_map_query,
   elevation: r.elevation_gain,

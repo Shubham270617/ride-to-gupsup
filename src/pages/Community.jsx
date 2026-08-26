@@ -1,4 +1,6 @@
-import { rtgMoments, joinSteps } from "../data/content";
+import { useRef } from "react";
+import { Link } from "react-router-dom";
+import { rtgMoments, joinSteps, waysToParticipate } from "../data/content";
 import { useTeamMembers, useWeeklySessions, useSiteImages } from "../lib/publicData";
 import { useAuthGate } from "../lib/AuthGateContext";
 import PageHero from "../components/ui/PageHero";
@@ -9,12 +11,89 @@ import Reveal from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
 import CommunityProof from "../components/sections/CommunityProof";
 import JoinCTA from "../components/sections/JoinCTA";
-import { CalendarClock, Sparkles, ArrowRight } from "lucide-react";
+import {
+  CalendarClock,
+  Sparkles,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Bike,
+  Footprints,
+  Flame,
+  Users,
+  HeartHandshake,
+} from "lucide-react";
 import { InstagramIcon } from "../components/ui/SocialIcons";
+
+const WAYS_ICONS = { bike: Bike, footprints: Footprints, flame: Flame, users: Users, "heart-handshake": HeartHandshake };
 
 const scrollToJoin = () => {
   document.getElementById("join-rtg")?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
+
+const scrollToVolunteer = (e) => {
+  e.preventDefault();
+  document.getElementById("volunteer")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+// Horizontal sliding carousel of team-member cards — native scroll-snap
+// (smooth, no janky custom state machine) plus a Framer Motion hover lift
+// per card for the "good effects" feel.
+function TeamVoicesSlider({ items }) {
+  const scrollRef = useRef(null);
+  const scrollByCards = (dir) => scrollRef.current?.scrollBy({ left: dir * 296, behavior: "smooth" });
+
+  return (
+    <div className="relative">
+      <div
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-2 -mx-6 px-6 md:mx-0 md:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {items.map((m) => (
+          <div key={m.name} className="snap-center shrink-0 w-64">
+            <GlassCard hover className="text-center h-full">
+              <img
+                src={m.image}
+                alt={m.name}
+                className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-rtg-orange-400/40"
+              />
+              <h3 className="font-display text-xl mb-0.5">{m.name}</h3>
+              <p className="text-rtg-orange-400 text-sm font-semibold mb-3">{m.role}</p>
+              {m.instagramUrl && (
+                <a
+                  href={m.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-rtg-mist hover:text-rtg-orange-400 transition-colors"
+                >
+                  <InstagramIcon size={12} /> Follow
+                </a>
+              )}
+            </GlassCard>
+          </div>
+        ))}
+      </div>
+      {items.length > 3 && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={() => scrollByCards(-1)}
+            className="w-11 h-11 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+            aria-label="Previous team members"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={() => scrollByCards(1)}
+            className="w-11 h-11 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+            aria-label="Next team members"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Community() {
   const images = useSiteImages();
@@ -76,7 +155,7 @@ export default function Community() {
         title="Way to Be Part of RTG"
         subtitle="Seven steps from stranger to teammate."
       >
-        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
           {joinSteps.map((s) => (
             <StaggerItem key={s.step}>
               <GlassCard className="h-full">
@@ -89,6 +168,36 @@ export default function Community() {
             </StaggerItem>
           ))}
         </StaggerGroup>
+
+        <Reveal className="text-center mb-10">
+          <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs md:text-sm mb-3">
+            Pick Your Entry Point
+          </span>
+          <h3 className="font-display text-2xl md:text-3xl">Ways to Participate</h3>
+        </Reveal>
+        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+          {waysToParticipate.map((w) => {
+            const Icon = WAYS_ICONS[w.icon];
+            const isAnchor = w.to.startsWith("#");
+            const card = (
+              <GlassCard hover className="h-full text-center">
+                <Icon className="text-rtg-orange-400 mx-auto mb-3" size={26} />
+                <h4 className="font-display text-lg mb-1.5">{w.title}</h4>
+                <p className="text-rtg-mist text-xs leading-relaxed">{w.desc}</p>
+              </GlassCard>
+            );
+            return (
+              <StaggerItem key={w.title}>
+                {isAnchor ? (
+                  <a href={w.to} onClick={scrollToVolunteer} className="block h-full">{card}</a>
+                ) : (
+                  <Link to={w.to} className="block h-full">{card}</Link>
+                )}
+              </StaggerItem>
+            );
+          })}
+        </StaggerGroup>
+
         <Reveal className="text-center">
           <Button onClick={() => requestLogin("signup")} size="lg">Get Started</Button>
         </Reveal>
@@ -120,37 +229,13 @@ export default function Community() {
         </Reveal>
       </Section>
 
-      {/* 6. MEMBER VOICES */}
+      {/* 6. MEMBER VOICES — sliding carousel, editable per-person via the admin Team screen */}
       <Section contentKey="community.voices" light eyebrow="Member Voices" title="The People Behind RTG">
-        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teamMembers.map((m) => (
-            <StaggerItem key={m.name}>
-              <GlassCard className="text-center h-full">
-                <img
-                  src={m.image}
-                  alt={m.name}
-                  className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-rtg-orange-400/40"
-                />
-                <h3 className="font-display text-xl mb-0.5">{m.name}</h3>
-                <p className="text-rtg-orange-400 text-sm font-semibold mb-3">{m.role}</p>
-                {m.instagramUrl && (
-                  <a
-                    href={m.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-rtg-mist hover:text-rtg-orange-400 transition-colors"
-                  >
-                    <InstagramIcon size={12} /> Follow
-                  </a>
-                )}
-              </GlassCard>
-            </StaggerItem>
-          ))}
-        </StaggerGroup>
+        <TeamVoicesSlider items={teamMembers} />
       </Section>
 
       {/* 7. VOLUNTEER — LAUNCHING SOON */}
-      <Section contentKey="community.volunteer" light eyebrow="Get Involved" title="Volunteer With RTG">
+      <Section id="volunteer" contentKey="community.volunteer" light eyebrow="Get Involved" title="Volunteer With RTG">
         <Reveal>
           <GlassCard className="max-w-xl mx-auto text-center py-14">
             <Sparkles className="text-rtg-orange-400 mx-auto mb-4" size={32} />

@@ -243,6 +243,22 @@ alter table events add column if not exists previous_edition_summary text;
 -- Route map (admin types a place/address, the public site embeds a Google Maps iframe for it).
 alter table events add column if not exists route_map_query text;
 
+-- Which of the 3 sections on the Events page this event belongs to —
+-- admin-picked, not computed from event_date (that column is free text like
+-- "June 2027", not a real date, and an admin may want an event to stay
+-- "Upcoming" even with a vague date). Separate from `featured` above, which
+-- only controls the homepage highlight — an event can be the Events page's
+-- Flagship pick without also being the one shown on the homepage, or vice
+-- versa.
+alter table events add column if not exists event_status text not null default 'Upcoming';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'events_status_check') then
+    alter table events add constraint events_status_check check (event_status in ('Flagship', 'Upcoming', 'Past'));
+  end if;
+end $$;
+
 -- Prize Pool moved from free text (e.g. "Prize Pool Worth ₹5 Lakhs") to a plain
 -- number so the public site can format it as currency consistently. Strips any
 -- non-numeric characters (₹, commas, "Lakhs" text, stray spaces) before casting
