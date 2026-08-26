@@ -1,4 +1,4 @@
-import { Target, Eye, Bike, Footprints, Trophy, Flag, Mountain, Coffee, ArrowRight } from "lucide-react";
+import { Target, Eye, Bike, Footprints, Trophy, Flag, Mountain, Coffee, ArrowRight, Sparkles } from "lucide-react";
 import {
   coreValues,
   howItStarted,
@@ -8,8 +8,7 @@ import {
   rtgInMotion,
   roadAheadFlow,
 } from "../data/content";
-import { useTeamMembers, useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
-import { InstagramIcon } from "../components/ui/SocialIcons";
+import { useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -21,7 +20,6 @@ const PILLAR_ICONS = { bike: Bike, footprints: Footprints, trophy: Trophy, flag:
 
 export default function About() {
   const images = useSiteImages();
-  const teamMembers = useTeamMembers();
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
 
@@ -176,34 +174,19 @@ export default function About() {
         </StaggerGroup>
       </Section>
 
-      {/* OUR LEADERSHIP */}
+      {/* THE PEOPLE BEHIND RTG — PDF marks this "to be updated later"; real
+          bios/photos live on the Community page's Member Voices slider for
+          now instead. */}
       <Section contentKey="about.leadership" light eyebrow="The People Behind RTG" title="Our Leadership">
-        <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teamMembers.map((m) => (
-            <StaggerItem key={m.name}>
-              <GlassCard className="text-center h-full">
-                <img
-                  src={m.image}
-                  alt={m.name}
-                  className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-rtg-orange-400"
-                />
-                <h3 className="font-display text-xl mb-1">{m.name}</h3>
-                <p className="text-rtg-orange-400 text-sm font-semibold mb-3">{m.role}</p>
-                <p className="text-rtg-mist text-xs mb-4">{[m.city, m.sport].filter(Boolean).join(" · ")}</p>
-                {m.instagramUrl && (
-                  <a
-                    href={m.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-rtg-mist hover:text-rtg-orange-400 transition-colors"
-                  >
-                    <InstagramIcon size={13} /> Follow
-                  </a>
-                )}
-              </GlassCard>
-            </StaggerItem>
-          ))}
-        </StaggerGroup>
+        <Reveal>
+          <GlassCard className="max-w-xl mx-auto text-center py-14">
+            <Sparkles className="text-rtg-orange-400 mx-auto mb-4" size={32} />
+            <h3 className="font-display text-2xl mb-2">Coming Soon</h3>
+            <p className="text-rtg-mist text-sm leading-relaxed max-w-sm mx-auto">
+              We're putting together proper profiles for the people behind RTG.
+            </p>
+          </GlassCard>
+        </Reveal>
       </Section>
 
       {/* THE ROAD AHEAD */}
