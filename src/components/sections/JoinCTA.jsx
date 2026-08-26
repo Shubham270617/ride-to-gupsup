@@ -3,7 +3,13 @@ import { images } from "../../data/images";
 import Reveal from "../ui/Reveal";
 import Button from "../ui/Button";
 
-export default function JoinCTA() {
+export default function JoinCTA({
+  primaryLabel = "Join Community",
+  primaryTo = "/community",
+  onPrimaryClick,
+  secondaryLabel = "Explore Events",
+  secondaryTo = "/events",
+}) {
   return (
     <section className="relative py-28 md:py-40 px-6 md:px-10 overflow-hidden">
       <motion.div
@@ -29,8 +35,12 @@ export default function JoinCTA() {
             500+ athletes across India are already riding, running, and growing together. Your seat at the chai stop is waiting.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button to="/community" size="lg">Join Community</Button>
-            <Button to="/events" variant="outline" size="lg">Explore Events</Button>
+            {onPrimaryClick ? (
+              <Button onClick={onPrimaryClick} size="lg">{primaryLabel}</Button>
+            ) : (
+              <Button to={primaryTo} size="lg">{primaryLabel}</Button>
+            )}
+            <Button to={secondaryTo} variant="outline" size="lg">{secondaryLabel}</Button>
           </div>
         </Reveal>
       </div>

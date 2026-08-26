@@ -1,12 +1,12 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, MapPin } from "lucide-react";
-import { stats, whyJoin, heroSlides } from "../data/content";
-import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions, useStates } from "../lib/publicData";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown } from "lucide-react";
+import { whyJoin, heroSlides } from "../data/content";
+import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions } from "../lib/publicData";
+import CommunityProof from "../components/sections/CommunityProof";
 import Section from "../components/ui/Section";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
-import AnimatedCounter from "../components/ui/AnimatedCounter";
 import EventCard from "../components/ui/EventCard";
 import ProductCard from "../components/ui/ProductCard";
 import MasonryGallery from "../components/ui/MasonryGallery";
@@ -202,7 +202,6 @@ export default function Home() {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
-  const states = useStates();
   const events = useEvents();
   const products = useProducts();
   const testimonials = useTestimonials();
@@ -260,35 +259,7 @@ export default function Home() {
       </Section>
 
       {/* STATS / 500+ MEMBERS + PRESENCE */}
-      <Section light>
-        <StaggerGroup className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 mb-16">
-          {stats.map((s) => {
-            const value = Number(t(`text.home.stat.${s.key}`, String(s.value))) || 0;
-            return (
-              <StaggerItem key={s.label}>
-                <div className="text-center">
-                  <AnimatedCounter value={value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
-                  <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
-                </div>
-              </StaggerItem>
-            );
-          })}
-        </StaggerGroup>
-
-        <Reveal className="text-center">
-          <h3 className="font-display text-2xl md:text-4xl mb-6">Present Across India</h3>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {states.map((s) => (
-              <span key={s} className="glass px-5 py-2.5 rounded-full text-sm font-medium text-rtg-white/90 flex items-center gap-2">
-                <MapPin size={14} className="text-rtg-orange-400" /> {s}
-              </span>
-            ))}
-            <span className="px-5 py-2.5 rounded-full text-sm font-semibold text-rtg-orange-400 border-2 border-dashed border-rtg-orange-400/40">
-              + Expanding
-            </span>
-          </div>
-        </Reveal>
-      </Section>
+      <CommunityProof light />
 
       {/* WEEKLY ACTIVITIES */}
       <Section contentKey="home.weeklyActivities" eyebrow="Weekly Rhythm" title="Weekly Activities" subtitle="Consistency builds champions. Here's how our week looks." dark>

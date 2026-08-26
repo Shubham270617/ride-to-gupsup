@@ -19,11 +19,11 @@ const SECTIONS = [
 
   { page: "Challenges", key: "challenges.hero", label: "Current Challenges", eyebrow: "Live & Upcoming", title: "Current Challenges", subtitle: "" },
 
-  { page: "Community", key: "community.howToJoin", label: "How to Join RTG", eyebrow: "Getting Started", title: "How to Join RTG", subtitle: "Seven steps from stranger to teammate." },
-  { page: "Community", key: "community.welcome", label: "Everyone Is Welcome", eyebrow: "Come As You Are", title: "Everyone Is Welcome", subtitle: "Regardless of age or fitness level, there's a place for you in the RTG community. We believe endurance sport should be accessible, not intimidating." },
-  { page: "Community", key: "community.acrossIndia", label: "RTG Across India", eyebrow: "Where We Ride", title: "RTG Across India", subtitle: "" },
+  { page: "Community", key: "community.feelsLike", label: "What RTG Feels Like", eyebrow: "What RTG Feels Like", title: "Come for the Activity. Stay for the People.", subtitle: "It's never just a ride or a run — it's the whole moment around it." },
+  { page: "Community", key: "community.howToJoin", label: "Way to Be Part of RTG", eyebrow: "Getting Started", title: "Way to Be Part of RTG", subtitle: "Seven steps from stranger to teammate." },
+  { page: "Community", key: "community.upcoming", label: "Upcoming Community Experiences", eyebrow: "Don't Miss Out", title: "Upcoming Community Experiences", subtitle: "Our weekly rhythm — full calendar has everything else, races included." },
+  { page: "Community", key: "community.voices", label: "Member Voices", eyebrow: "Member Voices", title: "The People Behind RTG", subtitle: "" },
   { page: "Community", key: "community.volunteer", label: "Volunteer With RTG", eyebrow: "Get Involved", title: "Volunteer With RTG", subtitle: "" },
-  { page: "Community", key: "community.timeline", label: "RTG Timeline", eyebrow: "How Far We've Come", title: "RTG Timeline", subtitle: "" },
 
   { page: "Events", key: "events.featured", label: "Featured Event", eyebrow: "Flagship", title: "Featured Event", subtitle: "" },
   { page: "Events", key: "events.moreEvents", label: "More Events", eyebrow: "Mark Your Calendar", title: "More Events", subtitle: "Championships, challenges, adventures, and workshops throughout the year." },

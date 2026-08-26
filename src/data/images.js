@@ -63,6 +63,10 @@ export const images = {
   communityBeginners: unsplash("1476480862126-209bfaa8edc8", 1000),
   communityExperienced: unsplash("1541625602330-2277a4c46182", 1000),
   communityVolunteers: unsplash("1552674605-db6ffd4facb5", 1000),
+  // Placeholders (reuse existing photos) until real RTG photos are uploaded
+  // via Site Photos — used by the "What RTG Feels Like" moments collage.
+  communityChai: unsplash("1476480862126-209bfaa8edc8", 1000),
+  communityCelebration: unsplash("1552674605-db6ffd4facb5", 1000),
 
   // ---- WEEKLY RIDES ----
   ridesHero: unsplash("1517836357463-d25dfeac3438", 2000),

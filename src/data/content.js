@@ -169,14 +169,12 @@ export const weeklySessions = [
   },
 ];
 
-export const communityGroups = [
-  { key: "communityCyclists", title: "Cyclists", desc: "Road, TT, gravel — riders chasing distance and speed together." },
-  { key: "communityRunners", title: "Runners", desc: "From 5K first-timers to marathon veterans." },
-  { key: "communitySwimmers", title: "Swimmers", desc: "Pool sessions and open-water swim training." },
-  { key: "communityTriathletes", title: "Triathletes", desc: "Multi-sport athletes training for the full distance." },
-  { key: "communityBeginners", title: "Beginners", desc: "New to endurance sport? You'll find your pace here." },
-  { key: "communityExperienced", title: "Experienced Athletes", desc: "Podium finishers who love mentoring the next generation." },
-  { key: "communityVolunteers", title: "Volunteers", desc: "The people who make every event and ride run smoothly." },
+// The Community page's "What RTG Feels Like" four-moment collage.
+export const rtgMoments = [
+  { key: "communityCyclists", title: "Riding", desc: "Weekend rides, mountain climbs, and city loops — wheels down, together." },
+  { key: "communityRunners", title: "Running", desc: "Sunrise 5Ks to marathon training blocks, every pace welcome." },
+  { key: "communityChai", title: "Chai & Conversation", desc: "Every ride ends the same way — chai, stories, and no rush to leave." },
+  { key: "communityCelebration", title: "Celebration & Volunteering", desc: "Finish lines, medal ceremonies, and the volunteers who make it all happen." },
 ];
 
 export const rideSafety = [
@@ -333,9 +331,8 @@ export const communityTimeline = [
 // via the admin Team screen — see src/lib/publicData.js useTeamMembers) ----
 
 export const teamMembers = [
-  { name: "Founder & Head Coach", role: "Founder & Head Coach", city: "Delhi", sport: "Cycling & Triathlon", avatarKey: "avatar1", instagramUrl: "https://instagram.com/RideTeaGupShup" },
-  { name: "Running Lead", role: "Running Lead", city: "Delhi", sport: "Ultra & Trail Running", avatarKey: "avatar2", instagramUrl: "https://instagram.com/RideTeaGupShup" },
-  { name: "Swim Coach", role: "Swim Coach", city: "Pune", sport: "Open Water & Pool", avatarKey: "avatar3", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Randeep", role: "Owner", city: "Delhi", sport: "Cycling & Triathlon", avatarKey: "avatar1", instagramUrl: "https://instagram.com/RideTeaGupShup" },
+  { name: "Simran", role: "Admin", city: "Delhi", sport: "Running", avatarKey: "avatar2", instagramUrl: "https://instagram.com/RideTeaGupShup" },
 ];
 
 export const fiveYearGoal =

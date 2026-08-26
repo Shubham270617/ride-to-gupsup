@@ -67,8 +67,8 @@ export default function Footer() {
   return (
     <footer className="relative bg-rtg-purple-950 border-t border-white/10 pt-14 pb-6 px-6 md:px-10 overflow-hidden">
       <div className="max-w-7xl mx-auto relative">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-10 mb-10">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-10 mb-10">
+          <div className="sm:col-span-2 xl:col-span-2">
             <img src={images.logo} alt={brand.name} className="h-9 w-auto mb-3" />
             <p className="text-rtg-mist text-sm leading-relaxed max-w-xs mb-4">
               {t(
@@ -125,12 +125,18 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Large faded logo watermark — purely decorative, sits behind/below the bottom bar */}
+      {/* Faded logo watermark — purely decorative, sized to always fit fully
+          within the footer (no clipping/bleeding off the edges) on any
+          screen size. mix-blend-multiply neutralizes a solid white
+          background if the logo image doesn't have real transparency (a
+          plain PNG/JPG export rather than a cut-out) — white multiplies
+          away to nothing against the dark footer, leaving just the mark
+          itself faintly visible instead of a visible box. */}
       <img
         src={images.logo}
         alt=""
         aria-hidden="true"
-        className="pointer-events-none select-none absolute left-1/2 -bottom-6 -translate-x-1/2 w-[140%] max-w-none opacity-[0.04] md:opacity-[0.05]"
+        className="pointer-events-none select-none absolute inset-0 m-auto h-20 md:h-28 w-auto max-w-[80%] object-contain opacity-20 mix-blend-multiply"
       />
     </footer>
   );
