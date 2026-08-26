@@ -123,11 +123,6 @@ export const rtgInMotion = [
   { key: "sports", value: "Cycling · Running · Triathlon", label: "" },
 ];
 
-export const roadAhead =
-  "We're building RTG step by step — stronger local communities, better events, meaningful challenges, structured training opportunities, memorable endurance experiences and a digital ecosystem that keeps everything connected.";
-
-export const roadAheadFlow = ["Community", "Events", "Training", "Adventure", "Digital", "Partnerships"];
-
 export const stats = [
   { key: "activeMembers", label: "Active Members", value: 500, suffix: "+" },
   { key: "states", label: "States", value: 13, suffix: "+" },

@@ -1,4 +1,4 @@
-import { Target, Eye, Bike, Footprints, Trophy, Flag, Mountain, Coffee, ArrowRight, Sparkles } from "lucide-react";
+import { Target, Eye, Bike, Footprints, Trophy, Flag, Mountain, Coffee } from "lucide-react";
 import {
   coreValues,
   howItStarted,
@@ -6,7 +6,6 @@ import {
   communityPillars,
   rtgJourney,
   rtgInMotion,
-  roadAheadFlow,
 } from "../data/content";
 import { useSiteImages, useSiteSettings, pickText } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
@@ -174,38 +173,15 @@ export default function About() {
         </StaggerGroup>
       </Section>
 
-      {/* THE PEOPLE BEHIND RTG — PDF marks this "to be updated later"; real
-          bios/photos live on the Community page's Member Voices slider for
-          now instead. */}
-      <Section contentKey="about.leadership" light eyebrow="The People Behind RTG" title="Our Leadership">
-        <Reveal>
-          <GlassCard className="max-w-xl mx-auto text-center py-14">
-            <Sparkles className="text-rtg-orange-400 mx-auto mb-4" size={32} />
-            <h3 className="font-display text-2xl mb-2">Coming Soon</h3>
-            <p className="text-rtg-mist text-sm leading-relaxed max-w-sm mx-auto">
-              We're putting together proper profiles for the people behind RTG.
-            </p>
-          </GlassCard>
-        </Reveal>
-      </Section>
-
       {/* THE ROAD AHEAD */}
       <Section contentKey="about.roadAhead" light eyebrow="What's Coming" title="The Road Ahead">
-        <Reveal className="text-center mb-12">
+        <Reveal className="text-center">
           <p className="text-rtg-mist text-lg leading-relaxed max-w-2xl mx-auto">
             {t(
               "text.about.roadAhead",
               "We're building RTG step by step — stronger local communities, better events, meaningful challenges, structured training opportunities, memorable endurance experiences and a digital ecosystem that keeps everything connected."
             )}
           </p>
-        </Reveal>
-        <Reveal className="flex flex-wrap items-center justify-center gap-3">
-          {roadAheadFlow.map((step, i) => (
-            <span key={step} className="flex items-center gap-3">
-              <span className="glass px-5 py-2.5 rounded-full text-sm font-semibold text-rtg-white/90">{step}</span>
-              {i < roadAheadFlow.length - 1 && <ArrowRight size={16} className="text-rtg-orange-400/60 shrink-0" />}
-            </span>
-          ))}
         </Reveal>
       </Section>
 

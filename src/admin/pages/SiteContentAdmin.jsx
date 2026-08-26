@@ -16,7 +16,6 @@ const SECTIONS = [
   { page: "About", key: "about.howWeBring", label: "How We Bring the Community Together", eyebrow: "What We Offer", title: "How We Bring the Community Together", subtitle: "" },
   { page: "About", key: "about.coreValues", label: "Our Core Values", eyebrow: "What We Stand For", title: "Our Core Values", subtitle: "" },
   { page: "About", key: "about.motion", label: "RTG in Motion", eyebrow: "RTG in Motion", title: "Where We Stand Today", subtitle: "" },
-  { page: "About", key: "about.leadership", label: "Our Leadership", eyebrow: "The People Behind RTG", title: "Our Leadership", subtitle: "" },
   { page: "About", key: "about.roadAhead", label: "The Road Ahead", eyebrow: "What's Coming", title: "The Road Ahead", subtitle: "" },
 
   { page: "Blog", key: "blog.hero", label: "From the Journal", eyebrow: "Latest", title: "From the Journal", subtitle: "" },
