@@ -229,10 +229,13 @@ export default function Community() {
         </Reveal>
       </Section>
 
-      {/* 6. MEMBER VOICES — sliding carousel, editable per-person via the admin Team screen */}
+      {/* 6. MEMBER VOICES — hidden for now per request. Sliding carousel,
+          editable per-person via the admin Team screen; re-add the
+          <Section>/<TeamVoicesSlider> block below when ready.
       <Section contentKey="community.voices" light eyebrow="Member Voices" title="The People Behind RTG">
         <TeamVoicesSlider items={teamMembers} />
       </Section>
+      */}
 
       {/* 7. VOLUNTEER — LAUNCHING SOON */}
       <Section id="volunteer" contentKey="community.volunteer" light eyebrow="Get Involved" title="Volunteer With RTG">
