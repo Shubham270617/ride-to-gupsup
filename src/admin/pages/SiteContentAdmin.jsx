@@ -9,11 +9,15 @@ import { supabase } from "../../lib/supabaseClient";
 // <Section> in the page file, then add one entry here with the same key
 // and its current copy as the fallback.
 const SECTIONS = [
-  { page: "About", key: "about.whyExists", label: "Why RTG Exists", eyebrow: "", title: "Why RTG Exists", subtitle: "" },
+  { page: "About", key: "about.howItStarted", label: "How It Started", eyebrow: "Our Origin", title: "How It Started", subtitle: "" },
+  { page: "About", key: "about.whyExists", label: "Why RTG Exists", eyebrow: "Why We're Here", title: "Why RTG Exists", subtitle: "" },
+  { page: "About", key: "about.journey", label: "The RTG Journey", eyebrow: "How Far We've Come", title: "The RTG Journey", subtitle: "" },
   { page: "About", key: "about.missionVision", label: "Mission & Vision", eyebrow: "What Drives Us", title: "Mission & Vision", subtitle: "" },
+  { page: "About", key: "about.howWeBring", label: "How We Bring the Community Together", eyebrow: "What We Offer", title: "How We Bring the Community Together", subtitle: "" },
   { page: "About", key: "about.coreValues", label: "Our Core Values", eyebrow: "What We Stand For", title: "Our Core Values", subtitle: "" },
-  { page: "About", key: "about.timeline", label: "RTG Timeline", eyebrow: "How Far We've Come", title: "RTG Timeline", subtitle: "" },
+  { page: "About", key: "about.motion", label: "RTG in Motion", eyebrow: "RTG in Motion", title: "Where We Stand Today", subtitle: "" },
   { page: "About", key: "about.leadership", label: "Our Leadership", eyebrow: "The People Behind RTG", title: "Our Leadership", subtitle: "" },
+  { page: "About", key: "about.roadAhead", label: "The Road Ahead", eyebrow: "What's Coming", title: "The Road Ahead", subtitle: "" },
 
   { page: "Blog", key: "blog.hero", label: "From the Journal", eyebrow: "Latest", title: "From the Journal", subtitle: "" },
 
@@ -107,6 +111,62 @@ const CUSTOM_GROUPS = {
         { key: "text.footer.description", label: "Description (under the logo)", fallback: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.", type: "textarea" },
         { key: "text.footer.copyright", label: "Copyright line (after \"© {year}\")", fallback: "Ride Tea GupShup. All rights reserved.", type: "text" },
         { key: "text.footer.tagline", label: "Bottom-right tagline", fallback: "Built for athletes, by athletes.", type: "text" },
+      ],
+    },
+  ],
+  About: [
+    {
+      heading: "How It Started (paragraphs)",
+      fields: [
+        {
+          key: "text.about.howItStarted.p1",
+          label: "Paragraph 1",
+          fallback: "RTG wasn't created to build another competitive sports club. It came from a simple belief that cycling and running become more meaningful when people have a community around them — people to ride with, learn from, have chai with and share the journey with.",
+          type: "textarea",
+        },
+        {
+          key: "text.about.howItStarted.p2",
+          label: "Paragraph 2",
+          fallback: "What started as a handful of Friday morning rides has grown into a movement of 500+ athletes across India's cities — cyclists, runners, and endurance enthusiasts united by one belief: sport is better shared.",
+          type: "textarea",
+        },
+      ],
+    },
+    {
+      heading: "Mission & Vision (text)",
+      fields: [
+        {
+          key: "text.about.mission",
+          label: "Mission",
+          fallback: "Build an inclusive endurance community where people connect through sport, learn from one another, challenge themselves and create experiences that go beyond the finish line.",
+          type: "textarea",
+        },
+        {
+          key: "text.about.vision",
+          label: "Vision",
+          fallback: "Build one of India's most trusted endurance communities — connecting cycling, running, triathlon and outdoor adventure through community, events, training and technology.",
+          type: "textarea",
+        },
+      ],
+    },
+    {
+      heading: "RTG in Motion (stat values)",
+      fields: [
+        { key: "text.about.motion.participants", label: "Endurance League Participants", fallback: "400+", type: "text" },
+        { key: "text.about.motion.duration", label: "\"One National Challenge\" duration", fallback: "4 Weeks", type: "text" },
+        { key: "text.about.motion.reach", label: "\"Growing Community Presence\" value", fallback: "Multiple Cities", type: "text" },
+        { key: "text.about.motion.sports", label: "Sports tagline (no label under this one)", fallback: "Cycling · Running · Triathlon", type: "text" },
+      ],
+    },
+    {
+      heading: "The Road Ahead (paragraph)",
+      fields: [
+        {
+          key: "text.about.roadAhead",
+          label: "Paragraph",
+          fallback: "We're building RTG step by step — stronger local communities, better events, meaningful challenges, structured training opportunities, memorable endurance experiences and a digital ecosystem that keeps everything connected.",
+          type: "textarea",
+        },
       ],
     },
   ],

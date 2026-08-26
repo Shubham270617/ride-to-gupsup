@@ -63,20 +63,70 @@ export const heroSlides = [
 ];
 
 export const mission =
-  "Build India's most loved endurance sports community where athletes learn together, grow together, and inspire one another.";
+  "Build an inclusive endurance community where people connect through sport, learn from one another, challenge themselves and create experiences that go beyond the finish line.";
 
 export const vision =
-  "Create a nationwide sports community that promotes respect, knowledge sharing, healthy competition, adventure, and lifelong friendships.";
+  "Build one of India's most trusted endurance communities — connecting cycling, running, triathlon and outdoor adventure through community, events, training and technology.";
 
 export const coreValues = [
-  { title: "Community First", desc: "We show up for each other, on and off the road." },
-  { title: "Learn Together", desc: "Every ride and run is a chance to get better, together." },
-  { title: "Fun Without Pressure", desc: "No egos. No pace-shaming. Just good vibes and hard work." },
-  { title: "Respect Every Athlete", desc: "Beginner or elite — everyone gets the same respect." },
-  { title: "Adventure", desc: "We chase sunrises, summits, and the open road." },
-  { title: "Consistency", desc: "Small, repeated efforts build big results." },
-  { title: "Growth Through Sports", desc: "Endurance sport as a vehicle for personal growth." },
+  { title: "Community First", desc: "People and belonging come before performance." },
+  { title: "Safety Always", desc: "Every activity puts participant safety first." },
+  { title: "Everyone Belongs", desc: "Beginner or experienced — everyone deserves the same respect." },
+  { title: "Grow Together", desc: "Share knowledge. Encourage progress." },
+  { title: "Consistency", desc: "Small efforts, repeated consistently, create meaningful change." },
+  { title: "Adventure", desc: "Explore new roads, trails, challenges and possibilities." },
 ];
+
+// About page's origin story, split from the "Why RTG Exists" 3-pillar
+// section below — the two used to be conflated under one heading.
+export const howItStarted = [
+  "RTG wasn't created to build another competitive sports club. It came from a simple belief that cycling and running become more meaningful when people have a community around them — people to ride with, learn from, have chai with and share the journey with.",
+  "What started as a handful of Friday morning rides has grown into a movement of 500+ athletes across India's cities — cyclists, runners, and endurance enthusiasts united by one belief: sport is better shared.",
+];
+
+export const whyRtgExists = [
+  { title: "Move Together", desc: "Cycling, running and endurance sport become better when they're shared." },
+  { title: "Grow Together", desc: "From first-timers to experienced athletes, everyone should have opportunities to learn and improve." },
+  { title: "Belong Together", desc: "No ego. No pace-shaming. No unnecessary pressure. Just respect, encouragement and community." },
+];
+
+// "How We Bring the Community Together" — icon is a key into the ICON map
+// defined in About.jsx (kept as short strings here so this stays plain data).
+export const communityPillars = [
+  { icon: "bike", title: "Community Rides", desc: "Social and endurance cycling experiences." },
+  { icon: "footprints", title: "Runs & Training", desc: "Running, brick sessions and structured community training." },
+  { icon: "trophy", title: "Challenges", desc: "Virtual and physical challenges designed around participation and consistency." },
+  { icon: "flag", title: "Races & Events", desc: "From community events to competitive endurance experiences." },
+  { icon: "mountain", title: "Adventure", desc: "Trails, tours and experiences beyond everyday training." },
+  { icon: "coffee", title: "Tea & GupShup", desc: "Because sometimes the best part starts after the workout." },
+];
+
+// The RTG Journey — horizontal timeline on desktop, vertical on mobile (see
+// About.jsx). `date` is optional; steps without one are milestones rather
+// than dated events.
+export const rtgJourney = [
+  { date: "Jan 2026", label: "RTG Begins", desc: "" },
+  { date: "", label: "Community Rides & Runs", desc: "Regular experiences bring people together." },
+  { date: "June 2026", label: "RTG Expands", desc: "Beyond regular rides." },
+  { date: "", label: "RTG Endurance League", desc: "Pan-India virtual endurance challenge." },
+  { date: "", label: "New Chapters & Communities", desc: "Delhi NCR · Dehradun · Chandigarh · Jaipur" },
+  { date: "", label: "What's Next", desc: "Races · Training · Adventures · Digital Community" },
+];
+
+// "RTG in Motion" stats — plain admin-editable text (via Site Content),
+// not the AnimatedCounter treatment used elsewhere, since not all of these
+// are numbers ("Multiple Cities" isn't a count to animate).
+export const rtgInMotion = [
+  { key: "participants", value: "400+", label: "Endurance League Participants" },
+  { key: "duration", value: "4 Weeks", label: "One National Challenge" },
+  { key: "reach", value: "Multiple Cities", label: "Growing Community Presence" },
+  { key: "sports", value: "Cycling · Running · Triathlon", label: "" },
+];
+
+export const roadAhead =
+  "We're building RTG step by step — stronger local communities, better events, meaningful challenges, structured training opportunities, memorable endurance experiences and a digital ecosystem that keeps everything connected.";
+
+export const roadAheadFlow = ["Community", "Events", "Training", "Adventure", "Digital", "Partnerships"];
 
 export const stats = [
   { key: "activeMembers", label: "Active Members", value: 500, suffix: "+" },
@@ -319,15 +369,6 @@ export const joinSteps = [
   { step: 7, title: "Grow Together", desc: "Train consistently, chase new distances, and mentor the next beginner." },
 ];
 
-export const communityTimeline = [
-  { label: "RTG Started", desc: "A handful of friends met for a Friday sunrise ride at Nehru Park." },
-  { label: "100 Members", desc: "Word spread — the WhatsApp group crossed 100 riders." },
-  { label: "First Event", desc: "RTG's first organized community ride outside Delhi." },
-  { label: "Running Added", desc: "Friday Bricks became cycling + running, and the community followed." },
-  { label: "Endurance League Launched", desc: "RTG's first pan-India virtual endurance challenge." },
-  { label: "500+ Members", desc: "Across 8+ cities, and still growing every week." },
-];
-
 // ---- About: Leadership (fallback shown until real team members are added
 // via the admin Team screen — see src/lib/publicData.js useTeamMembers) ----
 
@@ -350,9 +391,6 @@ export const waysToParticipate = [
   { title: "Attend a Meetup", desc: "Chai, stories, and planning the next big ride.", to: "/events", icon: "users" },
   { title: "Volunteer with RTG", desc: "Marshalling, logistics, photography, and more.", to: "#volunteer", icon: "heart-handshake" },
 ];
-
-export const fiveYearGoal =
-  "By 2032, we want RTG in 25+ Indian cities with 5,000+ active athletes, running a full calendar of RTG-organized races, and having produced 100+ first-time marathon, century-ride, and triathlon finishers who never thought they could.";
 
 // ---- Race Results (fallback shown until real results are added via the
 // admin Race Results screen) ----
