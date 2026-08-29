@@ -7,6 +7,7 @@ import AuthGate from "./components/AuthGate";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import { AuthGateProvider } from "./lib/AuthGateContext";
+import { CartProvider } from "./lib/CartContext";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
@@ -15,6 +16,9 @@ import WeeklySessionDetail from "./pages/WeeklySessionDetail";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Merchandise from "./pages/Merchandise";
+import ProductDetail from "./pages/ProductDetail";
+import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import Challenges from "./pages/Challenges";
 import RaceCalendar from "./pages/RaceCalendar";
 import RaceResults from "./pages/RaceResults";
@@ -37,6 +41,7 @@ const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const AdminLogin = lazy(() => import("./admin/pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const ResourceAdminPage = lazy(() => import("./admin/pages/ResourceAdminPage"));
+const OrdersAdmin = lazy(() => import("./admin/pages/OrdersAdmin"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
@@ -64,10 +69,11 @@ export default function App() {
   const exempt = INTRO_EXEMPT_PREFIXES.some((p) => location.pathname.startsWith(p));
 
   return (
-    <AuthGateProvider>
-      {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
-      {!exempt && introDone && <AuthGate />}
-      <Routes>
+    <CartProvider>
+      <AuthGateProvider>
+        {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
+        {!exempt && introDone && <AuthGate />}
+        <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
 
@@ -104,6 +110,7 @@ export default function App() {
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
           <Route path="messages" element={<MessagesAdmin />} />
+          <Route path="orders" element={<OrdersAdmin />} />
           <Route path="ai" element={<AiAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />
         </Route>
@@ -117,6 +124,9 @@ export default function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/events/:slug" element={<EventDetail />} />
           <Route path="/merchandise" element={<Merchandise />} />
+          <Route path="/merchandise/:id" element={<ProductDetail />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/race-calendar" element={<RaceCalendar />} />
           <Route path="/race-results" element={<RaceResults />} />
@@ -132,7 +142,8 @@ export default function App() {
           <Route path="/community-guidelines" element={<LegalPage {...communityGuidelines} />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-      </Routes>
-    </AuthGateProvider>
+        </Routes>
+      </AuthGateProvider>
+    </CartProvider>
   );
 }

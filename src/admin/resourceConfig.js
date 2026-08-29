@@ -65,6 +65,8 @@ export const resources = {
       { name: "name", label: "Name", type: "text", required: true },
       { name: "price", label: "Price (₹)", type: "number", required: true },
       { name: "tag", label: "Tag", type: "text", placeholder: "e.g. Bestseller" },
+      { name: "description", label: "Description", type: "textarea", hint: "Shown on the product's own page." },
+      { name: "sizes", label: "Sizes", type: "tags", placeholder: "S, M, L, XL", hint: "Leave blank for products that don't come in sizes (cap, bottle, etc.). If set, buyers must pick one before adding to cart." },
       { name: "image_url", label: "Product Photo", type: "image", folder: "products" },
       { name: "in_stock", label: "In Stock", type: "boolean", default: true },
       { name: "sort_order", label: "Sort Order", type: "number", default: 0 },

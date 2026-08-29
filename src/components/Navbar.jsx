@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { Menu, X, LogIn, LogOut, User, ShoppingBag } from "lucide-react";
 import { useSiteImages } from "../lib/publicData";
 import { brand } from "../data/content";
 import Button from "./ui/Button";
 import LiveClock from "./ui/LiveClock";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
+import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
 
 const links = [
@@ -70,6 +71,24 @@ function ProfileIcon({ className = "" }) {
         <LogOut size={16} />
       </button>
     </div>
+  );
+}
+
+function CartButton({ className = "" }) {
+  const { count, setOpen } = useCart();
+  return (
+    <button
+      onClick={() => setOpen(true)}
+      aria-label="Open cart"
+      className={`relative w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors ${className}`}
+    >
+      <ShoppingBag size={17} />
+      {count > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rtg-orange-500 text-rtg-ink text-[10px] font-bold flex items-center justify-center">
+          {count}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -148,6 +167,7 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
+          <CartButton />
           {user ? (
             <ProfileIcon />
           ) : (
@@ -166,13 +186,16 @@ export default function Navbar() {
           {showAdminLink && <HiddenAdminLink />}
         </div>
 
-        <button
-          className="lg:hidden text-rtg-white p-2"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X size={26} /> : <Menu size={26} />}
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <CartButton />
+          <button
+            className="text-rtg-white p-2"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>

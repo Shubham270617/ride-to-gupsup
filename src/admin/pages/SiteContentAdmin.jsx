@@ -169,6 +169,25 @@ const CUSTOM_GROUPS = {
       ],
     },
   ],
+  Merchandise: [
+    {
+      heading: "Payment (self-hosted UPI)",
+      fields: [
+        {
+          key: "payment.upiId",
+          label: "Your UPI ID (e.g. rtg@okhdfcbank — shown as a QR code and \"Pay in UPI App\" link at checkout; leave blank to hide the payment step until set)",
+          fallback: "",
+          type: "text",
+        },
+        {
+          key: "payment.payeeName",
+          label: "Payee Name (shown in the buyer's UPI app)",
+          fallback: "Ride Tea GupShup",
+          type: "text",
+        },
+      ],
+    },
+  ],
 };
 
 const PAGES = [...new Set([...SECTIONS.map((s) => s.page), ...Object.keys(CUSTOM_GROUPS)])].sort();

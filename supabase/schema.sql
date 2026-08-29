@@ -600,3 +600,96 @@ drop function if exists claim_admin_if_seats_open();
 --   select id, full_name from profiles where email = 'the-right-persons-email'
 --   on conflict (id) do nothing;
 -- ============================================================================
+
+-- ============================================================================
+-- PART — Merchandise Orders (cart/checkout, self-hosted UPI payment)
+--
+-- Deliberately kept out of the generic "content tables" RLS loop above —
+-- those tables are public-read/admin-write, but an order is private: a
+-- member should only ever see their OWN orders (never another member's),
+-- and only an admin can change an order's status. That's a different shape
+-- of policy, so it's written out by hand here instead of being folded into
+-- the shared loop, to avoid ever accidentally exposing orders as
+-- publicly readable.
+--
+-- Payment is self-hosted UPI (your own UPI ID + a QR/deep-link shown at
+-- checkout, see site_settings keys "payment.upiId" / "payment.payeeName")
+-- rather than a payment gateway — no transaction fees, no business KYC
+-- needed to get started. The buyer pays manually and types in the UPI
+-- transaction reference (UTR); every order starts 'pending_verification'
+-- until an admin checks that reference against their own bank/UPI app and
+-- marks it 'confirmed' or 'rejected' from Admin -> Orders.
+-- ============================================================================
+
+-- Apparel products (jersey/t-shirt/hoodie) can list selectable sizes here;
+-- products without sizes (cap/socks/bottle/wheel bag) just leave this blank.
+alter table products add column if not exists sizes text[];
+-- Shown on the new product detail page (/merchandise/:id).
+alter table products add column if not exists description text;
+
+create table if not exists orders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  customer_name text not null,
+  phone text not null,
+  email text not null,
+  address text not null,
+  city text not null,
+  pincode text not null,
+  subtotal numeric(10, 2) not null,
+  total numeric(10, 2) not null,
+  status text not null default 'pending_verification'
+    check (status in ('pending_verification', 'confirmed', 'rejected', 'shipped', 'delivered')),
+  utr_reference text,
+  admin_note text,
+  created_at timestamptz not null default now()
+);
+
+-- Line items are snapshotted (product_name/price captured at order time) so
+-- a later price change or product deletion never rewrites past order
+-- history — product_id is kept only as a soft reference for convenience.
+create table if not exists order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references orders(id) on delete cascade,
+  product_id uuid references products(id) on delete set null,
+  product_name text not null,
+  price numeric(10, 2) not null,
+  size text,
+  quantity int not null check (quantity > 0)
+);
+
+alter table orders enable row level security;
+alter table order_items enable row level security;
+
+drop policy if exists "orders own insert" on orders;
+create policy "orders own insert" on orders
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "orders own read" on orders;
+create policy "orders own read" on orders
+  for select using (auth.uid() = user_id or is_admin());
+
+drop policy if exists "orders admin update" on orders;
+create policy "orders admin update" on orders
+  for update using (is_admin());
+
+drop policy if exists "orders admin delete" on orders;
+create policy "orders admin delete" on orders
+  for delete using (is_admin());
+
+drop policy if exists "order_items owner insert" on order_items;
+create policy "order_items owner insert" on order_items
+  for insert with check (
+    exists (select 1 from orders o where o.id = order_id and o.user_id = auth.uid())
+  );
+
+drop policy if exists "order_items owner read" on order_items;
+create policy "order_items owner read" on order_items
+  for select using (
+    exists (select 1 from orders o where o.id = order_id and (o.user_id = auth.uid() or is_admin()))
+  );
+
+drop policy if exists "order_items admin delete" on order_items;
+create policy "order_items admin delete" on order_items
+  for delete using (is_admin());
+-- ============================================================================

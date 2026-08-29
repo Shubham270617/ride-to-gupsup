@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight } from "lucide-react";
+import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight, Package } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
@@ -9,6 +9,18 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
 import { uploadToCloudinary } from "../lib/cloudinaryUpload";
+
+const ORDER_STATUS = {
+  pending_verification: { label: "Pending Verification", className: "bg-amber-500/15 text-amber-300" },
+  confirmed: { label: "Confirmed", className: "bg-green-500/15 text-green-300" },
+  rejected: { label: "Rejected", className: "bg-red-500/15 text-red-300" },
+  shipped: { label: "Shipped", className: "bg-blue-500/15 text-blue-300" },
+  delivered: { label: "Delivered", className: "bg-rtg-orange-500/15 text-rtg-orange-300" },
+};
+
+function formatPrice(n) {
+  return `₹${Number(n).toLocaleString("en-IN")}`;
+}
 
 const StravaMark = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={16} height={16} {...props}>
@@ -42,6 +54,17 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [myOrders, setMyOrders] = useState([]);
+
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) return;
+    supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setMyOrders(data || []));
+  }, [user]);
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured) {
@@ -159,6 +182,39 @@ export default function Dashboard() {
           </GlassCard>
         </Link>
       </div>
+
+      {myOrders.length > 0 && (
+        <>
+          <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">My Orders</h2>
+          <div className="max-w-4xl mx-auto space-y-3 mb-10">
+            {myOrders.map((order) => {
+              const status = ORDER_STATUS[order.status] || ORDER_STATUS.pending_verification;
+              return (
+                <GlassCard key={order.id} className="!p-5">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex items-start gap-3">
+                      <Package size={18} className="text-rtg-orange-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {order.order_items.map((i) => i.product_name).join(", ")}
+                        </p>
+                        <p className="text-xs text-rtg-mist mt-0.5">
+                          {new Date(order.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          {" · "}
+                          {formatPrice(order.total)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${status.className}`}>
+                      {status.label}
+                    </span>
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">Athlete Profile</h2>
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">

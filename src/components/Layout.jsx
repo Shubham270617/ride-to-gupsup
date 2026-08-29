@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
 import AiWidget from "./ai/AiWidget";
+import CartDrawer from "./CartDrawer";
 
 export default function Layout() {
   return (
@@ -14,6 +15,7 @@ export default function Layout() {
       </main>
       <Footer />
       <AiWidget />
+      <CartDrawer />
     </div>
   );
 }

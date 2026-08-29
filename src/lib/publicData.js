@@ -96,12 +96,37 @@ export function useEvent(slugOrId) {
   return { event, loading };
 }
 
+const mapProductRow = (r) => ({
+  id: r.id,
+  name: r.name,
+  price: Number(r.price),
+  tag: r.tag,
+  image: r.image_url,
+  description: r.description,
+  sizes: r.sizes || [],
+  inStock: r.in_stock !== false,
+});
+
 export function useProducts() {
   return useSupabaseList("products", {
     staticFallback: staticProducts,
     filterPublished: false,
-    mapRow: (r) => ({ id: r.id, name: r.name, price: Number(r.price), tag: r.tag, image: r.image_url }),
+    mapRow: mapProductRow,
   }).items;
+}
+
+// A single product by id — powers the product detail page
+// (/merchandise/:id). Returns `loading` for the same reason useEvent does:
+// on the very first render `items` is still just the static fallback,
+// which won't contain a real admin-added product's id.
+export function useProduct(id) {
+  const { items, loading } = useSupabaseList("products", {
+    staticFallback: staticProducts,
+    filterPublished: false,
+    mapRow: mapProductRow,
+  });
+  const product = items.find((p) => p.id === id);
+  return { product, loading };
 }
 
 export function useBlogPosts() {
