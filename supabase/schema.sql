@@ -259,6 +259,15 @@ begin
   end if;
 end $$;
 
+-- Optional real date, separate from the free-text event_date display field
+-- above ("June 2027", "TBA", "Ongoing" — not parseable). Set this and the
+-- event automatically shows up on the Race Calendar on that exact day, no
+-- separate calendar_events row needed — see RaceCalendar.jsx and
+-- useEvents() in publicData.js. Leave blank and nothing changes.
+alter table events add column if not exists calendar_date date;
+
+create index if not exists events_calendar_date_idx on events (calendar_date) where calendar_date is not null;
+
 -- Prize Pool moved from free text (e.g. "Prize Pool Worth ₹5 Lakhs") to a plain
 -- number so the public site can format it as currency consistently. Strips any
 -- non-numeric characters (₹, commas, "Lakhs" text, stray spaces) before casting

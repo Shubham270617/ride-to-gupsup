@@ -294,6 +294,10 @@ export const calendarCategories = [
   { key: "triathlon", label: "Triathlons", color: "#ac8ce5" },
   { key: "community", label: "Community Rides", color: "#5b2ba8" },
   { key: "adventure", label: "Adventure Tours", color: "#d94f0e" },
+  // Not a real admin-set category — RaceCalendar.jsx tags every projected
+  // weekly-session occurrence with this key so it gets its own filter chip
+  // and color, distinct from one-off dated events.
+  { key: "weekly", label: "Weekly Rides", color: "#22c55e" },
 ];
 
 export const calendarEvents = [

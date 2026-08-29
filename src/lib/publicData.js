@@ -64,6 +64,7 @@ const mapEventRow = (r) => ({
   image: r.cover_image_url,
   featured: r.featured,
   status: r.event_status || "Upcoming",
+  calendarDate: r.calendar_date,
   route: r.route_info,
   routeMapQuery: r.route_map_query,
   elevation: r.elevation_gain,
