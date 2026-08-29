@@ -86,6 +86,8 @@ create policy "profiles self update" on profiles
 -- the count check server-side, against the real table, at the moment of
 -- granting — rather than baked into this trigger — is what makes that
 -- check race-safe under concurrent signups. See the bottom of this file.
+
+
 create or replace function handle_new_user()
 returns trigger
 language plpgsql
