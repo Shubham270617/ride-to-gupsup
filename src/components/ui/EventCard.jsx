@@ -7,7 +7,7 @@ import useSession from "../../lib/useSession";
 import { useAuthGate } from "../../lib/AuthGateContext";
 import GlassCard from "./GlassCard";
 
-export default function EventCard({ event, featured = false }) {
+export default function EventCard({ event, featured = false, badgeLabel = "Featured Event" }) {
   const img = event.image || images[event.imgKey];
   const to = `/events/${event.slug || event.id}`;
   const { user } = useSession();
@@ -48,7 +48,7 @@ export default function EventCard({ event, featured = false }) {
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
             <span className="inline-block bg-rtg-orange-500 text-rtg-ink text-xs font-bold px-3 py-1.5 rounded-full mb-4 tracking-wide uppercase">
-              Featured Event
+              {badgeLabel}
             </span>
             <h3 className="font-display text-4xl md:text-6xl mb-3 leading-none">{event.title}</h3>
             <p className="text-rtg-mist mb-2 text-sm md:text-base">{event.type}</p>

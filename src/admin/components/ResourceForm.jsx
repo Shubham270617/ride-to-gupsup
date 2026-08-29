@@ -156,11 +156,19 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
               <option value="" className="bg-rtg-ink">
                 {f.placeholder || "Select…"}
               </option>
-              {(f.options || []).map((o) => (
-                <option key={o} value={o} className="bg-rtg-ink">
-                  {o}
-                </option>
-              ))}
+              {(f.options || []).map((o) => {
+                // Plain strings ("Beginner") or { value, label } pairs when
+                // the stored value needs to stay stable while the text
+                // shown to the admin changes (e.g. events.event_status
+                // keeps storing "Flagship" but displays "Signature Events").
+                const value = typeof o === "string" ? o : o.value;
+                const label = typeof o === "string" ? o : o.label;
+                return (
+                  <option key={value} value={value} className="bg-rtg-ink">
+                    {label}
+                  </option>
+                );
+              })}
             </select>
           )}
 

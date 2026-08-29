@@ -18,9 +18,13 @@ export const resources = {
         name: "event_status",
         label: "Section on Events Page",
         type: "select",
-        options: ["Flagship", "Upcoming", "Past"],
+        options: [
+          { value: "Flagship", label: "Signature Events" },
+          { value: "Upcoming", label: "Coming Up" },
+          { value: "Past", label: "Past Highlights" },
+        ],
         default: "Upcoming",
-        hint: "Which of the 3 sections on the public Events page this shows under.",
+        hint: "Which of the 3 sections on the public Events page this shows under. Signature Events — reserve this for your biggest events, typically only 1–2 per year.",
       },
       { name: "event_date", label: "Date", type: "text", placeholder: "e.g. June 2027" },
       {

@@ -28,9 +28,9 @@ const SECTIONS = [
   { page: "Community", key: "community.voices", label: "Member Voices", eyebrow: "Member Voices", title: "The People Behind RTG", subtitle: "" },
   { page: "Community", key: "community.volunteer", label: "Volunteer With RTG", eyebrow: "Get Involved", title: "Volunteer With RTG", subtitle: "" },
 
-  { page: "Events", key: "events.featured", label: "Flagship Event", eyebrow: "Flagship", title: "Our Flagship Event", subtitle: "" },
-  { page: "Events", key: "events.upcoming", label: "Upcoming Events", eyebrow: "Mark Your Calendar", title: "Upcoming Events", subtitle: "Regularly happening — championships, challenges, adventures, and workshops throughout the year." },
-  { page: "Events", key: "events.past", label: "Past Events", eyebrow: "Where We've Been", title: "Past Events", subtitle: "A look back at what the community has already pulled off." },
+  { page: "Events", key: "events.featured", label: "Signature Events", eyebrow: "Signature", title: "Signature Events", subtitle: "" },
+  { page: "Events", key: "events.upcoming", label: "Coming Up", eyebrow: "Mark Your Calendar", title: "Coming Up", subtitle: "Regularly happening — championships, challenges, adventures, and workshops throughout the year." },
+  { page: "Events", key: "events.past", label: "Past Highlights", eyebrow: "Where We've Been", title: "Past Highlights", subtitle: "A look back at what the community has already pulled off." },
 
   { page: "Home", key: "home.whyJoin", label: "Why Athletes Join RTG", eyebrow: "Why RTG", title: "Why Athletes Join RTG", subtitle: "Six reasons endurance athletes across India call RTG home." },
   { page: "Home", key: "home.weeklyActivities", label: "Weekly Activities", eyebrow: "Weekly Rhythm", title: "Weekly Activities", subtitle: "Consistency builds champions. Here's how our week looks." },
