@@ -247,27 +247,6 @@ export const rideFaqs = [
   { q: "What if I can only do the cycling or only the run?", a: "That's fine — join for whichever part works for you." },
 ];
 
-export const events = [
-  {
-    id: "endurance-league-2",
-    title: "Endurance League Vol. 2",
-    date: "June 2027",
-    type: "Pan India Virtual Endurance Challenge",
-    categories: ["Cycling", "Running"],
-    prize: 500000,
-    featured: true,
-    status: "Flagship",
-    imgKey: "eventFeatured",
-    desc: "India's biggest virtual endurance challenge returns. Log your distance, climb the leaderboard, win big.",
-  },
-  { id: "mtb-championship", title: "MTB Championship", date: "TBA 2027", type: "Off-road Racing", categories: ["MTB"], status: "Upcoming", imgKey: "eventMTB", desc: "Technical trails, timed climbs, and serious bragging rights." },
-  { id: "resolution-challenge", title: "Resolution Challenge", date: "January 2027", type: "Virtual Challenge", categories: ["Cycling", "Running"], status: "Upcoming", imgKey: "eventResolution", desc: "Start the year strong with a community-wide distance goal." },
-  { id: "adventure-rides", title: "Adventure Rides", date: "Ongoing", type: "Outdoor Touring", categories: ["Cycling", "Adventure"], status: "Upcoming", imgKey: "eventAdventure", desc: "Multi-day rides through the hills — Shimla, Dehradun and beyond." },
-  { id: "community-meetups", title: "Community Meetups", date: "Monthly", type: "Social", categories: ["Community"], status: "Upcoming", imgKey: "eventMeetup", desc: "Chai, stories, and planning the next big ride." },
-  { id: "monthly-challenges", title: "Monthly Challenges", date: "Every Month", type: "Virtual Challenge", categories: ["Cycling", "Running"], status: "Upcoming", imgKey: "eventMonthly", desc: "Fresh distance & elevation goals, every single month." },
-  { id: "sports-workshops", title: "Sports Workshops", date: "Quarterly", type: "Education", categories: ["Workshop"], status: "Past", imgKey: "eventWorkshop", desc: "Bike maintenance, nutrition, and injury-prevention sessions." },
-];
-
 export const products = [
   { id: "jersey", name: "RTG Jersey", price: 3000, imgKey: "productJersey", tag: "Bestseller" },
   { id: "tshirt", name: "Cotton T-Shirt", price: 2000, imgKey: "productTshirt" },

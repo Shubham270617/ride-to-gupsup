@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import {
-  events as staticEvents,
   products as staticProducts,
   blogPosts as staticBlogPosts,
   challenges as staticChallenges,
@@ -73,8 +72,10 @@ const mapEventRow = (r) => ({
   previousEdition: r.previous_edition_summary,
 });
 
+// No placeholder fallback — only real, admin-added events should ever show
+// up anywhere on the site. Until an admin adds one, this stays empty.
 export function useEvents() {
-  return useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow }).items;
+  return useSupabaseList("events", { staticFallback: [], mapRow: mapEventRow }).items;
 }
 
 // Used only for the "Upcoming Event" teaser in the login popup — unlike
@@ -90,7 +91,7 @@ export function useUpcomingEvent() {
  * "no such event," just "the real data hasn't arrived yet" — see the
  * useSupabaseList comment above for why that distinction matters here. */
 export function useEvent(slugOrId) {
-  const { items: events, loading } = useSupabaseList("events", { staticFallback: staticEvents, mapRow: mapEventRow });
+  const { items: events, loading } = useSupabaseList("events", { staticFallback: [], mapRow: mapEventRow });
   const event = events.find((e) => e.slug === slugOrId || e.id === slugOrId);
   return { event, loading };
 }
