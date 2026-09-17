@@ -170,9 +170,8 @@ export default function Onboarding() {
               label="Profile Photo"
               value={avatarUrl}
               onChange={setAvatarUrl}
-              folder="avatar"
               accept="image/*"
-              signEndpoint="/api/cloudinary/sign-avatar"
+              ownAvatar
             />
           </div>
 

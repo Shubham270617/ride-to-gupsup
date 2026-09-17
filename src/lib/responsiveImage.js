@@ -1,15 +1,12 @@
-// Admin-uploaded photos (Cloudinary) and the placeholder stock photos
-// (Unsplash) both support on-the-fly resizing via URL parameters — no
-// separate mobile upload needed. This lets a phone download a phone-sized
-// file instead of the same full-resolution photo a desktop gets, for the
-// exact same source image an admin uploaded once.
+// The placeholder stock photos (Unsplash) support on-the-fly resizing via
+// URL parameters, so a phone can download a phone-sized file instead of the
+// same full-resolution photo a desktop gets. Admin-uploaded photos (Supabase
+// Storage) don't have an equivalent — there's no on-the-fly transform API —
+// so those just serve the single size that was uploaded; they're already
+// capped to a sane max dimension client-side before upload (see
+// src/lib/supabaseUpload.js), so this isn't a large photo either way.
 function resizedUrl(url, width) {
   if (!url) return url;
-  if (url.includes("res.cloudinary.com")) {
-    // .../image/upload/v123/... -> .../image/upload/w_800,q_auto,f_auto,c_limit/v123/...
-    // c_limit only shrinks — never upscales a photo smaller than `width`.
-    return url.replace(/\/upload\//, `/upload/w_${width},q_auto,f_auto,c_limit/`);
-  }
   if (url.includes("images.unsplash.com")) {
     try {
       const u = new URL(url);
@@ -23,7 +20,7 @@ function resizedUrl(url, width) {
   return url;
 }
 
-const isResizable = (url) => Boolean(url) && (url.includes("res.cloudinary.com") || url.includes("images.unsplash.com"));
+const isResizable = (url) => Boolean(url) && url.includes("images.unsplash.com");
 
 // A ready-made srcSet for a full-bleed background/hero-style photo — small
 // version for phones, large for desktop, browser picks based on viewport.

@@ -106,6 +106,15 @@ export default function App() {
           <Route path="race-results" element={<ResourceAdminPage resource={resources.raceResults} />} />
           <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarEvents} />} />
           <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
+          <Route path="faqs" element={<ResourceAdminPage resource={resources.faqs} />} />
+          <Route path="ride-faqs" element={<ResourceAdminPage resource={resources.rideFaqs} />} />
+          <Route path="ride-safety" element={<ResourceAdminPage resource={resources.rideSafety} />} />
+          <Route path="what-to-bring" element={<ResourceAdminPage resource={resources.whatToBring} />} />
+          <Route path="general-safety" element={<ResourceAdminPage resource={resources.generalSafety} />} />
+          <Route path="sponsor-tiers" element={<ResourceAdminPage resource={resources.sponsorTiers} />} />
+          <Route path="sponsor-opportunities" element={<ResourceAdminPage resource={resources.sponsorOpportunities} />} />
+          <Route path="size-guide" element={<ResourceAdminPage resource={resources.sizeGuide} />} />
+          <Route path="merch-reviews" element={<ResourceAdminPage resource={resources.merchReviews} />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />

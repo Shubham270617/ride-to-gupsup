@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Upload, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { uploadToCloudinary, deleteFromCloudinary } from "../../lib/cloudinaryUpload";
+import { uploadToSupabaseStorage, deleteFromSupabaseStorage } from "../../lib/supabaseUpload";
 import useTable from "../useTable";
 import { useConfirm } from "../components/ConfirmDialog";
 import UploadProgressModal from "../components/UploadProgressModal";
@@ -39,7 +39,7 @@ export default function GalleryAdmin() {
         const file = files[i];
         setProgressState({ fileName: file.name, index: i + 1, total: files.length, progress: 0 });
         const mediaType = file.type.startsWith("video") ? "video" : "image";
-        const { url } = await uploadToCloudinary(file, "gallery", (p) =>
+        const { url } = await uploadToSupabaseStorage(file, "gallery", (p) =>
           setProgressState((prev) => ({ ...prev, progress: p }))
         );
         await insert({
@@ -66,9 +66,9 @@ export default function GalleryAdmin() {
   const handleDelete = async (row) => {
     const ok = await confirm({ title: "Delete this gallery item?", message: "This can't be undone." });
     if (!ok) return;
-    // Best-effort — if Cloudinary is briefly unreachable, still remove the
+    // Best-effort — if storage is briefly unreachable, still remove the
     // row rather than leaving a dead photo stuck on the public site.
-    await deleteFromCloudinary(row.media_url).catch(() => {});
+    await deleteFromSupabaseStorage(row.media_url).catch(() => {});
     await remove(row.id);
   };
 

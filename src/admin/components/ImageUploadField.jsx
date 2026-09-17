@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload, Loader2, Check, Trash2 } from "lucide-react";
-import { uploadToCloudinary } from "../../lib/cloudinaryUpload";
+import { uploadToSupabaseStorage } from "../../lib/supabaseUpload";
 import UploadProgressModal from "./UploadProgressModal";
 
 export default function ImageUploadField({
@@ -11,7 +11,10 @@ export default function ImageUploadField({
   deleting = false,
   folder = "uploads",
   accept = "image/*,video/*",
-  signEndpoint = "/api/cloudinary/sign",
+  // A regular member uploading their own avatar (Onboarding/Dashboard) —
+  // forces the upload into their own "avatars/<user-id>/" folder, the only
+  // place a non-admin is allowed to write (see supabase/schema.sql).
+  ownAvatar = false,
 }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -27,7 +30,7 @@ export default function ImageUploadField({
     setProgress(0);
     setError("");
     try {
-      const { url } = await uploadToCloudinary(file, folder, setProgress, signEndpoint);
+      const { url } = await uploadToSupabaseStorage(file, folder, setProgress, { ownAvatar });
       onChange(url);
     } catch (err) {
       setError(err.message || "Upload failed");
@@ -65,7 +68,7 @@ export default function ImageUploadField({
             onClick={onDelete}
             disabled={uploading || deleting}
             aria-label="Delete photo"
-            title="Delete — removes it from Cloudinary and reverts to the default"
+            title="Delete — removes the file and reverts to the default"
             className="inline-flex items-center justify-center w-8 h-8 rounded-full glass text-rtg-mist hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors disabled:opacity-50"
           >
             {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}

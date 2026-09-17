@@ -1,6 +1,6 @@
 import { Star, Truck, RotateCcw, Percent } from "lucide-react";
-import { useProducts, useSiteImages } from "../lib/publicData";
-import { sizeGuide, merchReviews, shippingInfo } from "../data/content";
+import { useProducts, useSiteImages, useSizeGuide, useMerchReviews, useSiteSettings, pickText } from "../lib/publicData";
+import { shippingInfo } from "../data/content";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -12,6 +12,12 @@ import Newsletter from "../components/sections/Newsletter";
 export default function Merchandise() {
   const images = useSiteImages();
   const products = useProducts();
+  const sizeGuide = useSizeGuide();
+  const merchReviews = useMerchReviews();
+  const settings = useSiteSettings();
+  const memberDiscount = pickText(settings, "text.merch.memberDiscount", shippingInfo.memberDiscount);
+  const shipping = pickText(settings, "text.merch.shipping", shippingInfo.shipping);
+  const returns = pickText(settings, "text.merch.returns", shippingInfo.returns);
   return (
     <>
       <PageHero
@@ -34,7 +40,7 @@ export default function Merchandise() {
       <Section contentKey="merch.perks" dark eyebrow="Member Perks" title="Members Save 10%">
         <Reveal className="max-w-2xl mx-auto text-center glass rounded-3xl p-8 md:p-10">
           <Percent className="text-rtg-orange-400 mx-auto mb-3" size={30} />
-          <p className="text-rtg-mist leading-relaxed">{shippingInfo.memberDiscount}</p>
+          <p className="text-rtg-mist leading-relaxed">{memberDiscount}</p>
         </Reveal>
       </Section>
 
@@ -90,14 +96,14 @@ export default function Merchandise() {
             <GlassCard className="h-full">
               <Truck className="text-rtg-orange-400 mb-3" size={26} />
               <h3 className="font-display text-xl mb-2">Shipping</h3>
-              <p className="text-rtg-mist text-sm leading-relaxed">{shippingInfo.shipping}</p>
+              <p className="text-rtg-mist text-sm leading-relaxed">{shipping}</p>
             </GlassCard>
           </Reveal>
           <Reveal delay={0.05}>
             <GlassCard className="h-full">
               <RotateCcw className="text-rtg-orange-400 mb-3" size={26} />
               <h3 className="font-display text-xl mb-2">Returns</h3>
-              <p className="text-rtg-mist text-sm leading-relaxed">{shippingInfo.returns}</p>
+              <p className="text-rtg-mist text-sm leading-relaxed">{returns}</p>
             </GlassCard>
           </Reveal>
         </div>

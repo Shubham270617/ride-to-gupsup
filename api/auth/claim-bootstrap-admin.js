@@ -1,12 +1,12 @@
 import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 
-// POST /api/auth/claim-bootstrap-admin — the first 3 people to ever
+// POST /api/auth/claim-bootstrap-admin — the first 2 people to ever
 // authenticate through /admin/login (email/password or Google, doesn't
 // matter which) become admins, no allowlist, no prior approval — by
-// explicit product decision. Grants admin if and only if fewer than 3
-// admin_profiles rows currently exist; the 4th+ attempt gets nothing and
-// must be granted access from the Admins screen by an existing admin
-// instead. The count check runs server-side against the real table on
+// explicit product decision. Grants admin if and only if fewer than 2
+// admin_profiles rows currently exist; the 3rd+ attempt gets nothing —
+// there is no manual "make admin" path anymore, only this automatic
+// bootstrap. The count check runs server-side against the real table on
 // every call, so it can't be raced or bypassed by calling this repeatedly
 // or concurrently — enforced again independently by the admin_seat_cap
 // trigger in supabase/schema.sql either way. Called from AdminLogin.jsx and
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "query_failed", message: countErr.message });
     return;
   }
-  if ((count ?? 0) >= 3) {
+  if ((count ?? 0) >= 2) {
     res.status(200).json({ granted: false, reason: "seats_full" });
     return;
   }

@@ -194,20 +194,21 @@ drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
 
--- Hard cap of 3 simultaneous admins, enforced here at the database level so
--- it applies no matter which path an insert comes through — an existing
--- admin granting someone from the Admins screen, or the one-time bootstrap
--- endpoint (api/auth/claim-bootstrap-admin.js) — and can't be bypassed by
--- calling the API directly. Not "at signup" anymore: see handle_new_user()
--- above, and the bootstrapping note at the bottom of this file.
+-- Hard cap of 2 simultaneous admins, enforced here at the database level so
+-- it applies no matter which path an insert comes through — the one-time
+-- bootstrap endpoint (api/auth/claim-bootstrap-admin.js) is the only path
+-- left that can grant admin (see the removed "Make Admin" button note at
+-- the bottom of this file) — and can't be bypassed by calling the API
+-- directly. Not "at signup" anymore: see handle_new_user() above, and the
+-- bootstrapping note at the bottom of this file.
 create or replace function enforce_admin_seat_cap()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if (select count(*) from public.admin_profiles) >= 3 then
-    raise exception 'Admin seat cap of 3 reached — remove an existing admin first.';
+  if (select count(*) from public.admin_profiles) >= 2 then
+    raise exception 'Admin seat cap of 2 reached — remove an existing admin first.';
   end if;
   return new;
 end;
@@ -452,6 +453,103 @@ update weekly_sessions
 set slug = lower(regexp_replace(regexp_replace(trim(name), '[^a-zA-Z0-9]+', '-', 'g'), '^-+|-+$', '', 'g'))
 where slug is null;
 
+-- ============================================================================
+-- Content that used to be hardcoded in src/data/content.js with no admin
+-- path at all — FAQ, safety checklists, sponsor pricing, size guide, and
+-- merch reviews. Same shape/plain-public-content pattern as everything
+-- above, so these join the generic RLS loop below rather than needing
+-- bespoke policies (unlike orders, which are private per-user).
+-- ============================================================================
+
+create table if not exists faqs (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  answer text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Friday Bricks–specific FAQ (Weekly Rides page) — kept separate from the
+-- site-wide `faqs` above since they're edited and shown in different
+-- places and shouldn't be mixed together in one admin list.
+create table if not exists ride_faqs (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  answer text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Plain checklist items — Weekly Rides' "Ride Safety" list and Safety
+-- page's "Weekly Session Checklist" both read this same table.
+create table if not exists ride_safety (
+  id uuid primary key default gen_random_uuid(),
+  item text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Also read by Weekly Rides and an event's "What to Bring" preview.
+create table if not exists what_to_bring (
+  id uuid primary key default gen_random_uuid(),
+  item text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists general_safety (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists sponsor_tiers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  price text,
+  perks text[] not null default '{}',
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists sponsor_opportunities (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists size_guide (
+  id uuid primary key default gen_random_uuid(),
+  size text not null,
+  chest text,
+  length text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists merch_reviews (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  product text,
+  rating int not null default 5 check (rating between 1 and 5),
+  quote text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 -- Event-specific photos/videos: lets "View Event Gallery" on an event's
 -- detail page show only that event's media instead of the whole gallery.
 -- A slug reference (not a uuid FK) so admins can type it directly in the
@@ -465,7 +563,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews']
   loop
     execute format('alter table %I enable row level security', t);
 
@@ -525,17 +623,35 @@ drop policy if exists "rtg-media public read" on storage.objects;
 create policy "rtg-media public read" on storage.objects
   for select using (bucket_id = 'rtg-media');
 
+-- Admins can write anywhere in the bucket; a regular logged-in member can
+-- only write inside their own "avatars/<their-user-id>/" folder — mirrors
+-- exactly what api/cloudinary/sign-avatar.js used to enforce server-side
+-- (forcing the folder to the caller's own id), now enforced by Postgres
+-- instead of a signing endpoint, since uploads go straight from the browser
+-- to Supabase Storage with no server hop in between.
 drop policy if exists "rtg-media admin write" on storage.objects;
-create policy "rtg-media admin write" on storage.objects
-  for insert with check (bucket_id = 'rtg-media' and is_admin());
+drop policy if exists "rtg-media write" on storage.objects;
+create policy "rtg-media write" on storage.objects
+  for insert with check (
+    bucket_id = 'rtg-media'
+    and (is_admin() or (storage.foldername(name))[1:2] = array['avatars', auth.uid()::text])
+  );
 
 drop policy if exists "rtg-media admin update" on storage.objects;
-create policy "rtg-media admin update" on storage.objects
-  for update using (bucket_id = 'rtg-media' and is_admin());
+drop policy if exists "rtg-media update" on storage.objects;
+create policy "rtg-media update" on storage.objects
+  for update using (
+    bucket_id = 'rtg-media'
+    and (is_admin() or (storage.foldername(name))[1:2] = array['avatars', auth.uid()::text])
+  );
 
 drop policy if exists "rtg-media admin delete" on storage.objects;
-create policy "rtg-media admin delete" on storage.objects
-  for delete using (bucket_id = 'rtg-media' and is_admin());
+drop policy if exists "rtg-media delete" on storage.objects;
+create policy "rtg-media delete" on storage.objects
+  for delete using (
+    bucket_id = 'rtg-media'
+    and (is_admin() or (storage.foldername(name))[1:2] = array['avatars', auth.uid()::text])
+  );
 
 -- Real submissions from the /contact page's form — previously that form
 -- only showed a fake "Message Sent!" confirmation and stored nothing.
@@ -576,27 +692,28 @@ create policy "contact_messages admin delete" on contact_messages
 drop function if exists claim_admin_if_seats_open();
 
 -- ============================================================================
--- Bootstrapping your first admins: fully automatic, no SQL needed. The
--- first 3 people to ever authenticate through /admin/login — email/password
--- or Google, Log In tab or Sign Up tab, doesn't matter which — become
--- admins. No allowlist, no pre-approval: whoever gets there first, up to 3,
--- is an admin. api/auth/claim-bootstrap-admin.js does the actual grant,
--- checking admin_profiles' row count server-side at the moment of the
--- attempt so concurrent signups can't race past the cap; the
--- admin_seat_cap trigger above enforces the same "at most 3" rule
--- independently at the database level regardless of which code path an
--- insert comes through.
+-- Bootstrapping your admins: fully automatic, no SQL needed. The first 2
+-- people to ever authenticate through /admin/login — email/password or
+-- Google, Log In tab or Sign Up tab, doesn't matter which — become admins.
+-- No allowlist, no pre-approval: whoever gets there first, up to 2, is an
+-- admin. api/auth/claim-bootstrap-admin.js does the actual grant, checking
+-- admin_profiles' row count server-side at the moment of the attempt so
+-- concurrent signups can't race past the cap; the admin_seat_cap trigger
+-- above enforces the same "at most 2" rule independently at the database
+-- level regardless of which code path an insert comes through.
 --
--- Once 3 admins exist, everyone after that stays a regular member until an
--- existing admin grants them access from the Admins screen. If a seat opens
--- back up later (an admin's profiles row got deleted — which, via
+-- Once 2 admins exist, there is no way for anyone (including an existing
+-- admin) to manually grant a third — the Admins screen only shows who's
+-- currently an admin and lets an admin revoke another's access, it can no
+-- longer promote a member. If a seat opens back up later (an admin's
+-- profiles row got deleted, or their access was revoked — which, via
 -- admin_profiles_profile_fk above, also removes their admin_profiles row),
--- it refills the same automatic way: the next people to authenticate
--- through /admin/login claim the open seat(s), no re-bootstrapping by hand.
+-- it refills the same automatic way: the next person to authenticate
+-- through /admin/login claims the open seat, no re-bootstrapping by hand.
 --
--- Caution: on a public production site, this means the first 3 people who
+-- Caution: on a public production site, this means the first 2 people who
 -- ever complete /admin/login — not necessarily the people you intend —
--- become the founding admins. Get your own 3 admins signed up first, or
+-- become the founding admins. Get your own 2 admins signed up first, or
 -- promote a specific existing account by hand instead:
 --   insert into admin_profiles (id, full_name)
 --   select id, full_name from profiles where email = 'the-right-persons-email'

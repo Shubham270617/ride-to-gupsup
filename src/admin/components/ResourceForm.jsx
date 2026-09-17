@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
+
+const inputClass =
+  "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
 
 // Sanitizes any input into a safe URL slug — lowercase, hyphen-separated,
 // no stray spaces/typos in casing/punctuation like "enduare -league 2".
@@ -15,6 +18,44 @@ export function slugify(str) {
 
 function mapEmbedUrl(query) {
   return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
+
+// The live map preview used to rebuild its iframe `src` on every keystroke
+// — reloading a whole embedded Google Maps page each time, and shifting
+// every field below it down the moment the preview first appeared. Typing
+// a location (route_map_query sits mid-form on the Events form) made the
+// page jump under the admin's cursor while they were still typing.
+// Debouncing the preview to update only after typing pauses fixes both.
+function MapField({ field, value, onChange }) {
+  const [preview, setPreview] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setPreview(value), 600);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  return (
+    <>
+      <input
+        type="text"
+        placeholder={field.placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      />
+      {field.hint && <p className="mt-1.5 text-xs text-rtg-mist">{field.hint}</p>}
+      {preview && (
+        <div className="mt-3 rounded-xl overflow-hidden h-48 border border-white/10">
+          <iframe
+            title={`${field.label} preview`}
+            src={mapEmbedUrl(preview)}
+            className="w-full h-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      )}
+    </>
+  );
 }
 
 function toEditValue(field, raw) {
@@ -78,9 +119,6 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
       setError(err.message || "Something went wrong.");
     }
   };
-
-  const inputClass =
-    "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -190,27 +228,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
           )}
 
           {f.type === "map" && (
-            <>
-              <input
-                type="text"
-                placeholder={f.placeholder}
-                value={values[f.name]}
-                onChange={(e) => setField(f.name, e.target.value)}
-                className={inputClass}
-              />
-              {f.hint && <p className="mt-1.5 text-xs text-rtg-mist">{f.hint}</p>}
-              {values[f.name] && (
-                <div className="mt-3 rounded-xl overflow-hidden h-48 border border-white/10">
-                  <iframe
-                    title={`${f.label} preview`}
-                    src={mapEmbedUrl(values[f.name])}
-                    className="w-full h-full border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                </div>
-              )}
-            </>
+            <MapField field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />
           )}
 
           {f.type === "boolean" && (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { images as staticImages } from "../../data/images";
-import { deleteFromCloudinary } from "../../lib/cloudinaryUpload";
+import { deleteFromSupabaseStorage, isSupabaseStorageUrl } from "../../lib/supabaseUpload";
 import ImageUploadField from "../components/ImageUploadField";
 import { useConfirm } from "../components/ConfirmDialog";
 
@@ -10,7 +10,6 @@ import { useConfirm } from "../components/ConfirmDialog";
 // managed on the Gallery admin page instead).
 const KEYS = Object.keys(staticImages).filter((k) => typeof staticImages[k] === "string");
 const PAGE_SIZE = 15;
-const isCloudinaryUrl = (url) => typeof url === "string" && url.includes("res.cloudinary.com");
 
 function humanize(key) {
   return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
@@ -57,7 +56,7 @@ export default function SiteImagesAdmin() {
     // The old file isn't deleted right away — it's queued and cleared out by
     // a daily cron 2 days later (see supabase/schema.sql), so an admin who
     // replaces a photo by mistake still has a short window to fix it.
-    if (previousUrl && isCloudinaryUrl(previousUrl) && previousUrl !== url) {
+    if (previousUrl && isSupabaseStorageUrl(previousUrl) && previousUrl !== url) {
       await supabase.from("media_pending_deletions").insert({ url: previousUrl });
     }
   };
@@ -72,13 +71,13 @@ export default function SiteImagesAdmin() {
     if (!current) return;
     const ok = await confirm({
       title: `Delete ${humanize(key)} photo?`,
-      message: "This removes it from Cloudinary immediately and reverts this slot to the default image.",
+      message: "This removes the file immediately and reverts this slot to the default image.",
     });
     if (!ok) return;
     setError("");
     setDeletingKey(key);
     try {
-      if (isCloudinaryUrl(current)) await deleteFromCloudinary(current);
+      if (isSupabaseStorageUrl(current)) await deleteFromSupabaseStorage(current);
       await supabase.from("site_images").delete().eq("key", key);
       setOverrides((prev) => {
         const next = { ...prev };

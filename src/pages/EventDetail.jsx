@@ -1,7 +1,6 @@
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Calendar, Tag, Mountain, Route as RouteIcon, ImageIcon, Trophy, History, Loader2 } from "lucide-react";
-import { useEvent, useEventGallery } from "../lib/publicData";
-import { whatToBring } from "../data/content";
+import { useEvent, useEventGallery, useWhatToBring } from "../lib/publicData";
 import { formatPrize } from "../lib/format";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
@@ -15,6 +14,7 @@ export default function EventDetail() {
   const { slug } = useParams();
   const { event, loading } = useEvent(slug);
   const eventGallery = useEventGallery(slug);
+  const whatToBring = useWhatToBring();
 
   // Wait for the real fetch to actually finish before deciding this slug
   // doesn't exist — on first render `event` is only checked against the

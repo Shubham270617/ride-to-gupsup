@@ -1,6 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { useSiteImages } from "../lib/publicData";
-import { generalSafety, rideSafety } from "../data/content";
+import { useSiteImages, useGeneralSafety, useRideSafety } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -10,6 +9,8 @@ import JoinCTA from "../components/sections/JoinCTA";
 
 export default function Safety() {
   const images = useSiteImages();
+  const generalSafety = useGeneralSafety();
+  const rideSafety = useRideSafety();
   return (
     <>
       <PageHero

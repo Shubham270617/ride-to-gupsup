@@ -1,13 +1,13 @@
 import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
-import { destroyCloudinaryAsset } from "../../api-lib/cloudinaryDestroy.js";
+import { destroyStorageAsset } from "../../api-lib/storageDestroy.js";
 
 const GRACE_PERIOD_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 
 // Runs once a day (see vercel.json crons). When an admin replaces a Site
 // Photo, the old image's URL gets queued in media_pending_deletions instead
 // of being destroyed on the spot — this job clears anything that's sat there
-// for 2+ days, freeing Cloudinary storage without deleting a photo an admin
-// might still want to revert to a few minutes after replacing it.
+// for 2+ days, freeing storage without deleting a photo an admin might still
+// want to revert to a few minutes after replacing it.
 export default async function handler(req, res) {
   if (process.env.CRON_SECRET) {
     const auth = req.headers.authorization || "";
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
   const failures = [];
   for (const row of rows || []) {
     try {
-      await destroyCloudinaryAsset(row.url);
+      await destroyStorageAsset(supabaseAdmin, row.url);
       await supabaseAdmin.from("media_pending_deletions").delete().eq("id", row.id);
       purged += 1;
     } catch (err) {

@@ -9,6 +9,15 @@ import {
   raceResults as staticRaceResults,
   calendarEvents as staticCalendarEvents,
   weeklySessions as staticWeeklySessions,
+  faqs as staticFaqs,
+  rideFaqs as staticRideFaqs,
+  rideSafety as staticRideSafety,
+  whatToBring as staticWhatToBring,
+  generalSafety as staticGeneralSafety,
+  sponsorTiers as staticSponsorTiers,
+  sponsorOpportunities as staticSponsorOpportunities,
+  sizeGuide as staticSizeGuide,
+  merchReviews as staticMerchReviews,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -257,6 +266,74 @@ export function useWeeklySession(slugOrId) {
   });
   const session = sessions.find((s) => s.slug === slugOrId || s.id === slugOrId);
   return { session, loading };
+}
+
+// Content that used to be hardcoded in data/content.js with no admin path
+// at all — see Admin -> FAQ / Ride Safety Checklist / etc. Each still keeps
+// its content.js array as a static fallback, same pattern as everything
+// else in this file, so a page never shows blank while real rows load or
+// before an admin has added any.
+export function useFaqs() {
+  return useSupabaseList("faqs", {
+    staticFallback: staticFaqs,
+    mapRow: (r) => ({ q: r.question, a: r.answer }),
+  }).items;
+}
+
+export function useRideFaqs() {
+  return useSupabaseList("ride_faqs", {
+    staticFallback: staticRideFaqs,
+    mapRow: (r) => ({ q: r.question, a: r.answer }),
+  }).items;
+}
+
+export function useRideSafety() {
+  return useSupabaseList("ride_safety", {
+    staticFallback: staticRideSafety,
+    mapRow: (r) => r.item,
+  }).items;
+}
+
+export function useWhatToBring() {
+  return useSupabaseList("what_to_bring", {
+    staticFallback: staticWhatToBring,
+    mapRow: (r) => r.item,
+  }).items;
+}
+
+export function useGeneralSafety() {
+  return useSupabaseList("general_safety", {
+    staticFallback: staticGeneralSafety,
+    mapRow: (r) => ({ title: r.title, desc: r.description }),
+  }).items;
+}
+
+export function useSponsorTiers() {
+  return useSupabaseList("sponsor_tiers", {
+    staticFallback: staticSponsorTiers,
+    mapRow: (r) => ({ name: r.name, price: r.price, perks: r.perks || [] }),
+  }).items;
+}
+
+export function useSponsorOpportunities() {
+  return useSupabaseList("sponsor_opportunities", {
+    staticFallback: staticSponsorOpportunities,
+    mapRow: (r) => ({ title: r.title, desc: r.description }),
+  }).items;
+}
+
+export function useSizeGuide() {
+  return useSupabaseList("size_guide", {
+    staticFallback: staticSizeGuide,
+    mapRow: (r) => ({ size: r.size, chest: r.chest, length: r.length }),
+  }).items;
+}
+
+export function useMerchReviews() {
+  return useSupabaseList("merch_reviews", {
+    staticFallback: staticMerchReviews,
+    mapRow: (r) => ({ name: r.name, product: r.product, rating: r.rating, quote: r.quote }),
+  }).items;
 }
 
 // Small generic key/value settings table (see api/.env-free equivalent:

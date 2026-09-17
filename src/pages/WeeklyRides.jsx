@@ -1,7 +1,7 @@
 import { MapPin, Clock, Bike, CheckCircle2, Gauge, IndianRupee, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { rideSafety, whatToBring, rideFaqs, brand } from "../data/content";
-import { useWeeklySessions, useSiteImages } from "../lib/publicData";
+import { brand } from "../data/content";
+import { useWeeklySessions, useSiteImages, useRideSafety, useWhatToBring, useRideFaqs } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -16,6 +16,9 @@ function mapEmbedUrl(query) {
 export default function WeeklyRides() {
   const images = useSiteImages();
   const sessions = useWeeklySessions();
+  const rideSafety = useRideSafety();
+  const whatToBring = useWhatToBring();
+  const rideFaqs = useRideFaqs();
   // The hero info cards mirror the real "Friday Bricks" row from Weekly
   // Sessions (admin-editable) instead of a separate hardcoded copy, so
   // editing it there can't silently fall out of sync with what's shown here.

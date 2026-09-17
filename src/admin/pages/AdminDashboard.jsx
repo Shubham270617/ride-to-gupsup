@@ -1,17 +1,39 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarDays, Images, ShoppingBag, Newspaper, Handshake, Quote, Flame } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  CalendarClock,
+  Images,
+  ShoppingBag,
+  Package,
+  Newspaper,
+  Handshake,
+  Quote,
+  Flame,
+  Users,
+  Trophy,
+} from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 
+// Every table that's worth a quick "how many do I have" glance at the top
+// of the admin — the smaller list-shaped content (FAQ, safety checklists,
+// sponsor tiers, etc.) is reachable from the sidebar but left off this
+// overview grid since a count of those isn't something you'd check daily.
 const cards = [
   { table: "events", label: "Events", icon: CalendarDays, to: "/admin/events" },
+  { table: "calendar_events", label: "Calendar Entries", icon: CalendarRange, to: "/admin/calendar" },
+  { table: "weekly_sessions", label: "Weekly Sessions", icon: CalendarClock, to: "/admin/weekly-sessions" },
   { table: "gallery_items", label: "Gallery Items", icon: Images, to: "/admin/gallery" },
   { table: "products", label: "Products", icon: ShoppingBag, to: "/admin/products" },
+  { table: "orders", label: "Orders", icon: Package, to: "/admin/orders" },
   { table: "blog_posts", label: "Blog Posts", icon: Newspaper, to: "/admin/blog" },
   { table: "sponsors", label: "Sponsors", icon: Handshake, to: "/admin/sponsors" },
   { table: "testimonials", label: "Testimonials", icon: Quote, to: "/admin/testimonials" },
   { table: "challenges", label: "Challenges", icon: Flame, to: "/admin/challenges" },
+  { table: "team_members", label: "Team Members", icon: Users, to: "/admin/team" },
+  { table: "race_results", label: "Race Results", icon: Trophy, to: "/admin/race-results" },
 ];
 
 export default function AdminDashboard() {

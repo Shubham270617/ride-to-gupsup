@@ -187,6 +187,29 @@ const CUSTOM_GROUPS = {
         },
       ],
     },
+    {
+      heading: "Shipping, Returns & Member Discount",
+      fields: [
+        {
+          key: "text.merch.shipping",
+          label: "Shipping",
+          fallback: "Free shipping on orders above ₹2,000. Delivery in 5–7 business days across India.",
+          type: "textarea",
+        },
+        {
+          key: "text.merch.returns",
+          label: "Returns",
+          fallback: "Not happy with the fit? Returns accepted within 7 days of delivery, unworn and with tags attached.",
+          type: "textarea",
+        },
+        {
+          key: "text.merch.memberDiscount",
+          label: "Member Discount banner",
+          fallback: "RTG members get 10% off all merchandise — log in before checkout to apply your discount automatically.",
+          type: "textarea",
+        },
+      ],
+    },
   ],
 };
 

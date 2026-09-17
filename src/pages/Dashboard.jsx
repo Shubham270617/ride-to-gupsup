@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight, Package } from "lucide-react";
+import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight, Package, AlertTriangle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
@@ -8,7 +8,7 @@ import { useUpcomingEvent, useRaceResults } from "../lib/publicData";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
-import { uploadToCloudinary } from "../lib/cloudinaryUpload";
+import { uploadToSupabaseStorage } from "../lib/supabaseUpload";
 
 const ORDER_STATUS = {
   pending_verification: { label: "Pending Verification", className: "bg-amber-500/15 text-amber-300" },
@@ -54,6 +54,8 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [deleteStep, setDeleteStep] = useState("idle"); // idle | confirming | deleting
+  const [deleteError, setDeleteError] = useState("");
   const [myOrders, setMyOrders] = useState([]);
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function Dashboard() {
     setAvatarUploading(true);
     setAvatarError("");
     try {
-      const { url } = await uploadToCloudinary(file, "avatar", null, "/api/cloudinary/sign-avatar");
+      const { url } = await uploadToSupabaseStorage(file, "avatar", null, { ownAvatar: true });
       setForm((f) => ({ ...f, avatar_url: url }));
       await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
     } catch (err) {
@@ -122,6 +124,28 @@ export default function Dashboard() {
       setError(err.message || "Couldn't save. Please try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteStep("deleting");
+    setDeleteError("");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Couldn't delete your account. Please try again.");
+      }
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (err) {
+      setDeleteError(err.message || "Something went wrong. Please try again.");
+      setDeleteStep("confirming");
     }
   };
 
@@ -303,6 +327,46 @@ export default function Dashboard() {
               {saved ? "Saved" : "Save Changes"}
             </button>
           </form>
+        </GlassCard>
+      </div>
+
+      <div className="max-w-4xl mx-auto mt-10">
+        <GlassCard className="border-red-500/20">
+          <div className="flex items-start gap-3 mb-1">
+            <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={18} />
+            <h3 className="font-display text-xl">Delete My Account</h3>
+          </div>
+          <p className="text-rtg-mist text-sm mb-4">
+            Permanently deletes your account and all associated data (profile, orders). This can't be undone.
+          </p>
+          {deleteError && <p className="text-sm text-red-400 mb-4">{deleteError}</p>}
+          {deleteStep === "idle" ? (
+            <button
+              onClick={() => setDeleteStep("confirming")}
+              className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors"
+            >
+              Delete my account
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm text-rtg-white">Are you sure? This is permanent.</span>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteStep === "deleting"}
+                className="inline-flex items-center gap-2 rounded-full bg-red-500 text-white font-semibold px-5 py-2 text-sm hover:bg-red-400 transition-colors disabled:opacity-60"
+              >
+                {deleteStep === "deleting" && <Loader2 size={14} className="animate-spin" />}
+                Yes, delete permanently
+              </button>
+              <button
+                onClick={() => setDeleteStep("idle")}
+                disabled={deleteStep === "deleting"}
+                className="text-sm text-rtg-mist hover:text-rtg-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </GlassCard>
       </div>
     </Section>

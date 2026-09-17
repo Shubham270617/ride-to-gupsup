@@ -1,5 +1,5 @@
-import { sponsorOpportunities, sponsorTiers, brand } from "../data/content";
-import { useSiteSettings, useSponsors, useSiteImages, useCities } from "../lib/publicData";
+import { brand } from "../data/content";
+import { useSiteSettings, useSponsors, useSiteImages, useCities, useSponsorTiers, useSponsorOpportunities } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -12,6 +12,8 @@ export default function Sponsors() {
   const settings = useSiteSettings();
   const sponsors = useSponsors();
   const cities = useCities();
+  const sponsorTiers = useSponsorTiers();
+  const sponsorOpportunities = useSponsorOpportunities();
   const whySponsorStats = [
     { icon: Users, label: "Audience", value: `${brand.members} active endurance athletes across every RTG channel` },
     { icon: TrendingUp, label: "Reach", value: "Thousands of monthly impressions across Instagram, WhatsApp, and Strava" },

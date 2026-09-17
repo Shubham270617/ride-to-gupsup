@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldOff, Search, Loader2, Users } from "lucide-react";
+import { ShieldCheck, ShieldOff, Search, Users } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -13,10 +13,13 @@ function formatDate(iso) {
 }
 
 // Every member who has ever signed up, in one place — how many there are,
-// their contact info, when they last logged in, and a one-click way to
-// grant (or revoke) admin access. Replaces the old email-search-only flow:
-// now you just scroll/filter the full list instead of having to already
-// know someone's exact email.
+// their contact info, when they last logged in, and whether they currently
+// have admin access. Admin access is capped at 2 and can only be claimed
+// automatically (the first 2 people to ever log into /admin/login — see
+// api/auth/claim-bootstrap-admin.js) — by explicit product decision, no
+// admin can promote a third member from here. An admin can still revoke
+// another admin's access, which reopens that seat for the next person to
+// authenticate through /admin/login.
 export default function AdminsAdmin() {
   const { user } = useAdminSession();
   const confirm = useConfirm();
@@ -42,20 +45,6 @@ export default function AdminsAdmin() {
   useEffect(() => {
     loadAll();
   }, []);
-
-  const grantAdmin = async (member) => {
-    setBusyId(member.id);
-    setError("");
-    try {
-      const { error: err } = await supabase.from("admin_profiles").insert({ id: member.id, full_name: member.full_name });
-      if (err) throw err;
-      setAdminIds((prev) => new Set(prev).add(member.id));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
 
   const revokeAdmin = async (member) => {
     const ok = await confirm({
@@ -102,8 +91,9 @@ export default function AdminsAdmin() {
         </span>
       </div>
       <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Everyone who has ever signed up, when they last logged in, and whether they have admin access. Grant or
-        remove admin access with one click — no SQL needed.
+        Everyone who has ever signed up, when they last logged in, and whether they have admin access. Capped at 2
+        admins — a seat can only be revoked here, not granted; a revoked seat is auto-claimed by the next person
+        who logs into /admin/login.
       </p>
 
       <div className="relative mb-5 max-w-sm">
@@ -162,13 +152,7 @@ export default function AdminsAdmin() {
                           </button>
                         )
                       ) : (
-                        <button
-                          onClick={() => grantAdmin(m)}
-                          disabled={busyId === m.id}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-orange-500/15 text-rtg-orange-300 px-3.5 py-1.5 hover:bg-rtg-orange-500/25 transition-colors disabled:opacity-60"
-                        >
-                          {busyId === m.id ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />} Make Admin
-                        </button>
+                        <span className="text-xs text-rtg-mist">Member</span>
                       )}
                     </td>
                   </tr>

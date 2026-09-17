@@ -93,6 +93,12 @@ export default function RaceCalendar() {
     return [...dated, ...fromEvents, ...weekly];
   }, [calendarEvents, events, weeklySessions, year, month]);
 
+  // Events with a vague/TBA date ("June 2027", "Ongoing") can't be placed
+  // on a specific day grid, so they'd otherwise be invisible on this page
+  // even though they're real, published events. Surfaced separately here
+  // instead of silently dropped — nothing an admin adds should disappear.
+  const flexibleEvents = useMemo(() => events.filter((e) => !e.calendarDate), [events]);
+
   const monthEvents = useMemo(() => {
     const q = search.trim().toLowerCase();
     return combinedEvents
@@ -324,6 +330,30 @@ export default function RaceCalendar() {
             </div>
           ))}
         </Reveal>
+
+        {flexibleEvents.length > 0 && (
+          <Reveal className="max-w-4xl mx-auto mt-14">
+            <div className="text-center mb-6">
+              <h3 className="font-display text-2xl md:text-3xl mb-2">Flexible Dates</h3>
+              <p className="text-rtg-mist text-sm">
+                Events without a fixed day yet — set a Calendar Date on them (Admin → Events) to plot them above.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {flexibleEvents.map((e) => (
+                <div key={e.id} className="glass rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <span className="font-medium block truncate">{e.title}</span>
+                    <span className="text-xs text-rtg-mist">{e.date}</span>
+                  </div>
+                  <Button to={e.slug ? `/events/${e.slug}` : "/events"} size="md" className="!px-4 !py-1.5 !text-xs shrink-0">
+                    View Details
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        )}
       </Section>
     </>
   );
