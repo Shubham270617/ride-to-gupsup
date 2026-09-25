@@ -38,7 +38,15 @@ export default async function handler(req, res) {
     authorizeUrl.searchParams.set(key, value);
   }
 
-  res.setHeader("Set-Cookie", serializeCookie("oauth_state", state, { maxAge: 600 }));
+  const cookies = [serializeCookie("oauth_state", state, { maxAge: 600 })];
+  // Carried through to the final redirect so AuthCallback.jsx can apply the
+  // same "clicked Log In but this just created a brand-new account" check
+  // it already does for Google — see callback.js.
+  const intent = req.query.intent;
+  if (intent === "login" || intent === "signup") {
+    cookies.push(serializeCookie("oauth_intent", intent, { maxAge: 600 }));
+  }
+  res.setHeader("Set-Cookie", cookies);
   res.writeHead(302, { Location: authorizeUrl.toString() });
   res.end();
 }

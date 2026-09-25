@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight, Package, AlertTriangle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useUpcomingEvent, useRaceResults } from "../lib/publicData";
+import useAuthProviders from "../lib/useAuthProviders";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
@@ -42,10 +43,18 @@ function LoggedOutPrompt() {
   );
 }
 
+const STRAVA_NOTICES = {
+  connected: { text: "Strava connected!", tone: "good" },
+  already_linked: { text: "That Strava account is already connected to a different RTG member.", tone: "bad" },
+  error: { text: "Couldn't connect Strava — please try again.", tone: "bad" },
+};
+
 export default function Dashboard() {
   const { user, loading: sessionLoading } = useSession();
   const upcomingEvent = useUpcomingEvent();
   const raceResults = useRaceResults();
+  const authProviders = useAuthProviders();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ full_name: "", city: "", sport: "", bio: "", avatar_url: "" });
@@ -56,7 +65,22 @@ export default function Dashboard() {
   const [avatarError, setAvatarError] = useState("");
   const [deleteStep, setDeleteStep] = useState("idle"); // idle | confirming | deleting
   const [deleteError, setDeleteError] = useState("");
+  const [connectingStrava, setConnectingStrava] = useState(false);
   const [myOrders, setMyOrders] = useState([]);
+
+  // Landed back here from api/auth/strava/callback.js after a "Connect
+  // Strava" attempt — show what happened once, then drop the param from
+  // the URL so refreshing the page doesn't keep re-showing the same
+  // message. Captured into state on mount, since the effect below removes
+  // the param that stravaNotice would otherwise keep re-reading.
+  const [stravaNotice] = useState(() => STRAVA_NOTICES[searchParams.get("strava")]);
+  useEffect(() => {
+    if (!searchParams.get("strava")) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("strava");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured) return;
@@ -149,6 +173,28 @@ export default function Dashboard() {
     }
   };
 
+  // Links Strava to this existing account — never signs the browser into a
+  // different session (see api/auth/[provider]/connect-start.js). Strava
+  // redirects the browser away and back on its own, so this doesn't set
+  // connectingStrava back to false on success — only on a failure that
+  // never leaves the page.
+  const handleConnectStrava = async () => {
+    setConnectingStrava(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch("/api/auth/strava/connect-start", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("not_ok");
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch {
+      setConnectingStrava(false);
+    }
+  };
+
   if (sessionLoading || (user && loading)) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -168,6 +214,15 @@ export default function Dashboard() {
 
   return (
     <Section eyebrow="Member Dashboard" title={`Welcome, ${form.full_name || "Athlete"}`}>
+      {stravaNotice && (
+        <p
+          className={`max-w-4xl mx-auto mb-6 text-center text-sm rounded-full py-2.5 px-4 ${
+            stravaNotice.tone === "good" ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"
+          }`}
+        >
+          {stravaNotice.text}
+        </p>
+      )}
       <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-8">
         {upcomingEvent && (
           <Link to={`/events/${upcomingEvent.slug || upcomingEvent.id}`} className="group">
@@ -262,6 +317,15 @@ export default function Dashboard() {
               <span className="inline-flex items-center gap-1.5 text-rtg-orange-400">
                 <StravaMark /> Strava Connected
               </span>
+            ) : authProviders.strava ? (
+              <button
+                onClick={handleConnectStrava}
+                disabled={connectingStrava}
+                className="inline-flex items-center gap-1.5 rounded-full glass px-3.5 py-1.5 hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors disabled:opacity-60"
+              >
+                {connectingStrava ? <Loader2 size={13} className="animate-spin" /> : <StravaMark />}
+                Connect Strava
+              </button>
             ) : (
               <span>No Strava connected</span>
             )}
