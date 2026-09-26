@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { providers, isProviderConfigured } from "../../../api-lib/providers.js";
 import { getSupabaseAdmin } from "../../../api-lib/supabaseAdmin.js";
 import { parseCookies, serializeCookie } from "../../../api-lib/cookies.js";
+import { backfillRecentActivities } from "../../../api-lib/stravaSync.js";
 
 // Verifies the signed "oauth_connect" cookie set by connect-start.js against
 // the OAuth `state` that just came back from the provider. Returns the
@@ -125,6 +126,10 @@ export default async function handler(req, res) {
         res.end();
         return;
       }
+      // One-time pull of recent history — webhooks only cover activity
+      // from this point forward, so without this the member's stats would
+      // sit at zero until they record something new.
+      if (provider === "strava") await backfillRecentActivities(supabaseAdmin, connectUserId);
       res.setHeader("Set-Cookie", clearConnectCookies());
       res.writeHead(302, { Location: `${frontend}/dashboard?${provider}=connected` });
       res.end();
@@ -164,6 +169,8 @@ export default async function handler(req, res) {
       console.error(`[auth/${provider}/callback] profiles upsert`, upsertErr);
       return redirectWithError("profile_save_failed");
     }
+
+    if (provider === "strava") await backfillRecentActivities(supabaseAdmin, userId);
 
     const redirectTo = `${frontend}/auth/callback${loginIntent ? `?intent=${loginIntent}` : ""}`;
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({

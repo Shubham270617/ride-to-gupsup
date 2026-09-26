@@ -34,6 +34,7 @@ const cols = [
       { to: "/challenges", label: "Challenges" },
       { to: "/race-calendar", label: "Race Calendar" },
       { to: "/race-results", label: "Race Results" },
+      { to: "/leaderboard", label: "Leaderboard" },
       { to: "/sponsors", label: "Sponsor With RTG" },
       { to: "/contact", label: "Become Chapter Captain" },
     ],

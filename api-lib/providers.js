@@ -9,7 +9,13 @@ export const providers = {
     tokenUrl: "https://www.strava.com/api/v3/oauth/token",
     clientId: process.env.STRAVA_CLIENT_ID,
     clientSecret: process.env.STRAVA_CLIENT_SECRET,
-    scope: "read",
+    // "read" alone only gets a name/photo for login. activity:read_all also
+    // covers activities a member has marked private on Strava — otherwise
+    // their leaderboard total would be wrong just because of a Strava-side
+    // privacy toggle unrelated to us. What we show publicly is controlled
+    // separately (aggregated totals only, never raw activity details) —
+    // see leaderboard_stats in schema.sql.
+    scope: "read,activity:read_all",
     extraAuthorizeParams: { approval_prompt: "auto" },
     parseProfile: (tokenData) => ({
       providerId: tokenData.athlete?.id != null ? String(tokenData.athlete.id) : "",

@@ -131,6 +131,7 @@ export const images = {
 
   // ---- RACE RESULTS ----
   raceResultsHero: unsplash("1546519638-68e109498ffc", 2000),
+  leaderboardHero: unsplash("1461896836934-ffe607ba8211", 2000),
 
   // ---- SAFETY ----
   safetyHero: unsplash("1517931524326-bdd55a541177", 2000),

@@ -4,7 +4,7 @@ import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, 
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
-import { useUpcomingEvent, useRaceResults } from "../lib/publicData";
+import { useUpcomingEvent, useRaceResults, useMyStravaActivities, useMyLeaderboardStats } from "../lib/publicData";
 import useAuthProviders from "../lib/useAuthProviders";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -21,6 +21,10 @@ const ORDER_STATUS = {
 
 function formatPrice(n) {
   return `₹${Number(n).toLocaleString("en-IN")}`;
+}
+
+function formatKm(meters) {
+  return `${(Number(meters || 0) / 1000).toFixed(1)} km`;
 }
 
 const StravaMark = (props) => (
@@ -53,6 +57,8 @@ export default function Dashboard() {
   const { user, loading: sessionLoading } = useSession();
   const upcomingEvent = useUpcomingEvent();
   const raceResults = useRaceResults();
+  const myStravaActivities = useMyStravaActivities(user?.id);
+  const myLeaderboardStats = useMyLeaderboardStats(user?.id);
   const authProviders = useAuthProviders();
   const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
@@ -295,6 +301,55 @@ export default function Dashboard() {
         </>
       )}
 
+      {profile?.strava_athlete_id && (
+        <div className="max-w-4xl mx-auto mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-2xl">My Strava Activity</h2>
+            <Link to="/leaderboard" className="text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors">
+              View Leaderboard →
+            </Link>
+          </div>
+          {myLeaderboardStats && myLeaderboardStats.activity_count > 0 && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <GlassCard className="!p-4 text-center">
+                <p className="font-display text-2xl">{formatKm(myLeaderboardStats.total_distance_meters)}</p>
+                <p className="text-xs text-rtg-mist mt-1">Total Distance</p>
+              </GlassCard>
+              <GlassCard className="!p-4 text-center">
+                <p className="font-display text-2xl">{myLeaderboardStats.activity_count}</p>
+                <p className="text-xs text-rtg-mist mt-1">Activities</p>
+              </GlassCard>
+              <GlassCard className="!p-4 text-center">
+                <p className="font-display text-2xl">{Math.round(myLeaderboardStats.total_moving_time_seconds / 3600)}h</p>
+                <p className="text-xs text-rtg-mist mt-1">Moving Time</p>
+              </GlassCard>
+            </div>
+          )}
+          {myStravaActivities.length === 0 ? (
+            <p className="text-rtg-mist text-sm">
+              No activities synced yet — they'll show up here after your next ride or run on Strava.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {myStravaActivities.map((a) => (
+                <GlassCard key={a.id} className="!p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Activity size={16} className="text-rtg-orange-400 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{a.name}</p>
+                      <p className="text-xs text-rtg-mist">
+                        {a.type} · {new Date(a.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-sm text-rtg-white/90 shrink-0">{formatKm(a.distance_meters)}</span>
+                </GlassCard>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">Athlete Profile</h2>
       <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <GlassCard className="md:col-span-1 text-center">
@@ -311,7 +366,17 @@ export default function Dashboard() {
           </label>
           {avatarError && <p className="text-xs text-rtg-orange-400 mb-2">{avatarError}</p>}
           <p className="font-semibold text-rtg-white mb-1">{form.full_name || "Athlete"}</p>
-          <p className="text-xs text-rtg-mist mb-4">{profile?.email || user.email}</p>
+          <p className="text-xs text-rtg-mist mb-4">
+            {/* Strava/XFitConnect logins don't hand us a real email, so one
+                gets invented internally (a "@members." placeholder) just to
+                satisfy Supabase's auth system — that's plumbing, never
+                meant to be shown to the member as if it were their email. */}
+            {profile?.email?.includes("@members.") ? (
+              <span className="capitalize">Connected via {profile.auth_provider}</span>
+            ) : (
+              profile?.email || user.email
+            )}
+          </p>
           <div className="flex items-center justify-center gap-2 text-xs text-rtg-mist">
             {profile?.strava_athlete_id ? (
               <span className="inline-flex items-center gap-1.5 text-rtg-orange-400">

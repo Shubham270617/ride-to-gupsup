@@ -22,6 +22,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Challenges from "./pages/Challenges";
 import RaceCalendar from "./pages/RaceCalendar";
 import RaceResults from "./pages/RaceResults";
+import Leaderboard from "./pages/Leaderboard";
 import Safety from "./pages/Safety";
 import Dashboard from "./pages/Dashboard";
 import Blog from "./pages/Blog";
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/race-calendar" element={<RaceCalendar />} />
           <Route path="/race-results" element={<RaceResults />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/safety" element={<Safety />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/blog" element={<Blog />} />

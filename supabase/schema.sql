@@ -812,3 +812,66 @@ drop policy if exists "order_items admin delete" on order_items;
 create policy "order_items admin delete" on order_items
   for delete using (is_admin());
 -- ============================================================================
+
+-- ============================================================================
+-- PART — Strava activity data (member profile stats + the auto leaderboard)
+--
+-- Split into two tables on purpose:
+--  - strava_activities holds the real, detailed data — kept private to the
+--    owning member (and admins), same as an order or a profile field.
+--  - leaderboard_stats holds only a running TOTAL per member — no dates, no
+--    routes, no individual activities — and is the only one that's public.
+-- The leaderboard is built to read from the safe, aggregated table only, so
+-- there's never a path where a public page can query raw Strava activity
+-- rows directly.
+-- ============================================================================
+
+create table if not exists strava_activities (
+  id uuid primary key default gen_random_uuid(),
+  strava_activity_id bigint unique not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type text,
+  name text,
+  distance_meters numeric,
+  moving_time_seconds int,
+  elevation_gain_meters numeric,
+  average_speed numeric,
+  start_date timestamptz,
+  raw_data jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists strava_activities_user_id_idx on strava_activities (user_id);
+
+-- One row per member, kept in sync by api-lib/stravaSync.js every time an
+-- activity is added/updated/removed — recomputed from strava_activities for
+-- that member, never edited directly. full_name/avatar_url are a snapshot
+-- copied in at the same time (server-side, bypassing RLS) specifically so
+-- the public leaderboard never needs a public-read policy on `profiles`
+-- itself — this table is the only thing a visitor's browser ever queries.
+create table if not exists leaderboard_stats (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  full_name text,
+  avatar_url text,
+  total_distance_meters numeric not null default 0,
+  total_moving_time_seconds int not null default 0,
+  activity_count int not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+alter table strava_activities enable row level security;
+alter table leaderboard_stats enable row level security;
+
+drop policy if exists "strava_activities own read" on strava_activities;
+create policy "strava_activities own read" on strava_activities
+  for select using (auth.uid() = user_id or is_admin());
+
+-- No public/member insert-update-delete policy on purpose — only the
+-- service-role client (api-lib/stravaSync.js, bypasses RLS) ever writes
+-- here, never a browser-supplied write.
+
+drop policy if exists "leaderboard_stats public read" on leaderboard_stats;
+create policy "leaderboard_stats public read" on leaderboard_stats
+  for select using (true);
+-- ============================================================================

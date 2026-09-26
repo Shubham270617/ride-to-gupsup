@@ -336,6 +336,77 @@ export function useMerchReviews() {
   }).items;
 }
 
+// A logged-in member's own synced Strava activities — RLS already
+// restricts this table to the owner (or an admin), so no extra filtering
+// needed here beyond who's currently signed in.
+export function useMyStravaActivities(userId) {
+  const [activities, setActivities] = useState([]);
+  useEffect(() => {
+    if (!isSupabaseConfigured || !userId) {
+      setActivities([]);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("strava_activities")
+      .select("*")
+      .eq("user_id", userId)
+      .order("start_date", { ascending: false })
+      .limit(10)
+      .then(({ data }) => {
+        if (!cancelled) setActivities(data || []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+  return activities;
+}
+
+// One member's own leaderboard totals — same public table as the full
+// leaderboard, just filtered to one row, for the Dashboard's own summary.
+export function useMyLeaderboardStats(userId) {
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    if (!isSupabaseConfigured || !userId) return;
+    let cancelled = false;
+    supabase
+      .from("leaderboard_stats")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setStats(data || null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+  return stats;
+}
+
+// The public leaderboard — reads only the pre-aggregated, public-read
+// leaderboard_stats table (see schema.sql), never raw activity rows.
+export function useLeaderboard() {
+  const [rows, setRows] = useState([]);
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+    supabase
+      .from("leaderboard_stats")
+      .select("*")
+      .gt("activity_count", 0)
+      .order("total_distance_meters", { ascending: false })
+      .then(({ data }) => {
+        if (!cancelled) setRows(data || []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return rows;
+}
+
 // Small generic key/value settings table (see api/.env-free equivalent:
 // admin-editable, no code changes needed). Currently just the sponsor deck
 // download link, but built to hold any future one-off setting too.
