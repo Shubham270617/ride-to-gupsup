@@ -59,7 +59,7 @@ export function ConfirmProvider({ children }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => close(false)}
-                  className="flex-1 rounded-full glass py-2.5 text-sm font-semibold text-rtg-white hover:border-white/30 transition-colors"
+                  className="flex-1 rounded-full glass py-2.5 text-sm font-semibold text-rtg-white hover:border-rtg-orange-400/40 transition-colors"
                 >
                   Cancel
                 </button>

@@ -11,13 +11,15 @@ import { useAuthGate } from "../lib/AuthGateContext";
 import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
 
+// Matches the live site's own nav exactly: Community, Calendar, Events,
+// Leaderboard, Store — nothing more, nothing less (About/Gallery dropped,
+// Leaderboard added, Merchandise relabeled "Store").
 const links = [
   { to: "/community", label: "Community" },
-  { to: "/about", label: "About" },
   { to: "/race-calendar", label: "Calendar" },
   { to: "/events", label: "Events" },
-  { to: "/gallery", label: "Gallery" },
-  { to: "/merchandise", label: "Merchandise" },
+  { to: "/leaderboard", label: "Leaderboard" },
+  { to: "/merchandise", label: "Store" },
 ];
 
 function AccountIndicator({ className = "" }) {
@@ -136,18 +138,18 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-        scrolled ? "glass shadow-lg shadow-black/20" : "bg-transparent"
+      className={`fixed top-0 inset-x-0 z-50 bg-white/92 backdrop-blur-xl backdrop-saturate-150 border-b border-rtg-border transition-shadow duration-300 ${
+        scrolled ? "shadow-lg shadow-rtg-purple-950/10" : ""
       }`}
     >
-      <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-4 text-[11px] md:text-xs text-rtg-mist py-1.5 border-b border-white/5">
+      <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-4 text-[11px] md:text-xs text-rtg-mist py-1.5 border-b border-rtg-border">
         <LiveClock />
         <AccountIndicator className="hidden sm:inline-flex" />
       </div>
 
       <div className="max-w-7xl mx-auto px-5 md:px-8 h-18 flex items-center justify-between py-3">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={images.logo} alt={brand.name} className="h-10 md:h-11 w-auto" />
+        <Link to="/" className="flex items-center gap-2 shrink-0 bg-rtg-purple-950 rounded-2xl px-3.5 py-2">
+          <img src={images.logoNav} alt={brand.name} className="h-8 md:h-9 w-auto" />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-0.5">
@@ -156,8 +158,8 @@ export default function Navbar() {
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
-                `px-2.5 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-colors ${
-                  isActive ? "text-rtg-orange-400" : "text-rtg-white/85 hover:text-rtg-orange-300"
+                `px-2.5 py-2 rounded-full text-[13px] font-bold tracking-wide whitespace-nowrap transition-colors ${
+                  isActive ? "text-rtg-orange-500" : "text-rtg-mist hover:text-rtg-purple-600"
                 }`
               }
             >
@@ -174,7 +176,7 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => requestLogin("login")}
-                className="text-sm font-semibold text-rtg-white/90 hover:text-rtg-orange-400 transition-colors"
+                className="text-sm font-semibold text-rtg-purple-600 hover:text-rtg-orange-500 transition-colors"
               >
                 Login
               </button>
@@ -189,7 +191,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 lg:hidden">
           <CartButton />
           <button
-            className="text-rtg-white p-2"
+            className="text-rtg-purple-600 p-2"
             onClick={() => setOpen((o) => !o)}
             aria-label="Toggle menu"
           >
@@ -205,7 +207,7 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="lg:hidden glass overflow-hidden"
+            className="lg:hidden bg-white/97 backdrop-blur-xl overflow-hidden"
           >
             <nav className="flex flex-col px-6 py-4 gap-1">
               {links.map((l) => (
@@ -213,15 +215,15 @@ export default function Navbar() {
                   key={l.to}
                   to={l.to}
                   className={({ isActive }) =>
-                    `py-3 border-b border-white/5 text-base font-medium ${
-                      isActive ? "text-rtg-orange-400" : "text-rtg-white/85"
+                    `py-3 border-b border-rtg-border text-base font-semibold ${
+                      isActive ? "text-rtg-orange-500" : "text-rtg-purple-600"
                     }`
                   }
                 >
                   {l.label}
                 </NavLink>
               ))}
-              <div className="py-3 border-b border-white/5 text-sm text-rtg-white/85 flex items-center justify-between">
+              <div className="py-3 border-b border-rtg-border text-sm text-rtg-mist flex items-center justify-between">
                 <AccountIndicator />
                 {showAdminLink && <HiddenAdminLink />}
               </div>
@@ -229,7 +231,7 @@ export default function Navbar() {
                 <div className="mt-4 mb-2 flex gap-2">
                   <button
                     onClick={() => requestLogin("login")}
-                    className="flex-1 rounded-full glass py-3 text-sm font-semibold text-rtg-white"
+                    className="flex-1 rounded-full border border-rtg-border bg-white py-3 text-sm font-semibold text-rtg-purple-600"
                   >
                     Login
                   </button>

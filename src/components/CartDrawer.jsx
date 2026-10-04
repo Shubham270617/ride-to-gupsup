@@ -23,7 +23,7 @@ export default function CartDrawer() {
             onClick={() => setOpen(false)}
           />
           <motion.aside
-            className="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-rtg-purple-950 border-l border-white/10 z-[71] flex flex-col"
+            className="theme-night fixed top-0 right-0 h-full w-full sm:w-[420px] bg-rtg-purple-950 text-rtg-white border-l border-rtg-border z-[71] flex flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -101,7 +101,7 @@ export default function CartDrawer() {
                   <Link
                     to="/checkout"
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-4 hover:bg-rtg-orange-400 transition-colors"
+                    className="btn-shine block w-full text-center rounded-full bg-rtg-orange-500 text-white font-semibold px-6 py-4 hover:bg-rtg-orange-400 transition-colors"
                   >
                     Checkout
                   </Link>

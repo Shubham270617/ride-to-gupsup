@@ -71,6 +71,45 @@ function eventsWithCalendarDate(events) {
     });
 }
 
+// Quiet orbit-ring accent, same inline-animation formula used on Home/Events
+// (three nested rings on the shared rtg-orbit-spin / -reverse / -pulse
+// keyframes from index.css). Desktop only so it never competes with the
+// calendar grid on mobile.
+function OrbitAccent() {
+  return (
+    <div className="hidden lg:block absolute z-0 -top-14 -right-14 w-[20vw] max-w-[260px] aspect-square pointer-events-none opacity-60">
+      <div className="absolute inset-0 rounded-full border border-rtg-purple-400/20" style={{ animation: "rtg-orbit-spin 24s linear infinite" }} />
+      <div className="absolute inset-[14%] rounded-full border border-rtg-orange-400/25" style={{ animation: "rtg-orbit-spin-reverse 17s linear infinite" }} />
+      <div className="absolute inset-[29%] rounded-full border border-rtg-purple-300/30" style={{ animation: "rtg-orbit-pulse 4.6s ease-in-out infinite" }} />
+    </div>
+  );
+}
+
+// Route-dash SVG accent — a dashed line "drawing" itself infinitely, plus a
+// couple of pulsing dots, echoing the brand reference's calendar-hero route
+// art. Built entirely from the shared .rtg-route-dash / .rtg-pulse-dot
+// classes already defined in index.css.
+function RouteAccent({ className = "" }) {
+  return (
+    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+      <svg viewBox="0 0 600 200" preserveAspectRatio="none" className="absolute inset-0 w-full h-full text-rtg-white/10">
+        <path
+          d="M-10 40 C120 130, 220 10, 340 100 S520 170, 620 90"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className="rtg-route-dash"
+        />
+      </svg>
+      <span className="rtg-pulse-dot absolute left-[10%] top-[30%] w-2 h-2 rounded-full bg-rtg-orange-400" />
+      <span
+        className="rtg-pulse-dot absolute right-[14%] top-[58%] w-2 h-2 rounded-full bg-rtg-purple-300"
+        style={{ animationDelay: "1.1s" }}
+      />
+    </div>
+  );
+}
+
 export default function RaceCalendar() {
   const images = useSiteImages();
   const calendarEvents = useCalendarEvents();
@@ -168,192 +207,216 @@ export default function RaceCalendar() {
         height="h-[50vh] md:h-[55vh]"
       />
 
-      <Section>
-        <Reveal className="max-w-md mx-auto mb-6">
-          <div className="relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search events…"
-              className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
-            />
-          </div>
-        </Reveal>
-
-        <Reveal className="flex flex-wrap items-center justify-center gap-3 mb-6">
-          <select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            className="rounded-full glass px-4 py-2 text-sm text-rtg-white/80 focus:outline-none"
-          >
-            <option value="All" className="bg-rtg-ink">All Cities</option>
-            {calendarCities.map((c) => (
-              <option key={c} value={c} className="bg-rtg-ink">{c}</option>
-            ))}
-          </select>
-          <select
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="rounded-full glass px-4 py-2 text-sm text-rtg-white/80 focus:outline-none"
-          >
-            <option value="All" className="bg-rtg-ink">All Difficulties</option>
-            {calendarDifficulties.map((d) => (
-              <option key={d} value={d} className="bg-rtg-ink">{d}</option>
-            ))}
-          </select>
-        </Reveal>
-
-        <Reveal className="flex flex-wrap items-center justify-center gap-3 mb-12">
-          {calendarCategories.map((c) => {
-            const active = activeFilters.includes(c.key);
-            return (
-              <button
-                key={c.key}
-                onClick={() => toggleFilter(c.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                  active ? "border-transparent text-rtg-ink" : "glass text-rtg-white/80 border-white/10"
-                }`}
-                style={active ? { backgroundColor: c.color } : undefined}
-              >
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: active ? "currentColor" : c.color }} />
-                {c.label}
-              </button>
-            );
-          })}
-        </Reveal>
-
-        <Reveal className="glass rounded-3xl p-5 md:p-8 max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={() => setCursor(new Date(year, month - 1, 1))}
-              className="w-10 h-10 rounded-full glass hover:text-rtg-orange-400 flex items-center justify-center"
-            >
-              ‹
-            </button>
-            <div className="text-center">
-              <h3 className="font-display text-2xl md:text-3xl">{monthNames[month]} {year}</h3>
-              <button
-                onClick={() => setCursor(new Date())}
-                className="text-xs text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors"
-              >
-                Jump to today
-              </button>
-            </div>
-            <button
-              onClick={() => setCursor(new Date(year, month + 1, 1))}
-              className="w-10 h-10 rounded-full glass hover:text-rtg-orange-400 flex items-center justify-center"
-            >
-              ›
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5 mb-2 text-center text-xs text-rtg-mist uppercase tracking-wide">
-            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-              <div key={d}>{d}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5">
-            {cells.map((day, i) => {
-              const isToday =
-                day &&
-                year === new Date().getFullYear() &&
-                month === new Date().getMonth() &&
-                day === new Date().getDate();
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.01 }}
-                  className={`aspect-square rounded-xl p-1.5 text-xs flex flex-col ${day ? "bg-white/5" : ""} ${
-                    eventsByDay[day]?.length ? "ring-1 ring-rtg-orange-400/50" : ""
-                  } ${isToday ? "ring-2 ring-rtg-orange-400" : ""}`}
-                >
-                  {day && (
-                    <>
-                      <span className={isToday ? "text-rtg-orange-400 font-bold" : "text-rtg-white/70"}>{day}</span>
-                      <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden">
-                        {eventsByDay[day]?.slice(0, 2).map((e) => (
-                          <span
-                            key={e.key}
-                            title={e.title}
-                            className="w-full h-1.5 rounded-full"
-                            style={{ backgroundColor: catColor(e.cat) }}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </Reveal>
-
-        <Reveal className="max-w-4xl mx-auto mt-10 space-y-3">
-          {monthEvents.length === 0 && (
-            <p className="text-center text-rtg-mist">No events this month yet — check back soon.</p>
-          )}
-          {monthEvents.map((e) => (
-            <div key={e.key} className="glass rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: catColor(e.cat) }} />
-                <div className="min-w-0">
-                  <span className="font-medium block truncate">
-                    {e.title}
-                    {e.type === "weekly" && <span className="text-rtg-mist font-normal"> · Weekly</span>}
-                  </span>
-                  <span className="text-xs text-rtg-mist">
-                    {[e.city, e.difficulty].filter(Boolean).join(" · ")}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-sm text-rtg-mist">
-                  {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </span>
-                <button
-                  onClick={() => addToCalendar(e)}
-                  aria-label={`Add ${e.title} to your calendar`}
-                  title="Add to Calendar"
-                  className="w-8 h-8 rounded-full glass flex items-center justify-center text-rtg-mist hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
-                >
-                  <CalendarPlus size={14} />
-                </button>
-                <Button to={registerTo(e)} size="md" className="!px-4 !py-1.5 !text-xs">
-                  {e.type === "weekly" ? "View Details" : "Register"}
-                </Button>
-              </div>
-            </div>
-          ))}
-        </Reveal>
-
-        {flexibleEvents.length > 0 && (
-          <Reveal className="max-w-4xl mx-auto mt-14">
-            <div className="text-center mb-6">
-              <h3 className="font-display text-2xl md:text-3xl mb-2">Flexible Dates</h3>
-              <p className="text-rtg-mist text-sm">
-                Events without a fixed day yet — set a Calendar Date on them (Admin → Events) to plot them above.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {flexibleEvents.map((e) => (
-                <div key={e.id} className="glass rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <span className="font-medium block truncate">{e.title}</span>
-                    <span className="text-xs text-rtg-mist">{e.date}</span>
-                  </div>
-                  <Button to={e.slug ? `/events/${e.slug}` : "/events"} size="md" className="!px-4 !py-1.5 !text-xs shrink-0">
-                    View Details
-                  </Button>
-                </div>
-              ))}
+      <Section light className="relative">
+        <OrbitAccent />
+        <div className="relative z-10">
+          <Reveal className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search events…"
+                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+              />
             </div>
           </Reveal>
-        )}
+
+          <Reveal className="flex flex-wrap items-center justify-center gap-3 mb-6">
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="rounded-full glass px-4 py-2 text-sm text-rtg-white/80 focus:outline-none border border-rtg-border"
+            >
+              <option value="All" className="bg-rtg-ink">All Cities</option>
+              {calendarCities.map((c) => (
+                <option key={c} value={c} className="bg-rtg-ink">{c}</option>
+              ))}
+            </select>
+            <select
+              value={difficultyFilter}
+              onChange={(e) => setDifficultyFilter(e.target.value)}
+              className="rounded-full glass px-4 py-2 text-sm text-rtg-white/80 focus:outline-none border border-rtg-border"
+            >
+              <option value="All" className="bg-rtg-ink">All Difficulties</option>
+              {calendarDifficulties.map((d) => (
+                <option key={d} value={d} className="bg-rtg-ink">{d}</option>
+              ))}
+            </select>
+          </Reveal>
+
+          <Reveal className="flex flex-wrap items-center justify-center gap-3 mb-12">
+            {calendarCategories.map((c) => {
+              const active = activeFilters.includes(c.key);
+              return (
+                <motion.button
+                  key={c.key}
+                  onClick={() => toggleFilter(c.key)}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                    active ? "border-transparent text-white" : "glass text-rtg-white/80 border-rtg-border"
+                  }`}
+                  style={active ? { backgroundColor: c.color } : undefined}
+                >
+                  <span
+                    className={active ? "w-2.5 h-2.5 rounded-full rtg-pulse-dot" : "w-2.5 h-2.5 rounded-full"}
+                    style={{ backgroundColor: active ? "currentColor" : c.color }}
+                  />
+                  {c.label}
+                </motion.button>
+              );
+            })}
+          </Reveal>
+
+          <Reveal className="glass rounded-3xl p-5 md:p-8 max-w-4xl mx-auto relative overflow-hidden">
+            <RouteAccent className="opacity-60" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setCursor(new Date(year, month - 1, 1))}
+                  className="w-10 h-10 rounded-full glass hover:text-rtg-orange-400 flex items-center justify-center"
+                >
+                  ‹
+                </motion.button>
+                <div className="text-center">
+                  <h3 className="font-display text-2xl md:text-3xl">{monthNames[month]} {year}</h3>
+                  <button
+                    onClick={() => setCursor(new Date())}
+                    className="text-xs text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors"
+                  >
+                    Jump to today
+                  </button>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setCursor(new Date(year, month + 1, 1))}
+                  className="w-10 h-10 rounded-full glass hover:text-rtg-orange-400 flex items-center justify-center"
+                >
+                  ›
+                </motion.button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5 mb-2 text-center text-xs text-rtg-mist uppercase tracking-wide">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                  <div key={d}>{d}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1.5">
+                {cells.map((day, i) => {
+                  const isToday =
+                    day &&
+                    year === new Date().getFullYear() &&
+                    month === new Date().getMonth() &&
+                    day === new Date().getDate();
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.01 }}
+                      whileHover={day ? { scale: 1.06 } : undefined}
+                      className={`aspect-square rounded-xl p-1.5 text-xs flex flex-col transition-colors ${day ? "bg-rtg-white/5" : ""} ${
+                        eventsByDay[day]?.length ? "ring-1 ring-rtg-orange-400/50" : ""
+                      } ${isToday ? "ring-2 ring-rtg-orange-400" : ""}`}
+                    >
+                      {day && (
+                        <>
+                          <span className={isToday ? "text-rtg-orange-400 font-bold" : "text-rtg-white/70"}>{day}</span>
+                          <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden">
+                            {eventsByDay[day]?.slice(0, 2).map((e) => (
+                              <span
+                                key={e.key}
+                                title={e.title}
+                                className="w-full h-1.5 rounded-full"
+                                style={{ backgroundColor: catColor(e.cat) }}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </Reveal>
+
+          <div className="max-w-4xl mx-auto mt-10 space-y-3">
+            {monthEvents.length === 0 && (
+              <p className="text-center text-rtg-mist">No events this month yet — check back soon.</p>
+            )}
+            {monthEvents.map((e, i) => (
+              <motion.div
+                key={e.key}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: Math.min(i, 6) * 0.04 }}
+                whileHover={{ y: -2 }}
+                className="glass rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: catColor(e.cat) }} />
+                  <div className="min-w-0">
+                    <span className="font-medium block truncate">
+                      {e.title}
+                      {e.type === "weekly" && <span className="text-rtg-mist font-normal"> · Weekly</span>}
+                    </span>
+                    <span className="text-xs text-rtg-mist">
+                      {[e.city, e.difficulty].filter(Boolean).join(" · ")}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-sm text-rtg-mist">
+                    {new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                  <button
+                    onClick={() => addToCalendar(e)}
+                    aria-label={`Add ${e.title} to your calendar`}
+                    title="Add to Calendar"
+                    className="w-8 h-8 rounded-full glass flex items-center justify-center text-rtg-mist hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+                  >
+                    <CalendarPlus size={14} />
+                  </button>
+                  <Button to={registerTo(e)} size="md" className="!px-4 !py-1.5 !text-xs">
+                    {e.type === "weekly" ? "View Details" : "Register"}
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {flexibleEvents.length > 0 && (
+            <Reveal className="max-w-4xl mx-auto mt-14">
+              <div className="text-center mb-6">
+                <h3 className="font-display text-2xl md:text-3xl mb-2">Flexible Dates</h3>
+                <p className="text-rtg-mist text-sm">
+                  Events without a fixed day yet — set a Calendar Date on them (Admin → Events) to plot them above.
+                </p>
+              </div>
+              <div className="space-y-3">
+                {flexibleEvents.map((e) => (
+                  <div key={e.id} className="glass rounded-2xl px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <span className="font-medium block truncate">{e.title}</span>
+                      <span className="text-xs text-rtg-mist">{e.date}</span>
+                    </div>
+                    <Button to={e.slug ? `/events/${e.slug}` : "/events"} size="md" className="!px-4 !py-1.5 !text-xs shrink-0">
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          )}
+        </div>
       </Section>
     </>
   );

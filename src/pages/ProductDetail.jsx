@@ -57,7 +57,7 @@ export default function ProductDetail() {
           <Reveal direction="right">
             <div className="rounded-3xl overflow-hidden bg-rtg-purple-900 aspect-square">
               <img
-                src={product.image || images[product.imgKey]}
+                src={product.image || images[product.imgKey] || images.placeholder}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

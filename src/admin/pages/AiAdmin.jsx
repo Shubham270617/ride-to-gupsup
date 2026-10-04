@@ -201,7 +201,7 @@ export default function AiAdmin() {
                     <ChevronDown size={16} className={`text-rtg-mist shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </button>
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-1 border-t border-white/5 space-y-2 max-h-96 overflow-y-auto">
+                    <div className="px-5 pb-5 pt-1 border-t border-rtg-border space-y-2 max-h-96 overflow-y-auto">
                       {loadingMessages === c.id ? (
                         <p className="text-rtg-mist text-sm py-4">Loading…</p>
                       ) : (

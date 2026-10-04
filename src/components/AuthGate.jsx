@@ -186,7 +186,7 @@ export default function AuthGate() {
     <AnimatePresence>
       {shouldShow && (
         <motion.div
-          className="fixed inset-0 z-[150] flex items-center justify-center px-4 py-8 bg-rtg-ink/85 backdrop-blur-sm"
+          className="fixed inset-0 z-[150] flex items-center justify-center px-4 py-8 bg-rtg-purple-950/70 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.4 } }}
@@ -200,14 +200,14 @@ export default function AuthGate() {
           >
             <button
               onClick={dismiss}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-orange-400 hover:bg-white/5 transition-colors"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-orange-500 hover:bg-rtg-purple-950/5 transition-colors"
               aria-label="Continue browsing"
             >
               <X size={20} />
             </button>
 
             <div className="text-center mb-6">
-              <span className="inline-block text-rtg-orange-400 font-semibold tracking-[0.2em] uppercase text-xs mb-3">
+              <span className="inline-block text-rtg-orange-500 font-bold tracking-[0.2em] uppercase text-xs mb-3">
                 Welcome to {brand.shortName}
               </span>
               <h2 className="font-display text-3xl md:text-4xl leading-none mb-2">
@@ -220,7 +220,7 @@ export default function AuthGate() {
               <button
                 type="button"
                 onClick={handleGoogle}
-                className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white text-rtg-ink hover:bg-white/90 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors"
               >
                 <GoogleMark /> Continue with Google
               </button>
@@ -229,7 +229,7 @@ export default function AuthGate() {
                 <button
                   type="button"
                   onClick={handleStrava}
-                  className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white text-rtg-ink hover:bg-white/90 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors"
                 >
                   <StravaMark /> Continue with Strava
                 </button>
@@ -237,16 +237,16 @@ export default function AuthGate() {
             </div>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-rtg-border" />
               <span className="text-xs text-rtg-mist uppercase tracking-wide">or continue with</span>
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-rtg-border" />
             </div>
 
             <div className="flex glass rounded-full p-1 mb-3">
               <button
                 onClick={() => switchMode("login")}
                 className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-                  mode === "login" ? "bg-rtg-orange-500 text-rtg-ink" : "text-rtg-mist"
+                  mode === "login" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
                 }`}
               >
                 Log In
@@ -254,7 +254,7 @@ export default function AuthGate() {
               <button
                 onClick={() => switchMode("signup")}
                 className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-                  mode === "signup" ? "bg-rtg-orange-500 text-rtg-ink" : "text-rtg-mist"
+                  mode === "signup" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
                 }`}
               >
                 Sign Up
@@ -294,7 +294,7 @@ export default function AuthGate() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Full name"
-                    className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                    className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
                   />
                 </div>
               )}
@@ -310,7 +310,7 @@ export default function AuthGate() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     placeholder="98765 43210"
-                    className="w-full rounded-full bg-white/5 border border-white/10 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                    className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
                   />
                 </div>
               )}
@@ -324,7 +324,7 @@ export default function AuthGate() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email address"
-                    className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                    className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
                   />
                 </div>
               )}
@@ -338,7 +338,7 @@ export default function AuthGate() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                  className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
                 />
               </div>
 
@@ -348,7 +348,7 @@ export default function AuthGate() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold py-3 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+                className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
               >
                 {submitting && <Loader2 size={16} className="animate-spin" />}
                 {mode === "login" ? "Log In" : "Create Account"}
@@ -356,7 +356,7 @@ export default function AuthGate() {
             </form>
 
             {(hasLive || hasUpcoming) && (
-              <div className="mt-6 pt-5 border-t border-white/10">
+              <div className="mt-6 pt-5 border-t border-rtg-border">
                 {hasLive && (
                   <div className="mb-4">
                     <div className="flex items-center gap-1.5 mb-2">
@@ -432,7 +432,7 @@ export default function AuthGate() {
                     <Link
                       to="/race-calendar"
                       onClick={dismiss}
-                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-rtg-orange-500/15 text-rtg-orange-300 text-xs font-semibold py-2 hover:bg-rtg-orange-500/25 transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-rtg-orange-500/15 text-rtg-orange-600 text-xs font-semibold py-2 hover:bg-rtg-orange-500/25 transition-colors"
                     >
                       Register Now <ArrowRight size={12} />
                     </Link>

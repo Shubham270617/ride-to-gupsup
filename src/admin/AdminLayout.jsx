@@ -98,8 +98,10 @@ export default function AdminLayout() {
 
   const sidebarContent = (
     <>
-      <div className="p-5 border-b border-white/10 flex items-center justify-between">
-        <img src={images.logo} alt={brand.name} className="h-8 w-auto" />
+      <div className="p-5 border-b border-rtg-border flex items-center justify-between">
+        <div className="bg-rtg-purple-950 rounded-xl px-3 py-2">
+          <img src={images.logoNav} alt={brand.name} className="h-6 w-auto" />
+        </div>
         <button
           onClick={() => setMobileOpen(false)}
           className="md:hidden text-rtg-mist hover:text-rtg-white transition-colors"
@@ -116,7 +118,7 @@ export default function AdminLayout() {
             end={l.end}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                isActive ? "bg-rtg-orange-500/15 text-rtg-orange-300" : "text-rtg-mist hover:text-rtg-white hover:bg-white/5"
+                isActive ? "bg-rtg-orange-500/15 text-rtg-orange-600" : "text-rtg-mist hover:text-rtg-white hover:bg-rtg-purple-950/5"
               }`
             }
           >
@@ -130,18 +132,18 @@ export default function AdminLayout() {
           </NavLink>
         ))}
       </nav>
-      <div className="p-3 border-t border-white/10 space-y-1">
+      <div className="p-3 border-t border-rtg-border space-y-1">
         <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-white hover:bg-rtg-purple-950/5 transition-colors"
         >
           <ExternalLink size={17} /> View Site
         </a>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-orange-400 hover:bg-white/5 transition-colors"
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-rtg-mist hover:text-rtg-orange-500 hover:bg-rtg-purple-950/5 transition-colors"
         >
           <LogOut size={17} /> Log Out
         </button>
@@ -153,7 +155,7 @@ export default function AdminLayout() {
     <ConfirmProvider>
     <div className="h-svh bg-rtg-ink md:flex overflow-hidden">
       {/* Mobile top bar — replaces the always-visible sidebar below md */}
-      <div className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-white/10 bg-rtg-ink/95 backdrop-blur">
+      <div className="md:hidden sticky top-0 z-30 h-14 flex items-center justify-between px-4 border-b border-rtg-border bg-rtg-ink/95 backdrop-blur">
         <button
           onClick={() => setMobileOpen(true)}
           className="text-rtg-white p-1 -ml-1"
@@ -161,7 +163,9 @@ export default function AdminLayout() {
         >
           <Menu size={22} />
         </button>
-        <img src={images.logo} alt={brand.name} className="h-6 w-auto" />
+        <div className="bg-rtg-purple-950 rounded-lg px-2.5 py-1.5">
+          <img src={images.logoNav} alt={brand.name} className="h-5 w-auto" />
+        </div>
         <span className="w-8" aria-hidden="true" />
       </div>
 
@@ -177,7 +181,7 @@ export default function AdminLayout() {
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
-              className="md:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-rtg-ink border-r border-white/10 flex flex-col"
+              className="md:hidden fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-rtg-ink border-r border-rtg-border flex flex-col"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -190,12 +194,12 @@ export default function AdminLayout() {
       </AnimatePresence>
 
       {/* Desktop sidebar — always visible at md and up */}
-      <aside className="hidden md:flex w-60 shrink-0 border-r border-white/10 flex-col">
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-rtg-border flex-col">
         {sidebarContent}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="hidden md:flex h-16 shrink-0 border-b border-white/10 items-center justify-end px-6">
+        <header className="hidden md:flex h-16 shrink-0 border-b border-rtg-border items-center justify-end px-6">
           <span className="text-sm text-rtg-mist">{adminName || user?.email}</span>
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8">

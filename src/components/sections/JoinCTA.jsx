@@ -11,7 +11,7 @@ export default function JoinCTA({
   secondaryTo = "/events",
 }) {
   return (
-    <section className="relative py-28 md:py-40 px-6 md:px-10 overflow-hidden">
+    <section className="theme-night relative py-28 md:py-40 px-6 md:px-10 overflow-hidden bg-rtg-purple-950">
       <motion.div
         className="absolute inset-0"
         initial={{ scale: 1.1 }}
@@ -20,7 +20,7 @@ export default function JoinCTA({
         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
       >
         <img src={images.homeCTA} alt="RTG adventure" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-rtg-ink/85 via-rtg-purple-950/80 to-rtg-ink/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(27,17,48,0.85)] via-[rgba(27,17,48,0.80)] to-[rgba(27,17,48,0.90)]" />
       </motion.div>
 
       <div className="relative z-10 max-w-4xl mx-auto text-center">

@@ -47,7 +47,7 @@ export default function Preloader({ onFinish }) {
     <AnimatePresence onExitComplete={() => (document.body.style.overflow = "", onFinish?.())}>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[200] bg-rtg-ink overflow-hidden"
+          className="theme-night fixed inset-0 z-[200] bg-rtg-purple-950 overflow-hidden"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }}
         >

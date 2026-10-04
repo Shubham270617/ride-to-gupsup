@@ -44,7 +44,7 @@ function MapField({ field, value, onChange }) {
       />
       {field.hint && <p className="mt-1.5 text-xs text-rtg-mist">{field.hint}</p>}
       {preview && (
-        <div className="mt-3 rounded-xl overflow-hidden h-48 border border-white/10">
+        <div className="mt-3 rounded-xl overflow-hidden h-48 border border-rtg-border">
           <iframe
             title={`${field.label} preview`}
             src={mapEmbedUrl(preview)}

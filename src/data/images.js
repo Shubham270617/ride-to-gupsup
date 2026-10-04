@@ -14,19 +14,64 @@
  *    3. Restart/rebuild the site — done.
  *
  *  Every image on the entire website is pulled from this one object, so
- *  there is no need to hunt through component files. All current values are
- *  placeholder stock photography — swap them for real RTG event photos
- *  whenever they're ready.
+ *  there is no need to hunt through component files.
+ *
+ *  No stock/third-party photography is used anywhere in this file by
+ *  design — only real RTG photos (currently the 5 pulled from the approved
+ *  brand reference site, under /public/images/rtg-reference/) or the
+ *  `placeholder` mark below, which reserves the space with a neutral
+ *  on-brand placeholder until a real photo is dropped in. Swap any
+ *  `placeholder` value for a real photo the moment one exists — nothing
+ *  else needs to change, every component already reads from here.
  * ============================================================================
  */
 
-const unsplash = (id, w = 1600) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+// Neutral on-brand "photo coming soon" mark — a soft canvas tile with a
+// dashed border and a simple image glyph, in the site's own purple/orange,
+// instead of a broken-image icon or borrowed stock photography. Used for
+// every slot that doesn't have a real RTG photo yet.
+const placeholderSvg =
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'>" +
+  "<rect width='400' height='300' fill='#f3f0f8'/>" +
+  "<rect x='1' y='1' width='398' height='298' fill='none' stroke='#35246f' stroke-opacity='0.16' stroke-width='1.5' stroke-dasharray='8 7'/>" +
+  "<g transform='translate(200,150)' opacity='0.45'>" +
+  "<circle r='26' fill='none' stroke='#f76b1c' stroke-width='2.5'/>" +
+  "<path d='M-11 7 L-3 -5 L6 5 L14 -9' fill='none' stroke='#35246f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>" +
+  "<circle cx='-15' cy='-11' r='3.5' fill='#f76b1c'/>" +
+  "</g>" +
+  "</svg>";
+const placeholder = `data:image/svg+xml,${encodeURIComponent(placeholderSvg)}`;
+
+// The 5 real RTG event photos currently available (extracted from the
+// approved brand reference site) — reused across any slot that calls for a
+// generic "cycling" / "running" / "community" / "adventure" moment, instead
+// of inventing new ones per section.
+const rtg = {
+  cycling: "/images/rtg-reference/rtg-cycling.jpg",
+  running: "/images/rtg-reference/rtg-running.jpg",
+  adventure: "/images/rtg-reference/rtg-adventure.jpg",
+  adventure2: "/images/rtg-reference/rtg-adventure2.jpg",
+  community: "/images/rtg-reference/rtg-community.jpg",
+};
 
 export const images = {
   // ---- Brand ----
   logo: "/images/rtg-logo-horizontal.png", // navbar/footer lockup (icon + wordmark, one line)
   logoIcon: "/images/rtg-logo-square.png", // stacked icon+wordmark — used where a compact/square mark fits better
+  // `logo` above is a white-only export, invisible on a light bar — a
+  // same-size replacement was attempted from the reference site but the
+  // extracted file turned out corrupted on decode, so `logoNav` just
+  // points back to the known-good asset for now (paired with a small dark
+  // badge wherever it sits on light chrome, same fix as everywhere else
+  // this logo is used on a light background).
+  logoNav: "/images/rtg-logo-horizontal.png",
+
+  // Final fallback for any admin-added item (product, event, blog post,
+  // testimonial) that has no photo uploaded yet — e.g.
+  // `item.image || images[item.imgKey] || images.placeholder`. Keeps the
+  // reserved-space look consistent even for content that doesn't come
+  // from this file at all.
+  placeholder,
 
   // ---- INTRO / PRELOADER ----
   // introPoster shows instantly while /videos/rtg-intro.mp4 loads (also the
@@ -36,127 +81,132 @@ export const images = {
   introPoster: "/images/intro-poster.jpg",
 
   // ---- HOME ----
-  homeHero: unsplash("1517649763962-0c623066013b", 2000), // sunrise cyclist
+  // Mapped the same way the brand reference itself maps them: community ->
+  // hero, cycling -> weekly-rhythm band, adventure2 -> final CTA.
+  homeHero: rtg.community,
   // Home hero carousel slides (Cycling/Running/Swimming/Community)
-  heroCycling: unsplash("1517649763962-0c623066013b", 2000),
-  heroRunning: unsplash("1461896836934-ffe607ba8211", 2000),
-  heroSwimming: unsplash("1519315901367-f34ff9154487", 2000),
-  heroCommunity: unsplash("1541625602330-2277a4c46182", 2000),
-  homeAbout: unsplash("1541625602330-2277a4c46182", 1400), // group of cyclists
-  homeWhyJoin: unsplash("1476480862126-209bfaa8edc8", 1400), // runner
-  homeWeekly: unsplash("1461896836934-ffe607ba8211", 1600), // group runners
-  homeMerchPreview: unsplash("1554068865-24cecd4e34b8", 1200),
-  homeCTA: unsplash("1506905925346-21bda4d32df4", 2000), // mountain adventure
+  heroCycling: rtg.cycling,
+  heroRunning: rtg.running,
+  // No real RTG swim photo exists yet — reserved, not substituted with stock.
+  heroSwimming: placeholder,
+  heroCommunity: rtg.community,
+  homeAbout: rtg.community,
+  homeWhyJoin: rtg.adventure,
+  homeWeekly: rtg.cycling,
+  homeMerchPreview: placeholder,
+  homeCTA: rtg.adventure2,
 
   // ---- ABOUT ----
-  aboutHero: unsplash("1571068316344-75bc76f77890", 2000), // road cycling
-  aboutStory1: unsplash("1519315901367-f34ff9154487", 1200), // swimmer
-  aboutStory2: unsplash("1552674605-db6ffd4facb5", 1200), // running shoes
-  aboutMission: unsplash("1530549387789-4c1017266635", 1400), // open water swim
+  aboutHero: rtg.cycling,
+  aboutStory1: placeholder,
+  aboutStory2: placeholder,
+  aboutMission: rtg.adventure,
 
   // ---- COMMUNITY ----
-  communityHero: unsplash("1502904550040-7534597429ae", 2000),
-  communityCyclists: unsplash("1517649763962-0c623066013b", 1000),
-  communityRunners: unsplash("1461896836934-ffe607ba8211", 1000),
-  communitySwimmers: unsplash("1519315901367-f34ff9154487", 1000),
-  communityTriathletes: unsplash("1571068316344-75bc76f77890", 1000),
-  communityBeginners: unsplash("1476480862126-209bfaa8edc8", 1000),
-  communityExperienced: unsplash("1541625602330-2277a4c46182", 1000),
-  communityVolunteers: unsplash("1552674605-db6ffd4facb5", 1000),
-  // Placeholders (reuse existing photos) until real RTG photos are uploaded
-  // via Site Photos — used by the "What RTG Feels Like" moments collage.
-  communityChai: unsplash("1476480862126-209bfaa8edc8", 1000),
-  communityCelebration: unsplash("1552674605-db6ffd4facb5", 1000),
+  communityHero: rtg.community,
+  communityCyclists: rtg.cycling,
+  communityRunners: rtg.running,
+  communitySwimmers: placeholder,
+  communityTriathletes: rtg.adventure,
+  communityBeginners: placeholder,
+  communityExperienced: rtg.community,
+  communityVolunteers: placeholder,
+  communityChai: placeholder,
+  communityCelebration: rtg.adventure2,
 
   // ---- WEEKLY RIDES ----
-  ridesHero: unsplash("1517836357463-d25dfeac3438", 2000),
-  ridesBricks: unsplash("1571019613454-1cb2f99b2d8b", 1600),
-  ridesSafety: unsplash("1517931524326-bdd55a541177", 1200),
-  ridesGear: unsplash("1600965962102-9d260a71890d", 1200),
+  ridesHero: rtg.cycling,
+  ridesBricks: rtg.running,
+  ridesSafety: placeholder,
+  ridesGear: placeholder,
 
   // ---- EVENTS ----
-  eventsHero: unsplash("1571902943202-507ec2618e8f", 2000),
-  eventFeatured: unsplash("1524594152303-9fd13543fe6e", 1600), // Endurance League
-  eventMTB: unsplash("1506905925346-21bda4d32df4", 1000),
-  eventResolution: unsplash("1461896836934-ffe607ba8211", 1000),
-  eventAdventure: unsplash("1508898578281-774ac4893c0c", 1000),
-  eventMeetup: unsplash("1541625602330-2277a4c46182", 1000),
-  eventMonthly: unsplash("1476480862126-209bfaa8edc8", 1000),
-  eventWorkshop: unsplash("1601058268499-e52658b8bb88", 1000),
+  eventsHero: rtg.adventure2,
+  eventFeatured: rtg.community,
+  eventMTB: rtg.adventure,
+  eventResolution: rtg.running,
+  eventAdventure: rtg.adventure,
+  eventMeetup: rtg.community,
+  eventMonthly: placeholder,
+  eventWorkshop: placeholder,
 
   // ---- CHALLENGES ----
-  challengesHero: unsplash("1546519638-68e109498ffc", 2000),
+  challengesHero: rtg.adventure,
 
   // ---- RACE CALENDAR ----
-  calendarHero: unsplash("1523875194681-bedd468c58bf", 2000),
+  calendarHero: rtg.cycling,
 
   // ---- BLOG ----
-  blogHero: unsplash("1546483875-ad9014c88eba", 2000),
-  blogCycling: unsplash("1517649763962-0c623066013b", 1000),
-  blogRunning: unsplash("1552674605-db6ffd4facb5", 1000),
-  blogSwimming: unsplash("1519315901367-f34ff9154487", 1000),
-  blogNutrition: unsplash("1584735175315-9d5df23860e6", 1000),
-  blogRecovery: unsplash("1517022812141-23620dba5c23", 1000),
-  blogMaintenance: unsplash("1571068316344-75bc76f77890", 1000),
-  blogRacePrep: unsplash("1461896836934-ffe607ba8211", 1000),
-  blogStories: unsplash("1544367567-0f2fcb009e0b", 1000),
+  blogHero: placeholder,
+  blogCycling: rtg.cycling,
+  blogRunning: rtg.running,
+  blogSwimming: placeholder,
+  blogNutrition: placeholder,
+  blogRecovery: placeholder,
+  blogMaintenance: placeholder,
+  blogRacePrep: placeholder,
+  blogStories: rtg.community,
 
   // ---- SPONSORS ----
-  sponsorsHero: unsplash("1502224562085-639556652f33", 2000),
+  sponsorsHero: placeholder,
 
   // ---- GALLERY (masonry) ----
+  // Real admin-uploaded gallery photos (via Site Photos / Gallery admin,
+  // stored in Supabase) take priority over this list wherever that's wired
+  // up — this is just the static fallback, so it stays all-placeholder
+  // rather than repeating the same 5 reference photos a dozen times.
   gallery: [
-    unsplash("1517649763962-0c623066013b", 1200),
-    unsplash("1461896836934-ffe607ba8211", 1200),
-    unsplash("1519315901367-f34ff9154487", 1200),
-    unsplash("1541625602330-2277a4c46182", 1200),
-    unsplash("1506905925346-21bda4d32df4", 1200),
-    unsplash("1476480862126-209bfaa8edc8", 1200),
-    unsplash("1571068316344-75bc76f77890", 1200),
-    unsplash("1530549387789-4c1017266635", 1200),
-    unsplash("1552674605-db6ffd4facb5", 1200),
-    unsplash("1571019613454-1cb2f99b2d8b", 1200),
-    unsplash("1517931524326-bdd55a541177", 1200),
-    unsplash("1600965962102-9d260a71890d", 1200),
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
+    placeholder,
   ],
 
   // ---- CONTACT ----
-  contactHero: unsplash("1571902943202-507ec2618e8f", 2000),
+  contactHero: placeholder,
 
   // ---- MERCHANDISE ----
-  merchHero: unsplash("1600965962102-9d260a71890d", 2000),
+  merchHero: rtg.community,
 
   // ---- FAQ ----
-  faqHero: unsplash("1517931524326-bdd55a541177", 2000),
+  faqHero: placeholder,
 
   // ---- RACE RESULTS ----
-  raceResultsHero: unsplash("1546519638-68e109498ffc", 2000),
-  leaderboardHero: unsplash("1461896836934-ffe607ba8211", 2000),
+  raceResultsHero: rtg.cycling,
+  leaderboardHero: rtg.running,
 
   // ---- SAFETY ----
-  safetyHero: unsplash("1517931524326-bdd55a541177", 2000),
+  safetyHero: placeholder,
 
   // ---- MERCHANDISE (product photos) ----
-  productJersey: unsplash("1517649763962-0c623066013b", 1000),
-  productTshirt: unsplash("1476480862126-209bfaa8edc8", 1000),
-  productHoodie: unsplash("1554068865-24cecd4e34b8", 1000),
-  productCap: unsplash("1601058268499-e52658b8bb88", 1000),
-  productSocks: unsplash("1552674605-db6ffd4facb5", 1000),
-  productBottle: unsplash("1530549387789-4c1017266635", 1000),
-  productWheelBag: unsplash("1517836357463-d25dfeac3438", 1000),
+  productJersey: placeholder,
+  productTshirt: placeholder,
+  productHoodie: placeholder,
+  productCap: placeholder,
+  productSocks: placeholder,
+  productBottle: placeholder,
+  productWheelBag: placeholder,
 
   // ---- AI ASSISTANT ("Tapri") ----
   aiAssistant: "/images/ai.jpeg",
 
   // ---- TESTIMONIAL AVATARS ----
-  avatar1: unsplash("1502224562085-639556652f33", 300),
-  avatar2: unsplash("1546519638-68e109498ffc", 300),
-  avatar3: unsplash("1523875194681-bedd468c58bf", 300),
-  avatar4: unsplash("1508898578281-774ac4893c0c", 300),
-  avatar5: unsplash("1517649763962-0c623066013b", 300),
-  avatar6: unsplash("1461896836934-ffe607ba8211", 300),
-  avatar7: unsplash("1519315901367-f34ff9154487", 300),
-  avatar8: unsplash("1541625602330-2277a4c46182", 300),
+  avatar1: placeholder,
+  avatar2: placeholder,
+  avatar3: placeholder,
+  avatar4: placeholder,
+  avatar5: placeholder,
+  avatar6: placeholder,
+  avatar7: placeholder,
+  avatar8: placeholder,
 };
 
 export default images;

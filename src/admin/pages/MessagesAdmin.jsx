@@ -96,7 +96,7 @@ export default function MessagesAdmin() {
                   <span className="text-xs text-rtg-mist shrink-0">{formatDate(m.created_at)}</span>
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 border-t border-white/5">
+                  <div className="px-5 pb-5 pt-1 border-t border-rtg-border">
                     <p className="text-sm text-rtg-white whitespace-pre-wrap mb-4">{m.message}</p>
                     <div className="flex items-center gap-3">
                       <a

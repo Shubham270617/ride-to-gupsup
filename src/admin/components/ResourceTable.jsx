@@ -6,10 +6,10 @@ export default function ResourceTable({ rows, columns, onEdit, onDelete }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10">
+    <div className="overflow-x-auto rounded-2xl border border-rtg-border">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wide text-rtg-mist">
+          <tr className="border-b border-rtg-border text-left text-xs uppercase tracking-wide text-rtg-mist">
             {columns.map((c) => (
               <th key={c} className="px-4 py-3 font-semibold whitespace-nowrap">
                 {c.replace(/_/g, " ")}

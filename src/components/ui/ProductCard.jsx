@@ -11,7 +11,7 @@ export default function ProductCard({ product }) {
       <GlassCard className="p-0 overflow-hidden group h-full" hover>
         <div className="relative overflow-hidden h-64 bg-rtg-purple-900">
           <motion.img
-            src={product.image || images[product.imgKey]}
+            src={product.image || images[product.imgKey] || images.placeholder}
             alt={product.name}
             className="w-full h-full object-cover"
             whileHover={{ scale: 1.08 }}

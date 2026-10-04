@@ -453,6 +453,15 @@ update weekly_sessions
 set slug = lower(regexp_replace(regexp_replace(trim(name), '[^a-zA-Z0-9]+', '-', 'g'), '^-+|-+$', '', 'g'))
 where slug is null;
 
+-- Training-format detail for Home's "Training Formats" section — see
+-- supabase/migrations/001_weekly_sessions_training_detail.sql for the full
+-- explanation of each field's format. All nullable; the frontend falls back
+-- gracefully when they're empty.
+alter table weekly_sessions add column if not exists image_url text;
+alter table weekly_sessions add column if not exists tags text;
+alter table weekly_sessions add column if not exists steps text;
+alter table weekly_sessions add column if not exists highlights text;
+
 -- ============================================================================
 -- Content that used to be hardcoded in src/data/content.js with no admin
 -- path at all — FAQ, safety checklists, sponsor pricing, size guide, and

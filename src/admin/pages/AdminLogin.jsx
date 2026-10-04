@@ -137,15 +137,17 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6">
-      <div className="relative glass rounded-3xl p-8 md:p-10 w-full max-w-sm">
+      <div className="relative glass rounded-3xl p-8 md:p-10 w-full max-w-sm shadow-xl shadow-rtg-purple-950/10">
         <button
           onClick={() => navigate("/")}
           aria-label="Close"
-          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-white hover:bg-white/10 transition-colors"
+          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-orange-500 hover:bg-rtg-purple-950/5 transition-colors"
         >
           <X size={18} />
         </button>
-        <img src={images.logo} alt={brand.name} className="h-10 w-auto mx-auto mb-6" />
+        <div className="mx-auto mb-6 w-fit bg-rtg-purple-950 rounded-2xl px-4 py-2.5">
+          <img src={images.logoNav} alt={brand.name} className="h-8 w-auto" />
+        </div>
         <h1 className="font-display text-3xl text-center mb-1">Admin</h1>
         <p className="text-rtg-mist text-sm text-center mb-8">Manage RTG's events, gallery, store, and more.</p>
 
@@ -162,22 +164,22 @@ export default function AdminLogin() {
         <button
           type="button"
           onClick={handleGoogle}
-          className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white text-rtg-ink hover:bg-white/90 transition-colors mb-5"
+          className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors mb-5"
         >
           <GoogleMark /> Continue with Google
         </button>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="h-px flex-1 bg-rtg-border" />
           <span className="text-xs text-rtg-mist uppercase tracking-wide">or continue with</span>
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="h-px flex-1 bg-rtg-border" />
         </div>
 
         <div className="flex glass rounded-full p-1 mb-3">
           <button
             onClick={() => switchMode("login")}
             className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-              mode === "login" ? "bg-rtg-orange-500 text-rtg-ink" : "text-rtg-mist"
+              mode === "login" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
             }`}
           >
             Log In
@@ -185,7 +187,7 @@ export default function AdminLogin() {
           <button
             onClick={() => switchMode("signup")}
             className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-              mode === "signup" ? "bg-rtg-orange-500 text-rtg-ink" : "text-rtg-mist"
+              mode === "signup" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
             }`}
           >
             Sign Up
@@ -225,7 +227,7 @@ export default function AdminLogin() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Full name"
-                className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
               />
             </div>
           )}
@@ -241,7 +243,7 @@ export default function AdminLogin() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 placeholder="98765 43210"
-                className="w-full rounded-full bg-white/5 border border-white/10 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
               />
             </div>
           )}
@@ -255,7 +257,7 @@ export default function AdminLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
-                className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
               />
             </div>
           )}
@@ -269,7 +271,7 @@ export default function AdminLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
+              className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
             />
           </div>
 
@@ -279,7 +281,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold py-3 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+            className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
           >
             {submitting && <Loader2 size={16} className="animate-spin" />}
             {mode === "login" ? "Log In" : "Create Account"}

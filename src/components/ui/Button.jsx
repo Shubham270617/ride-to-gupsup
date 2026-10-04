@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-wide transition-colors duration-200 whitespace-nowrap";
+  "btn-shine inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-wide transition-colors duration-200 whitespace-nowrap";
 
 const sizes = {
   md: "px-6 py-3 text-sm",
@@ -13,7 +13,10 @@ const sizes = {
 };
 
 const variants = {
-  primary: "bg-rtg-orange-500 text-rtg-ink hover:bg-rtg-orange-400 shadow-[0_0_0_1px_rgba(247,107,28,0.4)]",
+  // Literal white text, not the themed ink token — this button is always an
+  // orange pill, in every section (light canvas or deliberately-dark), so
+  // its label must stay white regardless of which theme scope it's in.
+  primary: "bg-gradient-to-r from-[#f45b18] via-rtg-orange-500 to-rtg-orange-400 text-white hover:brightness-110 shadow-[0_13px_28px_rgba(247,107,28,0.25)]",
   secondary: "glass text-rtg-white hover:border-rtg-orange-400/60",
   ghost: "text-rtg-white hover:text-rtg-orange-400",
   outline: "border-2 border-rtg-white/70 text-rtg-white hover:border-rtg-orange-400 hover:text-rtg-orange-400",

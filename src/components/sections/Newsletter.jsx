@@ -45,13 +45,13 @@ export default function Newsletter({ dark = false }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="flex-1 rounded-full bg-white/5 border border-white/15 px-5 py-3.5 text-sm text-rtg-white placeholder:text-rtg-mist focus:outline-none focus:border-rtg-orange-400 transition-colors"
+                className="flex-1 rounded-full bg-rtg-white/5 border border-rtg-white/15 px-5 py-3.5 text-sm text-rtg-white placeholder:text-rtg-mist focus:outline-none focus:border-rtg-orange-400 transition-colors"
               />
               <motion.button
                 type="submit"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
-                className="rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-3.5 flex items-center justify-center gap-2 hover:bg-rtg-orange-400 transition-colors"
+                className="btn-shine rounded-full bg-rtg-orange-500 text-white font-semibold px-6 py-3.5 flex items-center justify-center gap-2 hover:bg-rtg-orange-400 transition-colors"
               >
                 Subscribe <Send size={16} />
               </motion.button>

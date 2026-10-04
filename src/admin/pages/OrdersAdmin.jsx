@@ -110,7 +110,7 @@ export default function OrdersAdmin() {
                   <span className="text-xs text-rtg-mist shrink-0 hidden sm:inline">{formatDate(order.created_at)}</span>
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 border-t border-white/5 space-y-4">
+                  <div className="px-5 pb-5 pt-1 border-t border-rtg-border space-y-4">
                     <div className="grid sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-rtg-mist mb-1">Shipping Address</p>

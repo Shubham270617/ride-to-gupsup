@@ -233,6 +233,22 @@ export function useCalendarEvents() {
   }).items;
 }
 
+// "Label | Value" per line -> [{ label, value }], skipping blank lines and
+// any line that doesn't actually contain the "|" separator (so a half-typed
+// admin entry doesn't crash the page, it just gets silently dropped).
+const parsePipeLines = (text) =>
+  (text || "")
+    .split("\n")
+    .map((line) => line.split("|").map((p) => p.trim()))
+    .filter(([label, value]) => label && value)
+    .map(([label, value]) => ({ label, value }));
+
+const parseTags = (text) =>
+  (text || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
 const mapWeeklySessionRow = (r) => ({
   id: r.id,
   slug: r.slug,
@@ -246,6 +262,12 @@ const mapWeeklySessionRow = (r) => ({
   routeMapQuery: r.route_map_query,
   cost: r.cost,
   description: r.description,
+  image: r.image_url,
+  tags: parseTags(r.tags),
+  // { label, value } for steps ("Ride" / "60 min") so the same parser
+  // covers both steps and highlights — the two just render differently.
+  steps: parsePipeLines(r.steps),
+  highlights: parsePipeLines(r.highlights),
 });
 
 // Real, admin-manageable weekly session schedule for the Weekly Rides page

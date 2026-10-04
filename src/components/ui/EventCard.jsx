@@ -8,7 +8,7 @@ import { useAuthGate } from "../../lib/AuthGateContext";
 import GlassCard from "./GlassCard";
 
 export default function EventCard({ event, featured = false, badgeLabel = "Featured Event" }) {
-  const img = event.image || images[event.imgKey];
+  const img = event.image || images[event.imgKey] || images.placeholder;
   const to = `/events/${event.slug || event.id}`;
   const { user } = useSession();
   const { requestLogin } = useAuthGate();
@@ -27,7 +27,7 @@ export default function EventCard({ event, featured = false, badgeLabel = "Featu
     return (
       <Link to={to} onClick={handleClick} className="block">
         <motion.div
-          className="relative rounded-3xl overflow-hidden group cursor-pointer"
+          className="theme-night relative rounded-3xl overflow-hidden group cursor-pointer bg-rtg-purple-950"
           whileHover="hover"
           initial="rest"
         >
@@ -38,7 +38,7 @@ export default function EventCard({ event, featured = false, badgeLabel = "Featu
             variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-rtg-ink via-rtg-ink/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(27,17,48,1)] via-[rgba(27,17,48,0.5)] to-transparent" />
           <div className="absolute top-6 left-6 flex gap-2">
             {event.categories.map((c) => (
               <span key={c} className="glass px-3 py-1.5 rounded-full text-xs font-semibold text-rtg-orange-300">
@@ -47,10 +47,10 @@ export default function EventCard({ event, featured = false, badgeLabel = "Featu
             ))}
           </div>
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <span className="inline-block bg-rtg-orange-500 text-rtg-ink text-xs font-bold px-3 py-1.5 rounded-full mb-4 tracking-wide uppercase">
+            <span className="inline-block bg-rtg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full mb-4 tracking-wide uppercase">
               {badgeLabel}
             </span>
-            <h3 className="font-display text-4xl md:text-6xl mb-3 leading-none">{event.title}</h3>
+            <h3 className="font-display text-rtg-white text-4xl md:text-6xl mb-3 leading-none">{event.title}</h3>
             <p className="text-rtg-mist mb-2 text-sm md:text-base">{event.type}</p>
             <div className="flex flex-wrap items-center gap-4 mt-4">
               <span className="flex items-center gap-2 text-sm text-rtg-white/90"><Calendar size={16} /> {event.date}</span>

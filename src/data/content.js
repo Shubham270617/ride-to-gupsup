@@ -157,6 +157,14 @@ export const whyJoin = [
     title: "Premium Merch & Gear",
     desc: "Kit that looks as good as your Strava segment times.",
   },
+  {
+    title: "Adventure Beyond the Routine",
+    desc: "Hill climbs, trail days, and road trips that turn training into an experience.",
+  },
+  {
+    title: "Create Stories",
+    desc: "Rides, runs and shared moments that stay with you for life.",
+  },
 ];
 
 // Full weekly schedule shown on /weekly-rides and Home's Weekly Activities

@@ -142,8 +142,8 @@ export default function AiWidget() {
               <AvatarShell size="w-14 h-14" ring="border-rtg-orange-400" />
             </motion.button>
 
-            <div className="relative w-full h-full bg-rtg-ink border border-white/10 rounded-3xl flex flex-col overflow-hidden shadow-2xl shadow-black/60">
-              <div className="flex items-center gap-2 px-5 pt-6 pb-3 border-b border-white/10 shrink-0">
+            <div className="theme-night relative w-full h-full bg-rtg-purple-950 text-rtg-white border border-rtg-border rounded-3xl flex flex-col overflow-hidden shadow-2xl shadow-black/60">
+              <div className="flex items-center gap-2 px-5 pt-6 pb-3 border-b border-rtg-border shrink-0">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-rtg-white">{name}</p>
                   <p className="text-[11px] text-rtg-mist">RTG's AI companion</p>

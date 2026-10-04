@@ -66,7 +66,20 @@ export default function Footer() {
   const settings = useSiteSettings();
   const t = (key, fallback) => pickText(settings, key, fallback);
   return (
-    <footer className="relative bg-rtg-purple-950 border-t border-white/10 pt-14 pb-6 px-6 md:px-10 overflow-hidden">
+    <footer className="theme-night relative pt-14 pb-6 px-6 md:px-10 overflow-hidden bg-rtg-purple-950">
+      {/* Guaranteed-solid dark base (bg-rtg-purple-950 on the footer itself,
+          above) so this can never wash out to the light page background —
+          same fix as TrainingFormats, same root cause (Tailwind's
+          token-opacity gradient stops rendering unreliably when they're the
+          ONLY source of darkness). The photo + literal-rgba gradient below
+          are enhancement layers on top of an already-correct dark surface.
+          Same photo JoinCTA uses directly above the footer on every page,
+          continuing seamlessly — matches the reference, where the footer is
+          literally part of the same photo section as the final CTA. */}
+      <div className="absolute inset-0 -z-10">
+        <img src={images.homeCTA} alt="" aria-hidden="true" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(27,17,48,0.90)] via-[rgba(27,17,48,0.95)] to-[rgba(27,17,48,1)]" />
+      </div>
       <div className="max-w-7xl mx-auto relative">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-10 mb-10">
           <div className="sm:col-span-2 xl:col-span-2">

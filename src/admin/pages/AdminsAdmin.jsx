@@ -115,7 +115,7 @@ export default function AdminsAdmin() {
         <div className="glass rounded-2xl overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-rtg-mist border-b border-white/10">
+              <tr className="text-left text-xs uppercase tracking-wide text-rtg-mist border-b border-rtg-border">
                 <th className="px-5 py-3 font-semibold">Name</th>
                 <th className="px-5 py-3 font-semibold">Email</th>
                 <th className="px-5 py-3 font-semibold">Phone</th>
@@ -128,7 +128,7 @@ export default function AdminsAdmin() {
               {pageMembers.map((m) => {
                 const isAdmin = adminIds.has(m.id);
                 return (
-                  <tr key={m.id} className="border-b border-white/5 last:border-0">
+                  <tr key={m.id} className="border-b border-rtg-border last:border-0">
                     <td className="px-5 py-3 text-rtg-white">
                       {m.full_name || "—"} {m.id === user?.id && <span className="text-rtg-mist">(you)</span>}
                     </td>

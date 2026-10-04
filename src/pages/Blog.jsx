@@ -25,7 +25,7 @@ export default function Blog() {
               <GlassCard className="p-0 overflow-hidden h-full group cursor-pointer" hover>
                 <div className="h-52 overflow-hidden">
                   <motion.img
-                    src={p.image || images[p.imgKey]}
+                    src={p.image || images[p.imgKey] || images.placeholder}
                     alt={p.title}
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.1 }}
