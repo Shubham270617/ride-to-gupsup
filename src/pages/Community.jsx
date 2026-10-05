@@ -11,7 +11,6 @@ import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import Reveal from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
 import CommunityProof from "../components/sections/CommunityProof";
-import JoinCTA from "../components/sections/JoinCTA";
 import {
   CalendarClock,
   Sparkles,
@@ -343,12 +342,6 @@ export default function Community() {
       </Section>
 
       {/* 8. FINAL CTA */}
-      <JoinCTA
-        primaryLabel="Join the Community"
-        onPrimaryClick={() => requestLogin("signup")}
-        secondaryLabel="Explore Upcoming Events"
-        secondaryTo="/race-calendar"
-      />
     </>
   );
 }

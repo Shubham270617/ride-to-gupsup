@@ -5,7 +5,6 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import Reveal from "../components/ui/Reveal";
-import JoinCTA from "../components/sections/JoinCTA";
 
 export default function Safety() {
   const images = useSiteImages();
@@ -47,8 +46,6 @@ export default function Safety() {
           </ul>
         </Reveal>
       </Section>
-
-      <JoinCTA />
     </>
   );
 }

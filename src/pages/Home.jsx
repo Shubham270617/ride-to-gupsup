@@ -12,7 +12,6 @@ import ProductCard from "../components/ui/ProductCard";
 import MasonryGallery from "../components/ui/MasonryGallery";
 import RotatingPhotoWheel from "../components/ui/RotatingPhotoWheel";
 import TestimonialSlider from "../components/ui/TestimonialSlider";
-import JoinCTA from "../components/sections/JoinCTA";
 import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 import useIsMobile from "../hooks/useIsMobile";
 import { heroSrcSet, heroFallbackSrc } from "../lib/responsiveImage";
@@ -899,7 +898,6 @@ export default function Home() {
           The component itself still exists (src/components/sections/Newsletter.jsx)
           and stays in use elsewhere if it's wanted there; just not here. */}
       {/* Instagram feed hidden for now, per request — planned for next sprint. Re-add <InstagramFeed /> here when ready. */}
-      <JoinCTA />
     </>
   );
 }

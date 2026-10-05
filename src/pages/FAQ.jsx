@@ -2,7 +2,6 @@ import { useSiteImages, useFaqs } from "../lib/publicData";
 import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import FAQAccordion from "../components/ui/FAQAccordion";
-import JoinCTA from "../components/sections/JoinCTA";
 
 export default function FAQ() {
   const images = useSiteImages();
@@ -22,8 +21,6 @@ export default function FAQ() {
           <FAQAccordion items={faqs} />
         </div>
       </Section>
-
-      <JoinCTA />
     </>
   );
 }

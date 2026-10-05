@@ -13,7 +13,6 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Reveal from "../components/ui/Reveal";
 import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
-import JoinCTA from "../components/sections/JoinCTA";
 
 const PILLAR_ICONS = { bike: Bike, footprints: Footprints, trophy: Trophy, flag: Flag, mountain: Mountain, coffee: Coffee };
 
@@ -184,8 +183,6 @@ export default function About() {
           </p>
         </Reveal>
       </Section>
-
-      <JoinCTA />
     </>
   );
 }

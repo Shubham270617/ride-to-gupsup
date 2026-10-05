@@ -4,7 +4,6 @@ import PageHero from "../components/ui/PageHero";
 import Section from "../components/ui/Section";
 import EventCard from "../components/ui/EventCard";
 import Reveal, { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
-import JoinCTA from "../components/sections/JoinCTA";
 
 // Small "editorial number" kicker — mirrors the brand reference's
 // `events-editorial-number-v3` treatment (big faint Bebas numeral + small
@@ -157,8 +156,6 @@ export default function Events() {
           </StaggerGroup>
         )}
       </Section>
-
-      <JoinCTA />
     </>
   );
 }

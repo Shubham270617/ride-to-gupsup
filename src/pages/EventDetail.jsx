@@ -8,7 +8,6 @@ import GlassCard from "../components/ui/GlassCard";
 import Reveal from "../components/ui/Reveal";
 import Button from "../components/ui/Button";
 import MasonryGallery from "../components/ui/MasonryGallery";
-import JoinCTA from "../components/sections/JoinCTA";
 
 export default function EventDetail() {
   const { slug } = useParams();
@@ -179,8 +178,6 @@ export default function EventDetail() {
           </Link>
         </div>
       </Section>
-
-      <JoinCTA />
     </>
   );
 }
