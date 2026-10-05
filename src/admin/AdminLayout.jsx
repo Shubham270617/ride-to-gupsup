@@ -99,9 +99,7 @@ export default function AdminLayout() {
   const sidebarContent = (
     <>
       <div className="p-5 border-b border-rtg-border flex items-center justify-between">
-        <div className="bg-rtg-purple-950 rounded-xl px-3 py-2">
-          <img src={images.logoNav} alt={brand.name} className="h-6 w-auto" />
-        </div>
+        <img src={images.logoNav} alt={brand.name} className="h-8 w-auto" />
         <button
           onClick={() => setMobileOpen(false)}
           className="md:hidden text-rtg-mist hover:text-rtg-white transition-colors"
@@ -163,9 +161,7 @@ export default function AdminLayout() {
         >
           <Menu size={22} />
         </button>
-        <div className="bg-rtg-purple-950 rounded-lg px-2.5 py-1.5">
-          <img src={images.logoNav} alt={brand.name} className="h-5 w-auto" />
-        </div>
+        <img src={images.logoNav} alt={brand.name} className="h-7 w-auto" />
         <span className="w-8" aria-hidden="true" />
       </div>
 

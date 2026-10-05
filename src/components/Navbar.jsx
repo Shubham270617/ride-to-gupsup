@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LogIn, LogOut, User, ShoppingBag } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogIn,
+  LogOut,
+  User,
+  ShoppingBag,
+} from "lucide-react";
+
 import { useSiteImages } from "../lib/publicData";
 import { brand } from "../data/content";
 import Button from "./ui/Button";
@@ -11,16 +19,37 @@ import { useAuthGate } from "../lib/AuthGateContext";
 import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
 
-// Matches the live site's own nav exactly: Community, Calendar, Events,
-// Leaderboard, Store — nothing more, nothing less (About/Gallery dropped,
-// Leaderboard added, Merchandise relabeled "Store").
+/* =========================================================
+   NAVIGATION LINKS
+   ========================================================= */
+
 const links = [
-  { to: "/community", label: "Community" },
-  { to: "/race-calendar", label: "Calendar" },
-  { to: "/events", label: "Events" },
-  { to: "/leaderboard", label: "Leaderboard" },
-  { to: "/merchandise", label: "Store" },
+  {
+    to: "/community",
+    label: "Community",
+  },
+  {
+    to: "/race-calendar",
+    label: "Calendar",
+  },
+  {
+    to: "/events",
+    label: "Events",
+  },
+  {
+    to: "/leaderboard",
+    label: "Leaderboard",
+  },
+  {
+    to: "/merchandise",
+    label: "Store",
+  },
 ];
+
+/* =========================================================
+   ACCOUNT INDICATOR
+   Used inside mobile menu
+   ========================================================= */
 
 function AccountIndicator({ className = "" }) {
   const { user } = useSession();
@@ -30,21 +59,50 @@ function AccountIndicator({ className = "" }) {
     return (
       <button
         onClick={() => requestLogin("login")}
-        className={`inline-flex items-center gap-1.5 hover:text-rtg-orange-400 transition-colors ${className}`}
+        className={`
+          inline-flex
+          items-center
+          gap-1.5
+          hover:text-rtg-orange-400
+          transition-colors
+          ${className}
+        `}
       >
-        <LogIn size={13} /> Log In
+        <LogIn size={13} />
+        Log In
       </button>
     );
   }
 
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 hover:text-rtg-orange-400 transition-colors">
-        <User size={13} /> My Profile
+    <span
+      className={`
+        inline-flex
+        items-center
+        gap-2
+        ${className}
+      `}
+    >
+      <Link
+        to="/dashboard"
+        className="
+          inline-flex
+          items-center
+          gap-1.5
+          hover:text-rtg-orange-400
+          transition-colors
+        "
+      >
+        <User size={13} />
+        My Profile
       </Link>
+
       <button
         onClick={() => supabase?.auth.signOut()}
-        className="hover:text-rtg-orange-400 transition-colors"
+        className="
+          hover:text-rtg-orange-400
+          transition-colors
+        "
         aria-label="Log out"
       >
         <LogOut size={13} />
@@ -53,22 +111,55 @@ function AccountIndicator({ className = "" }) {
   );
 }
 
-// Circular profile icon shown in the main nav bar once someone is logged
-// in, replacing the Login/Sign Up buttons.
+/* =========================================================
+   PROFILE ICON
+   Shown when user is logged in
+   ========================================================= */
+
 function ProfileIcon({ className = "" }) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div
+      className={`
+        flex
+        items-center
+        gap-2
+        ${className}
+      `}
+    >
       <Link
         to="/dashboard"
         aria-label="My Profile"
-        className="w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+        className="
+          w-10
+          h-10
+          rounded-full
+          glass
+          flex
+          items-center
+          justify-center
+          hover:text-rtg-orange-400
+          hover:border-rtg-orange-400/60
+          transition-colors
+        "
       >
         <User size={18} />
       </Link>
+
       <button
         onClick={() => supabase?.auth.signOut()}
         aria-label="Log out"
-        className="w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors"
+        className="
+          w-10
+          h-10
+          rounded-full
+          glass
+          flex
+          items-center
+          justify-center
+          hover:text-rtg-orange-400
+          hover:border-rtg-orange-400/60
+          transition-colors
+        "
       >
         <LogOut size={16} />
       </button>
@@ -76,167 +167,480 @@ function ProfileIcon({ className = "" }) {
   );
 }
 
+/* =========================================================
+   CART BUTTON
+   ========================================================= */
+
 function CartButton({ className = "" }) {
   const { count, setOpen } = useCart();
+
   return (
     <button
       onClick={() => setOpen(true)}
       aria-label="Open cart"
-      className={`relative w-10 h-10 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors ${className}`}
+      className={`
+        relative
+        w-9
+        h-9
+        rounded-full
+        glass
+        flex
+        items-center
+        justify-center
+        hover:text-rtg-orange-400
+        hover:border-rtg-orange-400/60
+        transition-colors
+        ${className}
+      `}
     >
-      <ShoppingBag size={17} />
-      {count > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rtg-orange-500 text-rtg-ink text-[10px] font-bold flex items-center justify-center">
-          {count}
-        </span>
-      )}
+      <ShoppingBag size={16} />
+
+      {/* Keep badge visible even when count is 0 */}
+      <span
+        className="
+          absolute
+          -top-1
+          -right-1
+          min-w-[17px]
+          h-[17px]
+          px-1
+          rounded-full
+          bg-rtg-orange-500
+          text-white
+          text-[9px]
+          font-bold
+          flex
+          items-center
+          justify-center
+        "
+      >
+        {count}
+      </span>
     </button>
   );
 }
 
-// Genuinely invisible, not just subtle — no resting color, no hover state,
-// nothing that renders differently on mouseover or focus. This is
-// discretion only, never the actual security boundary: whether or not
-// anyone ever finds this link, /admin/login is reachable by typing the URL
-// directly regardless, and every admin-only read/write is separately
-// enforced server-side (Postgres RLS via is_admin(), or an explicit check
-// in the relevant api/ function) — discovering either path grants nothing
-// without a real, authorized admin session.
+/* =========================================================
+   HIDDEN ADMIN LINK
+   Keep exactly hidden.
+   Functionality/route remains available.
+   ========================================================= */
+
 function HiddenAdminLink({ className = "" }) {
   return (
     <Link
       to="/admin/login"
       aria-hidden="true"
       tabIndex={-1}
-      className={`inline-flex items-center justify-center w-9 h-9 -m-2.5 shrink-0 ${className}`}
+      className={`
+        inline-flex
+        items-center
+        justify-center
+        w-9
+        h-9
+        -m-2.5
+        shrink-0
+        ${className}
+      `}
     >
       <span className="w-2 h-2 rounded-full bg-transparent" />
     </Link>
   );
 }
 
+/* =========================================================
+   NAVBAR
+   ========================================================= */
+
 export default function Navbar() {
   const images = useSiteImages();
+
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
   const location = useLocation();
+
   const { requestLogin } = useAuthGate();
   const { user } = useSession();
-  // The hidden admin-panel link is only ever shown to a logged-out visitor
-  // (RTG staff use it to reach /admin/login). Once anyone is logged in —
-  // admin or not — it disappears; admins go there directly by URL instead.
+
+  /*
+   * Keep admin functionality exactly as before.
+   * The link remains invisible.
+   */
   const showAdminLink = !user;
 
+  /* =======================================================
+     SCROLL SHADOW
+     ======================================================= */
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 4);
+    };
+
     onScroll();
+
     window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
-  useEffect(() => setOpen(false), [location.pathname]);
+  /* =======================================================
+     CLOSE MOBILE MENU WHEN ROUTE CHANGES
+     ======================================================= */
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 bg-white/92 backdrop-blur-xl backdrop-saturate-150 border-b border-rtg-border transition-shadow duration-300 ${
-        scrolled ? "shadow-lg shadow-rtg-purple-950/10" : ""
-      }`}
+      className={`
+        fixed
+        top-0
+        left-0
+        right-0
+        z-50
+        bg-white/95
+        backdrop-blur-xl
+        backdrop-saturate-150
+        border-b
+        border-rtg-border
+        transition-shadow
+        duration-300
+        ${
+          scrolled
+            ? "shadow-lg shadow-rtg-purple-950/10"
+            : "shadow-sm"
+        }
+      `}
     >
-      <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-4 text-[11px] md:text-xs text-rtg-mist py-1.5 border-b border-rtg-border">
-        <LiveClock />
-        <AccountIndicator className="hidden sm:inline-flex" />
-      </div>
+      {/* ===================================================
+          MAIN NAVBAR
+          =================================================== */}
 
-      <div className="max-w-7xl mx-auto px-5 md:px-8 h-18 flex items-center justify-between py-3">
-        <Link to="/" className="flex items-center gap-2 shrink-0 bg-rtg-purple-950 rounded-2xl px-3.5 py-2">
-          <img src={images.logoNav} alt={brand.name} className="h-8 md:h-9 w-auto" />
+      <div
+        className="
+          w-full
+          max-w-[1440px]
+          mx-auto
+          px-5
+          md:px-8
+          lg:px-6
+          h-[68px]
+          flex
+          items-center
+          justify-between
+          gap-4
+        "
+      >
+        {/* =================================================
+            LOGO
+            ================================================= */}
+
+        <Link
+          to="/"
+          className="
+            flex
+            items-center
+            shrink-0
+          "
+        >
+          <img
+            src={images.logoNav}
+            alt={brand.name}
+            className="
+              h-9
+              md:h-10
+              w-auto
+              object-contain
+            "
+          />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-0.5">
-          {links.map((l) => (
+        {/* =================================================
+            DESKTOP NAVIGATION
+
+            ml-auto pushes navigation toward right.
+            mr-1 keeps it close to the action buttons.
+            ================================================= */}
+
+        <nav
+          className="
+            hidden
+            lg:flex
+            items-center
+            gap-1
+            ml-auto
+            mr-1
+          "
+        >
+          {links.map((link) => (
             <NavLink
-              key={l.to}
-              to={l.to}
+              key={link.to}
+              to={link.to}
               className={({ isActive }) =>
-                `px-2.5 py-2 rounded-full text-[13px] font-bold tracking-wide whitespace-nowrap transition-colors ${
-                  isActive ? "text-rtg-orange-500" : "text-rtg-mist hover:text-rtg-purple-600"
-                }`
+                `
+                  px-3
+                  py-2
+                  rounded-full
+                  text-[12px]
+                  font-bold
+                  uppercase
+                  tracking-[0.14em]
+                  whitespace-nowrap
+                  transition-colors
+                  ${
+                    isActive
+                      ? "text-rtg-orange-500"
+                      : "text-rtg-mist hover:text-rtg-purple-600"
+                  }
+                `
               }
             >
-              {l.label}
+              {link.label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-3">
+        {/* =================================================
+            RIGHT ACTIONS
+
+            Kept very close to right edge.
+            ================================================= */}
+
+        <div
+          className="
+            hidden
+            lg:flex
+            items-center
+            gap-2
+            shrink-0
+            ml-1
+          "
+        >
+          {/* Cart */}
+
           <CartButton />
+
+          {/* =================================================
+              LOGGED IN USER
+              ================================================= */}
+
           {user ? (
             <ProfileIcon />
           ) : (
             <>
+              {/* Login */}
+
               <button
                 onClick={() => requestLogin("login")}
-                className="text-sm font-semibold text-rtg-purple-600 hover:text-rtg-orange-500 transition-colors"
+                className="
+                  h-9
+                  px-3
+                  text-[12px]
+                  font-bold
+                  uppercase
+                  tracking-[0.08em]
+                  text-rtg-purple-600
+                  hover:text-rtg-orange-500
+                  transition-colors
+                  whitespace-nowrap
+                "
               >
                 Login
               </button>
-              <Button onClick={() => requestLogin("signup")} size="md">
-                Sign Up
+
+              {/* Signup */}
+
+              <Button
+                onClick={() => requestLogin("signup")}
+                size="md"
+                className="
+                  uppercase
+                  whitespace-nowrap
+                  !h-9
+                  !px-5
+                "
+              >
+                Signup
               </Button>
+
+              {/* =================================================
+                  ADMIN LOGIN
+
+                  STILL HIDDEN — DO NOT REMOVE
+                  ================================================= */}
+
+              {showAdminLink && <HiddenAdminLink />}
             </>
           )}
-          {showAdminLink && <HiddenAdminLink />}
         </div>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        {/* =================================================
+            MOBILE ACTIONS
+            ================================================= */}
+
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            lg:hidden
+          "
+        >
           <CartButton />
+
           <button
-            className="text-rtg-purple-600 p-2"
-            onClick={() => setOpen((o) => !o)}
+            className="
+              text-rtg-purple-600
+              p-2
+              rounded-full
+              hover:bg-rtg-purple-50
+              transition-colors
+            "
+            onClick={() => setOpen((current) => !current)}
             aria-label="Toggle menu"
+            aria-expanded={open}
           >
-            {open ? <X size={26} /> : <Menu size={26} />}
+            {open ? (
+              <X size={25} />
+            ) : (
+              <Menu size={25} />
+            )}
           </button>
         </div>
       </div>
 
+      {/* =====================================================
+          MOBILE MENU
+          ===================================================== */}
+
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="lg:hidden bg-white/97 backdrop-blur-xl overflow-hidden"
+            initial={{
+              height: 0,
+              opacity: 0,
+            }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+            }}
+            transition={{
+              duration: 0.3,
+              ease: "easeInOut",
+            }}
+            className="
+              lg:hidden
+              bg-white/97
+              backdrop-blur-xl
+              overflow-hidden
+              border-t
+              border-rtg-border
+            "
           >
-            <nav className="flex flex-col px-6 py-4 gap-1">
-              {links.map((l) => (
+            <nav
+              className="
+                flex
+                flex-col
+                px-6
+                py-4
+                gap-1
+              "
+            >
+              {/* Navigation links */}
+
+              {links.map((link) => (
                 <NavLink
-                  key={l.to}
-                  to={l.to}
+                  key={link.to}
+                  to={link.to}
                   className={({ isActive }) =>
-                    `py-3 border-b border-rtg-border text-base font-semibold ${
-                      isActive ? "text-rtg-orange-500" : "text-rtg-purple-600"
-                    }`
+                    `
+                      py-3
+                      border-b
+                      border-rtg-border
+                      text-base
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      ${
+                        isActive
+                          ? "text-rtg-orange-500"
+                          : "text-rtg-purple-600"
+                      }
+                    `
                   }
                 >
-                  {l.label}
+                  {link.label}
                 </NavLink>
               ))}
-              <div className="py-3 border-b border-rtg-border text-sm text-rtg-mist flex items-center justify-between">
+
+              {/* Account */}
+
+              <div
+                className="
+                  py-3
+                  border-b
+                  border-rtg-border
+                  text-sm
+                  text-rtg-mist
+                  flex
+                  items-center
+                  justify-between
+                "
+              >
                 <AccountIndicator />
+
+                {/* Admin stays hidden */}
                 {showAdminLink && <HiddenAdminLink />}
               </div>
+
+              {/* Login + Signup */}
+
               {!user && (
-                <div className="mt-4 mb-2 flex gap-2">
+                <div
+                  className="
+                    mt-4
+                    mb-2
+                    flex
+                    gap-2
+                  "
+                >
                   <button
                     onClick={() => requestLogin("login")}
-                    className="flex-1 rounded-full border border-rtg-border bg-white py-3 text-sm font-semibold text-rtg-purple-600"
+                    className="
+                      flex-1
+                      rounded-full
+                      border
+                      border-rtg-border
+                      bg-white
+                      py-3
+                      text-sm
+                      font-bold
+                      uppercase
+                      tracking-wide
+                      text-rtg-purple-600
+                    "
                   >
                     Login
                   </button>
-                  <Button onClick={() => requestLogin("signup")} size="md" className="flex-1">
-                    Sign Up
+
+                  <Button
+                    onClick={() => requestLogin("signup")}
+                    size="md"
+                    className="
+                      flex-1
+                      uppercase
+                    "
+                  >
+                    Signup
                   </Button>
                 </div>
               )}
@@ -244,6 +648,24 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* =====================================================
+          LIVE CLOCK
+
+          Existing component is preserved but hidden from
+          the visual navbar so it doesn't create another row.
+          ===================================================== */}
+
+      <div
+        className="
+          sr-only
+          absolute
+          pointer-events-none
+        "
+        aria-hidden="true"
+      >
+        <LiveClock />
+      </div>
     </header>
   );
 }

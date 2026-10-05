@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { MapPin, Mail, Phone } from "lucide-react";
 
@@ -6,6 +5,7 @@ import Reveal from "../ui/Reveal";
 import Button from "../ui/Button";
 
 import { useSiteImages, useSiteSettings, pickText } from "../../lib/publicData";
+import useIsMobile from "../../hooks/useIsMobile";
 import { brand } from "../../data/content";
 
 import {
@@ -180,6 +180,7 @@ export default function JoinCTA({
 }) {
   const images = useSiteImages();
   const settings = useSiteSettings();
+  const isMobile = useIsMobile();
 
   const t = (key, fallback) => {
     return pickText(settings, key, fallback);
@@ -197,54 +198,39 @@ export default function JoinCTA({
     >
       {/* =====================================================
           CONTINUOUS BACKGROUND IMAGE
-          
+
           IMPORTANT:
           There is ONLY ONE background image for both:
           - Join CTA
           - Footer
 
-          No scroll-linked y animation is used.
+          `background-attachment: fixed` (desktop) — same technique as the
+          Merchandise section and the reference site's own dark photo
+          sections. The image stays pinned to the viewport while the CTA +
+          Footer content scrolls over it, reading as "floating" rather than
+          scrolling in lockstep. This is a pure CSS technique, not the
+          useScroll/useTransform/style={{y}} approach removed earlier (that
+          caused real glitches) — background-attachment has no JS scroll
+          math to get wrong. Falls back to normal `scroll` attachment on
+          mobile, where fixed backgrounds are broken/janky.
+
+          No wrapping motion.div/scale animation here on purpose — a
+          transformed ancestor would create a new containing block and
+          silently break "fixed" (it'd pin to that ancestor instead of the
+          viewport), and the fixed-attachment itself is already the entrance
+          effect — nothing extra needed on top of it.
           ===================================================== */}
 
-      <motion.div
-        className="
-          absolute
-          inset-0
-          z-0
-          overflow-hidden
-          pointer-events-none
-        "
-        initial={{
-          scale: 1.08,
-        }}
-        whileInView={{
-          scale: 1,
-        }}
-        viewport={{
-          once: true,
-          amount: 0.1,
-        }}
-        transition={{
-          duration: 1.5,
-          ease: [0.22, 1, 0.36, 1],
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          backgroundImage: `url(${images.homeCTA})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: isMobile ? "scroll" : "fixed",
         }}
       >
-        {/* Background Image */}
-
-        <img
-          src={images.homeCTA}
-          alt=""
-          aria-hidden="true"
-          className="
-            absolute
-            inset-0
-            w-full
-            h-full
-            object-cover
-            object-center
-          "
-        />
-
         {/* =================================================
             MAIN DARK OVERLAY
 
@@ -280,7 +266,7 @@ export default function JoinCTA({
             bg-[rgba(27,17,48,0.18)]
           "
         />
-      </motion.div>
+      </div>
 
       {/* =====================================================
           CONTENT

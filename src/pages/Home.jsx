@@ -199,8 +199,13 @@ function Hero() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slide]);
 
+  // `min-h-svh` (not `h-svh`) below — lets the section grow taller than one
+  // viewport if its bottom-anchored content (headline + copy + buttons +
+  // slide nav + presence marquee) needs more room than the viewport offers,
+  // instead of clipping the top of the heading. Normally this still lands
+  // at exactly viewport height, same as before.
   return (
-    <section ref={ref} className="theme-night relative h-svh min-h-[640px] w-full overflow-hidden flex items-end">
+    <section ref={ref} className="theme-night relative min-h-svh min-h-[640px] w-full overflow-hidden flex items-end">
       <motion.div style={{ y }} className="absolute inset-0 scale-100 sm:scale-110">
         <AnimatePresence mode="sync">
           <motion.img
@@ -901,11 +906,15 @@ export default function Home() {
             </Reveal>
           </div>
 
+          {/* 12, not 8 — the right column needs real height for the sticky
+              left panel to have room to work; the reference shows ~10
+              photos here. Full archive is still on /gallery, this is just
+              the preview cap. */}
           <div>
             {filteredGallery.length === 0 ? (
               <p className="text-center text-rtg-mist py-10">No {galleryFilter.toLowerCase()} moments yet — check back soon.</p>
             ) : (
-              <MasonryGallery items={filteredGallery.slice(0, 8)} />
+              <MasonryGallery items={filteredGallery.slice(0, 12)} />
             )}
           </div>
         </div>

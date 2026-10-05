@@ -64,7 +64,11 @@ export const images = {
   // points back to the known-good asset for now (paired with a small dark
   // badge wherever it sits on light chrome, same fix as everywhere else
   // this logo is used on a light background).
-  logoNav: "/images/rtg-logo-horizontal.png",
+  // Real color lockup pulled from the reference site (earlier attempt was
+  // corrupted — its base64 payload had HTML entities like &#43; embedded
+  // in it that weren't unescaped before decoding, silently truncating the
+  // file). Reads fine directly on a light background, no badge/pill needed.
+  logoNav: "/images/rtg-logo-nav.png",
 
   // Final fallback for any admin-added item (product, event, blog post,
   // testimonial) that has no photo uploaded yet — e.g.
