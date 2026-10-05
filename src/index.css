@@ -56,7 +56,12 @@
 html {
   scroll-behavior: smooth;
   width: 100%;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) — hides horizontal bleed exactly the same way,
+     but unlike `hidden` it does NOT establish a new scroll container, so it
+     doesn't silently break `position: sticky` for every element on the
+     page (a classic CSS gotcha: overflow-x: hidden on html/body computes
+     overflow-y to auto under the hood, which breaks sticky site-wide). */
+  overflow-x: clip;
 }
 
 body {
@@ -66,7 +71,7 @@ body {
   color: var(--color-rtg-white);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 ::selection {

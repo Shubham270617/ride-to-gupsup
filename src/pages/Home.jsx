@@ -5,6 +5,7 @@ import { whyJoin, heroSlides } from "../data/content";
 import { useEvents, useProducts, useTestimonials, useGalleryItems, useSponsors, useSiteImages, useSiteSettings, pickText, useWeeklySessions, useStates } from "../lib/publicData";
 import CommunityProof from "../components/sections/CommunityProof";
 import Section from "../components/ui/Section";
+import FloatingIcons from "../components/ui/FloatingIcons";
 import Button from "../components/ui/Button";
 import GlassCard from "../components/ui/GlassCard";
 import EventCard from "../components/ui/EventCard";
@@ -809,35 +810,10 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* GALLERY PREVIEW — reference's "Moments That Become Stories" /
-          "Community Gallery" section is on the light canvas, not a dark
-          band (flipped from `dark` to `light` to match). */}
-      <Section contentKey="home.gallery" eyebrow="Moments That Become Stories" title="Community Gallery" subtitle="Finish lines, sunrise starts, and everything in between." light>
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          {GALLERY_PREVIEW_CATEGORIES.map((c) => (
-            <button
-              key={c}
-              onClick={() => setGalleryFilter(c)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                galleryFilter === c ? "bg-rtg-orange-500 text-white" : "glass text-rtg-white/75 hover:text-rtg-white"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-        {filteredGallery.length === 0 ? (
-          <p className="text-center text-rtg-mist py-10">No {galleryFilter.toLowerCase()} moments yet — check back soon.</p>
-        ) : (
-          <MasonryGallery items={filteredGallery.slice(0, 8)} />
-        )}
-        <div className="text-center mt-10">
-          <Button to="/gallery" variant="outline">Explore Full Gallery</Button>
-        </div>
-      </Section>
-
       {/* MERCH PREVIEW — reference's "Merchandise Highlights" sits on a
-          dark community photo band, not a plain light grid. */}
+          dark community photo band. Placed above Gallery/Testimonials per
+          request, so the order reads: Merch -> Sponsors -> Gallery ->
+          Testimonials -> JoinCTA/Footer. */}
       <Section contentKey="home.store" eyebrow="RTG Store" title="Merchandise Highlights" subtitle="A quick look at the RTG collection — designed around the colours, energy and identity of the community." dark image={images.homeHero}>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {products.slice(0, 4).map((p) => (
@@ -880,17 +856,65 @@ export default function Home() {
         </Section>
       )}
 
-      {/* TESTIMONIALS — Sponsors right above only renders once a real
-          sponsor exists, so this flips dark/light to match whichever
-          section actually ended up before it, keeping the alternation
-          correct either way instead of assuming Sponsors is always there. */}
-      <Section
-        contentKey="home.testimonials"
-        eyebrow="Athlete Voices"
-        title="What Our Community Says"
-        light={sponsors.length > 0}
-        dark={sponsors.length === 0}
-      >
+      {/* GALLERY PREVIEW — sticky left content (text + CTA) with a normally
+          scrolling right-hand image grid, matching the reference exactly:
+          the left panel pins via plain CSS `position: sticky` (no manual
+          scroll-transform JS) while the taller right column of images
+          scrolls past it, then releases naturally once the grid's bottom
+          edge (i.e. the end of the gallery images) reaches it — which is
+          also exactly where Testimonials begins. Mobile drops the sticky
+          behavior entirely (unprefixed classes default to a single stacked
+          column; `md:` is what turns on the two-column + sticky layout). */}
+      {/* No overflow-hidden on this section — it would create a new
+          scroll-clipping container and silently break the sticky left
+          column below (sticky positioning requires every ancestor between
+          it and the viewport to have visible overflow). FloatingIcons
+          already clips itself internally, so nothing bleeds regardless. */}
+      <section className="relative isolate py-20 md:py-28 px-6 md:px-10 bg-rtg-canvas">
+        <FloatingIcons />
+        <div className="relative max-w-7xl mx-auto grid md:grid-cols-[320px_1fr] lg:grid-cols-[380px_1fr] gap-10 lg:gap-16 items-start">
+          <div className="md:sticky md:top-28 self-start">
+            <Reveal direction="right">
+              <span className="inline-block text-rtg-orange-500 font-bold tracking-[0.2em] uppercase text-xs md:text-sm mb-4">
+                Moments That Become Stories
+              </span>
+              <h2 className="font-display text-rtg-white text-4xl md:text-6xl leading-[0.95] mb-4">
+                Community <span className="text-gradient">Gallery.</span>
+              </h2>
+              <p className="text-rtg-mist text-base md:text-lg leading-relaxed mb-8 max-w-sm">
+                Finish lines, sunrise starts, and everything in between.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-8">
+                {GALLERY_PREVIEW_CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setGalleryFilter(c)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      galleryFilter === c ? "bg-rtg-orange-500 text-white" : "glass text-rtg-white/75 hover:text-rtg-white"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <Button to="/gallery" variant="outline">Explore Full Gallery</Button>
+            </Reveal>
+          </div>
+
+          <div>
+            {filteredGallery.length === 0 ? (
+              <p className="text-center text-rtg-mist py-10">No {galleryFilter.toLowerCase()} moments yet — check back soon.</p>
+            ) : (
+              <MasonryGallery items={filteredGallery.slice(0, 8)} />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS — immediately follows Gallery, always light, so the
+          two read as one continuous light page flow with no hard visual
+          break. */}
+      <Section contentKey="home.testimonials" eyebrow="Athlete Voices" title="What Our Community Says" light>
         <TestimonialSlider items={testimonials} />
       </Section>
 

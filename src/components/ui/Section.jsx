@@ -1,6 +1,7 @@
 import Reveal from "./Reveal";
 import FloatingIcons from "./FloatingIcons";
 import { useSiteSettings, pickText } from "../../lib/publicData";
+import useIsMobile from "../../hooks/useIsMobile";
 
 export default function Section({
   id,
@@ -28,6 +29,7 @@ export default function Section({
   contentKey,
 }) {
   const settings = useSiteSettings();
+  const isMobile = useIsMobile();
   const resolvedEyebrow = contentKey ? pickText(settings, `text.${contentKey}.eyebrow`, eyebrow) : eyebrow;
   const resolvedTitle = contentKey ? pickText(settings, `text.${contentKey}.title`, title) : title;
   const resolvedSubtitle = contentKey ? pickText(settings, `text.${contentKey}.subtitle`, subtitle) : subtitle;
@@ -41,9 +43,23 @@ export default function Section({
     >
       {dark && image && (
         <>
+          {/* `background-attachment: fixed` — the exact technique the
+              reference site itself uses on its dark photo sections (hero,
+              Life-at-RTG, final CTA). The image stays pinned to the
+              viewport while the section's content scrolls over it, so it
+              reads as "floating"/parallax rather than scrolling in lockstep
+              with the page. Falls back to normal `scroll` attachment on
+              mobile — fixed backgrounds are janky/unsupported on iOS
+              Safari, and the reference's own mobile CSS makes the same
+              fallback. */}
           <div
-            className="absolute inset-0 -z-20 rtg-kenburns"
-            style={{ backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center" }}
+            className="absolute inset-0 -z-20"
+            style={{
+              backgroundImage: `url(${image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundAttachment: isMobile ? "scroll" : "fixed",
+            }}
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-rtg-purple-950/90 via-rtg-purple-950/70 to-rtg-purple-950/50" />
         </>
