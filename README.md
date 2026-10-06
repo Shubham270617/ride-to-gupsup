@@ -48,7 +48,10 @@ your project dashboard:
      deletes the old Home gallery/testimonials heading text;
      `007_remove_home_sponsors_wording.sql` deletes the wording of the
      Sponsors band removed from Home; `008_footer_links.sql` adds the
-     `footer_links` table (the footer's link columns) with starter rows. Until they're
+     `footer_links` table (the footer's link columns) with starter rows; Until they're
+     `009_events_board.sql` turns the event status into the Events page
+     category, adds the optional `tone` colour, and seeds seven starter
+     events only if the events table is empty.
      run, those sections simply show their built-in defaults and the
      matching admin screens can't save.
 2. **Get your API keys**: Project Settings → API.

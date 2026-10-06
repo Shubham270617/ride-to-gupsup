@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy } from "../../data/content";
 import {
   HOME_EVENTS_FIELDS,
   HOME_MERCH_FIELDS,
+  EVENTS_PAGE_FIELDS,
+  eventsPageKey,
   JOIN_FIELDS,
   FOOTER_FIELDS,
   joinKey,
@@ -52,9 +54,6 @@ const SECTIONS = [
   { page: "Community", key: "community.voices", label: "Member Voices", eyebrow: "Member Voices", title: "The People Behind RTG", subtitle: "" },
   { page: "Community", key: "community.volunteer", label: "Volunteer With RTG", eyebrow: "Get Involved", title: "Volunteer With RTG", subtitle: "" },
 
-  { page: "Events", key: "events.featured", label: "Signature Events", eyebrow: "Signature", title: "Signature Events", subtitle: "" },
-  { page: "Events", key: "events.upcoming", label: "Coming Up", eyebrow: "Mark Your Calendar", title: "Coming Up", subtitle: "Regularly happening — championships, challenges, adventures, and workshops throughout the year." },
-  { page: "Events", key: "events.past", label: "Past Highlights", eyebrow: "Where We've Been", title: "Past Highlights", subtitle: "A look back at what the community has already pulled off." },
 
 
   { page: "Merchandise", key: "merch.hero", label: "All Merchandise", eyebrow: "Shop", title: "All Merchandise", subtitle: "Free community pride, premium quality — order yours today." },
@@ -172,6 +171,17 @@ const CUSTOM_GROUPS = {
           type: "text",
         },
       ],
+    },
+  ],
+  // The events on the page are their own admin screen (Events).
+  Events: [
+    {
+      heading: "Events page — hero",
+      fields: EVENTS_PAGE_FIELDS.filter((f) => f.label.startsWith("Hero")).map((f) => ({ key: eventsPageKey(f.field), label: f.label, fallback: eventsPageCopy[f.field], type: f.type })),
+    },
+    {
+      heading: "Events page — board & grid",
+      fields: EVENTS_PAGE_FIELDS.filter((f) => !f.label.startsWith("Hero")).map((f) => ({ key: eventsPageKey(f.field), label: f.label, fallback: eventsPageCopy[f.field], type: f.type })),
     },
   ],
   // Shown at the bottom of every page. The footer's link columns are their

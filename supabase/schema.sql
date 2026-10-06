@@ -246,21 +246,19 @@ alter table events add column if not exists previous_edition_summary text;
 -- Route map (admin types a place/address, the public site embeds a Google Maps iframe for it).
 alter table events add column if not exists route_map_query text;
 
--- Which of the 3 sections on the Events page this event belongs to —
--- admin-picked, not computed from event_date (that column is free text like
--- "June 2027", not a real date, and an admin may want an event to stay
--- "Upcoming" even with a vague date). Separate from `featured` above, which
--- only controls the homepage highlight — an event can be the Events page's
--- Flagship pick without also being the one shown on the homepage, or vice
--- versa.
-alter table events add column if not exists event_status text not null default 'Upcoming';
+-- The event's category on the Events page board (its filter pill).
+-- Admin-picked. 'Past' also keeps an event out of Home's Upcoming Events.
+-- Separate from `featured` above, which only controls the homepage slides.
+-- (Was 'Flagship' / 'Upcoming' / 'Past' before migration 009.)
+alter table events add column if not exists event_status text not null default 'Community';
+alter table events drop constraint if exists events_status_check;
+update events set event_status = 'Community' where event_status = 'Upcoming';
+alter table events alter column event_status set default 'Community';
+alter table events add constraint events_status_check check (event_status in ('Flagship', 'Community', 'Virtual', 'Past'));
 
-do $$
-begin
-  if not exists (select 1 from pg_constraint where conname = 'events_status_check') then
-    alter table events add constraint events_status_check check (event_status in ('Flagship', 'Upcoming', 'Past'));
-  end if;
-end $$;
+-- Accent colours on the Events page: sunset | electric | trail | blue |
+-- warm | mint | future. Optional.
+alter table events add column if not exists tone text;
 
 -- Optional real date, separate from the free-text event_date display field
 -- above ("June 2027", "TBA", "Ongoing" — not parseable). Set this and the

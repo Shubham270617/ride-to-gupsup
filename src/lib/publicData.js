@@ -33,6 +33,7 @@ import {
   joinCopy as staticJoinCopy,
   footerCopy as staticFooterCopy,
   footerLinks as staticFooterLinks,
+  eventsPageCopy as staticEventsPageCopy,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -86,7 +87,8 @@ const mapEventRow = (r) => ({
   desc: r.description,
   image: r.cover_image_url,
   featured: r.featured,
-  status: r.event_status || "Upcoming",
+  status: r.event_status || "Community",
+  tone: r.tone,
   calendarDate: r.calendar_date,
   route: r.route_info,
   routeMapQuery: r.route_map_query,
@@ -724,6 +726,35 @@ export const HOME_VOICES_FIELDS = [
 ];
 export const homeVoicesKey = (field) => `text.home.voices.${field}`;
 export const buildHomeVoicesCopy = (settings) => buildCopy(settings, HOME_VOICES_FIELDS, homeVoicesKey, staticHomeVoicesCopy);
+
+// Events page wording (pages/Events.jsx). SiteContentAdmin builds its
+// Events page from this list.
+export const EVENTS_PAGE_FIELDS = [
+  { field: "indexLabel", label: "Hero — small label (left)", type: "text" },
+  { field: "indexYear", label: "Hero — small label (right, e.g. the season)", type: "text" },
+  { field: "eyebrow", label: "Hero — eyebrow", type: "text" },
+  { field: "titleLine1", label: "Hero — headline line 1", type: "text" },
+  { field: "titleLine2", label: "Hero — headline line 2 (blue gradient)", type: "text" },
+  { field: "titleLine3", label: "Hero — headline line 3 (orange gradient)", type: "text" },
+  { field: "intro", label: "Hero — paragraph", type: "textarea" },
+  { field: "signals", label: "Hero — dotted tags under the paragraph (comma-separated)", type: "text" },
+  { field: "pulseLabel", label: "Hero — label on the event carousel", type: "text" },
+  { field: "prevLabel", label: "Hero — screen-reader name of the previous arrow", type: "text" },
+  { field: "nextLabel", label: "Hero — screen-reader name of the next arrow", type: "text" },
+  { field: "sectionNumber", label: "Board — big number beside the heading", type: "text" },
+  { field: "sectionLabel", label: "Board — small label under that number", type: "text" },
+  { field: "kicker", label: "Board — eyebrow", type: "text" },
+  { field: "heading", label: "Board — headline", type: "text" },
+  { field: "headingAccent", label: "Board — headline, accent-colored part", type: "text" },
+  { field: "body", label: "Board — paragraph", type: "textarea" },
+  { field: "allLabel", label: "Board — name of the \"all events\" filter", type: "text" },
+  { field: "viewLabel", label: "Board — button that opens the selected event's page", type: "text" },
+  { field: "boardHeading", label: "Grid — heading", type: "text" },
+  { field: "boardHint", label: "Grid — hint beside the heading", type: "text" },
+  { field: "emptyText", label: "Message shown when there are no events", type: "text" },
+];
+export const eventsPageKey = (field) => `text.events.${field}`;
+export const buildEventsPageCopy = (settings) => buildCopy(settings, EVENTS_PAGE_FIELDS, eventsPageKey, staticEventsPageCopy);
 
 // "Join the Movement" band + site footer (components/sections/JoinCTA.jsx,
 // shown on every page). SiteContentAdmin builds its Footer page from these.

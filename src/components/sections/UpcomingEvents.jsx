@@ -2,23 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { buildHomeEventsCopy, useEvents } from "../../lib/publicData";
 import Reveal from "../ui/Reveal";
+import { splitTitle } from "../../lib/format";
 
 const AUTO_ADVANCE_MS = 6500;
-
-// "RTG MTB Challenge 2026" -> ["RTG MTB", "Challenge 2026"]: the second
-// part is drawn in the accent gradient. Uses the event's own accent text
-// when it's set and really is the end of the title; otherwise the second
-// half of the words.
-function splitTitle(title = "", accent) {
-  const wanted = (accent || "").trim();
-  if (wanted && title.toLowerCase().endsWith(wanted.toLowerCase())) {
-    return [title.slice(0, title.length - wanted.length).trim(), title.slice(title.length - wanted.length)];
-  }
-  const words = title.trim().split(/\s+/);
-  if (words.length < 2) return [title, ""];
-  const cut = Math.ceil(words.length / 2);
-  return [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
-}
 
 const SLIDE_PILL =
   "px-3.5 py-2.5 rounded-full border border-white/15 bg-[rgba(28,20,45,0.54)] backdrop-blur-md text-[9px] font-bold tracking-[0.06em] uppercase text-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.12),0_8px_18px_rgba(8,5,15,0.16)]";
