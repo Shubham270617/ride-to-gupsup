@@ -7,7 +7,6 @@ import {
   testimonials as staticTestimonials,
   teamMembers as staticTeamMembers,
   raceResults as staticRaceResults,
-  calendarEvents as staticCalendarEvents,
   weeklySessions as staticWeeklySessions,
   faqs as staticFaqs,
   rideFaqs as staticRideFaqs,
@@ -34,6 +33,7 @@ import {
   footerCopy as staticFooterCopy,
   footerLinks as staticFooterLinks,
   eventsPageCopy as staticEventsPageCopy,
+  calendarPageCopy as staticCalendarPageCopy,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -89,7 +89,6 @@ const mapEventRow = (r) => ({
   featured: r.featured,
   status: r.event_status || "Community",
   tone: r.tone,
-  calendarDate: r.calendar_date,
   route: r.route_info,
   routeMapQuery: r.route_map_query,
   elevation: r.elevation_gain,
@@ -242,22 +241,50 @@ export function useRaceResults() {
   }).items;
 }
 
-// Real, admin-manageable race calendar — replaces the old hardcoded list so
-// the "Register" button can deep-link to a real event page when the admin
-// has linked one, and so a genuine `date` column can drive "is this today"
-// checks (see useLiveActivity below).
-export function useCalendarEvents() {
-  const staticFallback = staticCalendarEvents.map((e) => ({ ...e, slug: null }));
-  return useSupabaseList("calendar_events", {
-    staticFallback,
-    orderBy: "event_date",
+// Calendar page — the activity types (Admin -> Calendar — Activity Types).
+// No placeholder fallback, same as events: only what an admin has added.
+const HEX_COLOR = /^#[0-9a-f]{3,8}$/i;
+
+export function useCalendarCategories() {
+  return useSupabaseList("calendar_categories", {
+    staticFallback: [],
     mapRow: (r) => ({
-      date: r.event_date,
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      detailLabel: r.detail_label || r.name,
+      // Anything that isn't a hex colour is ignored (the page's own default
+      // colour is used) rather than put into a style.
+      color: HEX_COLOR.test((r.color || "").trim()) ? r.color.trim() : null,
+    }),
+  }).items;
+}
+
+// Calendar page — everything on the calendar (Admin -> Calendar —
+// Activities). `schedule` is "weekly" (repeats on `weekday`), "once"
+// (happens on `date`, "YYYY-MM-DD") or "flexible" (no fixed day).
+export function useCalendarActivities() {
+  return useSupabaseList("calendar_activities", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
       title: r.title,
-      cat: (r.category || "").toLowerCase(),
+      category: r.category_slug,
+      schedule: r.schedule_type,
+      weekday: r.weekday,
+      date: r.activity_date,
+      whenText: r.when_text,
+      time: r.time_text,
       city: r.city,
-      difficulty: r.difficulty,
-      slug: r.event_slug,
+      location: r.location,
+      format: r.format,
+      summary: r.summary,
+      organiser: r.organiser,
+      status: r.status_label,
+      note: r.note,
+      linkLabel: r.link_label,
+      link: r.link_url,
+      inRhythm: r.show_in_rhythm,
     }),
   }).items;
 }
@@ -756,6 +783,51 @@ export const EVENTS_PAGE_FIELDS = [
 export const eventsPageKey = (field) => `text.events.${field}`;
 export const buildEventsPageCopy = (settings) => buildCopy(settings, EVENTS_PAGE_FIELDS, eventsPageKey, staticEventsPageCopy);
 
+// Calendar page wording (pages/Calendar.jsx). SiteContentAdmin builds its
+// Calendar page from this list; `group` is the card a field sits in there.
+export const CALENDAR_PAGE_FIELDS = [
+  { group: "hero", field: "heroKicker", label: "Eyebrow (small line above the headline)", type: "text" },
+  { group: "hero", field: "heroTitle", label: "Headline — line 1", type: "text" },
+  { group: "hero", field: "heroTitleAccent", label: "Headline — line 2 (accent color)", type: "text" },
+  { group: "hero", field: "heroText", label: "Paragraph", type: "textarea" },
+  { group: "hero", field: "heroTags", label: "Dotted tags under the paragraph (comma-separated)", type: "text" },
+  { group: "hero", field: "boardLabel", label: "Calendar card — small label above the month", type: "text" },
+  { group: "hero", field: "boardBadge", label: "Calendar card — badge", type: "text" },
+  { group: "hero", field: "cardOneLabel", label: "Floating card 1 — label", type: "text" },
+  { group: "hero", field: "cardOneText", label: "Floating card 1 — text", type: "text" },
+  { group: "hero", field: "cardTwoLabel", label: "Floating card 2 — label", type: "text" },
+  { group: "hero", field: "cardTwoText", label: "Floating card 2 — text", type: "text" },
+  { group: "hero", field: "scrollLabel", label: "Scroll-down label at the bottom", type: "text" },
+  { group: "intro", field: "rhythmKicker", label: "Weekly Rhythm panel — eyebrow", type: "text" },
+  { group: "intro", field: "rhythmTitle", label: "Weekly Rhythm panel — heading", type: "text" },
+  { group: "intro", field: "rhythmText", label: "Weekly Rhythm panel — paragraph", type: "textarea" },
+  { group: "intro", field: "rhythmViewLabel", label: "Weekly Rhythm panel — word on each activity (e.g. View)", type: "text" },
+  { group: "intro", field: "rhythmEmptyText", label: "Weekly Rhythm panel — message when no activity is listed", type: "text" },
+  { group: "intro", field: "introKicker", label: "Beside the panel — eyebrow", type: "text" },
+  { group: "intro", field: "introTitle", label: "Beside the panel — headline", type: "text" },
+  { group: "intro", field: "introTitleAccent", label: "Beside the panel — headline, accent-colored part", type: "text" },
+  { group: "intro", field: "introText", label: "Beside the panel — paragraph", type: "textarea" },
+  { group: "intro", field: "introPoints", label: "Beside the panel — dotted points (comma-separated)", type: "text" },
+  { group: "grid", field: "allLabel", label: "Name of the \"all activities\" filter", type: "text" },
+  { group: "grid", field: "todayLabel", label: "Button that jumps back to the current month", type: "text" },
+  { group: "grid", field: "prevLabel", label: "Screen-reader name of the previous-month arrow", type: "text" },
+  { group: "grid", field: "nextLabel", label: "Screen-reader name of the next-month arrow", type: "text" },
+  { group: "grid", field: "emptyText", label: "Message when the month has no activities", type: "text" },
+  { group: "grid", field: "dayEmptyText", label: "Phones — message when the tapped day has no activities", type: "text" },
+  { group: "modal", field: "modalKicker", label: "Eyebrow above the activity's title", type: "text" },
+  { group: "modal", field: "formatLabel", label: "Label of the Format box", type: "text" },
+  { group: "modal", field: "locationLabel", label: "Label of the Location box", type: "text" },
+  { group: "modal", field: "timeLabel", label: "Label of the Time box", type: "text" },
+  { group: "modal", field: "organiserLabel", label: "Label of the Organiser box", type: "text" },
+  { group: "modal", field: "statusLabel", label: "Label of the Status box", type: "text" },
+  { group: "modal", field: "noteLabel", label: "Label above the activity's note", type: "text" },
+  { group: "modal", field: "linkLabel", label: "Link button — default label (an activity can set its own)", type: "text" },
+  { group: "modal", field: "addLabel", label: "\"Add to my calendar\" button label", type: "text" },
+  { group: "modal", field: "closeLabel", label: "Screen-reader name of the close button", type: "text" },
+];
+export const calendarPageKey = (field) => `text.calendar.${field}`;
+export const buildCalendarPageCopy = (settings) => buildCopy(settings, CALENDAR_PAGE_FIELDS, calendarPageKey, staticCalendarPageCopy);
+
 // "Join the Movement" band + site footer (components/sections/JoinCTA.jsx,
 // shown on every page). SiteContentAdmin builds its Footer page from these.
 export const JOIN_FIELDS = [
@@ -904,22 +976,27 @@ export function useEventGallery(eventSlug) {
 }
 
 // Drives the login popup's "Live" vs "Upcoming" sections. LIVE means a real
-// weekly session falls on today's weekday, or a real calendar entry is
-// dated today — genuine data checks, not a fake/hardcoded "today" label.
+// weekly session falls on today's weekday, or a dated calendar activity is
+// today — genuine data checks, not a fake/hardcoded "today" label.
 export function useLiveActivity() {
   const sessions = useWeeklySessions();
-  const calendarEvents = useCalendarEvents();
+  const activities = useCalendarActivities();
   const upcomingEvent = useUpcomingEvent();
 
-  const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const todayName = now.toLocaleDateString("en-US", { weekday: "long" });
+  // Local date, not toISOString() — that's UTC, a day behind in India
+  // until 5:30 in the morning.
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  const dated = activities.filter((a) => a.schedule === "once" && a.date);
 
   const todaysSession = sessions.find((s) => s.day === todayName) || null;
-  const todaysCalendarEvent = calendarEvents.find((e) => e.date === todayIso) || null;
+  const todaysCalendarEvent = dated.find((a) => a.date === todayIso) || null;
 
   const nextCalendarEvent =
-    calendarEvents
-      .filter((e) => e.date >= todayIso)
+    dated
+      .filter((a) => a.date >= todayIso)
       .sort((a, b) => (a.date > b.date ? 1 : -1))[0] || null;
 
   return { todaysSession, todaysCalendarEvent, upcomingEvent, nextCalendarEvent };

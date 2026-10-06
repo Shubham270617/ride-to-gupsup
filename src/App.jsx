@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import Layout from "./components/Layout";
 import Preloader from "./components/Preloader";
@@ -20,7 +20,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Challenges from "./pages/Challenges";
-import RaceCalendar from "./pages/RaceCalendar";
+import Calendar from "./pages/Calendar";
 import RaceResults from "./pages/RaceResults";
 import Leaderboard from "./pages/Leaderboard";
 import Safety from "./pages/Safety";
@@ -105,7 +105,8 @@ export default function App() {
           <Route path="challenges" element={<ResourceAdminPage resource={resources.challenges} />} />
           <Route path="team" element={<ResourceAdminPage resource={resources.team} />} />
           <Route path="race-results" element={<ResourceAdminPage resource={resources.raceResults} />} />
-          <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarEvents} />} />
+          <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarActivities} />} />
+          <Route path="calendar-types" element={<ResourceAdminPage resource={resources.calendarCategories} />} />
           <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
           <Route path="faqs" element={<ResourceAdminPage resource={resources.faqs} />} />
           <Route path="ride-faqs" element={<ResourceAdminPage resource={resources.rideFaqs} />} />
@@ -142,7 +143,9 @@ export default function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           <Route path="/challenges" element={<Challenges />} />
-          <Route path="/race-calendar" element={<RaceCalendar />} />
+          <Route path="/calendar" element={<Calendar />} />
+          {/* The page's old address — kept so existing links still land. */}
+          <Route path="/race-calendar" element={<Navigate to="/calendar" replace />} />
           <Route path="/race-results" element={<RaceResults />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/safety" element={<Safety />} />

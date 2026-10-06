@@ -30,6 +30,7 @@ import {
   Ruler,
   Star,
   Gift,
+  Tags,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { images } from "../data/images";
@@ -40,7 +41,8 @@ import { ConfirmProvider } from "./components/ConfirmDialog";
 const links = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/events", label: "Events", icon: CalendarDays },
-  { to: "/admin/calendar", label: "Race Calendar", icon: CalendarRange },
+  { to: "/admin/calendar", label: "Calendar — Activities", icon: CalendarRange },
+  { to: "/admin/calendar-types", label: "Calendar — Activity Types", icon: Tags },
   { to: "/admin/weekly-sessions", label: "Weekly Sessions", icon: CalendarClock },
   { to: "/admin/ride-safety", label: "Ride Safety Checklist", icon: ShieldAlert },
   { to: "/admin/what-to-bring", label: "What to Bring", icon: Backpack },

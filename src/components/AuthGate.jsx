@@ -430,7 +430,7 @@ export default function AuthGate() {
                       )}
                     </div>
                     <Link
-                      to="/race-calendar"
+                      to="/calendar"
                       onClick={dismiss}
                       className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-rtg-orange-500/15 text-rtg-orange-600 text-xs font-semibold py-2 hover:bg-rtg-orange-500/25 transition-colors"
                     >

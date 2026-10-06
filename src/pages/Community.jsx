@@ -308,7 +308,7 @@ export default function Community() {
           ))}
         </StaggerGroup>
         <Reveal className="text-center">
-          <Button to="/race-calendar" variant="outline" size="lg" icon={ArrowRight}>View Full Calendar</Button>
+          <Button to="/calendar" variant="outline" size="lg" icon={ArrowRight}>View Full Calendar</Button>
         </Reveal>
       </Section>
 

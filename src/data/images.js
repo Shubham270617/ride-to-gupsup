@@ -137,9 +137,6 @@ export const images = {
   // ---- CHALLENGES ----
   challengesHero: rtg.adventure,
 
-  // ---- RACE CALENDAR ----
-  calendarHero: rtg.cycling,
-
   // ---- BLOG ----
   blogHero: placeholder,
   blogCycling: rtg.cycling,

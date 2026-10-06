@@ -29,7 +29,7 @@ const links = [
     label: "Community",
   },
   {
-    to: "/race-calendar",
+    to: "/calendar",
     label: "Calendar",
   },
   {

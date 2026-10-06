@@ -23,7 +23,7 @@ import useAdminSession from "../useAdminSession";
 // overview grid since a count of those isn't something you'd check daily.
 const cards = [
   { table: "events", label: "Events", icon: CalendarDays, to: "/admin/events" },
-  { table: "calendar_events", label: "Calendar Entries", icon: CalendarRange, to: "/admin/calendar" },
+  { table: "calendar_activities", label: "Calendar Activities", icon: CalendarRange, to: "/admin/calendar" },
   { table: "weekly_sessions", label: "Weekly Sessions", icon: CalendarClock, to: "/admin/weekly-sessions" },
   { table: "gallery_items", label: "Gallery Items", icon: Images, to: "/admin/gallery" },
   { table: "products", label: "Products", icon: ShoppingBag, to: "/admin/products" },

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
+import { supabase } from "../../lib/supabaseClient";
 
 const inputClass =
   "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
@@ -58,6 +59,44 @@ function MapField({ field, value, onChange }) {
   );
 }
 
+// A dropdown whose choices are the rows of another table (field.table),
+// storing field.valueColumn and showing field.labelColumn — e.g. a calendar
+// activity's type, picked from the activity types an admin has created.
+function RelationField({ field, value, onChange }) {
+  const [options, setOptions] = useState([]);
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let cancelled = false;
+    supabase
+      .from(field.table)
+      .select(`${field.valueColumn},${field.labelColumn}`)
+      .order(field.orderBy || "sort_order")
+      .then(({ data }) => {
+        if (!cancelled) setOptions(data || []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [field.table, field.valueColumn, field.labelColumn, field.orderBy]);
+
+  return (
+    <select required={field.required} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
+      <option value="" className="bg-rtg-ink">
+        {field.placeholder || "Select…"}
+      </option>
+      {options.map((o) => (
+        <option key={o[field.valueColumn]} value={o[field.valueColumn]} className="bg-rtg-ink">
+          {o[field.labelColumn]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// field.showWhen = { field, in: [...] } — the field is only part of the form
+// while that other field holds one of those values.
+const isShown = (field, values) => !field.showWhen || field.showWhen.in.includes(values[field.showWhen.field]);
+
 function toEditValue(field, raw) {
   if (field.type === "tags") return Array.isArray(raw) ? raw.join(", ") : raw || "";
   if (field.type === "boolean") return raw ?? field.default ?? false;
@@ -74,6 +113,9 @@ function toSavedValue(field, editVal, values, slugTouched) {
   }
   if (field.type === "number") return Number(editVal) || 0;
   if (field.type === "boolean") return Boolean(editVal);
+  // An unpicked date/dropdown is "no value", not an empty string (which a
+  // date column, or a column limited to a list of choices, would reject).
+  if (["date", "select", "relation"].includes(field.type)) return editVal || null;
   if (field.type === "slug") {
     // If the admin never touched the slug field, derive it fresh from the
     // source field at save time; otherwise sanitize whatever they typed.
@@ -111,7 +153,9 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
     setError("");
     const payload = {};
     fields.forEach((f) => {
-      payload[f.name] = toSavedValue(f, values[f.name], values, slugTouched);
+      // A field hidden by showWhen is cleared, so e.g. a weekly activity
+      // switched to a one-off date doesn't keep its old weekday.
+      payload[f.name] = isShown(f, values) ? toSavedValue(f, values[f.name], values, slugTouched) : null;
     });
     try {
       await onSubmit(payload);
@@ -122,7 +166,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {fields.map((f) => (
+      {fields.filter((f) => isShown(f, values)).map((f) => (
         <div key={f.name}>
           {f.type !== "boolean" && f.type !== "image" && (
             <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">{f.label}</label>
@@ -138,6 +182,30 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
               className={inputClass}
             />
           )}
+
+          {f.type === "color" && (
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={/^#[0-9a-f]{6}$/i.test(values[f.name]) ? values[f.name] : "#000000"}
+                onChange={(e) => setField(f.name, e.target.value)}
+                aria-label={f.label}
+                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-transparent p-1"
+              />
+              <input
+                type="text"
+                required={f.required}
+                placeholder="#35246f"
+                pattern="#[0-9a-fA-F]{6}"
+                title="A colour code like #35246f"
+                value={values[f.name]}
+                onChange={(e) => setField(f.name, e.target.value)}
+                className={`${inputClass} font-mono`}
+              />
+            </div>
+          )}
+
+          {f.type === "relation" && <RelationField field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />}
 
           {f.type === "textarea" && (
             <textarea
@@ -250,6 +318,10 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
               onChange={(url) => setField(f.name, url)}
               folder={f.folder}
             />
+          )}
+
+          {["text", "textarea", "tags", "date", "select", "color", "relation"].includes(f.type) && f.hint && (
+            <p className="mt-1.5 text-xs text-rtg-mist">{f.hint}</p>
           )}
         </div>
       ))}

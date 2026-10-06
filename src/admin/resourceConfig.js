@@ -2,7 +2,12 @@
 // ResourceTable + ResourceForm so Events/Products/Blog/Sponsors/Testimonials/
 // Challenges don't each need their own hand-built CRUD page.
 //
-// field.type: "text" | "textarea" | "number" | "boolean" | "tags" | "image" | "slug" | "map" | "date" | "select"
+// field.type: "text" | "textarea" | "number" | "boolean" | "tags" | "image" | "slug" | "map" | "date" | "select" | "color" | "relation"
+//
+// "relation" is a dropdown filled from another table's rows:
+//   { type: "relation", table, valueColumn, labelColumn }
+// field.showWhen = { field, in: [...] } shows the field only while another
+// field of the same form holds one of those values.
 
 // Keys of the line-art icons drawn by components/sections/WhyRtg.jsx
 // (WHY_ICONS) — keep the two in step.
@@ -50,12 +55,6 @@ export const resources = {
           { value: "future", label: "Future (violet → pink)" },
         ],
         hint: "Optional. The accent colours of this event's cards on the Events page. If not set, colours rotate automatically.",
-      },
-      {
-        name: "calendar_date",
-        label: "Calendar Date (optional)",
-        type: "date",
-        hint: "Set this to also show this event on the Race Calendar automatically, on this exact day — no need to add it separately there too. Leave blank if this event doesn't need a specific plottable day yet (e.g. the \"Date\" above is still vague, like \"TBA 2027\").",
       },
       { name: "event_type", label: "Type", type: "text", placeholder: "e.g. Flagship MTB Race", hint: "The small coloured line on the event's card (Events page) and the tag on its homepage slide." },
       { name: "categories", label: "Categories", type: "tags", placeholder: "Cycling, Running" },
@@ -198,20 +197,58 @@ export const resources = {
       { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
     ],
   },
-  calendarEvents: {
-    table: "calendar_events",
-    title: "Race Calendar",
-    singular: "Calendar Entry",
-    orderBy: "event_date",
-    listColumns: ["title", "event_date", "city", "published"],
+  calendarCategories: {
+    table: "calendar_categories",
+    title: "Calendar — Activity Types",
+    singular: "Activity Type",
+    orderBy: "sort_order",
+    listColumns: ["name", "detail_label", "color", "sort_order", "published"],
     fields: [
-      { name: "title", label: "Title", type: "text", required: true },
-      { name: "event_date", label: "Date", type: "date", required: true },
-      { name: "category", label: "Category", type: "select", options: ["Cycling", "Running", "MTB", "Triathlon", "Community", "Adventure"] },
-      { name: "city", label: "City", type: "text", placeholder: "e.g. Delhi" },
-      { name: "difficulty", label: "Difficulty", type: "select", options: ["Beginner", "Intermediate", "Advanced"] },
-      { name: "event_slug", label: "Linked Event (optional)", type: "text", placeholder: "e.g. endurance-league-2", hint: "If this matches an Event's URL slug exactly, the calendar's Register button links straight to that event's page instead of the contact form. Note: if that Event already has its own Calendar Date set (in Admin → Events), it already shows on the calendar automatically — you don't need a separate entry here for it too." },
-      { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Brick", hint: "Each activity type is a filter pill above the calendar, a pill under the Weekly Rhythm panel and a floating tag in the page's hero (the first three)." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Activities are filed under this code — leave it as it is." },
+      { name: "detail_label", label: "Name in the Detail Window", type: "text", placeholder: "e.g. Brick Session", hint: "Optional. Shown at the top of an activity's detail window. If empty, the name is used." },
+      { name: "color", label: "Colour", type: "color", default: "#35246f", hint: "The colour of this type's activities everywhere on the Calendar page." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order of the filter pills, left to right." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  calendarActivities: {
+    table: "calendar_activities",
+    title: "Calendar — Activities",
+    singular: "Activity",
+    orderBy: "sort_order",
+    listColumns: ["title", "schedule_type", "weekday", "activity_date", "category_slug", "published"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, placeholder: "e.g. RTG Brick & Burn" },
+      { name: "category_slug", label: "Activity Type", type: "relation", table: "calendar_categories", valueColumn: "slug", labelColumn: "name", hint: "Decides its colour and which filter it sits under. Add or rename types in Calendar — Activity Types." },
+      {
+        name: "schedule_type",
+        label: "When does it happen?",
+        type: "select",
+        required: true,
+        default: "weekly",
+        options: [
+          { value: "weekly", label: "Every week, on the same day" },
+          { value: "once", label: "Once, on one date" },
+          { value: "flexible", label: "No fixed day yet" },
+        ],
+        hint: "\"Every week\" puts it on that weekday of every month. \"Once\" puts it on one date. \"No fixed day yet\" keeps it off the day grid — it is only listed in the Weekly Rhythm panel.",
+      },
+      { name: "weekday", label: "Day of the Week", type: "select", options: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], required: true, showWhen: { field: "schedule_type", in: ["weekly"] } },
+      { name: "activity_date", label: "Date", type: "date", required: true, showWhen: { field: "schedule_type", in: ["once"] } },
+      { name: "when_text", label: "Shown Instead of a Day", type: "text", placeholder: "e.g. Weekend", showWhen: { field: "schedule_type", in: ["flexible"] } },
+      { name: "time_text", label: "Time", type: "text", placeholder: "e.g. 5:00 – 6:30 AM", hint: "Optional. If it starts with a clock time (5:00 AM), \"Add to Calendar\" saves it at that time; otherwise as an all-day entry." },
+      { name: "city", label: "City / Region", type: "text", placeholder: "e.g. Delhi NCR" },
+      { name: "location", label: "Location", type: "text", placeholder: "e.g. Nehru Park" },
+      { name: "format", label: "Format", type: "text", placeholder: "e.g. Ride + Run + Mobility" },
+      { name: "summary", label: "Summary", type: "textarea", placeholder: "One or two sentences about the activity.", hint: "The paragraph in its detail window." },
+      { name: "organiser", label: "Hosted By", type: "text", placeholder: "e.g. RTG Delhi", hint: "Optional — the group or community running it." },
+      { name: "status_label", label: "Status", type: "text", placeholder: "e.g. Recurring Community Session, Registration Open" },
+      { name: "note", label: "Note", type: "textarea", placeholder: "e.g. Helmet mandatory. Reporting 15 minutes before the start.", hint: "Optional. Shown in a highlighted box at the bottom of the detail window." },
+      { name: "link_url", label: "Button Link", type: "text", placeholder: "e.g. /events/rtg-mtb-challenge-2026", hint: "Optional. Adds a button to the detail window — a page on this site (starts with /) or a full web address (https://…)." },
+      { name: "link_label", label: "Button Label", type: "text", placeholder: "e.g. Register", hint: "Optional. The default label is set in Site Content → Calendar." },
+      { name: "show_in_rhythm", label: "Also list in the \"Weekly Rhythm\" panel", type: "boolean", default: false },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order within a day, and in the Weekly Rhythm panel." },
       { name: "published", label: "Published", type: "boolean", default: true },
     ],
   },

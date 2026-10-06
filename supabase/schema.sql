@@ -260,15 +260,6 @@ alter table events add constraint events_status_check check (event_status in ('F
 -- warm | mint | future. Optional.
 alter table events add column if not exists tone text;
 
--- Optional real date, separate from the free-text event_date display field
--- above ("June 2027", "TBA", "Ongoing" — not parseable). Set this and the
--- event automatically shows up on the Race Calendar on that exact day, no
--- separate calendar_events row needed — see RaceCalendar.jsx and
--- useEvents() in publicData.js. Leave blank and nothing changes.
-alter table events add column if not exists calendar_date date;
-
-create index if not exists events_calendar_date_idx on events (calendar_date) where calendar_date is not null;
-
 -- Prize Pool moved from free text (e.g. "Prize Pool Worth ₹5 Lakhs") to a plain
 -- number so the public site can format it as currency consistently. Strips any
 -- non-numeric characters (₹, commas, "Lakhs" text, stray spaces) before casting
@@ -395,24 +386,6 @@ create table if not exists site_settings (
   value text,
   label text,
   updated_at timestamptz not null default now()
-);
-
--- Real, admin-manageable calendar of races/rides — replaces the old
--- hardcoded content.js list so "Register" can deep-link to a real event
--- when one exists, and so a real `date` column (not free text like the
--- `events` table's event_date) can drive genuine "is this today" checks
--- for the login popup's Live Events section.
-create table if not exists calendar_events (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  event_date date not null,
-  category text,
-  city text,
-  difficulty text,
-  event_slug text references events(slug) on delete set null,
-  sort_order int not null default 0,
-  published boolean not null default true,
-  created_at timestamptz not null default now()
 );
 
 -- Real, admin-manageable weekly session schedule — replaces the old
@@ -635,8 +608,72 @@ create table if not exists merch_reviews (
 -- Event-specific photos/videos: lets "View Event Gallery" on an event's
 -- detail page show only that event's media instead of the whole gallery.
 -- A slug reference (not a uuid FK) so admins can type it directly in the
--- Gallery upload form, same pattern as calendar_events.event_slug above.
+-- Gallery upload form.
 alter table gallery_items add column if not exists event_slug text references events(slug) on delete set null;
+
+-- ============================================================================
+-- Calendar page (/calendar) — two tables of its own, each with an admin
+-- screen. Its headings and labels live in site_settings under
+-- "text.calendar.<field>" (Admin -> Site Content -> Calendar). Starter rows,
+-- and the one-time copy of the old calendar into these tables, are in
+-- supabase/migrations/010_calendar.sql.
+-- ============================================================================
+
+-- The activity types (Admin -> Calendar — Activity Types): each is a filter
+-- pill, a legend pill, a hero tag and the colour of its activities.
+create table if not exists calendar_categories (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  detail_label text,
+  color text not null default '#35246f',
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Everything on the calendar (Admin -> Calendar — Activities). A row is
+-- 'weekly' (repeats on `weekday`), 'once' (happens on `activity_date`) or
+-- 'flexible' (no fixed day — "Weekly Rhythm" panel only, shows `when_text`).
+create table if not exists calendar_activities (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  category_slug text references calendar_categories(slug) on update cascade on delete set null,
+  schedule_type text not null default 'weekly' check (schedule_type in ('weekly', 'once', 'flexible')),
+  weekday text check (weekday in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')),
+  activity_date date,
+  when_text text,
+  time_text text,
+  city text,
+  location text,
+  format text,
+  summary text,
+  organiser text,
+  status_label text,
+  note text,
+  link_label text,
+  link_url text,
+  show_in_rhythm boolean not null default false,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists calendar_activities_date_idx on calendar_activities (activity_date) where activity_date is not null;
+
+-- These two tables replaced the old calendar_events table and the
+-- events.calendar_date column. Migration 010 copies their rows across
+-- before dropping them, so they're only dropped here once that copy has
+-- happened (the new table has rows) — re-running this file on a database
+-- that hasn't had migration 010 yet never loses calendar data.
+do $$
+begin
+  if exists (select 1 from calendar_activities) then
+    drop table if exists calendar_events;
+    drop index if exists events_calendar_date_idx;
+    alter table events drop column if exists calendar_date;
+  end if;
+end $$;
 
 -- Same RLS pattern on every content table: public can read, only admins
 -- (rows in admin_profiles) can write.
@@ -645,7 +682,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
   loop
     execute format('alter table %I enable row level security', t);
 

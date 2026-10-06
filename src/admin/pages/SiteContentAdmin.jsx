@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy } from "../../data/content";
 import {
   HOME_EVENTS_FIELDS,
   HOME_MERCH_FIELDS,
   EVENTS_PAGE_FIELDS,
   eventsPageKey,
+  CALENDAR_PAGE_FIELDS,
+  calendarPageKey,
   JOIN_FIELDS,
   FOOTER_FIELDS,
   joinKey,
@@ -109,6 +111,15 @@ const HERO_GROUPS = [
   }),
 ];
 
+// Calendar page — one card per part of the page, from the field list in
+// lib/publicData.js.
+const CALENDAR_GROUP_HEADINGS = {
+  hero: "Calendar page — hero",
+  intro: "Calendar page — Weekly Rhythm panel & intro",
+  grid: "Calendar page — month calendar",
+  modal: "Calendar page — activity detail window",
+};
+
 const CUSTOM_GROUPS = {
   Home: [
     ...HERO_GROUPS,
@@ -184,6 +195,17 @@ const CUSTOM_GROUPS = {
       fields: EVENTS_PAGE_FIELDS.filter((f) => !f.label.startsWith("Hero")).map((f) => ({ key: eventsPageKey(f.field), label: f.label, fallback: eventsPageCopy[f.field], type: f.type })),
     },
   ],
+  // What's on the calendar is two admin screens of its own (Calendar —
+  // Activities / Activity Types).
+  Calendar: Object.entries(CALENDAR_GROUP_HEADINGS).map(([group, heading]) => ({
+    heading,
+    fields: CALENDAR_PAGE_FIELDS.filter((f) => f.group === group).map((f) => ({
+      key: calendarPageKey(f.field),
+      label: f.label,
+      fallback: calendarPageCopy[f.field],
+      type: f.type,
+    })),
+  })),
   // Shown at the bottom of every page. The footer's link columns are their
   // own admin screen (Footer Links).
   Footer: [

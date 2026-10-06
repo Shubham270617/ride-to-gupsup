@@ -378,6 +378,52 @@ export const eventsPageCopy = {
   emptyText: "No events yet — new ones are on the way.",
 };
 
+// Calendar page (/calendar) wording. What's on the calendar is the rows of
+// `calendar_activities` and `calendar_categories` (Admin -> Calendar —
+// Activities / Activity Types); this is every heading, label and paragraph
+// around them, editable in Admin -> Site Content -> Calendar under
+// "text.calendar.<field>".
+export const calendarPageCopy = {
+  heroKicker: "Shared Calendar",
+  heroTitle: "One Calendar.",
+  heroTitleAccent: "Every Community.",
+  heroText: "A single place to track rides, runs, training sessions and community events — from RTG and the wider groups we move with.",
+  heroTags: "Rides, Runs, Training, Group Events",
+  boardLabel: "Next 4 Weeks",
+  boardBadge: "Live Schedule",
+  cardOneLabel: "Connected Groups",
+  cardOneText: "RTG + Community Network",
+  cardTwoLabel: "This Week",
+  cardTwoText: "Plan • Join • Move",
+  scrollLabel: "Explore Full Calendar",
+  rhythmKicker: "Weekly Rhythm",
+  rhythmTitle: "Regular Sessions",
+  rhythmText: "A quick view of the recurring training rhythm. As more groups join the shared calendar, their regular sessions can live here too.",
+  rhythmViewLabel: "View",
+  rhythmEmptyText: "Regular sessions will appear here soon.",
+  introKicker: "Month at a Glance",
+  introTitle: "What's Happening.",
+  introTitleAccent: "When.",
+  introText: "Explore rides, runs, training sessions and community events in one shared view. Click any activity inside the calendar to open its details without leaving the page.",
+  introPoints: "Explore the Month, Filter by Activity, Click for Details",
+  allLabel: "All",
+  todayLabel: "Today",
+  prevLabel: "Previous month",
+  nextLabel: "Next month",
+  emptyText: "Nothing on the calendar this month yet — check back soon.",
+  dayEmptyText: "Nothing scheduled on this day.",
+  modalKicker: "Calendar Detail",
+  formatLabel: "Format",
+  locationLabel: "Location",
+  timeLabel: "Time",
+  organiserLabel: "Hosted By",
+  statusLabel: "Status",
+  noteLabel: "Good to Know",
+  linkLabel: "View Details",
+  addLabel: "Add to Calendar",
+  closeLabel: "Close details",
+};
+
 // "Join the Movement" band above the footer, on every page. Fallback
 // defaults — editable in Admin -> Site Content -> Footer under
 // "text.join.<field>".
@@ -421,7 +467,7 @@ export const footerLinks = [
   { column: "Community", columnOrder: 1, label: "Volunteer", to: "/community" },
   { column: "Get Involved", columnOrder: 2, label: "Events", to: "/events" },
   { column: "Get Involved", columnOrder: 2, label: "Challenges", to: "/challenges" },
-  { column: "Get Involved", columnOrder: 2, label: "Race Calendar", to: "/race-calendar" },
+  { column: "Get Involved", columnOrder: 2, label: "Calendar", to: "/calendar" },
   { column: "Get Involved", columnOrder: 2, label: "Race Results", to: "/race-results" },
   { column: "Get Involved", columnOrder: 2, label: "Leaderboard", to: "/leaderboard" },
   { column: "Get Involved", columnOrder: 2, label: "Sponsor With RTG", to: "/sponsors" },
@@ -550,33 +596,6 @@ export const challenges = [
   { title: "Run Streaks", period: "Ongoing", desc: "One run a day, every day — build the habit." },
   { title: "Virtual Competitions", period: "Seasonal", desc: "Compete against RTG members across India, wherever you are." },
 ];
-
-export const calendarCategories = [
-  { key: "cycling", label: "Cycling Events", color: "#f76b1c" },
-  { key: "running", label: "Running Events", color: "#8354d1" },
-  { key: "mtb", label: "MTB Events", color: "#ffb073" },
-  { key: "triathlon", label: "Triathlons", color: "#ac8ce5" },
-  { key: "community", label: "Community Rides", color: "#5b2ba8" },
-  { key: "adventure", label: "Adventure Tours", color: "#d94f0e" },
-  // Not a real admin-set category — RaceCalendar.jsx tags every projected
-  // weekly-session occurrence with this key so it gets its own filter chip
-  // and color, distinct from one-off dated events.
-  { key: "weekly", label: "Weekly Rides", color: "#22c55e" },
-];
-
-export const calendarEvents = [
-  { date: "2027-01-15", title: "Resolution Challenge Kickoff", cat: "running", city: "Delhi", difficulty: "Beginner" },
-  { date: "2027-02-08", title: "Chandigarh Community Ride", cat: "community", city: "Chandigarh", difficulty: "Beginner" },
-  { date: "2027-03-22", title: "Dehradun Hill Climb (MTB)", cat: "mtb", city: "Dehradun", difficulty: "Advanced" },
-  { date: "2027-04-12", title: "Jaipur Sprint Triathlon", cat: "triathlon", city: "Jaipur", difficulty: "Intermediate" },
-  { date: "2027-05-05", title: "Shimla Adventure Tour", cat: "adventure", city: "Shimla", difficulty: "Advanced" },
-  { date: "2027-06-06", title: "Endurance League Vol. 2 Opens", cat: "cycling", city: "Delhi", difficulty: "Intermediate" },
-  { date: "2027-07-19", title: "Pune Monsoon Ride", cat: "cycling", city: "Pune", difficulty: "Beginner" },
-  { date: "2027-09-14", title: "Mumbai Coastal Run", cat: "running", city: "Mumbai", difficulty: "Intermediate" },
-];
-
-export const calendarCities = ["Delhi", "Chandigarh", "Dehradun", "Jaipur", "Shimla", "Pune", "Mumbai"];
-export const calendarDifficulties = ["Beginner", "Intermediate", "Advanced"];
 
 export const blogPosts = [
   { id: "cycling-tips-beginners", title: "5 Cycling Tips Every Beginner Should Know", category: "Cycling Tips", imgKey: "blogCycling", excerpt: "From bike fit to pacing — start your cycling journey the right way." },
