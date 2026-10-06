@@ -1,679 +1,177 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MapPin, Mail, Phone } from "lucide-react";
-
 import Reveal from "../ui/Reveal";
-import Button from "../ui/Button";
-
-import { useSiteImages, useSiteSettings, pickText } from "../../lib/publicData";
+import { useSiteImages, useSiteSettings, buildJoinCopy, buildFooterCopy, useFooterColumns } from "../../lib/publicData";
 import useIsMobile from "../../hooks/useIsMobile";
-import { brand } from "../../data/content";
+import { InstagramIcon, FacebookIcon, YoutubeIcon, StravaIcon } from "../ui/SocialIcons";
 
-import {
-  InstagramIcon,
-  FacebookIcon,
-  YoutubeIcon,
-  StravaIcon,
-} from "../ui/SocialIcons";
-
-/* =========================================================
-   SOCIAL LINKS
-   ========================================================= */
-
-const socials = [
-  {
-    platform: "instagram",
-    icon: InstagramIcon,
-    ...brand.social.instagram,
-  },
-  {
-    platform: "facebook",
-    icon: FacebookIcon,
-    ...brand.social.facebook,
-  },
-  {
-    platform: "youtube",
-    icon: YoutubeIcon,
-    ...brand.social.youtube,
-  },
-  {
-    platform: "strava",
-    icon: StravaIcon,
-    ...brand.social.strava,
-  },
+// Which icon goes with which social link field (see FOOTER_FIELDS in
+// lib/publicData.js). A platform whose link is left empty isn't shown.
+const SOCIALS = [
+  { field: "instagramUrl", name: "Instagram", icon: InstagramIcon },
+  { field: "facebookUrl", name: "Facebook", icon: FacebookIcon },
+  { field: "youtubeUrl", name: "YouTube", icon: YoutubeIcon },
+  { field: "stravaUrl", name: "Strava", icon: StravaIcon },
 ];
 
-/* =========================================================
-   CONTACT
-   ========================================================= */
+const CTA_BUTTON =
+  "inline-flex items-center justify-center min-h-[52px] px-[27px] rounded-full text-[10.5px] font-bold tracking-[0.08em] uppercase text-white transition-all duration-300 hover:-translate-y-0.5";
+const FOOTER_LINK = "text-[11.5px] leading-[1.38] text-white/75 transition-colors hover:text-white";
 
-const CONTACT_CITY = "Delhi";
+// A link typed in the admin: a path on this site ("/events") stays in the
+// app; anything else (https://…, mailto:…) opens as a normal link.
+function SmartLink({ to, className, children }) {
+  if (!to) return <span className={className}>{children}</span>;
+  if (to.startsWith("/")) {
+    return (
+      <Link to={to} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={to} target="_blank" rel="noopener noreferrer" className={className}>
+      {children}
+    </a>
+  );
+}
 
-/* =========================================================
-   FOOTER COLUMNS
-   ========================================================= */
-
-const cols = [
-  {
-    title: "Community",
-    links: [
-      {
-        to: "/about",
-        label: "About RTG",
-      },
-      {
-        to: "/community",
-        label: "Our Community",
-      },
-      {
-        to: "/weekly-rides",
-        label: "Weekly Rides",
-      },
-      {
-        to: "/gallery",
-        label: "Gallery",
-      },
-      {
-        to: "/community",
-        label: "Volunteer",
-      },
-    ],
-  },
-
-  {
-    title: "Get Involved",
-    links: [
-      {
-        to: "/events",
-        label: "Events",
-      },
-      {
-        to: "/challenges",
-        label: "Challenges",
-      },
-      {
-        to: "/race-calendar",
-        label: "Race Calendar",
-      },
-      {
-        to: "/race-results",
-        label: "Race Results",
-      },
-      {
-        to: "/leaderboard",
-        label: "Leaderboard",
-      },
-      {
-        to: "/sponsors",
-        label: "Sponsor With RTG",
-      },
-      {
-        to: "/contact",
-        label: "Become Chapter Captain",
-      },
-    ],
-  },
-
-  {
-    title: "More",
-    links: [
-      {
-        to: "/merchandise",
-        label: "Store",
-      },
-      {
-        to: "/merchandise",
-        label: "Kit",
-      },
-      {
-        to: "/blog",
-        label: "Resources",
-      },
-      {
-        to: "/safety",
-        label: "Safety",
-      },
-      {
-        to: "/faq",
-        label: "FAQ",
-      },
-      {
-        to: "/contact",
-        label: "Contact",
-      },
-      {
-        to: "/contact",
-        label: "Media",
-      },
-    ],
-  },
-
-  {
-    title: "Legal",
-    links: [
-      {
-        to: "/community-guidelines",
-        label: "Community Guidelines",
-      },
-      {
-        to: "/privacy",
-        label: "Privacy Policy",
-      },
-      {
-        to: "/terms",
-        label: "Terms",
-      },
-    ],
-  },
-];
-
-/* =========================================================
-   JOIN CTA + FOOTER
-   ========================================================= */
-
-export default function JoinCTA({
-  primaryLabel = "Join Community",
-  primaryTo = "/community",
-  onPrimaryClick,
-
-  secondaryLabel = "Explore Events",
-  secondaryTo = "/events",
-}) {
+// "Join the Movement" + the site footer, as one continuous photo-backed
+// band at the bottom of every page (rendered once, in Layout). The photo is
+// pinned to the viewport on desktop (`background-attachment: fixed`) while
+// the content scrolls over it; phones fall back to a normal background,
+// where fixed ones misbehave.
+//
+// `onPrimaryClick`, when given, replaces the first button's link with an
+// action (the Community page uses it to open the sign-up panel).
+export default function JoinCTA({ onPrimaryClick }) {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const isMobile = useIsMobile();
-
-  const t = (key, fallback) => {
-    return pickText(settings, key, fallback);
-  };
+  const join = useMemo(() => buildJoinCopy(settings), [settings]);
+  const footer = useMemo(() => buildFooterCopy(settings), [settings]);
+  const columns = useFooterColumns();
+  const socials = SOCIALS.filter((s) => footer[s.field]);
 
   return (
-    <section
-      className="
-        theme-night
-        relative
-        isolate
-        overflow-hidden
-        bg-rtg-purple-950
-      "
-    >
-      {/* =====================================================
-          CONTINUOUS BACKGROUND IMAGE
-
-          IMPORTANT:
-          There is ONLY ONE background image for both:
-          - Join CTA
-          - Footer
-
-          `background-attachment: fixed` (desktop) — same technique as the
-          Merchandise section and the reference site's own dark photo
-          sections. The image stays pinned to the viewport while the CTA +
-          Footer content scrolls over it, reading as "floating" rather than
-          scrolling in lockstep. This is a pure CSS technique, not the
-          useScroll/useTransform/style={{y}} approach removed earlier (that
-          caused real glitches) — background-attachment has no JS scroll
-          math to get wrong. Falls back to normal `scroll` attachment on
-          mobile, where fixed backgrounds are broken/janky.
-
-          No wrapping motion.div/scale animation here on purpose — a
-          transformed ancestor would create a new containing block and
-          silently break "fixed" (it'd pin to that ancestor instead of the
-          viewport), and the fixed-attachment itself is already the entrance
-          effect — nothing extra needed on top of it.
-          ===================================================== */}
-
+    <section id="join-rtg" className="theme-night relative isolate overflow-hidden bg-[#21143c]">
       <div
         aria-hidden="true"
-        className="absolute inset-0 z-0 pointer-events-none"
+        className="absolute inset-0 -z-20"
         style={{
           backgroundImage: `url(${images.homeCTA})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: isMobile ? "scroll" : "fixed",
         }}
-      >
-        {/* =================================================
-            MAIN DARK OVERLAY
+      />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(22,13,40,0.67)_0%,rgba(20,11,38,0.69)_50%,rgba(18,10,34,0.71)_100%)]" />
 
-            This keeps the image visible but makes the
-            white text readable.
-            ================================================= */}
-
-        <div
-          className="
-            absolute
-            inset-0
-            bg-gradient-to-b
-            from-[rgba(27,17,48,0.82)]
-            via-[rgba(27,17,48,0.89)]
-            to-[rgba(27,17,48,0.97)]
-          "
-        />
-
-        {/* =================================================
-            EXTRA FOOTER DARKNESS
-
-            Bottom part is intentionally darker like the
-            reference screenshot.
-            ================================================= */}
-
-        <div
-          className="
-            absolute
-            left-0
-            right-0
-            bottom-0
-            h-[48%]
-            bg-[rgba(27,17,48,0.18)]
-          "
-        />
+      <div className="flex items-center justify-center min-h-[485px] px-6 pt-[82px] pb-16">
+        <Reveal className="flex flex-col items-center max-w-[980px] text-center">
+          <span className="mb-[15px] text-[10px] font-semibold leading-none tracking-[0.25em] uppercase text-[#ff7b2c]">{join.eyebrow}</span>
+          <h2 className="font-display text-[clamp(3.75rem,6.65vw,7.875rem)] leading-[0.88] text-white">
+            {join.title} <span className="text-gradient">{join.titleAccent}</span>
+          </h2>
+          <p className="mt-5 max-w-[760px] text-sm leading-[1.55] text-white/80">{join.subtitle}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3.5 mt-[30px]">
+            {onPrimaryClick ? (
+              <button
+                type="button"
+                onClick={onPrimaryClick}
+                className={`${CTA_BUTTON} btn-shine bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] shadow-[0_14px_28px_rgba(247,107,28,0.22)]`}
+              >
+                {join.primaryLabel}
+              </button>
+            ) : (
+              <SmartLink
+                to={join.primaryLink}
+                className={`${CTA_BUTTON} btn-shine bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] shadow-[0_14px_28px_rgba(247,107,28,0.22)]`}
+              >
+                {join.primaryLabel}
+              </SmartLink>
+            )}
+            <SmartLink to={join.secondaryLink} className={`${CTA_BUTTON} border border-white/35 hover:bg-white/10`}>
+              {join.secondaryLabel}
+            </SmartLink>
+          </div>
+        </Reveal>
       </div>
 
-      {/* =====================================================
-          CONTENT
-          ===================================================== */}
-
-      <div className="relative z-10">
-        {/* ===================================================
-            JOIN CTA
-            =================================================== */}
-
+      <footer className="relative px-6 md:px-10 xl:px-[76px] pt-7 pb-[18px]">
         <div
-          className="
-            min-h-[620px]
-            md:min-h-[700px]
-            flex
-            items-center
-            justify-center
-            px-6
-            md:px-10
-            py-28
-            md:py-40
-          "
+          className="grid gap-x-12 gap-y-10 grid-cols-2 md:grid-cols-3 lg:[grid-template-columns:var(--footer-columns)]"
+          style={{ "--footer-columns": `minmax(260px, 1.52fr) repeat(${columns.length}, minmax(0, 1fr))` }}
         >
-          <div
-            className="
-              w-full
-              max-w-4xl
-              mx-auto
-              text-center
-            "
-          >
-            <Reveal>
-              {/* Small heading */}
+          <div className="col-span-2 md:col-span-3 lg:col-span-1 grid sm:grid-cols-[112px_minmax(0,1fr)] gap-x-3.5 gap-y-4 max-w-[430px]">
+            <img src={images.logo} alt={footer.logoAlt} className="w-[108px] h-auto opacity-95" />
+            <div>
+              <p className="text-[11.5px] leading-[1.52] text-white/75">{footer.description}</p>
 
-              <span
-                className="
-                  inline-block
-                  text-rtg-orange-400
-                  font-semibold
-                  tracking-[0.2em]
-                  uppercase
-                  text-xs
-                  md:text-sm
-                  mb-5
-                "
-              >
-                Your Next Chapter Starts Here
-              </span>
-
-              {/* Main heading */}
-
-              <h2
-                className="
-                  font-display
-                  text-5xl
-                  md:text-8xl
-                  leading-[0.92]
-                  mb-6
-                  text-rtg-white
-                "
-              >
-                Join the{" "}
-                <span className="text-gradient">
-                  Movement
-                </span>
-              </h2>
-
-              {/* Description */}
-
-              <p
-                className="
-                  text-rtg-mist
-                  text-base
-                  md:text-xl
-                  max-w-xl
-                  mx-auto
-                  mb-10
-                "
-              >
-                500+ athletes across India are already
-                riding, running, and growing together.
-                Your seat at the chai stop is waiting.
-              </p>
-
-              {/* Buttons */}
-
-              <div
-                className="
-                  flex
-                  flex-col
-                  sm:flex-row
-                  items-center
-                  justify-center
-                  gap-4
-                "
-              >
-                {/* Primary Button */}
-
-                {onPrimaryClick ? (
-                  <Button
-                    onClick={onPrimaryClick}
-                    size="lg"
-                  >
-                    {primaryLabel}
-                  </Button>
-                ) : (
-                  <Button
-                    to={primaryTo}
-                    size="lg"
-                  >
-                    {primaryLabel}
-                  </Button>
+              <div className="grid gap-1.5 mt-8">
+                <h4 className="mb-1 text-[10px] font-bold tracking-[0.11em] uppercase text-[#ff7b2c]">{footer.contactHeading}</h4>
+                {footer.email && (
+                  <a href={`mailto:${footer.email}`} className="flex items-center gap-[7px] text-[10.5px] leading-[1.3] text-white/75 hover:text-white">
+                    <Mail size={12} className="shrink-0" />
+                    {footer.email}
+                  </a>
                 )}
-
-                {/* Secondary Button */}
-
-                <Button
-                  to={secondaryTo}
-                  variant="outline"
-                  size="lg"
-                >
-                  {secondaryLabel}
-                </Button>
+                {footer.phone && (
+                  <a
+                    href={`tel:${footer.phone.replace(/\s+/g, "")}`}
+                    className="flex items-center gap-[7px] text-[10.5px] leading-[1.3] text-white/75 hover:text-white"
+                  >
+                    <Phone size={12} className="shrink-0" />
+                    {footer.phone}
+                  </a>
+                )}
+                {footer.location && (
+                  <span className="flex items-center gap-[7px] text-[10.5px] leading-[1.3] text-white/75">
+                    <MapPin size={12} className="shrink-0" />
+                    {footer.location}
+                  </span>
+                )}
               </div>
-            </Reveal>
+
+              {socials.length > 0 && (
+                <div className="flex flex-wrap items-center gap-[7px] mt-3">
+                  {socials.map(({ field, name, icon: Icon }) => (
+                    <a
+                      key={field}
+                      href={footer[field]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={name}
+                      className="w-[30px] h-[30px] rounded-full grid place-items-center border border-white/12 bg-white/7 text-white transition-colors hover:text-rtg-orange-400 hover:border-rtg-orange-400/60"
+                    >
+                      <Icon size={13} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+
+          {columns.map((column) => (
+            <div key={column.title} className="flex flex-col items-start">
+              <h4 className="mb-3 text-[10.5px] font-bold leading-[1.2] tracking-[0.1em] uppercase text-[#ff7b2c]">{column.title}</h4>
+              {column.links.map((link) => (
+                <SmartLink key={`${link.label}-${link.to}`} to={link.to} className={`${FOOTER_LINK} mb-2`}>
+                  {link.label}
+                </SmartLink>
+              ))}
+            </div>
+          ))}
         </div>
 
-        {/* ===================================================
-            FOOTER
-            =================================================== */}
-
-        <footer
-          className="
-            relative
-            px-6
-            md:px-10
-            pt-14
-            pb-6
-          "
-        >
-          <div className="max-w-7xl mx-auto">
-            {/* ===============================================
-                FOOTER MAIN GRID
-                =============================================== */}
-
-            <div
-              className="
-                grid
-                grid-cols-1
-                sm:grid-cols-2
-                md:grid-cols-3
-                xl:grid-cols-6
-                gap-10
-                mb-10
-              "
-            >
-              {/* =============================================
-                  BRAND / DESCRIPTION
-                  ============================================= */}
-
-              <div
-                className="
-                  sm:col-span-2
-                  xl:col-span-2
-                "
-              >
-                {/* Logo */}
-
-                <img
-                  src={images.logo}
-                  alt={brand.name}
-                  className="
-                    h-9
-                    w-auto
-                    mb-3
-                  "
-                />
-
-                {/* Description */}
-
-                <p
-                  className="
-                    text-rtg-mist
-                    text-sm
-                    leading-relaxed
-                    max-w-xs
-                    mb-4
-                  "
-                >
-                  {t(
-                    "text.footer.description",
-                    "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures."
-                  )}
-                </p>
-
-                {/* Social icons */}
-
-                <div className="flex gap-2.5">
-                  {socials.map((social) => {
-                    const Icon = social.icon;
-
-                    return (
-                      <a
-                        key={social.platform}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="
-                          w-9
-                          h-9
-                          rounded-full
-                          glass
-                          flex
-                          items-center
-                          justify-center
-                          text-rtg-white
-                          hover:text-rtg-orange-400
-                          hover:border-rtg-orange-400/60
-                          transition-colors
-                        "
-                        aria-label={social.handle}
-                      >
-                        <Icon size={16} />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* =============================================
-                  FOOTER LINK COLUMNS
-                  ============================================= */}
-
-              {cols.map((column) => (
-                <div key={column.title}>
-                  {/* Column title */}
-
-                  <h4
-                    className="
-                      font-display
-                      text-base
-                      tracking-wide
-                      mb-3
-                      text-rtg-orange-400
-                    "
-                  >
-                    {column.title}
-                  </h4>
-
-                  {/* Links */}
-
-                  <ul className="space-y-2">
-                    {column.links.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          to={link.to}
-                          className="
-                            text-sm
-                            text-rtg-mist
-                            hover:text-rtg-white
-                            transition-colors
-                          "
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-
-              {/* =============================================
-                  CONTACT
-                  ============================================= */}
-
-              <div>
-                <h4
-                  className="
-                    font-display
-                    text-base
-                    tracking-wide
-                    mb-3
-                    text-rtg-orange-400
-                  "
-                >
-                  Contact
-                </h4>
-
-                <ul
-                  className="
-                    space-y-2
-                    text-sm
-                    text-rtg-mist
-                  "
-                >
-                  {/* Email */}
-
-                  <li className="flex items-start gap-2">
-                    <Mail
-                      size={15}
-                      className="mt-0.5 shrink-0"
-                    />
-
-                    <span>
-                      {brand.email}
-                    </span>
-                  </li>
-
-                  {/* Phone */}
-
-                  <li className="flex items-start gap-2">
-                    <Phone
-                      size={15}
-                      className="mt-0.5 shrink-0"
-                    />
-
-                    <span>
-                      {brand.phone}
-                    </span>
-                  </li>
-
-                  {/* Location */}
-
-                  <li className="flex items-start gap-2">
-                    <MapPin
-                      size={15}
-                      className="mt-0.5 shrink-0"
-                    />
-
-                    <span>
-                      {CONTACT_CITY}
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* ===============================================
-                FOOTER BOTTOM
-                =============================================== */}
-
-            <div
-              className="
-                border-t
-                border-white/10
-                pt-4
-                flex
-                flex-col
-                md:flex-row
-                items-center
-                justify-between
-                gap-2
-                text-xs
-                text-rtg-mist
-              "
-            >
-              {/* Copyright */}
-
-              <p>
-                © {new Date().getFullYear()}{" "}
-                {t(
-                  "text.footer.copyright",
-                  "Ride Tea GupShup. All rights reserved."
-                )}
-              </p>
-
-              {/* Tagline */}
-
-              <p>
-                {t(
-                  "text.footer.tagline",
-                  "Built for athletes, by athletes."
-                )}
-              </p>
-            </div>
-          </div>
-        </footer>
-
-        {/* ===================================================
-            FADED LOGO WATERMARK
-
-            This is kept at the very bottom of the combined
-            section so it doesn't create a separate image box.
-            =================================================== */}
-
-        <img
-          src={images.logo}
-          alt=""
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            select-none
-            absolute
-            left-1/2
-            bottom-16
-            -translate-x-1/2
-            h-20
-            md:h-28
-            w-auto
-            max-w-[80%]
-            object-contain
-            opacity-[0.08]
-            mix-blend-screen
-          "
-        />
-      </div>
+        <div className="flex flex-col sm:flex-row justify-between gap-x-6 gap-y-1 mt-[18px] pt-[11px] border-t border-white/10 text-[9.5px] text-white/55">
+          <span>
+            © {new Date().getFullYear()} {footer.copyright}
+          </span>
+          <span>{footer.tagline}</span>
+        </div>
+      </footer>
     </section>
   );
 }

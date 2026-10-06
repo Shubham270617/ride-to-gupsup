@@ -111,6 +111,10 @@ export default function App() {
           <Route path="ride-faqs" element={<ResourceAdminPage resource={resources.rideFaqs} />} />
           <Route path="ride-safety" element={<ResourceAdminPage resource={resources.rideSafety} />} />
           <Route path="what-to-bring" element={<ResourceAdminPage resource={resources.whatToBring} />} />
+          <Route path="footer-links" element={<ResourceAdminPage resource={resources.footerLinks} />} />
+          <Route path="home-why" element={<ResourceAdminPage resource={resources.homeWhyReasons} />} />
+          <Route path="home-training" element={<ResourceAdminPage resource={resources.homeTrainingFormats} />} />
+          <Route path="home-ways" element={<ResourceAdminPage resource={resources.homeWays} />} />
           <Route path="general-safety" element={<ResourceAdminPage resource={resources.generalSafety} />} />
           <Route path="sponsor-tiers" element={<ResourceAdminPage resource={resources.sponsorTiers} />} />
           <Route path="sponsor-opportunities" element={<ResourceAdminPage resource={resources.sponsorOpportunities} />} />

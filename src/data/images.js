@@ -97,7 +97,7 @@ export const images = {
   homeAbout: rtg.community,
   homeWhyJoin: rtg.adventure,
   homeWeekly: rtg.cycling,
-  homeMerchPreview: placeholder,
+  homeMerchPreview: rtg.community, // washed-out photo behind Home's Merchandise Highlights
   homeCTA: rtg.adventure2,
 
   // ---- ABOUT ----

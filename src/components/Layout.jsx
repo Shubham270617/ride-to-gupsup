@@ -4,6 +4,7 @@ import JoinCTA from "./sections/JoinCTA";
 import ScrollToTop from "./ScrollToTop";
 import AiWidget from "./ai/AiWidget";
 import CartDrawer from "./CartDrawer";
+import SiteBackground from "./ui/SiteBackground";
 import { useAuthGate } from "../lib/AuthGateContext";
 
 // JoinCTA now contains the footer too (merged by request — one continuous
@@ -24,21 +25,15 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-rtg-ink bg-grain">
+      {/* Fixed behind everything. <main> is `relative` so all page content
+          — positioned or not — paints above it. */}
+      <SiteBackground />
       <ScrollToTop />
       <Navbar />
-      <main className="flex-1">
+      <main className="relative flex-1">
         <Outlet />
       </main>
-      {isCommunity ? (
-        <JoinCTA
-          primaryLabel="Join the Community"
-          onPrimaryClick={() => requestLogin("signup")}
-          secondaryLabel="Explore Upcoming Events"
-          secondaryTo="/race-calendar"
-        />
-      ) : (
-        <JoinCTA />
-      )}
+      <JoinCTA onPrimaryClick={isCommunity ? () => requestLogin("signup") : undefined} />
       <AiWidget />
       <CartDrawer />
     </div>

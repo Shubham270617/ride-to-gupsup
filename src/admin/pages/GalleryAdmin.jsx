@@ -16,6 +16,7 @@ export default function GalleryAdmin() {
   const [error, setError] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [eventSlug, setEventSlug] = useState("");
+  const [caption, setCaption] = useState("");
   const [page, setPage] = useState(1);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
@@ -45,6 +46,7 @@ export default function GalleryAdmin() {
         await insert({
           media_url: url,
           media_type: mediaType,
+          caption: caption.trim() || null,
           category,
           event_slug: eventSlug.trim() || null,
           sort_order: nextSort,
@@ -77,7 +79,7 @@ export default function GalleryAdmin() {
       <UploadProgressModal active={uploading} {...progressState} />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-3xl">Gallery</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -89,6 +91,14 @@ export default function GalleryAdmin() {
               </option>
             ))}
           </select>
+          <input
+            type="text"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="Label (optional)"
+            title="Shown on the photo on the homepage gallery, e.g. Community, Run, Ride. If empty, the category is shown instead."
+            className="w-40 rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
+          />
           <input
             type="text"
             value={eventSlug}
