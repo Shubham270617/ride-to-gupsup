@@ -349,6 +349,35 @@ export const homeVoicesCopy = {
   nextLabel: "Next community voice",
 };
 
+// Events page (/events) wording. The events themselves are the rows of the
+// `events` table (Admin -> Events); this is every heading, label and
+// paragraph around them, editable in Admin -> Site Content -> Events under
+// "text.events.<field>".
+export const eventsPageCopy = {
+  indexLabel: "Events",
+  indexYear: "2026—27",
+  eyebrow: "Show Up for Something Bigger",
+  titleLine1: "Don't Just",
+  titleLine2: "Mark the Date.",
+  titleLine3: "Feel the Event.",
+  intro: "Races, virtual challenges, trails and community formats — built for movement, energy and the moments people remember after the finish.",
+  signals: "Flagship Races, Pan-India Challenges, Community Experiences",
+  pulseLabel: "Event Pulse",
+  prevLabel: "Previous event",
+  nextLabel: "Next event",
+  sectionNumber: "01",
+  sectionLabel: "Discover",
+  kicker: "What's Next",
+  heading: "Find Your",
+  headingAccent: "Next Start Line.",
+  body: "Choose the kind of energy you want next. Flagship race, virtual challenge or a regular community format — every card below can become a full event experience when registration goes live.",
+  allLabel: "All",
+  viewLabel: "View Event",
+  boardHeading: "Browse the Board",
+  boardHint: "Click a card to bring it into the spotlight.",
+  emptyText: "No events yet — new ones are on the way.",
+};
+
 // "Join the Movement" band above the footer, on every page. Fallback
 // defaults — editable in Admin -> Site Content -> Footer under
 // "text.join.<field>".
