@@ -18,6 +18,21 @@ import {
   sponsorOpportunities as staticSponsorOpportunities,
   sizeGuide as staticSizeGuide,
   merchReviews as staticMerchReviews,
+  heroSlides as staticHeroSlides,
+  heroCopy as staticHeroCopy,
+  stats as staticStats,
+  whyJoin as staticWhyReasons,
+  homeWhyCopy as staticHomeWhyCopy,
+  homeWays as staticHomeWays,
+  homeWaysCopy as staticHomeWaysCopy,
+  homeTrainingFormats as staticTrainingFormats,
+  homeEventsCopy as staticHomeEventsCopy,
+  homeMerchCopy as staticHomeMerchCopy,
+  homeGalleryCopy as staticHomeGalleryCopy,
+  homeVoicesCopy as staticHomeVoicesCopy,
+  joinCopy as staticJoinCopy,
+  footerCopy as staticFooterCopy,
+  footerLinks as staticFooterLinks,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -79,6 +94,17 @@ const mapEventRow = (r) => ({
   gpxUrl: r.gpx_url,
   results: r.results_summary,
   previousEdition: r.previous_edition_summary,
+  // Optional extras for the Home "Upcoming Events" slide — the section
+  // derives sensible values from the fields above when these are empty.
+  home: {
+    titleAccent: r.home_title_accent,
+    pills: (r.home_pills || "").split(",").map((p) => p.trim()).filter(Boolean),
+    highlightLabel: r.highlight_label,
+    highlightTitle: r.highlight_title,
+    highlightText: r.highlight_text,
+    secondaryLabel: r.secondary_button_label,
+    secondaryLink: r.secondary_button_link,
+  },
 });
 
 // No placeholder fallback — only real, admin-added events should ever show
@@ -110,6 +136,7 @@ const mapProductRow = (r) => ({
   name: r.name,
   price: Number(r.price),
   tag: r.tag,
+  eyebrow: r.eyebrow,
   image: r.image_url,
   description: r.description,
   sizes: r.sizes || [],
@@ -262,12 +289,6 @@ const mapWeeklySessionRow = (r) => ({
   routeMapQuery: r.route_map_query,
   cost: r.cost,
   description: r.description,
-  image: r.image_url,
-  tags: parseTags(r.tags),
-  // { label, value } for steps ("Ride" / "60 min") so the same parser
-  // covers both steps and highlights — the two just render differently.
-  steps: parsePipeLines(r.steps),
-  highlights: parsePipeLines(r.highlights),
 });
 
 // Real, admin-manageable weekly session schedule for the Weekly Rides page
@@ -470,6 +491,312 @@ export function pickText(settings, key, fallback) {
   return settings[key] ?? fallback;
 }
 
+// Same as pickText, but a blank saved value also falls back — for fields
+// where "empty" is never what an admin means (a hero headline, a stat).
+function pickFilled(settings, key, fallback) {
+  const value = settings[key];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+// The Home hero's per-slide text, in the shape the admin edits it: one flat
+// string per field. The metric card's numbers are one "Value | Label" pair
+// per line, same convention as weekly_sessions.steps/highlights.
+// SiteContentAdmin builds its form from these two exports, so the admin's
+// placeholder text and the live site's fallback can't drift apart.
+export const HERO_SLIDE_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline — line 1", type: "text" },
+  { field: "accent", label: "Headline — line 2 (accent color)", type: "text" },
+  { field: "subtitle", label: "Paragraph", type: "textarea" },
+  { field: "cardKicker", label: "Floating card — small top line", type: "text" },
+  { field: "cardHeading", label: "Floating card — heading", type: "text" },
+  { field: "cardMetrics", label: "Floating card — numbers, one per line as \"Value | Label\" (e.g. 45 | KM)", type: "textarea" },
+];
+
+export const HERO_COPY_FIELDS = [
+  { field: "ctaLabel", label: "Button label", type: "text" },
+  { field: "ctaLink", label: "Button link (a page on this site, e.g. /community)", type: "text" },
+  { field: "scrollLabel", label: "Label above the slide dots", type: "text" },
+  { field: "presenceLabel", label: "Label before the states strip", type: "text" },
+  { field: "expandingLabel", label: "Last chip after the states strip", type: "text" },
+];
+
+export const heroSlideKey = (slide, field) => `text.home.hero.${slide.key}.${field}`;
+export const heroCopyKey = (field) => `text.home.hero.${field}`;
+
+export const heroSlideDefaults = (slide) => ({
+  eyebrow: slide.eyebrow,
+  title: slide.title,
+  accent: slide.accent,
+  subtitle: slide.subtitle,
+  cardKicker: slide.card.kicker,
+  cardHeading: slide.card.heading,
+  cardMetrics: slide.card.metrics.map((m) => `${m.value} | ${m.label}`).join("\n"),
+});
+
+// content.js heroSlides with every admin override from site_settings merged
+// in. Takes the settings map (rather than calling useSiteSettings itself)
+// so a page that already has it doesn't pay for a second round-trip.
+export function buildHeroSlides(settings) {
+  return staticHeroSlides.map((slide) => {
+    const defaults = heroSlideDefaults(slide);
+    const text = (field) => pickFilled(settings, heroSlideKey(slide, field), defaults[field]);
+    const metrics = parsePipeLines(text("cardMetrics")).map(({ label, value }) => ({ value: label, label: value }));
+    return {
+      ...slide,
+      eyebrow: text("eyebrow"),
+      title: text("title"),
+      accent: text("accent"),
+      subtitle: text("subtitle"),
+      card: {
+        kicker: text("cardKicker"),
+        heading: text("cardHeading"),
+        metrics: metrics.length ? metrics : slide.card.metrics,
+      },
+    };
+  });
+}
+
+export function buildHeroCopy(settings) {
+  const copy = {};
+  HERO_COPY_FIELDS.forEach(({ field }) => {
+    copy[field] = pickFilled(settings, heroCopyKey(field), staticHeroCopy[field]);
+  });
+  return copy;
+}
+
+// Home's "Why RTG" and "More Ways to Move Together" sections — the single
+// values around each card list (heading, paragraphs, button). Same shape as
+// the hero fields above: SiteContentAdmin builds its form from these.
+export const HOME_WHY_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "titleLine1", label: "Headline — line 1", type: "text" },
+  { field: "titleLine2", label: "Headline — line 2 (accent color)", type: "text" },
+  { field: "subtitle", label: "Paragraph", type: "textarea" },
+  { field: "ctaLabel", label: "Button label", type: "text" },
+  { field: "ctaLink", label: "Button link (a page on this site, e.g. /community)", type: "text" },
+];
+
+export const HOME_WAYS_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline", type: "text" },
+  { field: "titleAccent", label: "Headline — last line (accent color)", type: "text" },
+  { field: "description", label: "Paragraph", type: "textarea" },
+  { field: "descriptionExtra", label: "Second, smaller paragraph", type: "textarea" },
+];
+
+export const homeWhyKey = (field) => `text.home.why.${field}`;
+export const homeWaysKey = (field) => `text.home.ways.${field}`;
+
+const buildCopy = (settings, fields, keyOf, defaults) =>
+  Object.fromEntries(fields.map(({ field }) => [field, pickFilled(settings, keyOf(field), defaults[field])]));
+
+export const buildHomeWhyCopy = (settings) => buildCopy(settings, HOME_WHY_FIELDS, homeWhyKey, staticHomeWhyCopy);
+export const buildHomeWaysCopy = (settings) => buildCopy(settings, HOME_WAYS_FIELDS, homeWaysKey, staticHomeWaysCopy);
+
+// The "Why RTG" card stack (Admin -> Why RTG Cards).
+export function useWhyReasons() {
+  return useSupabaseList("home_why_reasons", {
+    staticFallback: staticWhyReasons,
+    mapRow: (r) => ({ id: r.id, icon: r.icon, pill: r.pill, title: r.title, desc: r.description }),
+  }).items;
+}
+
+// The "Ways to Move" photo cards (Admin -> Ways to Move Cards). Fallback
+// cards have an `imageKey` into the site images instead of an uploaded
+// `image` — the section resolves whichever is present.
+export function useHomeWays() {
+  return useSupabaseList("home_ways", {
+    staticFallback: staticHomeWays,
+    mapRow: (r) => ({ id: r.id, kicker: r.kicker, title: r.title, desc: r.description, image: r.image_url, link: r.link_url }),
+  }).items;
+}
+
+// Home's "Training Formats" showcase (Admin -> Home — Training Formats).
+// The table stores what the admin typed; the shapes the section draws are
+// parsed here. Fallback formats (data/content.js) use the same raw text, so
+// both go through one parser.
+const parseTrainingFormat = (f) => ({
+  id: f.id,
+  tabLabel: f.tabLabel,
+  kicker: f.kicker,
+  titleLine1: f.titleLine1,
+  titleLine2: f.titleLine2,
+  // "You | vs | You" -> ["You", "vs", "You"] (big, small, big)
+  tagline: (f.tagline || "").split("|").map((p) => p.trim()).filter(Boolean),
+  description: f.description,
+  pills: parseTags(f.pills),
+  note: f.note,
+  buttonLabel: f.buttonLabel,
+  link: f.link,
+  image: f.image,
+  imageKey: f.imageKey,
+  cardLabel: f.cardLabel,
+  cardTitle: f.cardTitle,
+  cardImage: f.cardImage,
+  cardStats: parseTags(f.cardStats),
+  cardSteps: parsePipeLines(f.cardSteps),
+  cardMeta: parsePipeLines(f.cardMeta),
+  panelRows: parsePipeLines(f.panelRows),
+});
+
+export function useTrainingFormats() {
+  return useSupabaseList("home_training_formats", {
+    staticFallback: staticTrainingFormats.map(parseTrainingFormat),
+    mapRow: (r) =>
+      parseTrainingFormat({
+        id: r.id,
+        tabLabel: r.tab_label,
+        kicker: r.kicker,
+        titleLine1: r.title_line1,
+        titleLine2: r.title_line2,
+        tagline: r.tagline,
+        description: r.description,
+        pills: r.pills,
+        note: r.note,
+        buttonLabel: r.button_label,
+        link: r.link_url,
+        image: r.image_url,
+        cardLabel: r.card_label,
+        cardTitle: r.card_title,
+        cardImage: r.card_image_url,
+        cardStats: r.card_stats,
+        cardSteps: r.card_steps,
+        cardMeta: r.card_meta,
+        panelRows: r.panel_rows,
+      }),
+  }).items;
+}
+
+// Home's "Upcoming Events" heading and button wording (the slides are the
+// featured events themselves — see mapEventRow's `home` fields).
+export const HOME_EVENTS_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline", type: "text" },
+  { field: "titleAccent", label: "Headline — accent-colored part", type: "text" },
+  { field: "subtitle", label: "Paragraph", type: "textarea" },
+  { field: "primaryLabel", label: "Slide button — opens the event's page", type: "text" },
+  { field: "secondaryLabel", label: "Slide second button — default label (an event can set its own)", type: "text" },
+  { field: "secondaryLink", label: "Slide second button — default link (e.g. /contact)", type: "text" },
+  { field: "allLabel", label: "Button under the slides — label", type: "text" },
+  { field: "allLink", label: "Button under the slides — link (e.g. /events)", type: "text" },
+  { field: "emptyText", label: "Message shown when there are no upcoming events", type: "textarea" },
+];
+export const homeEventsKey = (field) => `text.home.events.${field}`;
+export const buildHomeEventsCopy = (settings) => buildCopy(settings, HOME_EVENTS_FIELDS, homeEventsKey, staticHomeEventsCopy);
+
+// Home's "Merchandise Highlights" heading and button wording (the cards
+// are the store's products — Admin -> Merchandise).
+export const HOME_MERCH_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline", type: "text" },
+  { field: "titleAccent", label: "Headline — accent-colored part", type: "text" },
+  { field: "subtitle", label: "Paragraph", type: "textarea" },
+  { field: "addLabel", label: "Card button — product without sizes (adds it to the cart)", type: "text" },
+  { field: "chooseLabel", label: "Card button — product with sizes (opens its page to pick one)", type: "text" },
+  { field: "soldOutLabel", label: "Card button — product not in stock", type: "text" },
+  { field: "storeLabel", label: "Button under the cards — label", type: "text" },
+  { field: "storeLink", label: "Button under the cards — link (e.g. /merchandise)", type: "text" },
+];
+export const homeMerchKey = (field) => `text.home.merch.${field}`;
+export const buildHomeMerchCopy = (settings) => buildCopy(settings, HOME_MERCH_FIELDS, homeMerchKey, staticHomeMerchCopy);
+
+// Home's "Community Gallery" wording (the tiles are Admin -> Gallery).
+export const HOME_GALLERY_FIELDS = [
+  { field: "kicker", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "heading", label: "Headline", type: "text" },
+  { field: "headingAccent", label: "Headline — accent-colored part", type: "text" },
+  { field: "body", label: "Paragraph", type: "textarea" },
+  { field: "buttonLabel", label: "Button label", type: "text" },
+  { field: "buttonLink", label: "Button link (e.g. /gallery) — the photos link here too", type: "text" },
+  { field: "emptyText", label: "Message shown when the gallery has no photos yet", type: "text" },
+];
+export const homeGalleryKey = (field) => `text.home.gallery.${field}`;
+export const buildHomeGalleryCopy = (settings) => buildCopy(settings, HOME_GALLERY_FIELDS, homeGalleryKey, staticHomeGalleryCopy);
+
+// Home's "What People Say" heading (the slides are Admin -> Testimonials).
+export const HOME_VOICES_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline", type: "text" },
+  { field: "titleAccent", label: "Headline — accent-colored part", type: "text" },
+  { field: "prevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { field: "nextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+];
+export const homeVoicesKey = (field) => `text.home.voices.${field}`;
+export const buildHomeVoicesCopy = (settings) => buildCopy(settings, HOME_VOICES_FIELDS, homeVoicesKey, staticHomeVoicesCopy);
+
+// "Join the Movement" band + site footer (components/sections/JoinCTA.jsx,
+// shown on every page). SiteContentAdmin builds its Footer page from these.
+export const JOIN_FIELDS = [
+  { field: "eyebrow", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "title", label: "Headline", type: "text" },
+  { field: "titleAccent", label: "Headline — accent-colored part", type: "text" },
+  { field: "subtitle", label: "Paragraph", type: "textarea" },
+  { field: "primaryLabel", label: "First button — label", type: "text" },
+  { field: "primaryLink", label: "First button — link (e.g. /community)", type: "text" },
+  { field: "secondaryLabel", label: "Second button — label", type: "text" },
+  { field: "secondaryLink", label: "Second button — link (e.g. /events)", type: "text" },
+];
+export const joinKey = (field) => `text.join.${field}`;
+export const buildJoinCopy = (settings) => buildCopy(settings, JOIN_FIELDS, joinKey, staticJoinCopy);
+
+export const FOOTER_FIELDS = [
+  { field: "description", label: "Description (beside the logo)", type: "textarea" },
+  { field: "logoAlt", label: "Logo description for screen readers", type: "text" },
+  { field: "contactHeading", label: "Contact — heading", type: "text" },
+  { field: "email", label: "Contact — email", type: "text" },
+  { field: "phone", label: "Contact — phone", type: "text" },
+  { field: "location", label: "Contact — location", type: "text" },
+  { field: "instagramUrl", label: "Instagram link (leave the default to keep it, or replace it)", type: "text" },
+  { field: "facebookUrl", label: "Facebook link", type: "text" },
+  { field: "youtubeUrl", label: "YouTube link", type: "text" },
+  { field: "stravaUrl", label: "Strava link", type: "text" },
+  { field: "copyright", label: "Copyright line (after \"© {year}\")", type: "text" },
+  { field: "tagline", label: "Bottom-right tagline", type: "text" },
+];
+export const footerKey = (field) => `text.footer.${field}`;
+export const buildFooterCopy = (settings) => buildCopy(settings, FOOTER_FIELDS, footerKey, staticFooterCopy);
+
+// Footer link columns (Admin -> Footer Links): flat rows grouped into
+// columns by their column title, columns ordered by column_order, links
+// inside a column by sort_order.
+export function useFooterColumns() {
+  const links = useSupabaseList("footer_links", {
+    staticFallback: staticFooterLinks.map((l, i) => ({ ...l, order: i })),
+    mapRow: (r) => ({ column: r.column_title, columnOrder: r.column_order, label: r.label, to: r.link_url, order: r.sort_order }),
+  }).items;
+
+  const byTitle = new Map();
+  links.forEach((link) => {
+    if (!byTitle.has(link.column)) byTitle.set(link.column, { title: link.column, order: link.columnOrder, links: [] });
+    byTitle.get(link.column).links.push(link);
+  });
+  return [...byTitle.values()]
+    .sort((a, b) => a.order - b.order)
+    .map((column) => ({ ...column, links: [...column.links].sort((a, b) => a.order - b.order) }));
+}
+
+// The six headline numbers (Home hero, Home/Community proof band) with the
+// admin's values and labels merged in. Tolerates "2,50,000" as typed.
+export function buildStats(settings) {
+  return staticStats.map((s) => {
+    const raw = pickFilled(settings, `text.home.stat.${s.key}`, String(s.value));
+    return {
+      ...s,
+      label: pickFilled(settings, `text.home.stat.${s.key}Label`, s.label),
+      value: Number(raw.replace(/[,\s]/g, "")) || 0,
+    };
+  });
+}
+
+export function pickStates(settings) {
+  const parsed = pickText(settings, "text.home.statesList", "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parsed.length ? parsed : brand.states;
+}
+
 // The "Present Across India" city list — edited in one place (Site Content
 // admin, under Home) and shared by every page that shows it (Home, Sponsors,
 // Community), so they can't drift out of sync. Falls back to brand.cities
@@ -489,13 +816,7 @@ export function useCities() {
 // Sponsors' "X+ Indian cities" reach stat and shouldn't change just because
 // the presence chips switch from city names to state names.
 export function useStates() {
-  const settings = useSiteSettings();
-  const raw = pickText(settings, "text.home.statesList", "");
-  const parsed = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return parsed.length ? parsed : brand.states;
+  return pickStates(useSiteSettings());
 }
 
 // Every image on the site is defined in data/images.js — this merges in any

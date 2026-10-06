@@ -1,6 +1,5 @@
 import { MapPin } from "lucide-react";
-import { stats } from "../../data/content";
-import { useSiteSettings, pickText, useStates } from "../../lib/publicData";
+import { useSiteSettings, buildStats, pickStates } from "../../lib/publicData";
 import AnimatedCounter from "../ui/AnimatedCounter";
 import Section from "../ui/Section";
 import Reveal, { StaggerGroup, StaggerItem } from "../ui/Reveal";
@@ -10,23 +9,20 @@ import Reveal, { StaggerGroup, StaggerItem } from "../ui/Reveal";
 // stats (Site Content → Home → Stats & Presence) instead of drifting apart.
 export default function CommunityProof({ light = true, dark = false }) {
   const settings = useSiteSettings();
-  const t = (key, fallback) => pickText(settings, key, fallback);
-  const states = useStates();
+  const stats = buildStats(settings);
+  const states = pickStates(settings);
 
   return (
     <Section light={light} dark={dark}>
       <StaggerGroup className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 mb-16">
-        {stats.map((s) => {
-          const value = Number(t(`text.home.stat.${s.key}`, String(s.value))) || 0;
-          return (
-            <StaggerItem key={s.label}>
-              <div className="text-center">
-                <AnimatedCounter value={value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
-                <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
-              </div>
-            </StaggerItem>
-          );
-        })}
+        {stats.map((s) => (
+          <StaggerItem key={s.key}>
+            <div className="text-center">
+              <AnimatedCounter value={s.value} suffix={s.suffix} className="font-display text-4xl md:text-6xl text-gradient block" />
+              <p className="text-rtg-mist text-xs md:text-sm mt-2 tracking-wide uppercase">{s.label}</p>
+            </div>
+          </StaggerItem>
+        ))}
       </StaggerGroup>
 
       <Reveal className="text-center">

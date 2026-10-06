@@ -21,13 +21,23 @@ export const brand = {
   },
 };
 
-// Home hero — 4-slide auto-advancing carousel (Cycling/Running/Swimming/Community)
+// Home hero — 4-slide auto-advancing carousel (Cycling/Running/Swimming/Community).
+// These are the fallback defaults only: every text field below (eyebrow,
+// headline, paragraph, and the floating metric card) is editable per slide
+// in Admin -> Site Content -> Home, stored under
+// "text.home.hero.<key>.<field>" (see buildHeroSlides in lib/publicData.js).
+// Photos are swapped in Admin -> Site Photos via `imageKey`.
+// `key` is the stable id those settings hang off — don't rename it.
+// `scene` picks the decorative line-art drawn beside the card
+// ("route" / "track" / "wave" / "network" — see SCENE_ART in Home.jsx).
 export const heroSlides = [
   {
+    key: "cycling",
     tag: "Cycling",
+    eyebrow: "Cycling · Endurance · Community",
     title: "Ride Together.",
     accent: "Go Further.",
-    subtitle: "Weekend rides, mountain adventures, and welcoming wheels for every pace — because the best rides are shared.",
+    subtitle: "Weekend rides, challenging climbs and unforgettable routes — because the best rides are shared.",
     imageKey: "heroCycling",
     // Which part of the photo to keep in frame on a narrow (portrait
     // mobile) crop — the same wide photo that looks right center-cropped
@@ -35,32 +45,89 @@ export const heroSlides = [
     // photo gets replaced via Site Photos with a differently-composed one,
     // this may need to be re-picked ("top" / "center" / "bottom").
     mobileFocus: "top",
+    scene: "route",
+    card: {
+      kicker: "Saturday · Train · Repeat",
+      heading: "Ridge Repeats",
+      metrics: [
+        { value: "5×", label: "Loops" },
+        { value: "45", label: "KM" },
+        { value: "You", label: "vs You" },
+      ],
+    },
   },
   {
+    key: "running",
     tag: "Running",
+    eyebrow: "Running · Endurance · Community",
     title: "Run Together.",
     accent: "Find Your Pace.",
     subtitle: "From sunrise 5Ks to marathon training blocks — every pace has a place in our run club.",
     imageKey: "heroRunning",
     mobileFocus: "center",
+    scene: "track",
+    card: {
+      kicker: "Run · Build · Recover",
+      heading: "Brick & Burn",
+      metrics: [
+        { value: "Ride", label: "60 Min" },
+        { value: "Run", label: "40 Min" },
+        { value: "Move", label: "Better" },
+      ],
+    },
   },
   {
+    key: "swimming",
     tag: "Swimming",
+    eyebrow: "Swimming · Technique · Community",
     title: "Swim Together.",
     accent: "Move Stronger.",
     subtitle: "Pool sessions and open-water swims, coached and community-powered from your very first lap.",
     imageKey: "heroSwimming",
     mobileFocus: "bottom",
+    scene: "wave",
+    card: {
+      kicker: "Pool · Technique · Confidence",
+      heading: "Stroke by Stroke",
+      metrics: [
+        { value: "1-3", label: "KM" },
+        { value: "Coached", label: "Sessions" },
+        { value: "All", label: "Levels" },
+      ],
+    },
   },
   {
+    key: "community",
     tag: "Community",
+    eyebrow: "Ride · Run · Explore · Connect",
     title: "Grow Together.",
     accent: "Belong Here.",
     subtitle: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.",
     imageKey: "heroCommunity",
     mobileFocus: "center",
+    scene: "network",
+    card: {
+      kicker: "Ride · Run · Connect",
+      heading: "This Is RTG",
+      metrics: [
+        { value: "500+", label: "Members" },
+        { value: "70+", label: "Cities" },
+        { value: "1", label: "Community" },
+      ],
+    },
   },
 ];
+
+// Hero copy shared by every slide — fallback defaults, editable in
+// Admin -> Site Content -> Home -> "Hero — buttons & labels" under
+// "text.home.hero.<field>".
+export const heroCopy = {
+  ctaLabel: "Join Community",
+  ctaLink: "/community",
+  scrollLabel: "Scroll to explore",
+  presenceLabel: "Present Across India",
+  expandingLabel: "+ Expanding",
+};
 
 export const mission =
   "Build an inclusive endurance community where people connect through sport, learn from one another, challenge themselves and create experiences that go beyond the finish line.";
@@ -132,39 +199,220 @@ export const stats = [
   { key: "rewards", label: "Rewards", value: 200, suffix: "+" },
 ];
 
+// Home -> "Why RTG" section. Fallback defaults only — the live cards come
+// from the `home_why_reasons` table (Admin -> Why RTG Cards) and the
+// heading/paragraph/button from Admin -> Site Content -> Home, under
+// "text.home.why.<field>". `icon` is a key into WHY_ICONS
+// (components/sections/WhyRtg.jsx).
+export const homeWhyCopy = {
+  eyebrow: "Why RTG",
+  titleLine1: "More Than Miles.",
+  titleLine2: "More Than Sport.",
+  subtitle: "Six reasons endurance athletes across India call RTG home — training, people, progression and experiences worth remembering.",
+  ctaLabel: "Explore the RTG Experience",
+  ctaLink: "/community",
+};
+
 export const whyJoin = [
+  { icon: "training", pill: "Weekly Training", title: "Train Together", desc: "Structured weekly sessions designed for real progress." },
+  { icon: "community", pill: "Community", title: "Find Your People", desc: "No pace is too slow. Every level belongs here." },
+  { icon: "running", pill: "Running", title: "Run Stronger", desc: "From easy runs to trail mornings and event-day confidence." },
+  { icon: "cycling", pill: "Cycling Skills", title: "Climb Better", desc: "Build pacing, strength and confidence for longer rides." },
+  { icon: "consistency", pill: "Consistency", title: "Stay Consistent", desc: "Weekly rhythm that keeps motivation alive and habits strong." },
+  { icon: "recognition", pill: "Recognition", title: "Earn Your Progress", desc: "Challenges, milestones and rewards that make effort visible." },
+  { icon: "adventure", pill: "Adventure", title: "Adventure More", desc: "Trails, long rides and new routes that keep things exciting." },
+  { icon: "memories", pill: "Memories", title: "Create Stories", desc: "Rides, runs and shared moments that stay with you for life." },
+];
+
+// Home -> "More Ways to Move Together" section. Fallback defaults only —
+// the live cards come from the `home_ways` table (Admin -> Ways to Move
+// Cards) and the heading/paragraphs from Admin -> Site Content -> Home,
+// under "text.home.ways.<field>". `imageKey` is only used by these
+// fallbacks; real cards carry their own uploaded photo.
+export const homeWaysCopy = {
+  eyebrow: "Find Your Way",
+  title: "More Ways to Move",
+  titleAccent: "Together.",
+  description: "Run, ride or head off-road — choose the way you want to move, connect and explore with RTG.",
+  descriptionExtra: "From community runs and endurance-building rides to MTB trails and new adventures, each path is designed to keep you active, challenged and connected — in your own way, at your own pace.",
+};
+
+// Home -> "Training Formats" showcase (the dark, photo-backed band with
+// tabs). Fallback defaults only — the live formats come from the
+// `home_training_formats` table (Admin -> Home — Training Formats).
+// Text conventions shared with that admin form (parsed in lib/publicData.js):
+//   *word*            -> drawn in the orange accent colour
+//   "A | B | C"       -> tagline: big, small, big
+//   "a, b, c"         -> a row of pills
+//   "Label | Value"   -> one per line: steps / details / panel rows
+// A format with a `cardImage` shows it (a route map) in the left card;
+// one without shows its `cardSteps` as a numbered flow instead.
+export const homeTrainingFormats = [
   {
-    title: "Structured Weekly Training",
-    desc: "Friday Bricks, long rides, and recovery runs designed for real progress.",
+    tabLabel: "Ridge Repeats",
+    kicker: "RTG Ridge Repeats • In collaboration with *@iRide2Reach* • Led by *Manish Jayal*",
+    titleLine1: "RTG Ridge",
+    titleLine2: "Repeats.",
+    tagline: "You | vs | You",
+    description: "A signature RTG road-cycling format built around repeat loops, steady effort, pacing, climbs, descents and self-improvement — simple, competitive and addictive.",
+    pills: "Delhi NCR, Saturday Mornings, Endurance Focus, Point System",
+    note: "Exclusively under the RTG Membership Program",
+    buttonLabel: "Explore Now",
+    link: "/weekly-rides",
+    imageKey: "heroCycling",
+    cardLabel: "Ridge Loop",
+    cardTitle: "Talkatora Circuit",
+    cardImage: "/images/ridge-loop-map.jpg",
+    cardStats: "5 Loops, 9.15 KM Each, ~45 KM Total",
+    cardSteps: "",
+    cardMeta: "Start | Talkatora Stadium\nWhen | Saturday • 5:00 AM\nFocus | Pacing • Climbing • Endurance\nStyle | You vs You",
+    panelRows: "Format | 5 × 9.15 KM Loops\nPoint System | Improvement % • KOM / QOM • PR Points\nRewards & Awards | Monthly, Quarterly, Half-Yearly & Yearly Recognition\nLed By | In collaboration with *@iRide2Reach* — led by *Manish Jayal*",
   },
   {
-    title: "Beginner Friendly",
-    desc: "No pace is too slow. We ride, run, and swim at every level, together.",
+    tabLabel: "Brick N Burn",
+    kicker: "RTG Friday Hybrid Training • Ride → Run → Reset",
+    titleLine1: "Brick N",
+    titleLine2: "Burn.",
+    tagline: "Ride | → | Run",
+    description: "A weekly hybrid session that combines cycling and running in one continuous training format — building endurance, transition confidence and stronger legs.",
+    pills: "Friday 5:00 AM, Ride + Run, Mobility Finish, Community Training",
+    note: "Built for consistent weekly progress",
+    buttonLabel: "Explore Now",
+    link: "/weekly-rides",
+    imageKey: "heroRunning",
+    cardLabel: "Friday Session",
+    cardTitle: "Brick Flow",
+    cardImage: "",
+    cardStats: "",
+    cardSteps: "Ride | 60 Min\nTransition | Bike → Run\nRun | 30 Min\nFinish | Mobility",
+    cardMeta: "When | Friday • 5:00 AM\nFormat | Ride + Run\nFocus | Endurance • Adaptation\nFinish | Mobility • Recovery",
+    panelRows: "Format | 60 Min Ride + 30 Min Run\nTransition | Bike → Run • Keep Moving\nFocus | Endurance • Pacing • Adaptation\nWhy Brick? | Train the body to run strong after the bike",
   },
-  {
-    title: "Real Community",
-    desc: "Chai after every ride. Friendships that outlast the finish line.",
-  },
-  {
-    title: "Events & Challenges",
-    desc: "From local meetups to the Endurance League — always something to train for.",
-  },
-  {
-    title: "Expert Guidance",
-    desc: "Learn technique, nutrition, and recovery from experienced athletes.",
-  },
-  {
-    title: "Premium Merch & Gear",
-    desc: "Kit that looks as good as your Strava segment times.",
-  },
-  {
-    title: "Adventure Beyond the Routine",
-    desc: "Hill climbs, trail days, and road trips that turn training into an experience.",
-  },
-  {
-    title: "Create Stories",
-    desc: "Rides, runs and shared moments that stay with you for life.",
-  },
+];
+
+// Home -> "Upcoming Events" section. The slides themselves are real events
+// (Admin -> Events, "Featured on homepage"); this is only the heading and
+// button wording around them, editable in Admin -> Site Content -> Home
+// under "text.home.events.<field>".
+export const homeEventsCopy = {
+  eyebrow: "Next on the RTG Calendar",
+  title: "Upcoming",
+  titleAccent: "Events.",
+  subtitle: "Flagship experiences, signature challenges and the next reasons to move together.",
+  primaryLabel: "Explore Event",
+  secondaryLabel: "Register Interest",
+  secondaryLink: "/contact",
+  allLabel: "Explore All Events",
+  allLink: "/events",
+  emptyText: "New events are on the way — check the Events page for what's coming up.",
+};
+
+// Home -> "Merchandise Highlights" section. The cards are the store's
+// products (Admin -> Merchandise); this is only the heading and button
+// wording, editable in Admin -> Site Content -> Home under
+// "text.home.merch.<field>".
+export const homeMerchCopy = {
+  eyebrow: "RTG Store",
+  title: "Merchandise",
+  titleAccent: "Highlights.",
+  subtitle: "A quick look at the RTG collection — designed around the colours, energy and identity of the community.",
+  addLabel: "Add to Cart",
+  chooseLabel: "Buy Now",
+  soldOutLabel: "Sold Out",
+  storeLabel: "Explore Entire RTG Store",
+  storeLink: "/merchandise",
+};
+
+// Home -> "Community Gallery" section. The tiles are the gallery items
+// uploaded in Admin -> Gallery; this is only the wording around them,
+// editable in Admin -> Site Content -> Home under "text.home.gallery.<field>".
+// (Field names are deliberately different from the old section's
+// eyebrow/title/subtitle trio, which migration 006 deletes.)
+export const homeGalleryCopy = {
+  kicker: "Moments That Become Stories",
+  heading: "Community",
+  headingAccent: "Gallery.",
+  body: "From early starts to finish-line smiles — a visual diary of rides, runs, trails, events and the people who make RTG.",
+  buttonLabel: "Explore Full Gallery",
+  buttonLink: "/gallery",
+  emptyText: "Photos are on their way — check back soon.",
+};
+
+// Home -> "What People Say" section. The slides are the testimonials from
+// Admin -> Testimonials; this is only the heading, editable in
+// Admin -> Site Content -> Home under "text.home.voices.<field>".
+export const homeVoicesCopy = {
+  eyebrow: "Community Voices",
+  title: "What People",
+  titleAccent: "Say.",
+  prevLabel: "Previous community voice",
+  nextLabel: "Next community voice",
+};
+
+// "Join the Movement" band above the footer, on every page. Fallback
+// defaults — editable in Admin -> Site Content -> Footer under
+// "text.join.<field>".
+export const joinCopy = {
+  eyebrow: "Your Next Chapter Starts Here",
+  title: "Join the",
+  titleAccent: "Movement",
+  subtitle: "Ride, run, explore and grow with a community that turns every mile into something memorable.",
+  primaryLabel: "Join Community",
+  primaryLink: "/community",
+  secondaryLabel: "Explore Events",
+  secondaryLink: "/events",
+};
+
+// Site footer — brand blurb, contact details, social links and the bottom
+// line. Fallback defaults — editable in Admin -> Site Content -> Footer
+// under "text.footer.<field>". Leave a social link empty to hide its icon.
+export const footerCopy = {
+  logoAlt: brand.name,
+  description: brand.sub,
+  contactHeading: "Contact",
+  email: brand.email,
+  phone: brand.phone,
+  location: "Delhi",
+  instagramUrl: brand.social.instagram.url,
+  facebookUrl: brand.social.facebook.url,
+  youtubeUrl: brand.social.youtube.url,
+  stravaUrl: brand.social.strava.url,
+  copyright: "Ride Tea GupShup. All rights reserved.",
+  tagline: "Built for athletes, by athletes.",
+};
+
+// Footer link columns. Fallback defaults only — the live links come from
+// the `footer_links` table (Admin -> Footer Links). Links sharing a
+// `column` title form one column; `columnOrder` places it left to right.
+export const footerLinks = [
+  { column: "Community", columnOrder: 1, label: "About RTG", to: "/about" },
+  { column: "Community", columnOrder: 1, label: "Our Community", to: "/community" },
+  { column: "Community", columnOrder: 1, label: "Weekly Rides", to: "/weekly-rides" },
+  { column: "Community", columnOrder: 1, label: "Gallery", to: "/gallery" },
+  { column: "Community", columnOrder: 1, label: "Volunteer", to: "/community" },
+  { column: "Get Involved", columnOrder: 2, label: "Events", to: "/events" },
+  { column: "Get Involved", columnOrder: 2, label: "Challenges", to: "/challenges" },
+  { column: "Get Involved", columnOrder: 2, label: "Race Calendar", to: "/race-calendar" },
+  { column: "Get Involved", columnOrder: 2, label: "Race Results", to: "/race-results" },
+  { column: "Get Involved", columnOrder: 2, label: "Leaderboard", to: "/leaderboard" },
+  { column: "Get Involved", columnOrder: 2, label: "Sponsor With RTG", to: "/sponsors" },
+  { column: "Get Involved", columnOrder: 2, label: "Become Chapter Captain", to: "/contact" },
+  { column: "More", columnOrder: 3, label: "Store", to: "/merchandise" },
+  { column: "More", columnOrder: 3, label: "Kit", to: "/merchandise" },
+  { column: "More", columnOrder: 3, label: "Resources", to: "/blog" },
+  { column: "More", columnOrder: 3, label: "Safety", to: "/safety" },
+  { column: "More", columnOrder: 3, label: "FAQ", to: "/faq" },
+  { column: "More", columnOrder: 3, label: "Contact", to: "/contact" },
+  { column: "More", columnOrder: 3, label: "Media", to: "/contact" },
+  { column: "Legal", columnOrder: 4, label: "Community Guidelines", to: "/community-guidelines" },
+  { column: "Legal", columnOrder: 4, label: "Privacy Policy", to: "/privacy" },
+  { column: "Legal", columnOrder: 4, label: "Terms", to: "/terms" },
+];
+
+export const homeWays = [
+  { kicker: "Run with RTG", title: "Running", desc: "Community runs, training, challenges.", imageKey: "heroRunning", link: "/weekly-rides" },
+  { kicker: "Ride with RTG", title: "Cycling", desc: "Group rides, new routes, bigger miles.", imageKey: "heroCycling", link: "/weekly-rides" },
+  { kicker: "Explore with RTG", title: "Adventure", desc: "MTB trails, off-road escapes and mountain days.", imageKey: "homeWhyJoin", link: "/events" },
 ];
 
 // Full weekly schedule shown on /weekly-rides and Home's Weekly Activities
@@ -256,9 +504,9 @@ export const rideFaqs = [
 ];
 
 export const products = [
-  { id: "jersey", name: "RTG Jersey", price: 3000, imgKey: "productJersey", tag: "Bestseller" },
-  { id: "tshirt", name: "Cotton T-Shirt", price: 2000, imgKey: "productTshirt" },
-  { id: "hoodie", name: "Hoodie", price: 2000, imgKey: "productHoodie" },
+  { id: "jersey", name: "RTG Jersey", price: 3000, imgKey: "productJersey", tag: "Bestseller", eyebrow: "Performance", description: "Race-inspired fit with the RTG purple-orange visual language." },
+  { id: "tshirt", name: "Cotton T-Shirt", price: 2000, imgKey: "productTshirt", eyebrow: "Everyday", description: "Clean everyday wear for meetups, events, chai stops and travel." },
+  { id: "hoodie", name: "Hoodie", price: 2000, imgKey: "productHoodie", eyebrow: "Layer Up", description: "A comfortable RTG layer for winters, travel and post-session mornings." },
   { id: "cap", name: "Cap", price: 500, imgKey: "productCap" },
   { id: "socks", name: "Socks", price: 500, imgKey: "productSocks" },
   { id: "bottle", name: "Bottle", price: 500, imgKey: "productBottle" },

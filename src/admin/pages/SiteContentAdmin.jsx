@@ -1,6 +1,30 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy } from "../../data/content";
+import {
+  HOME_EVENTS_FIELDS,
+  HOME_MERCH_FIELDS,
+  JOIN_FIELDS,
+  FOOTER_FIELDS,
+  joinKey,
+  footerKey,
+  HOME_GALLERY_FIELDS,
+  HOME_VOICES_FIELDS,
+  homeGalleryKey,
+  homeVoicesKey,
+  homeMerchKey,
+  homeEventsKey,
+  HERO_SLIDE_FIELDS,
+  HERO_COPY_FIELDS,
+  HOME_WHY_FIELDS,
+  HOME_WAYS_FIELDS,
+  homeWhyKey,
+  homeWaysKey,
+  heroSlideKey,
+  heroCopyKey,
+  heroSlideDefaults,
+} from "../../lib/publicData";
 
 // Every <Section contentKey="..."> on the public site reads its
 // eyebrow/title/subtitle from "text.<key>.{eyebrow,title,subtitle}" in
@@ -32,13 +56,6 @@ const SECTIONS = [
   { page: "Events", key: "events.upcoming", label: "Coming Up", eyebrow: "Mark Your Calendar", title: "Coming Up", subtitle: "Regularly happening — championships, challenges, adventures, and workshops throughout the year." },
   { page: "Events", key: "events.past", label: "Past Highlights", eyebrow: "Where We've Been", title: "Past Highlights", subtitle: "A look back at what the community has already pulled off." },
 
-  { page: "Home", key: "home.whyJoin", label: "Why Athletes Join RTG", eyebrow: "Why RTG", title: "Why Athletes Join RTG", subtitle: "Six reasons endurance athletes across India call RTG home." },
-  { page: "Home", key: "home.weeklyActivities", label: "Weekly Activities", eyebrow: "Weekly Rhythm", title: "Weekly Activities", subtitle: "Consistency builds champions. Here's how our week looks." },
-  { page: "Home", key: "home.upcomingEvents", label: "Upcoming Events", eyebrow: "Don't Miss Out", title: "Upcoming Events", subtitle: "" },
-  { page: "Home", key: "home.gallery", label: "Community Gallery", eyebrow: "Moments", title: "Community Gallery", subtitle: "Finish lines, sunrise starts, and everything in between." },
-  { page: "Home", key: "home.store", label: "Gear Up Like a Pro", eyebrow: "RTG Store", title: "Gear Up Like a Pro", subtitle: "" },
-  { page: "Home", key: "home.sponsors", label: "Our Sponsors & Partners", eyebrow: "Trusted By", title: "Our Sponsors & Partners", subtitle: "Brands that fuel the RTG movement." },
-  { page: "Home", key: "home.testimonials", label: "What Our Community Says", eyebrow: "Athlete Voices", title: "What Our Community Says", subtitle: "" },
 
   { page: "Merchandise", key: "merch.hero", label: "All Merchandise", eyebrow: "Shop", title: "All Merchandise", subtitle: "Free community pride, premium quality — order yours today." },
   { page: "Merchandise", key: "merch.perks", label: "Members Save 10%", eyebrow: "Member Perks", title: "Members Save 10%", subtitle: "" },
@@ -63,20 +80,68 @@ const SECTIONS = [
 
 // Custom-shaped groups — not the generic eyebrow/title/subtitle a
 // <Section contentKey> renders, so each keeps its own field list. Home's
-// About RTG headline matches the {t("text.home.about...", ...)} calls in
-// src/pages/Home.jsx; Footer matches the {t("text.footer...", ...)} calls
-// in src/components/Footer.jsx.
+// groups are generated from the field lists in lib/publicData.js; Footer
+// matches the {t("text.footer...", ...)} calls in the footer component.
+// Home hero — one card for the copy every slide shares, then one card per
+// slide. Generated from content.js's heroSlides/heroCopy (the same defaults
+// the live site falls back to) instead of retyping them here. Each slide's
+// photo is changed in Site Photos, not here.
+const HERO_GROUPS = [
+  {
+    heading: "Hero — buttons & labels",
+    fields: HERO_COPY_FIELDS.map((f) => ({
+      key: heroCopyKey(f.field),
+      label: f.label,
+      fallback: heroCopy[f.field],
+      type: f.type,
+    })),
+  },
+  ...heroSlides.map((slide, i) => {
+    const defaults = heroSlideDefaults(slide);
+    return {
+      heading: `Hero — slide ${i + 1} (${slide.tag})`,
+      fields: HERO_SLIDE_FIELDS.map((f) => ({
+        key: heroSlideKey(slide, f.field),
+        label: f.label,
+        fallback: defaults[f.field],
+        type: f.type,
+      })),
+    };
+  }),
+];
+
 const CUSTOM_GROUPS = {
   Home: [
+    ...HERO_GROUPS,
+    // The cards inside these two sections are their own admin screens
+    // (Home — Why RTG Cards / Home — Ways to Move Cards).
     {
-      heading: "About RTG section",
-      fields: [
-        { key: "text.home.aboutEyebrow", label: "Eyebrow", fallback: "This Is RTG", type: "text" },
-        { key: "text.home.aboutTitleLine1", label: "Headline — line 1", fallback: "More Than Miles.", type: "text" },
-        { key: "text.home.aboutTitleLine2", label: "Headline — line 2 (accent color)", fallback: "More Than Sport.", type: "text" },
-        { key: "text.home.aboutBody", label: "Paragraph", fallback: "Ride Tea GupShup brings cyclists, runners, and endurance enthusiasts together to move, connect, learn, and create experiences worth remembering.", type: "textarea" },
-        { key: "text.home.aboutButtonLabel", label: "Button label", fallback: "Discover Our Story", type: "text" },
-      ],
+      heading: "Why RTG section — heading & button",
+      fields: HOME_WHY_FIELDS.map((f) => ({ key: homeWhyKey(f.field), label: f.label, fallback: homeWhyCopy[f.field], type: f.type })),
+    },
+    {
+      heading: "More Ways to Move section — heading & text",
+      fields: HOME_WAYS_FIELDS.map((f) => ({ key: homeWaysKey(f.field), label: f.label, fallback: homeWaysCopy[f.field], type: f.type })),
+    },
+    // The slides are the events marked "Featured on homepage" (Events).
+    {
+      heading: "Upcoming Events section — heading & buttons",
+      fields: HOME_EVENTS_FIELDS.map((f) => ({ key: homeEventsKey(f.field), label: f.label, fallback: homeEventsCopy[f.field], type: f.type })),
+    },
+    // The cards are the store's products (Merchandise).
+    {
+      heading: "Merchandise Highlights section — heading & buttons",
+      fields: HOME_MERCH_FIELDS.map((f) => ({ key: homeMerchKey(f.field), label: f.label, fallback: homeMerchCopy[f.field], type: f.type })),
+    },
+    // The photos are the gallery items (Gallery).
+    {
+      heading: "Community Gallery section — heading & button",
+      fields: HOME_GALLERY_FIELDS.map((f) => ({ key: homeGalleryKey(f.field), label: f.label, fallback: homeGalleryCopy[f.field], type: f.type })),
+    },
+    // The quotes are the testimonials (Testimonials).
+    {
+      heading: "What People Say section — heading",
+      fields: HOME_VOICES_FIELDS.map((f) => ({ key: homeVoicesKey(f.field), label: f.label, fallback: homeVoicesCopy[f.field], type: f.type })),
     },
     {
       heading: "Stats & Presence",
@@ -87,6 +152,12 @@ const CUSTOM_GROUPS = {
         { key: "text.home.stat.cyclingKm", label: "Total Cycling KM", fallback: "250000", type: "text" },
         { key: "text.home.stat.runningKm", label: "Total Running KM", fallback: "75000", type: "text" },
         { key: "text.home.stat.rewards", label: "Rewards", fallback: "200", type: "text" },
+        ...stats.map((s) => ({
+          key: `text.home.stat.${s.key}Label`,
+          label: `Caption under the "${s.label}" number`,
+          fallback: s.label,
+          type: "text",
+        })),
         { key: "text.home.statesList", label: "States shown in \"Present Across India\" (comma-separated)", fallback: "Delhi, Haryana, Uttar Pradesh, Uttarakhand, Punjab, Chandigarh, Rajasthan, West Bengal, Maharashtra, Gujarat, Karnataka, Telangana, Assam", type: "textarea" },
         { key: "text.home.citiesList", label: "Cities (comma-separated — used on the Sponsors page's \"X+ Indian cities\" stat, and on Community's \"RTG Across India\" city captain cards)", fallback: "Delhi, Chandigarh, Dehradun, Jaipur, Shimla, Punjab, Pune, Mumbai", type: "text" },
       ],
@@ -103,14 +174,16 @@ const CUSTOM_GROUPS = {
       ],
     },
   ],
+  // Shown at the bottom of every page. The footer's link columns are their
+  // own admin screen (Footer Links).
   Footer: [
     {
-      heading: "Footer",
-      fields: [
-        { key: "text.footer.description", label: "Description (under the logo)", fallback: "India's endurance sports community for cycling, running, swimming, challenges, races, and unforgettable adventures.", type: "textarea" },
-        { key: "text.footer.copyright", label: "Copyright line (after \"© {year}\")", fallback: "Ride Tea GupShup. All rights reserved.", type: "text" },
-        { key: "text.footer.tagline", label: "Bottom-right tagline", fallback: "Built for athletes, by athletes.", type: "text" },
-      ],
+      heading: "Join the Movement band",
+      fields: JOIN_FIELDS.map((f) => ({ key: joinKey(f.field), label: f.label, fallback: joinCopy[f.field], type: f.type })),
+    },
+    {
+      heading: "Footer — brand, contact & social links",
+      fields: FOOTER_FIELDS.map((f) => ({ key: footerKey(f.field), label: f.label, fallback: footerCopy[f.field], type: f.type })),
     },
   ],
   About: [
@@ -282,11 +355,15 @@ export default function SiteContentAdmin() {
   const setField = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
 
   // Saves every field in one card at once, only when "Save" is clicked —
-  // typing into a field just updates local state until then.
+  // typing into a field just updates local state until then. A field the
+  // admin never touched saves the default it was showing, not a blank —
+  // otherwise saving one edit would wipe every other field in the card.
   const saveGroup = async (groupKey, rows) => {
     setStatus((s) => ({ ...s, [groupKey]: "saving" }));
     await Promise.all(
-      rows.map(({ key, label }) => supabase.from("site_settings").upsert({ key, value: values[key] ?? "", label }))
+      rows.map(({ key, label, fallback }) =>
+        supabase.from("site_settings").upsert({ key, value: values[key] ?? fallback ?? "", label })
+      )
     );
     setStatus((s) => ({ ...s, [groupKey]: "saved" }));
     setTimeout(() => setStatus((s) => (s[groupKey] === "saved" ? { ...s, [groupKey]: "" } : s)), 1500);
@@ -344,9 +421,9 @@ export default function SiteContentAdmin() {
 
             {sectionsForPage.map((s) => {
               const rows = [
-                { key: `text.${s.key}.eyebrow`, label: `${s.label} — Eyebrow` },
-                { key: `text.${s.key}.title`, label: `${s.label} — Title` },
-                { key: `text.${s.key}.subtitle`, label: `${s.label} — Subtitle` },
+                { key: `text.${s.key}.eyebrow`, label: `${s.label} — Eyebrow`, fallback: s.eyebrow },
+                { key: `text.${s.key}.title`, label: `${s.label} — Title`, fallback: s.title },
+                { key: `text.${s.key}.subtitle`, label: `${s.label} — Subtitle`, fallback: s.subtitle },
               ];
               return (
                 <div key={s.key} className="glass rounded-2xl p-6">

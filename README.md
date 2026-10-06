@@ -35,6 +35,22 @@ your project dashboard:
    creates every table (member `profiles`, `events`, `gallery_items`,
    `products`, etc.), security rules, and the `rtg-media` storage bucket.
    Safe to re-run if needed.
+   - **Already have a database from before?** Run the files in
+     [`supabase/migrations/`](supabase/migrations) you haven't run yet, in
+     number order, the same way. `002_home_sections.sql` adds the two Home
+     page card tables (`home_why_reasons`, `home_ways`) with starter rows;
+     `003_home_training_and_event_cards.sql` adds `home_training_formats`
+     and the optional homepage-slide columns on `events`;
+     `004_remove_unused.sql` drops columns and saved wording the rebuilt
+     Home page no longer uses (it deletes data — read its header first);
+     `005_products_home_card.sql` adds the optional `eyebrow` line on
+     products for the homepage cards; `006_remove_old_home_wording.sql`
+     deletes the old Home gallery/testimonials heading text;
+     `007_remove_home_sponsors_wording.sql` deletes the wording of the
+     Sponsors band removed from Home; `008_footer_links.sql` adds the
+     `footer_links` table (the footer's link columns) with starter rows. Until they're
+     run, those sections simply show their built-in defaults and the
+     matching admin screens can't save.
 2. **Get your API keys**: Project Settings → API.
    - `Project URL` and `anon public` key → go in `.env.local` (frontend, safe
      to expose — see `.env.example`)
@@ -266,10 +282,10 @@ site; a new tab/session shows it again. Visitors can also tap **Skip Intro**.
   `introPoster` key in `src/data/images.js`) — shown instantly while the video
   loads and if a browser blocks autoplay.
 - The 3D scene code lives in `src/three/` — `IntroScene.jsx` powers the
-  preloader, `HeroScene.jsx` powers the subtle wireframe accent on the Home
-  hero. Both are lazy-loaded (`React.lazy`) so Three.js doesn't block the
-  initial page shell, and both reduce particle count / skip extra shapes on
-  screens under 768px for mobile performance.
+  preloader. It's lazy-loaded (`React.lazy`) so Three.js doesn't block the
+  initial page shell, and it reduces particle count / skips extra shapes on
+  screens under 768px for mobile performance. (The Home hero's right-hand
+  scene is plain SVG/CSS — see `HeroCinematicScene` in `src/pages/Home.jsx`.)
 
 ## Live clock
 

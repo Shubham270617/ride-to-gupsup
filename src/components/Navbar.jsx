@@ -303,7 +303,9 @@ export default function Navbar() {
         left-0
         right-0
         z-50
-        bg-white/95
+        bg-gradient-to-b
+        from-white
+        to-white/90
         backdrop-blur-xl
         backdrop-saturate-150
         border-b
@@ -324,12 +326,9 @@ export default function Navbar() {
       <div
         className="
           w-full
-          max-w-[1440px]
-          mx-auto
           px-5
           md:px-8
-          lg:px-6
-          h-[68px]
+          h-[60px]
           flex
           items-center
           justify-between
@@ -352,8 +351,8 @@ export default function Navbar() {
             src={images.logoNav}
             alt={brand.name}
             className="
-              h-9
-              md:h-10
+              h-8
+              md:h-9
               w-auto
               object-contain
             "
@@ -373,8 +372,9 @@ export default function Navbar() {
             lg:flex
             items-center
             gap-1
+            xl:gap-2
             ml-auto
-            mr-1
+            mr-6
           "
         >
           {links.map((link) => (
@@ -386,16 +386,16 @@ export default function Navbar() {
                   px-3
                   py-2
                   rounded-full
-                  text-[12px]
+                  text-[10.5px]
                   font-bold
                   uppercase
-                  tracking-[0.14em]
+                  tracking-[0.2em]
                   whitespace-nowrap
                   transition-colors
                   ${
                     isActive
                       ? "text-rtg-orange-500"
-                      : "text-rtg-mist hover:text-rtg-purple-600"
+                      : "text-rtg-white/75 hover:text-rtg-purple-600"
                   }
                 `
               }
@@ -438,13 +438,18 @@ export default function Navbar() {
               <button
                 onClick={() => requestLogin("login")}
                 className="
-                  h-9
-                  px-3
-                  text-[12px]
-                  font-bold
+                  h-[34px]
+                  px-4
+                  rounded-full
+                  border
+                  border-rtg-purple-600/15
+                  bg-white
+                  text-[10px]
+                  font-extrabold
                   uppercase
-                  tracking-[0.08em]
-                  text-rtg-purple-600
+                  tracking-[0.1em]
+                  text-rtg-white
+                  hover:border-rtg-orange-400
                   hover:text-rtg-orange-500
                   transition-colors
                   whitespace-nowrap
@@ -461,8 +466,12 @@ export default function Navbar() {
                 className="
                   uppercase
                   whitespace-nowrap
-                  !h-9
-                  !px-5
+                  !h-[34px]
+                  !px-4
+                  !py-0
+                  !text-[10px]
+                  !font-extrabold
+                  !tracking-[0.1em]
                 "
               >
                 Signup

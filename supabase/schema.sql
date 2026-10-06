@@ -453,14 +453,13 @@ update weekly_sessions
 set slug = lower(regexp_replace(regexp_replace(trim(name), '[^a-zA-Z0-9]+', '-', 'g'), '^-+|-+$', '', 'g'))
 where slug is null;
 
--- Training-format detail for Home's "Training Formats" section — see
--- supabase/migrations/001_weekly_sessions_training_detail.sql for the full
--- explanation of each field's format. All nullable; the frontend falls back
--- gracefully when they're empty.
-alter table weekly_sessions add column if not exists image_url text;
-alter table weekly_sessions add column if not exists tags text;
-alter table weekly_sessions add column if not exists steps text;
-alter table weekly_sessions add column if not exists highlights text;
+-- Home's "Training Formats" section used to borrow four extra columns on
+-- this table; it now has its own table (home_training_formats, below), so
+-- they're dropped. See supabase/migrations/004_remove_unused.sql.
+alter table weekly_sessions drop column if exists image_url;
+alter table weekly_sessions drop column if exists tags;
+alter table weekly_sessions drop column if exists steps;
+alter table weekly_sessions drop column if exists highlights;
 
 -- ============================================================================
 -- Content that used to be hardcoded in src/data/content.js with no admin
@@ -519,6 +518,82 @@ create table if not exists general_safety (
   created_at timestamptz not null default now()
 );
 
+-- Home page sections directly under the hero — one table per section, each
+-- with its own admin screen. Their headings/paragraphs live in
+-- site_settings ("text.home.why.*" / "text.home.ways.*"). Starter rows are
+-- in supabase/migrations/002_home_sections.sql.
+create table if not exists home_why_reasons (
+  id uuid primary key default gen_random_uuid(),
+  icon text not null default 'training',
+  pill text,
+  title text not null,
+  description text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Site footer link columns (Admin -> Footer Links). Starter rows are in
+-- supabase/migrations/008_footer_links.sql.
+create table if not exists footer_links (
+  id uuid primary key default gen_random_uuid(),
+  column_title text not null,
+  column_order int not null default 0,
+  label text not null,
+  link_url text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Home's dark, tabbed "Training Formats" band. Text conventions and starter
+-- rows are in supabase/migrations/003_home_training_and_event_cards.sql.
+create table if not exists home_training_formats (
+  id uuid primary key default gen_random_uuid(),
+  tab_label text not null,
+  kicker text,
+  title_line1 text not null,
+  title_line2 text,
+  tagline text,
+  description text,
+  pills text,
+  note text,
+  button_label text,
+  link_url text,
+  image_url text,
+  card_label text,
+  card_title text,
+  card_image_url text,
+  card_stats text,
+  card_steps text,
+  card_meta text,
+  panel_rows text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Optional extras for an event's Home "Upcoming Events" slide.
+alter table events add column if not exists home_title_accent text;
+alter table events add column if not exists home_pills text;
+alter table events add column if not exists highlight_label text;
+alter table events add column if not exists highlight_title text;
+alter table events add column if not exists highlight_text text;
+alter table events add column if not exists secondary_button_label text;
+alter table events add column if not exists secondary_button_link text;
+
+create table if not exists home_ways (
+  id uuid primary key default gen_random_uuid(),
+  kicker text,
+  title text not null,
+  description text,
+  image_url text,
+  link_url text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists sponsor_tiers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -572,7 +647,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_events', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
   loop
     execute format('alter table %I enable row level security', t);
 
@@ -754,6 +829,8 @@ drop function if exists claim_admin_if_seats_open();
 alter table products add column if not exists sizes text[];
 -- Shown on the new product detail page (/merchandise/:id).
 alter table products add column if not exists description text;
+-- Small line above the name on Home's Merchandise Highlights cards.
+alter table products add column if not exists eyebrow text;
 
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
