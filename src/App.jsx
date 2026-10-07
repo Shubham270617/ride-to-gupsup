@@ -107,6 +107,12 @@ export default function App() {
           <Route path="race-results" element={<ResourceAdminPage resource={resources.raceResults} />} />
           <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarActivities} />} />
           <Route path="calendar-types" element={<ResourceAdminPage resource={resources.calendarCategories} />} />
+          <Route path="leaderboard" element={<ResourceAdminPage resource={resources.leaderboardEntries} />} />
+          <Route path="leaderboard-challenges" element={<ResourceAdminPage resource={resources.leaderboardChallenges} />} />
+          <Route path="leaderboard-sports" element={<ResourceAdminPage resource={resources.leaderboardSports} />} />
+          <Route path="leaderboard-age-groups" element={<ResourceAdminPage resource={resources.leaderboardAgeGroups} />} />
+          <Route path="ridge-results" element={<ResourceAdminPage resource={resources.ridgeResults} />} />
+          <Route path="ridge-sessions" element={<ResourceAdminPage resource={resources.ridgeSessions} />} />
           <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
           <Route path="faqs" element={<ResourceAdminPage resource={resources.faqs} />} />
           <Route path="ride-faqs" element={<ResourceAdminPage resource={resources.rideFaqs} />} />

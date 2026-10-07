@@ -34,6 +34,7 @@ import {
   footerLinks as staticFooterLinks,
   eventsPageCopy as staticEventsPageCopy,
   calendarPageCopy as staticCalendarPageCopy,
+  leaderboardPageCopy as staticLeaderboardPageCopy,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -457,28 +458,6 @@ export function useMyLeaderboardStats(userId) {
   return stats;
 }
 
-// The public leaderboard — reads only the pre-aggregated, public-read
-// leaderboard_stats table (see schema.sql), never raw activity rows.
-export function useLeaderboard() {
-  const [rows, setRows] = useState([]);
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-    let cancelled = false;
-    supabase
-      .from("leaderboard_stats")
-      .select("*")
-      .gt("activity_count", 0)
-      .order("total_distance_meters", { ascending: false })
-      .then(({ data }) => {
-        if (!cancelled) setRows(data || []);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return rows;
-}
-
 // Small generic key/value settings table (see api/.env-free equivalent:
 // admin-editable, no code changes needed). Currently just the sponsor deck
 // download link, but built to hold any future one-off setting too.
@@ -828,6 +807,87 @@ export const CALENDAR_PAGE_FIELDS = [
 export const calendarPageKey = (field) => `text.calendar.${field}`;
 export const buildCalendarPageCopy = (settings) => buildCopy(settings, CALENDAR_PAGE_FIELDS, calendarPageKey, staticCalendarPageCopy);
 
+// Leaderboard page wording (pages/Leaderboard.jsx). SiteContentAdmin builds
+// its Leaderboard page from this list; `group` is the card a field sits in.
+export const LEADERBOARD_PAGE_FIELDS = [
+  { group: "top", field: "kicker", label: "Eyebrow (small line above the headline)", type: "text" },
+  { group: "top", field: "title", label: "Headline", type: "text" },
+  { group: "top", field: "titleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "top", field: "text", label: "Paragraph", type: "textarea" },
+  { group: "top", field: "liveLabel", label: "Status box — small label", type: "text" },
+  { group: "top", field: "liveText", label: "Status box — text", type: "text" },
+  { group: "filters", field: "challengeLabel", label: "Label of the challenge dropdown", type: "text" },
+  { group: "filters", field: "allChallengesLabel", label: "Dropdown choice that shows every challenge", type: "text" },
+  { group: "filters", field: "rankLabel", label: "Label of the \"rank by\" dropdown", type: "text" },
+  { group: "filters", field: "searchLabel", label: "Label of the search box", type: "text" },
+  { group: "filters", field: "searchPlaceholder", label: "Grey hint inside the search box", type: "text" },
+  { group: "filters", field: "ridgeJumpKicker", label: "Ridge Repeats shortcut button — small label", type: "text" },
+  { group: "filters", field: "ridgeJumpTitle", label: "Ridge Repeats shortcut button — text", type: "text" },
+  { group: "filters", field: "genderLabel", label: "Gender filter — label (also a table column)", type: "text" },
+  { group: "filters", field: "ageLabel", label: "Age filter — label (also a table column)", type: "text" },
+  { group: "filters", field: "sportLabel", label: "Sport filter — label", type: "text" },
+  { group: "filters", field: "allLabel", label: "The \"all\" pill in each filter", type: "text" },
+  { group: "filters", field: "allGendersLabel", label: "Summary line — when no gender is picked", type: "text" },
+  { group: "filters", field: "allAgesLabel", label: "Summary line — when no age group is picked", type: "text" },
+  { group: "filters", field: "allSportsLabel", label: "Summary line — when no sport is picked", type: "text" },
+  { group: "filters", field: "resetLabel", label: "Reset button", type: "text" },
+  { group: "numbers", field: "pointsLabel", label: "Points — name (rank-by choice, table column)", type: "text" },
+  { group: "numbers", field: "pointsUnit", label: "Points — short unit after a score", type: "text" },
+  { group: "numbers", field: "distanceLabel", label: "Distance — name (rank-by choice, table column, total box)", type: "text" },
+  { group: "numbers", field: "distanceUnit", label: "Distance — unit", type: "text" },
+  { group: "numbers", field: "sessionsLabel", label: "Sessions — name (rank-by choice, table column)", type: "text" },
+  { group: "numbers", field: "consistencyLabel", label: "Consistency — name (rank-by choice, table column, total box)", type: "text" },
+  { group: "numbers", field: "kpiAthletesLabel", label: "Total box 1 — label", type: "text" },
+  { group: "numbers", field: "kpiAthletesText", label: "Total box 1 — small line", type: "text" },
+  { group: "numbers", field: "kpiPointsLabel", label: "Total box 2 — label", type: "text" },
+  { group: "numbers", field: "kpiPointsText", label: "Total box 2 — small line", type: "text" },
+  { group: "numbers", field: "kpiDistanceText", label: "Total box 3 — small line", type: "text" },
+  { group: "numbers", field: "kpiConsistencyText", label: "Total box 4 — small line", type: "text" },
+  { group: "panels", field: "podiumKicker", label: "Top 3 card — eyebrow", type: "text" },
+  { group: "panels", field: "podiumTitle", label: "Top 3 card — heading", type: "text" },
+  { group: "panels", field: "chartKicker", label: "Momentum chart — eyebrow", type: "text" },
+  { group: "panels", field: "chartTitle", label: "Momentum chart — heading", type: "text" },
+  { group: "panels", field: "chartChip", label: "Momentum chart — badge ({count} = number of checkpoints)", type: "text" },
+  { group: "panels", field: "checkpointPrefix", label: "Momentum chart — letter before each checkpoint number", type: "text" },
+  { group: "panels", field: "sportMixKicker", label: "Sport Mix card — eyebrow", type: "text" },
+  { group: "panels", field: "sportMixTitle", label: "Sport Mix card — heading", type: "text" },
+  { group: "panels", field: "ageKicker", label: "Age card — eyebrow", type: "text" },
+  { group: "panels", field: "ageTitle", label: "Age card — heading", type: "text" },
+  { group: "panels", field: "insightKicker", label: "Analysis card — eyebrow", type: "text" },
+  { group: "panels", field: "insightTitle", label: "Analysis card — heading", type: "text" },
+  { group: "panels", field: "insightBadge", label: "Analysis card — letters in the coloured square", type: "text" },
+  { group: "panels", field: "insightText", label: "Analysis card — sentence. {leader} = top athlete, {metric} = what the board is ranked by, {sport} = most common sport, {consistency} = average consistency", type: "textarea" },
+  { group: "panels", field: "insightEmptyText", label: "Analysis card — sentence when no athlete matches", type: "textarea" },
+  { group: "panels", field: "insightTags", label: "Analysis card — tags (comma-separated)", type: "text" },
+  { group: "board", field: "boardKicker", label: "Eyebrow", type: "text" },
+  { group: "board", field: "boardTitle", label: "Heading", type: "text" },
+  { group: "board", field: "boardBadge", label: "Badge beside the athlete count", type: "text" },
+  { group: "board", field: "athleteLabel", label: "Word for one athlete (also a table column)", type: "text" },
+  { group: "board", field: "rankColumn", label: "Table column — rank", type: "text" },
+  { group: "board", field: "eventColumn", label: "Table column — challenge", type: "text" },
+  { group: "board", field: "sportColumn", label: "Table column — sport", type: "text" },
+  { group: "board", field: "trendColumn", label: "Table column — trend line", type: "text" },
+  { group: "board", field: "emptyText", label: "Message when no athlete matches the filters", type: "text" },
+  { group: "ridge", field: "ridgeKicker", label: "Eyebrow", type: "text" },
+  { group: "ridge", field: "ridgeTitle", label: "Headline", type: "text" },
+  { group: "ridge", field: "ridgeTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "ridge", field: "ridgeText", label: "Paragraph", type: "textarea" },
+  { group: "ridge", field: "ridgeSessionLabel", label: "Label of the session dropdown", type: "text" },
+  { group: "ridge", field: "ridgeBestLabel", label: "Box 1 — label", type: "text" },
+  { group: "ridge", field: "ridgeAvgLabel", label: "Box 2 — label", type: "text" },
+  { group: "ridge", field: "ridgeCompletionLabel", label: "Box 3 — label", type: "text" },
+  { group: "ridge", field: "ridgeTopScoreLabel", label: "Box 4 — label", type: "text" },
+  { group: "ridge", field: "ridgeChartKicker", label: "Loop chart — eyebrow", type: "text" },
+  { group: "ridge", field: "loopPrefix", label: "Loop chart — letter before each loop number", type: "text" },
+  { group: "ridge", field: "ridgeBoardKicker", label: "Rider list — eyebrow", type: "text" },
+  { group: "ridge", field: "ridgeBoardTitle", label: "Rider list — heading", type: "text" },
+  { group: "ridge", field: "ridgeRiderLine", label: "Rider list — line under each name ({avg} = average loop, {completion} = completion %)", type: "text" },
+  { group: "ridge", field: "ridgeEmptyText", label: "Message when the session has no results", type: "text" },
+  { group: "ridge", field: "ridgeNote", label: "Small note at the bottom", type: "textarea" },
+];
+export const leaderboardPageKey = (field) => `text.leaderboard.${field}`;
+export const buildLeaderboardPageCopy = (settings) => buildCopy(settings, LEADERBOARD_PAGE_FIELDS, leaderboardPageKey, staticLeaderboardPageCopy);
+
 // "Join the Movement" band + site footer (components/sections/JoinCTA.jsx,
 // shown on every page). SiteContentAdmin builds its Footer page from these.
 export const JOIN_FIELDS = [
@@ -973,6 +1033,105 @@ export function useEventGallery(eventSlug) {
     };
   }, [eventSlug]);
   return items;
+}
+
+// ---- Leaderboard page ------------------------------------------------------
+// No placeholder fallbacks, same as the calendar: only what an admin has
+// added. Every total, ranking and chart is worked out in pages/Leaderboard.jsx
+// from these rows.
+
+// "66, 72, 79" -> [66, 72, 79] (anything that isn't a number is dropped).
+const numberList = (text) =>
+  (text || "")
+    .split(",")
+    .map((part) => parseFloat(part))
+    .filter((n) => Number.isFinite(n));
+
+// "21:16" -> 1276 seconds; a bare number is taken as seconds already.
+const clockToSeconds = (text) => {
+  if (!text.trim()) return null;
+  const parts = text.trim().split(":").map(Number);
+  if (parts.some((n) => !Number.isFinite(n))) return null;
+  return parts.reduce((total, part) => total * 60 + part, 0);
+};
+
+// The "Event / Challenge" dropdown (Admin -> Leaderboard — Challenges).
+export function useLeaderboardChallenges() {
+  return useSupabaseList("leaderboard_challenges", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name }),
+  }).items;
+}
+
+// Sport filter pills + Sport Mix ring colours (Admin -> Leaderboard — Sports).
+export function useLeaderboardSports() {
+  return useSupabaseList("leaderboard_sports", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      filterLabel: r.filter_label || r.name,
+      color: HEX_COLOR.test((r.color || "").trim()) ? r.color.trim() : null,
+    }),
+  }).items;
+}
+
+// Age filter pills + Age Distribution bars (Admin -> Leaderboard — Age Groups).
+export function useLeaderboardAgeGroups() {
+  return useSupabaseList("leaderboard_age_groups", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name, filterLabel: r.filter_label || r.name }),
+  }).items;
+}
+
+// One athlete on one challenge's board (Admin -> Leaderboard — Athletes).
+export function useLeaderboardEntries() {
+  return useSupabaseList("leaderboard_entries", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      name: r.athlete_name,
+      city: r.city,
+      challenge: r.challenge_slug,
+      sport: r.sport_slug,
+      gender: r.gender,
+      ageGroup: r.age_group_slug,
+      sessions: Number(r.sessions) || 0,
+      distance: Number(r.distance_km) || 0,
+      consistency: Number(r.consistency) || 0,
+      points: Number(r.points) || 0,
+      trend: numberList(r.trend),
+    }),
+  }).items;
+}
+
+// The Ridge Repeats "Session" dropdown (Admin -> Ridge Repeats — Sessions).
+export function useRidgeSessions() {
+  return useSupabaseList("ridge_sessions", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name, loopCount: Number(r.loop_count) || 0 }),
+  }).items;
+}
+
+// One rider in one Ridge Repeats session (Admin -> Ridge Repeats — Results).
+// `loops` are seconds per loop, in order; `improvement` is null unless an
+// admin typed one in (the page then works it out from the loops).
+export function useRidgeResults() {
+  return useSupabaseList("ridge_results", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      name: r.athlete_name,
+      session: r.session_slug,
+      loops: (r.loop_times || "")
+        .split(",")
+        .map(clockToSeconds)
+        .filter((n) => n !== null && n > 0),
+      improvement: r.improvement_pct === null || r.improvement_pct === undefined ? null : Number(r.improvement_pct),
+      score: Number(r.score) || 0,
+    }),
+  }).items;
 }
 
 // Drives the login popup's "Live" vs "Upcoming" sections. LIVE means a real

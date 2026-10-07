@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy } from "../../data/content";
 import {
   HOME_EVENTS_FIELDS,
   HOME_MERCH_FIELDS,
@@ -9,6 +9,8 @@ import {
   eventsPageKey,
   CALENDAR_PAGE_FIELDS,
   calendarPageKey,
+  LEADERBOARD_PAGE_FIELDS,
+  leaderboardPageKey,
   JOIN_FIELDS,
   FOOTER_FIELDS,
   joinKey,
@@ -120,6 +122,16 @@ const CALENDAR_GROUP_HEADINGS = {
   modal: "Calendar page — activity detail window",
 };
 
+// Leaderboard page — same arrangement as the Calendar page above.
+const LEADERBOARD_GROUP_HEADINGS = {
+  top: "Leaderboard page — top strip",
+  filters: "Leaderboard page — filters",
+  numbers: "Leaderboard page — numbers & total boxes",
+  panels: "Leaderboard page — top 3, charts & analysis cards",
+  board: "Leaderboard page — ranking table",
+  ridge: "Leaderboard page — Ridge Repeats",
+};
+
 const CUSTOM_GROUPS = {
   Home: [
     ...HERO_GROUPS,
@@ -203,6 +215,17 @@ const CUSTOM_GROUPS = {
       key: calendarPageKey(f.field),
       label: f.label,
       fallback: calendarPageCopy[f.field],
+      type: f.type,
+    })),
+  })),
+  // The athletes, challenges, sports, age groups and Ridge Repeats results
+  // are admin screens of their own (Leaderboard — … / Ridge Repeats — …).
+  Leaderboard: Object.entries(LEADERBOARD_GROUP_HEADINGS).map(([group, heading]) => ({
+    heading,
+    fields: LEADERBOARD_PAGE_FIELDS.filter((f) => f.group === group).map((f) => ({
+      key: leaderboardPageKey(f.field),
+      label: f.label,
+      fallback: leaderboardPageCopy[f.field],
       type: f.type,
     })),
   })),

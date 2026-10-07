@@ -13,6 +13,7 @@ import {
   Flame,
   Users,
   Trophy,
+  Medal,
 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
@@ -34,6 +35,7 @@ const cards = [
   { table: "challenges", label: "Challenges", icon: Flame, to: "/admin/challenges" },
   { table: "team_members", label: "Team Members", icon: Users, to: "/admin/team" },
   { table: "race_results", label: "Race Results", icon: Trophy, to: "/admin/race-results" },
+  { table: "leaderboard_entries", label: "Leaderboard Athletes", icon: Medal, to: "/admin/leaderboard" },
 ];
 
 export default function AdminDashboard() {

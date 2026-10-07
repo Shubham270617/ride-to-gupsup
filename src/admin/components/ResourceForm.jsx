@@ -100,7 +100,7 @@ const isShown = (field, values) => !field.showWhen || field.showWhen.in.includes
 function toEditValue(field, raw) {
   if (field.type === "tags") return Array.isArray(raw) ? raw.join(", ") : raw || "";
   if (field.type === "boolean") return raw ?? field.default ?? false;
-  if (field.type === "number") return raw ?? field.default ?? 0;
+  if (field.type === "number") return raw ?? field.default ?? (field.optional ? "" : 0);
   return raw ?? field.default ?? "";
 }
 
@@ -111,7 +111,8 @@ function toSavedValue(field, editVal, values, slugTouched) {
       .map((s) => s.trim())
       .filter(Boolean);
   }
-  if (field.type === "number") return Number(editVal) || 0;
+  // An optional number left blank is "no value", not zero.
+  if (field.type === "number") return field.optional && String(editVal).trim() === "" ? null : Number(editVal) || 0;
   if (field.type === "boolean") return Boolean(editVal);
   // An unpicked date/dropdown is "no value", not an empty string (which a
   // date column, or a column limited to a list of choices, would reject).
@@ -222,6 +223,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
             <>
               <input
                 type="number"
+                step={f.step}
                 required={f.required}
                 placeholder={f.placeholder}
                 value={values[f.name]}

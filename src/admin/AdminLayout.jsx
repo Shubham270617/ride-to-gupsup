@@ -31,6 +31,8 @@ import {
   Star,
   Gift,
   Tags,
+  Medal,
+  Repeat,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { images } from "../data/images";
@@ -60,6 +62,12 @@ const links = [
   { to: "/admin/challenges", label: "Challenges", icon: Flame },
   { to: "/admin/team", label: "Team", icon: Users },
   { to: "/admin/race-results", label: "Race Results", icon: Trophy },
+  { to: "/admin/leaderboard", label: "Leaderboard — Athletes", icon: Medal },
+  { to: "/admin/leaderboard-challenges", label: "Leaderboard — Challenges", icon: Tags },
+  { to: "/admin/leaderboard-sports", label: "Leaderboard — Sports", icon: Tags },
+  { to: "/admin/leaderboard-age-groups", label: "Leaderboard — Age Groups", icon: Tags },
+  { to: "/admin/ridge-results", label: "Ridge Repeats — Results", icon: Repeat },
+  { to: "/admin/ridge-sessions", label: "Ridge Repeats — Sessions", icon: Tags },
   { to: "/admin/site-images", label: "Site Photos", icon: ImageIcon },
   { to: "/admin/site-content", label: "Site Content", icon: FileText },
   { to: "/admin/home-why", label: "Home — Why RTG Cards", icon: Sparkles },

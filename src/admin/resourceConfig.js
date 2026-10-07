@@ -6,6 +6,8 @@
 //
 // "relation" is a dropdown filled from another table's rows:
 //   { type: "relation", table, valueColumn, labelColumn }
+// A "number" field takes whole numbers unless it has step: "any"; with
+// optional: true a blank box is saved as "no value" instead of 0.
 // field.showWhen = { field, in: [...] } shows the field only while another
 // field of the same form holds one of those values.
 
@@ -195,6 +197,100 @@ export const resources = {
       { name: "year", label: "Year", type: "text", placeholder: "e.g. 2027" },
       { name: "certificate_url", label: "Finisher Certificate", type: "image", folder: "certificates", hint: "Optional — upload a certificate image and a \"Download Certificate\" button appears for this result." },
       { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+    ],
+  },
+  leaderboardEntries: {
+    table: "leaderboard_entries",
+    title: "Leaderboard — Athletes",
+    singular: "Athlete",
+    orderBy: "sort_order",
+    listColumns: ["athlete_name", "challenge_slug", "sport_slug", "points", "published"],
+    fields: [
+      { name: "athlete_name", label: "Athlete Name", type: "text", required: true, placeholder: "e.g. Aarav Mehta" },
+      { name: "city", label: "City", type: "text", placeholder: "e.g. Delhi NCR", hint: "Shown under the name in the ranking table." },
+      { name: "challenge_slug", label: "Event / Challenge", type: "relation", table: "leaderboard_challenges", valueColumn: "slug", labelColumn: "name", required: true, hint: "The board this row belongs to. An athlete in two challenges gets one row per challenge. Add challenges in Leaderboard — Challenges." },
+      { name: "sport_slug", label: "Sport", type: "relation", table: "leaderboard_sports", valueColumn: "slug", labelColumn: "name", hint: "Add or rename sports in Leaderboard — Sports." },
+      { name: "gender", label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
+      { name: "age_group_slug", label: "Age Group", type: "relation", table: "leaderboard_age_groups", valueColumn: "slug", labelColumn: "name", hint: "Add or rename brackets in Leaderboard — Age Groups." },
+      { name: "sessions", label: "Sessions", type: "number", default: 0, hint: "How many sessions they completed." },
+      { name: "distance_km", label: "Distance (km)", type: "number", step: "any", default: 0 },
+      { name: "consistency", label: "Consistency (%)", type: "number", default: 0, hint: "A whole number from 0 to 100." },
+      { name: "points", label: "Points", type: "number", default: 0, hint: "The page ranks athletes by points unless the visitor picks something else." },
+      { name: "trend", label: "Checkpoint Scores", type: "text", placeholder: "e.g. 66, 72, 79, 86, 92, 100", hint: "Optional. Their score at each checkpoint, oldest first, separated by commas. Draws their trend line and the Momentum chart." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Only the order of this admin list — the page ranks athletes by their numbers." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  leaderboardChallenges: {
+    table: "leaderboard_challenges",
+    title: "Leaderboard — Challenges",
+    singular: "Challenge",
+    orderBy: "sort_order",
+    listColumns: ["name", "slug", "sort_order", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Endurance League Vol. 2", hint: "Each one is a choice in the Leaderboard page's Event / Challenge dropdown." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Athletes are filed under this code — leave it as it is." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order in the dropdown." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  leaderboardSports: {
+    table: "leaderboard_sports",
+    title: "Leaderboard — Sports",
+    singular: "Sport",
+    orderBy: "sort_order",
+    listColumns: ["name", "filter_label", "color", "sort_order", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Cycling", hint: "Each sport is a filter pill and a slice of the Sport Mix ring." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Athletes are filed under this code — leave it as it is." },
+      { name: "filter_label", label: "Wording on the Filter Pill", type: "text", placeholder: "e.g. Mixed / Events", hint: "Optional. If empty, the name is used." },
+      { name: "color", label: "Colour", type: "color", default: "#6568ff", hint: "The colour of this sport's slice of the Sport Mix ring." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order of the filter pills, left to right." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  leaderboardAgeGroups: {
+    table: "leaderboard_age_groups",
+    title: "Leaderboard — Age Groups",
+    singular: "Age Group",
+    orderBy: "sort_order",
+    listColumns: ["name", "filter_label", "sort_order", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Under 25", hint: "Each bracket is a filter pill and a bar of the Age Distribution card." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Athletes are filed under this code — leave it as it is." },
+      { name: "filter_label", label: "Wording on the Filter Pill", type: "text", placeholder: "e.g. U25", hint: "Optional. If empty, the name is used." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Youngest first." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  ridgeResults: {
+    table: "ridge_results",
+    title: "Ridge Repeats — Results",
+    singular: "Result",
+    orderBy: "sort_order",
+    listColumns: ["athlete_name", "session_slug", "loop_times", "score", "published"],
+    fields: [
+      { name: "athlete_name", label: "Rider Name", type: "text", required: true, placeholder: "e.g. Athlete R01" },
+      { name: "session_slug", label: "Session", type: "relation", table: "ridge_sessions", valueColumn: "slug", labelColumn: "name", required: true, hint: "Add sessions in Ridge Repeats — Sessions." },
+      { name: "loop_times", label: "Loop Times", type: "text", placeholder: "e.g. 21:16, 20:58, 20:29, 20:04, 19:42", hint: "Each loop as minutes:seconds, in order, separated by commas. Average loop, improvement and completion are worked out from these." },
+      { name: "score", label: "Score", type: "number", step: "any", default: 0, placeholder: "e.g. 34.6", hint: "Riders are ranked by score, highest first." },
+      { name: "improvement_pct", label: "Improvement % (optional)", type: "number", step: "any", optional: true, placeholder: "e.g. 8.42", hint: "Leave empty to work it out from the first and last loop time." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Only the order of this admin list." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  ridgeSessions: {
+    table: "ridge_sessions",
+    title: "Ridge Repeats — Sessions",
+    singular: "Session",
+    orderBy: "sort_order",
+    listColumns: ["name", "loop_count", "sort_order", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Saturday 12 October", hint: "Each one is a choice in the Ridge Repeats \"Session\" dropdown. The first one is shown when the page opens." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Results are filed under this code — leave it as it is." },
+      { name: "loop_count", label: "Loops in the Session", type: "number", default: 5, hint: "A rider's completion % is their recorded loops out of this." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order in the dropdown." },
+      { name: "published", label: "Published", type: "boolean", default: true },
     ],
   },
   calendarCategories: {

@@ -182,7 +182,6 @@ export const images = {
 
   // ---- RACE RESULTS ----
   raceResultsHero: rtg.cycling,
-  leaderboardHero: rtg.running,
 
   // ---- SAFETY ----
   safetyHero: placeholder,

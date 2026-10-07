@@ -675,6 +675,109 @@ begin
   end if;
 end $$;
 
+-- ============================================================================
+-- Leaderboard page (/leaderboard) — six tables of its own, each with an
+-- admin screen. Every ranking, total and chart on the page is worked out
+-- from their rows; its headings and labels live in site_settings under
+-- "text.leaderboard.<field>" (Admin -> Site Content -> Leaderboard). Starter
+-- rows are in supabase/migrations/011_leaderboard.sql.
+--   leaderboard_challenges  the "Event / Challenge" dropdown
+--   leaderboard_sports      sport filter pills + Sport Mix ring colours
+--   leaderboard_age_groups  age filter pills + Age Distribution bars
+--   leaderboard_entries     one row per athlete per challenge
+--   ridge_sessions          the Ridge Repeats "Session" dropdown
+--   ridge_results           one row per rider per Ridge Repeats session
+-- (The Strava totals further down — leaderboard_stats — are a separate,
+-- automatic thing shown on each member's own dashboard.)
+-- ============================================================================
+
+create table if not exists leaderboard_challenges (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists leaderboard_sports (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  filter_label text,
+  color text not null default '#6568ff',
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column leaderboard_sports.filter_label is 'Optional longer wording for the filter pill (e.g. Mixed / Events). Falls back to name.';
+comment on column leaderboard_sports.color is 'Hex colour (#rrggbb) of this sport''s slice of the Sport Mix ring.';
+
+create table if not exists leaderboard_age_groups (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  filter_label text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column leaderboard_age_groups.filter_label is 'Optional shorter wording for the filter pill (e.g. U25). Falls back to name.';
+
+create table if not exists leaderboard_entries (
+  id uuid primary key default gen_random_uuid(),
+  athlete_name text not null,
+  city text,
+  challenge_slug text references leaderboard_challenges(slug) on update cascade on delete set null,
+  sport_slug text references leaderboard_sports(slug) on update cascade on delete set null,
+  gender text check (gender in ('Male', 'Female', 'Other')),
+  age_group_slug text references leaderboard_age_groups(slug) on update cascade on delete set null,
+  sessions int not null default 0,
+  distance_km numeric not null default 0,
+  consistency int not null default 0 check (consistency between 0 and 100),
+  points int not null default 0,
+  trend text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column leaderboard_entries.consistency is 'Completion index, 0–100 (%).';
+comment on column leaderboard_entries.trend is 'Checkpoint scores, oldest first, comma-separated (e.g. 66, 72, 79, 86, 92, 100). Draws the athlete''s trend line and the Momentum chart.';
+
+create index if not exists leaderboard_entries_challenge_idx on leaderboard_entries (challenge_slug);
+
+create table if not exists ridge_sessions (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  loop_count int not null default 5 check (loop_count > 0),
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column ridge_sessions.loop_count is 'Loops a rider is meant to complete — a rider''s completion % is their recorded loops out of this.';
+
+create table if not exists ridge_results (
+  id uuid primary key default gen_random_uuid(),
+  athlete_name text not null,
+  session_slug text references ridge_sessions(slug) on update cascade on delete cascade,
+  loop_times text,
+  improvement_pct numeric,
+  score numeric not null default 0,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column ridge_results.loop_times is 'Loop times in order, mm:ss, comma-separated (e.g. 21:16, 20:58, 20:29).';
+comment on column ridge_results.improvement_pct is 'Optional. Improvement in %; when empty it is worked out from the first and last loop time.';
+
+create index if not exists ridge_results_session_idx on ridge_results (session_slug);
+
 -- Same RLS pattern on every content table: public can read, only admins
 -- (rows in admin_profiles) can write.
 do $$
@@ -682,7 +785,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'leaderboard_challenges', 'leaderboard_sports', 'leaderboard_age_groups', 'leaderboard_entries', 'ridge_sessions', 'ridge_results', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
   loop
     execute format('alter table %I enable row level security', t);
 
@@ -935,7 +1038,7 @@ create policy "order_items admin delete" on order_items
 -- ============================================================================
 
 -- ============================================================================
--- PART — Strava activity data (member profile stats + the auto leaderboard)
+-- PART — Strava activity data (member profile stats + automatic totals)
 --
 -- Split into two tables on purpose:
 --  - strava_activities holds the real, detailed data — kept private to the
