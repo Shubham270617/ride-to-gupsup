@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Lock, Phone, Cake, MapPin, AtSign, ShieldAlert, Droplet, MessageCircle } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
@@ -46,6 +46,9 @@ function RadioGroup({ label, options, value, onChange }) {
 // afterward (phone login checks a password — see /api/auth/phone-login).
 export default function Onboarding() {
   const navigate = useNavigate();
+  // Sent here by a "Join Community" button (lib/JoinCommunityContext.jsx).
+  const [searchParams] = useSearchParams();
+  const cameToJoin = searchParams.get("join") === "1";
   const { user, loading: sessionLoading } = useSession();
 
   const [profile, setProfile] = useState(null);
@@ -140,7 +143,14 @@ export default function Onboarding() {
       };
       if (needsPhone) updates.phone = toE164(phone);
 
-      const { error: updateError } = await supabase.from("profiles").update(updates).eq("id", user.id);
+      // Submitting this form is what makes someone a community member.
+      const joined = { community_joined: true, community_joined_at: new Date().toISOString() };
+      let { error: updateError } = await supabase.from("profiles").update({ ...updates, ...joined }).eq("id", user.id);
+      // A database that hasn't had migration 014 yet has no "joined"
+      // columns — save the profile without them rather than fail.
+      if (updateError && /community_joined/.test(updateError.message || "")) {
+        ({ error: updateError } = await supabase.from("profiles").update(updates).eq("id", user.id));
+      }
       if (updateError) throw updateError;
 
       navigate("/", { replace: true });
@@ -161,7 +171,9 @@ export default function Onboarding() {
           <h1 className="font-display text-3xl md:text-4xl leading-none mb-2">
             Complete Your <span className="text-gradient">Profile</span>
           </h1>
-          <p className="text-rtg-mist text-sm">A few details so RTG knows who's joining the ride.</p>
+          <p className="text-rtg-mist text-sm">
+            {cameToJoin ? "Complete your RTG Community Profile to officially join the community." : "A few details so RTG knows who's joining the ride."}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

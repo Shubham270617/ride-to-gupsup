@@ -6,16 +6,16 @@ import ScrollToTop from "./ScrollToTop";
 import AiWidget from "./ai/AiWidget";
 import CartDrawer from "./CartDrawer";
 import SiteBackground from "./ui/SiteBackground";
-import { useAuthGate } from "../lib/AuthGateContext";
+import { JoinCommunityProvider, useJoinCommunity } from "../lib/JoinCommunityContext";
 
 // Pages that end with the photo-backed "Join the Movement" band, which
 // carries the footer inside it. Every other page ends with the plain dark
 // <Footer /> on its own.
 const JOIN_BAND_PAGES = ["/", "/community"];
 
-export default function Layout() {
+function Page() {
   const location = useLocation();
-  const { requestLogin } = useAuthGate();
+  const joinCommunity = useJoinCommunity();
   const isCommunity = location.pathname === "/community";
   const hasJoinBand = JOIN_BAND_PAGES.includes(location.pathname);
 
@@ -31,13 +31,23 @@ export default function Layout() {
       </main>
       {hasJoinBand ? (
         // On Community the band has its own wording, and its first button
-        // opens the sign-up panel instead of following a link.
-        <JoinCTA community={isCommunity} onPrimaryClick={isCommunity ? () => requestLogin("signup") : undefined} />
+        // starts the Join Community flow instead of following a link.
+        <JoinCTA community={isCommunity} play={!isCommunity} onPrimaryClick={isCommunity ? joinCommunity : undefined} />
       ) : (
         <Footer />
       )}
       <AiWidget />
       <CartDrawer />
     </div>
+  );
+}
+
+// Every public page sits inside the Join Community flow, so any page's
+// button can start it (see lib/JoinCommunityContext.jsx).
+export default function Layout() {
+  return (
+    <JoinCommunityProvider>
+      <Page />
+    </JoinCommunityProvider>
   );
 }

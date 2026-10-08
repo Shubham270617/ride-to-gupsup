@@ -470,6 +470,7 @@ export const resources = {
       { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Activities are filed under this code — leave it as it is." },
       { name: "detail_label", label: "Name in the Detail Window", type: "text", placeholder: "e.g. Brick Session", hint: "Optional. Shown at the top of an activity's detail window. If empty, the name is used." },
       { name: "color", label: "Colour", type: "color", default: "#35246f", hint: "The colour of this type's activities everywhere on the Calendar page." },
+      { name: "show_as_filter", label: "Show as a filter above the calendar", type: "boolean", default: true, hint: "Switch off to keep the type (its colour and activities) without giving it a filter pill of its own — its activities can still appear under other filters." },
       { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order of the filter pills, left to right." },
       { name: "published", label: "Published", type: "boolean", default: true },
     ],
@@ -483,6 +484,7 @@ export const resources = {
     fields: [
       { name: "title", label: "Title", type: "text", required: true, placeholder: "e.g. RTG Brick & Burn" },
       { name: "category_slug", label: "Activity Type", type: "relation", table: "calendar_categories", valueColumn: "slug", labelColumn: "name", hint: "Decides its colour and which filter it sits under. Add or rename types in Calendar — Activity Types." },
+      { name: "also_category_slugs", label: "Also show under these filters", type: "relations", table: "calendar_categories", valueColumn: "slug", labelColumn: "name", hint: "Optional. Tick every other filter this activity should appear under — e.g. Brick & Burn under Cycling and Running, an MTB ride under Cycling and Adventure." },
       {
         name: "schedule_type",
         label: "When does it happen?",

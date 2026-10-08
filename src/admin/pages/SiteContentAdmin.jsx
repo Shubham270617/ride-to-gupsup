@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, homeJoinCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
 import {
   COMMUNITY_PAGE_FIELDS,
   communityPageKey,
@@ -21,6 +21,8 @@ import {
   footerKey,
   HOME_GALLERY_FIELDS,
   HOME_VOICES_FIELDS,
+  HOME_JOIN_FIELDS,
+  homeJoinKey,
   homeGalleryKey,
   homeVoicesKey,
   homeMerchKey,
@@ -177,6 +179,12 @@ const CUSTOM_GROUPS = {
     {
       heading: "What People Say section — heading",
       fields: HOME_VOICES_FIELDS.map((f) => ({ key: homeVoicesKey(f.field), label: f.label, fallback: homeVoicesCopy[f.field], type: f.type })),
+    },
+    // Shown when a member who has already joined clicks a Join Community
+    // button (Home hero, Community page).
+    {
+      heading: "Join Community — \"already a member\" window",
+      fields: HOME_JOIN_FIELDS.map((f) => ({ key: homeJoinKey(f.field), label: f.label, fallback: homeJoinCopy[f.field], type: f.type })),
     },
     {
       heading: "Stats & Presence",

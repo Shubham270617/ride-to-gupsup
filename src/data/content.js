@@ -123,7 +123,6 @@ export const heroSlides = [
 // "text.home.hero.<field>".
 export const heroCopy = {
   ctaLabel: "Join Community",
-  ctaLink: "/community",
   scrollLabel: "Scroll to explore",
   presenceLabel: "Present Across India",
   expandingLabel: "+ Expanding",
@@ -347,6 +346,22 @@ export const homeVoicesCopy = {
   titleAccent: "Say.",
   prevLabel: "Previous community voice",
   nextLabel: "Next community voice",
+};
+
+// The window a "Join Community" button shows to someone who is already a
+// member (lib/JoinCommunityContext.jsx). Editable in Admin -> Site Content
+// -> Home under "text.home.join.<field>".
+export const homeJoinCopy = {
+  joinedKicker: "RTG Community",
+  joinedTitle: "You're already part of the RTG Community!",
+  joinedText: "Your seat on the ride is saved. Pick where you want to go next.",
+  profileLabel: "View My Profile",
+  profileLink: "/dashboard",
+  eventsLabel: "Explore Events",
+  eventsLink: "/events",
+  boardLabel: "View Leaderboards",
+  boardLink: "/leaderboard",
+  closeLabel: "Close",
 };
 
 // Events page (/events) wording. The events themselves are the rows of the
@@ -696,6 +711,9 @@ export const joinCopy = {
   primaryLink: "/community",
   secondaryLabel: "Explore Events",
   secondaryLink: "/events",
+  // Home only: the small button that sends little athletes across the
+  // band (lib/useLittleAthletes.jsx). Saved empty, the button is hidden.
+  playLabel: "Start the race",
 };
 
 // Site footer — brand blurb, contact details, social links and the bottom
@@ -745,9 +763,9 @@ export const footerLinks = [
 ];
 
 export const homeWays = [
-  { kicker: "Run with RTG", title: "Running", desc: "Community runs, training, challenges.", imageKey: "heroRunning", link: "/weekly-rides" },
-  { kicker: "Ride with RTG", title: "Cycling", desc: "Group rides, new routes, bigger miles.", imageKey: "heroCycling", link: "/weekly-rides" },
-  { kicker: "Explore with RTG", title: "Adventure", desc: "MTB trails, off-road escapes and mountain days.", imageKey: "homeWhyJoin", link: "/events" },
+  { kicker: "Run with RTG", title: "Running", desc: "Community runs, training, challenges.", imageKey: "heroRunning", link: "/calendar?category=running" },
+  { kicker: "Ride with RTG", title: "Cycling", desc: "Group rides, new routes, bigger miles.", imageKey: "heroCycling", link: "/calendar?category=cycling" },
+  { kicker: "Explore with RTG", title: "Adventure", desc: "MTB trails, off-road escapes and mountain days.", imageKey: "homeWhyJoin", link: "/calendar?category=adventure" },
 ];
 
 // Full weekly schedule shown on /weekly-rides and Home's Weekly Activities

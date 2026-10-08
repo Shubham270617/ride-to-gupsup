@@ -93,12 +93,50 @@ function RelationField({ field, value, onChange }) {
   );
 }
 
+// The same choices as a RelationField, as tick boxes: any number of them can
+// be picked, and the value saved is the list of their field.valueColumn —
+// e.g. the other filters a calendar activity also appears under.
+function RelationsField({ field, value, onChange }) {
+  const [options, setOptions] = useState([]);
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let cancelled = false;
+    supabase
+      .from(field.table)
+      .select(`${field.valueColumn},${field.labelColumn}`)
+      .order(field.orderBy || "sort_order")
+      .then(({ data }) => {
+        if (!cancelled) setOptions(data || []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [field.table, field.valueColumn, field.labelColumn, field.orderBy]);
+
+  const toggle = (v) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const v = o[field.valueColumn];
+        return (
+          <label key={v} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-rtg-white cursor-pointer">
+            <input type="checkbox" checked={value.includes(v)} onChange={() => toggle(v)} className="w-4 h-4 accent-rtg-orange-500" />
+            {o[field.labelColumn]}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 // field.showWhen = { field, in: [...] } — the field is only part of the form
 // while that other field holds one of those values.
 const isShown = (field, values) => !field.showWhen || field.showWhen.in.includes(values[field.showWhen.field]);
 
 function toEditValue(field, raw) {
   if (field.type === "tags") return Array.isArray(raw) ? raw.join(", ") : raw || "";
+  if (field.type === "relations") return Array.isArray(raw) ? raw : [];
   if (field.type === "boolean") return raw ?? field.default ?? false;
   if (field.type === "number") return raw ?? field.default ?? (field.optional ? "" : 0);
   return raw ?? field.default ?? "";
@@ -207,6 +245,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
           )}
 
           {f.type === "relation" && <RelationField field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />}
+          {f.type === "relations" && <RelationsField field={f} value={values[f.name]} onChange={(v) => setField(f.name, v)} />}
 
           {f.type === "textarea" && (
             <textarea
@@ -322,7 +361,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
             />
           )}
 
-          {["text", "textarea", "tags", "date", "select", "color", "relation"].includes(f.type) && f.hint && (
+          {["text", "textarea", "tags", "date", "select", "color", "relation", "relations"].includes(f.type) && f.hint && (
             <p className="mt-1.5 text-xs text-rtg-mist">{f.hint}</p>
           )}
         </div>

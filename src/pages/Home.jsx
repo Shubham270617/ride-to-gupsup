@@ -10,6 +10,7 @@ import MerchHighlights from "../components/sections/MerchHighlights";
 import GalleryShowcase from "../components/sections/GalleryShowcase";
 import CommunityVoices from "../components/sections/CommunityVoices";
 import Button from "../components/ui/Button";
+import { useJoinCommunity } from "../lib/JoinCommunityContext";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
 import { heroSrcSet, heroFallbackSrc } from "../lib/responsiveImage";
 
@@ -230,6 +231,7 @@ function Hero({ images, settings, slides }) {
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const copy = useMemo(() => buildHeroCopy(settings), [settings]);
+  const joinCommunity = useJoinCommunity();
   const stats = useMemo(() => buildStats(settings), [settings]);
   const states = useMemo(() => pickStates(settings), [settings]);
 
@@ -341,7 +343,7 @@ function Hero({ images, settings, slides }) {
               transition={{ duration: 0.7, delay: 0.7 }}
               className="mt-8 md:mt-10"
             >
-              <Button to={copy.ctaLink} size="lg" className="uppercase !text-[11px] !font-extrabold !tracking-[0.18em] md:!px-12 md:!py-[1.05rem]">
+              <Button onClick={joinCommunity} size="lg" className="uppercase !text-[11px] !font-extrabold !tracking-[0.18em] md:!px-12 md:!py-[1.05rem]">
                 {copy.ctaLabel}
               </Button>
             </motion.div>

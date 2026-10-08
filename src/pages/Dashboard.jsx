@@ -229,6 +229,27 @@ export default function Dashboard() {
           {stravaNotice.text}
         </p>
       )}
+      {/* Strava is linked from here, not used to log in: a member who hasn't
+          connected it yet is asked to, once signed in. */}
+      {!profile?.strava_athlete_id && authProviders.strava && (
+        <div className="max-w-4xl mx-auto mb-6 glass rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <span className="shrink-0 w-12 h-12 rounded-2xl grid place-items-center bg-[#FC4C02]/10">
+            <StravaMark width={24} height={24} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-display text-2xl leading-none mb-1.5">Connect Your Strava</h2>
+            <p className="text-sm text-rtg-mist">Link your Strava account so your rides and runs show up on your RTG profile automatically.</p>
+          </div>
+          <button
+            onClick={handleConnectStrava}
+            disabled={connectingStrava}
+            className="btn-shine shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-[#FC4C02] text-white font-semibold px-5 py-3 text-sm hover:brightness-110 transition disabled:opacity-60"
+          >
+            {connectingStrava && <Loader2 size={14} className="animate-spin" />}
+            Connect Strava
+          </button>
+        </div>
+      )}
       <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-8">
         {upcomingEvent && (
           <Link to={`/events/${upcomingEvent.slug || upcomingEvent.id}`} className="group">

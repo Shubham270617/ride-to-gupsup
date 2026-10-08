@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarPlus, X } from "lucide-react";
 import Reveal from "../components/ui/Reveal";
@@ -15,6 +16,8 @@ import { downloadIcsFile } from "../lib/ics";
 //   calendar_activities  (Admin -> Calendar — Activities)      what's on it
 //   calendar_categories  (Admin -> Calendar — Activity Types)  the filters,
 //                                                              tags, colours
+//                        An activity is filed under one type (its colour)
+//                        and can also appear under other types' filters.
 //   "text.calendar.<field>" (Admin -> Site Content -> Calendar) every heading,
 //                                                              label, paragraph
 // An activity is "weekly" (on its weekday, every week), "once" (on one date)
@@ -362,7 +365,10 @@ function RhythmPanel({ copy, today, activities, categories, tint, onOpen }) {
 // ----------------------------------------------------------------------------
 function MonthCalendar({ copy, today, activities, categories, tint, onOpen }) {
   const [view, setView] = useState(() => ({ year: today.getFullYear(), month: today.getMonth(), direction: 0 }));
-  const [filter, setFilter] = useState(ALL);
+  // A link such as /calendar?category=cycling opens with that activity
+  // type's filter already on (Home's "Ways to Move" cards use this).
+  const [searchParams] = useSearchParams();
+  const [filter, setFilter] = useState(() => searchParams.get("category") || ALL);
   const [picked, setPicked] = useState(null);
 
   const { year, month, direction } = view;
@@ -380,15 +386,19 @@ function MonthCalendar({ copy, today, activities, categories, tint, onOpen }) {
       direction: Math.sign(today.getFullYear() * 12 + today.getMonth() - (v.year * 12 + v.month)),
     }));
 
-  // A filter left pointing at an activity type that's since been removed
-  // falls back to "all".
-  const activeFilter = filter === ALL || categories.some((c) => c.slug === filter) ? filter : ALL;
+  // The activity types that have a filter pill (Admin -> Calendar — Activity
+  // Types -> "Show as a filter"). A filter pointing at anything else — a
+  // type since removed or hidden — falls back to "all".
+  const filterTypes = useMemo(() => categories.filter((c) => c.isFilter), [categories]);
+  const activeFilter = filter === ALL || filterTypes.some((c) => c.slug === filter) ? filter : ALL;
 
   const days = useMemo(() => {
     const first = new Date(year, month, 1);
     const start = mondayOf(first);
     const weeks = Math.ceil((weekdayIndex(first) + new Date(year, month + 1, 0).getDate()) / 7);
-    const shown = activeFilter === ALL ? activities : activities.filter((a) => a.category === activeFilter);
+    // An activity can sit under more than one filter (Brick & Burn is both
+    // Cycling and Running).
+    const shown = activeFilter === ALL ? activities : activities.filter((a) => a.filters.includes(activeFilter));
     return Array.from({ length: weeks * 7 }, (_, i) => {
       const date = addDays(start, i);
       return { date, iso: toIso(date), inMonth: date.getMonth() === month, items: activitiesOn(shown, date) };
@@ -403,7 +413,7 @@ function MonthCalendar({ copy, today, activities, categories, tint, onOpen }) {
   const selected =
     monthDays.find((d) => d.iso === picked) || monthDays.find((d) => d.iso === todayIso) || monthDays.find((d) => d.items.length > 0) || monthDays[0];
 
-  const filters = [{ key: ALL, label: copy.allLabel }, ...categories.map((c) => ({ key: c.slug, label: c.name, slug: c.slug }))];
+  const filters = [{ key: ALL, label: copy.allLabel }, ...filterTypes.map((c) => ({ key: c.slug, label: c.name, slug: c.slug }))];
   const onThisMonth = year === today.getFullYear() && month === today.getMonth();
 
   return (
@@ -644,6 +654,15 @@ export default function Calendar() {
   const categories = useCalendarCategories();
   const activities = useCalendarActivities();
   const [detail, setDetail] = useState(null); // { activity, date } while the detail window is open
+  const [searchParams] = useSearchParams();
+  const wantsCategory = Boolean(searchParams.get("category"));
+
+  // Arriving with a category already picked: go straight to the month grid.
+  useEffect(() => {
+    if (!wantsCategory) return undefined;
+    const id = setTimeout(() => document.getElementById("calendar")?.scrollIntoView({ behavior: "smooth", block: "start" }), 350);
+    return () => clearTimeout(id);
+  }, [wantsCategory]);
 
   const today = useMemo(() => {
     const now = new Date();

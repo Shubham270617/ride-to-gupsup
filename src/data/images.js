@@ -100,6 +100,13 @@ export const images = {
   homeMerchPreview: rtg.community, // washed-out photo behind Home's Merchandise Highlights
   homeCTA: rtg.adventure2,
 
+  // The figures that run across Home's playful "little athletes" band
+  // (Microsoft Fluent Emoji, MIT licence). Each should face LEFT — they
+  // are mirrored for the trip back.
+  playCyclist: "/images/play/cyclist.png",
+  playRunner: "/images/play/runner.png",
+  playSwimmer: "/images/play/swimmer.png",
+
   // ---- ABOUT ----
   aboutHero: rtg.cycling,
   aboutStory1: placeholder,

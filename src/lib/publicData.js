@@ -27,6 +27,7 @@ import {
   homeMerchCopy as staticHomeMerchCopy,
   homeGalleryCopy as staticHomeGalleryCopy,
   homeVoicesCopy as staticHomeVoicesCopy,
+  homeJoinCopy as staticHomeJoinCopy,
   joinCopy as staticJoinCopy,
   footerCopy as staticFooterCopy,
   footerLinks as staticFooterLinks,
@@ -276,6 +277,8 @@ export function useCalendarCategories() {
       // Anything that isn't a hex colour is ignored (the page's own default
       // colour is used) rather than put into a style.
       color: HEX_COLOR.test((r.color || "").trim()) ? r.color.trim() : null,
+      // A type can be kept for its colour and legend without a filter pill.
+      isFilter: r.show_as_filter !== false,
     }),
   }).items;
 }
@@ -290,6 +293,8 @@ export function useCalendarActivities() {
       id: r.id,
       title: r.title,
       category: r.category_slug,
+      // Every filter it appears under: its own type, plus any extra ones.
+      filters: [r.category_slug, ...(r.also_category_slugs || [])].filter(Boolean),
       schedule: r.schedule_type,
       weekday: r.weekday,
       date: r.activity_date,
@@ -527,8 +532,7 @@ export const HERO_SLIDE_FIELDS = [
 ];
 
 export const HERO_COPY_FIELDS = [
-  { field: "ctaLabel", label: "Button label", type: "text" },
-  { field: "ctaLink", label: "Button link (a page on this site, e.g. /community)", type: "text" },
+  { field: "ctaLabel", label: "Button label (it starts the Join Community flow)", type: "text" },
   { field: "scrollLabel", label: "Label above the slide dots", type: "text" },
   { field: "presenceLabel", label: "Label before the states strip", type: "text" },
   { field: "expandingLabel", label: "Last chip after the states strip", type: "text" },
@@ -601,8 +605,10 @@ export const HOME_WAYS_FIELDS = [
 export const homeWhyKey = (field) => `text.home.why.${field}`;
 export const homeWaysKey = (field) => `text.home.ways.${field}`;
 
+// A field marked `optional` may be saved empty (to hide what it labels);
+// every other field falls back to its default when left blank.
 const buildCopy = (settings, fields, keyOf, defaults) =>
-  Object.fromEntries(fields.map(({ field }) => [field, pickFilled(settings, keyOf(field), defaults[field])]));
+  Object.fromEntries(fields.map(({ field, optional }) => [field, (optional ? pickText : pickFilled)(settings, keyOf(field), defaults[field])]));
 
 export const buildHomeWhyCopy = (settings) => buildCopy(settings, HOME_WHY_FIELDS, homeWhyKey, staticHomeWhyCopy);
 export const buildHomeWaysCopy = (settings) => buildCopy(settings, HOME_WAYS_FIELDS, homeWaysKey, staticHomeWaysCopy);
@@ -737,6 +743,23 @@ export const HOME_VOICES_FIELDS = [
 ];
 export const homeVoicesKey = (field) => `text.home.voices.${field}`;
 export const buildHomeVoicesCopy = (settings) => buildCopy(settings, HOME_VOICES_FIELDS, homeVoicesKey, staticHomeVoicesCopy);
+
+// The "already a member" window of a Join Community button
+// (lib/JoinCommunityContext.jsx).
+export const HOME_JOIN_FIELDS = [
+  { field: "joinedKicker", label: "Eyebrow (small line above the headline)", type: "text" },
+  { field: "joinedTitle", label: "Headline", type: "text" },
+  { field: "joinedText", label: "Paragraph", type: "textarea" },
+  { field: "profileLabel", label: "First button — label", type: "text" },
+  { field: "profileLink", label: "First button — link (e.g. /dashboard)", type: "text" },
+  { field: "eventsLabel", label: "Second button — label", type: "text" },
+  { field: "eventsLink", label: "Second button — link (e.g. /events)", type: "text" },
+  { field: "boardLabel", label: "Third button — label", type: "text" },
+  { field: "boardLink", label: "Third button — link (e.g. /leaderboard)", type: "text" },
+  { field: "closeLabel", label: "Screen-reader name of the close button", type: "text" },
+];
+export const homeJoinKey = (field) => `text.home.join.${field}`;
+export const buildHomeJoinCopy = (settings) => buildCopy(settings, HOME_JOIN_FIELDS, homeJoinKey, staticHomeJoinCopy);
 
 // Events page wording (pages/Events.jsx). SiteContentAdmin builds its
 // Events page from this list.
@@ -1094,6 +1117,7 @@ export const JOIN_FIELDS = [
   { field: "primaryLink", label: "First button — link (e.g. /community)", type: "text" },
   { field: "secondaryLabel", label: "Second button — label", type: "text" },
   { field: "secondaryLink", label: "Second button — link (e.g. /events)", type: "text" },
+  { field: "playLabel", label: "Home only — small \"little athletes\" button under the two buttons (clear it to hide the button)", type: "text", optional: true },
 ];
 export const joinKey = (field) => `text.join.${field}`;
 export const buildJoinCopy = (settings) => buildCopy(settings, JOIN_FIELDS, joinKey, staticJoinCopy);

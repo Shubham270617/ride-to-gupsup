@@ -7,7 +7,6 @@ import { signInWithPhone } from "../lib/phoneAuth";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useLiveActivity } from "../lib/publicData";
-import useAuthProviders from "../lib/useAuthProviders";
 import { brand } from "../data/content";
 
 const SESSION_KEY = "rtg_authgate_shown";
@@ -24,12 +23,6 @@ const GoogleMark = (props) => (
   </svg>
 );
 
-const StravaMark = (props) => (
-  <svg viewBox="0 0 24 24" fill="#FC4C02" width={18} height={18} {...props}>
-    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M9.395 0L3.638 11.61h3.462L9.6 6.859l2.5 4.751h3.467L9.395 0z" />
-  </svg>
-);
-
 export default function AuthGate() {
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(() => {
@@ -41,7 +34,6 @@ export default function AuthGate() {
   });
   const { session, loading: sessionLoading } = useSession();
   const { signal, initialMode } = useAuthGate();
-  const authProviders = useAuthProviders();
 
   const [mode, setMode] = useState("login");
   const [method, setMethod] = useState("email"); // "email" | "phone" — login only; signup always collects both
@@ -131,14 +123,6 @@ export default function AuthGate() {
     if (oauthError) setError(oauthError.message || "Couldn't start Google sign-in. Please try again.");
   };
 
-  // Strava isn't a Supabase-native OAuth provider, so this is a plain page
-  // navigation to our own broker (api/auth/[provider]/start.js) instead of
-  // supabase.auth.signInWithOAuth — same end result (browser leaves,
-  // comes back signed in), different plumbing under the hood.
-  const handleStrava = () => {
-    window.location.href = `/api/auth/strava/start?intent=${mode}`;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -223,18 +207,7 @@ export default function AuthGate() {
                 className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors"
               >
                 <GoogleMark /> Continue with Google
-              </button>
-
-              {authProviders.strava && (
-                <button
-                  type="button"
-                  onClick={handleStrava}
-                  className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors"
-                >
-                  <StravaMark /> Continue with Strava
-                </button>
-              )}
-            </div>
+              </button>            </div>
 
             <div className="flex items-center gap-3 mb-5">
               <div className="h-px flex-1 bg-rtg-border" />

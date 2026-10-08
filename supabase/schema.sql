@@ -61,6 +61,15 @@ alter table profiles add column if not exists join_reason text;
 -- the auth schema directly (Supabase doesn't expose it over the API).
 alter table profiles add column if not exists last_login_at timestamptz;
 
+-- Community membership: set when the member submits the Community
+-- Registration form (/onboarding). A "Join Community" button sends anyone
+-- not yet joined to that form, and shows members a welcome-back window
+-- instead (src/lib/JoinCommunityContext.jsx). See migration 014.
+alter table profiles add column if not exists community_joined boolean not null default false;
+alter table profiles add column if not exists community_joined_at timestamptz;
+update profiles set community_joined = true, community_joined_at = coalesce(community_joined_at, created_at)
+where onboarding_complete = true and community_joined = false;
+
 alter table profiles enable row level security;
 
 drop policy if exists "profiles self read" on profiles;
@@ -612,10 +621,16 @@ create table if not exists calendar_categories (
   name text not null,
   detail_label text,
   color text not null default '#35246f',
+  show_as_filter boolean not null default true,
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- Whether a type has its own filter pill above the calendar (a type can be
+-- kept for its colour and legend only). See migration 015.
+alter table calendar_categories add column if not exists show_as_filter boolean not null default true;
+comment on column calendar_categories.show_as_filter is 'Whether this activity type has its own filter pill above the calendar.';
 
 -- Everything on the calendar (Admin -> Calendar — Activities). A row is
 -- 'weekly' (repeats on `weekday`), 'once' (happens on `activity_date`) or
@@ -624,6 +639,7 @@ create table if not exists calendar_activities (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   category_slug text references calendar_categories(slug) on update cascade on delete set null,
+  also_category_slugs text[] not null default '{}',
   schedule_type text not null default 'weekly' check (schedule_type in ('weekly', 'once', 'flexible')),
   weekday text check (weekday in ('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')),
   activity_date date,
@@ -643,6 +659,11 @@ create table if not exists calendar_activities (
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- An activity sits under its own type's filter and under each of these too
+-- (e.g. Brick & Burn under Cycling and Running). See migration 015.
+alter table calendar_activities add column if not exists also_category_slugs text[] not null default '{}';
+comment on column calendar_activities.also_category_slugs is 'Short codes of the other activity types whose filter this activity also appears under.';
 
 create index if not exists calendar_activities_date_idx on calendar_activities (activity_date) where activity_date is not null;
 
