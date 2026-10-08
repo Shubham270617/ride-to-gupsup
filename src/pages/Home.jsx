@@ -386,7 +386,7 @@ function Hero({ images, settings, slides }) {
             </button>
           </div>
 
-          {/* Community numbers — same admin-editable stats as CommunityProof */}
+          {/* Community numbers — the admin-editable stats (Site Content → Home → Stats & Presence) */}
           <div className="mt-7 md:mt-8 grid grid-cols-3 gap-y-5 lg:grid-cols-none lg:grid-flow-col lg:auto-cols-fr lg:divide-x lg:divide-white/10">
             {stats.map((s) => (
               <div key={s.key} className="px-2 text-center">

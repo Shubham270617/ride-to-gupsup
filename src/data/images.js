@@ -107,16 +107,14 @@ export const images = {
   aboutMission: rtg.adventure,
 
   // ---- COMMUNITY ----
+  // The page's cards and city photos are uploaded per row in the admin
+  // (Community — Find Your Place / City Photos); these are its backgrounds.
   communityHero: rtg.community,
-  communityCyclists: rtg.cycling,
-  communityRunners: rtg.running,
-  communitySwimmers: placeholder,
-  communityTriathletes: rtg.adventure,
-  communityBeginners: placeholder,
-  communityExperienced: rtg.community,
-  communityVolunteers: placeholder,
-  communityChai: placeholder,
-  communityCelebration: rtg.adventure2,
+  communityWay: rtg.cycling, // behind "The RTG Way" band
+  // Outline the network pins sit on (Wikimedia Commons, CC BY-SA 3.0 — the
+  // credit under the map is in Site Content -> Community). The pins'
+  // positions are measured against this picture's shape.
+  communityIndiaMap: "/images/india-outline.svg",
 
   // ---- WEEKLY RIDES ----
   ridesHero: rtg.cycling,

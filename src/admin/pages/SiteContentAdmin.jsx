@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy } from "../../data/content";
 import {
+  COMMUNITY_PAGE_FIELDS,
+  communityPageKey,
   HOME_EVENTS_FIELDS,
   HOME_MERCH_FIELDS,
   EVENTS_PAGE_FIELDS,
@@ -51,14 +53,6 @@ const SECTIONS = [
   { page: "Blog", key: "blog.hero", label: "From the Journal", eyebrow: "Latest", title: "From the Journal", subtitle: "" },
 
   { page: "Challenges", key: "challenges.hero", label: "Current Challenges", eyebrow: "Live & Upcoming", title: "Current Challenges", subtitle: "" },
-
-  { page: "Community", key: "community.feelsLike", label: "What RTG Feels Like", eyebrow: "What RTG Feels Like", title: "Come for the Activity. Stay for the People.", subtitle: "It's never just a ride or a run — it's the whole moment around it." },
-  { page: "Community", key: "community.howToJoin", label: "Way to Be Part of RTG", eyebrow: "Getting Started", title: "Way to Be Part of RTG", subtitle: "Seven steps from stranger to teammate." },
-  { page: "Community", key: "community.upcoming", label: "Upcoming Community Experiences", eyebrow: "Don't Miss Out", title: "Upcoming Community Experiences", subtitle: "Our weekly rhythm — full calendar has everything else, races included." },
-  { page: "Community", key: "community.voices", label: "Member Voices", eyebrow: "Member Voices", title: "The People Behind RTG", subtitle: "" },
-  { page: "Community", key: "community.volunteer", label: "Volunteer With RTG", eyebrow: "Get Involved", title: "Volunteer With RTG", subtitle: "" },
-
-
 
   { page: "Merchandise", key: "merch.hero", label: "All Merchandise", eyebrow: "Shop", title: "All Merchandise", subtitle: "Free community pride, premium quality — order yours today." },
   { page: "Merchandise", key: "merch.perks", label: "Members Save 10%", eyebrow: "Member Perks", title: "Members Save 10%", subtitle: "" },
@@ -130,6 +124,17 @@ const LEADERBOARD_GROUP_HEADINGS = {
   panels: "Leaderboard page — top 3, charts & analysis cards",
   board: "Leaderboard page — ranking table",
   ridge: "Leaderboard page — Ridge Repeats",
+};
+
+// Community page — same arrangement again.
+const COMMUNITY_GROUP_HEADINGS = {
+  hero: "Community page — hero",
+  place: "Community page — Find Your Place",
+  way: "Community page — The RTG Way",
+  motion: "Community page — RTG in Motion",
+  network: "Community page — The RTG Network",
+  cities: "Community page — cities & photos",
+  join: "Community page — Join band at the bottom",
 };
 
 const CUSTOM_GROUPS = {
@@ -226,6 +231,17 @@ const CUSTOM_GROUPS = {
       key: leaderboardPageKey(f.field),
       label: f.label,
       fallback: leaderboardPageCopy[f.field],
+      type: f.type,
+    })),
+  })),
+  // The cards, network groups, map pins, cities and city photos are admin
+  // screens of their own (Community — …).
+  Community: Object.entries(COMMUNITY_GROUP_HEADINGS).map(([group, heading]) => ({
+    heading,
+    fields: COMMUNITY_PAGE_FIELDS.filter((f) => f.group === group).map((f) => ({
+      key: communityPageKey(f.field),
+      label: f.label,
+      fallback: communityPageCopy[f.field],
       type: f.type,
     })),
   })),

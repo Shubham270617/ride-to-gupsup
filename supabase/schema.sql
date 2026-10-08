@@ -778,6 +778,134 @@ comment on column ridge_results.improvement_pct is 'Optional. Improvement in %; 
 
 create index if not exists ridge_results_session_idx on ridge_results (session_slug);
 
+-- ============================================================================
+-- Community page (/community) — seven tables of its own, each with an admin
+-- screen. Its headings and labels live in site_settings under
+-- "text.community.<field>" (Admin -> Site Content -> Community); its two
+-- background photos are the 'communityHero' and 'communityWay' site photos.
+-- Starter rows are in supabase/migrations/012_community.sql.
+--   community_paths           "Find Your Place" carousel cards
+--   community_principles      "The RTG Way" cards
+--   community_milestones      "RTG in Motion" timeline cards
+--   community_network_cities  pins on the India map (one is the RTG hub)
+--   community_network_groups  the communities of "The RTG Network"
+--   community_cities          city buttons of "One Community. Different Cities."
+--   community_city_moments    the photos that rotate beside those buttons
+-- ============================================================================
+
+create table if not exists community_paths (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  nav_label text,
+  description text,
+  image_url text,
+  image_position text,
+  link_url text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column community_paths.nav_label is 'Short word on the button under the carousel (e.g. Ride). Falls back to title.';
+comment on column community_paths.image_position is 'Optional. Which part of the photo stays in view, as a CSS background-position (e.g. center 45%).';
+
+create table if not exists community_principles (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  label text,
+  description text,
+  nav_label text,
+  ghost_word text,
+  tags text,
+  icon text not null default 'people',
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column community_principles.nav_label is 'Short word on the button under the cards (e.g. Community). Falls back to title.';
+comment on column community_principles.ghost_word is 'The big faint word behind the cards while this one is open (e.g. No Ego).';
+comment on column community_principles.tags is 'Comma-separated pills at the bottom of the card.';
+comment on column community_principles.icon is 'Key of a line-art icon drawn by pages/Community.jsx: people | target | chat | shield.';
+
+create table if not exists community_milestones (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  label text,
+  description text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists community_network_cities (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  pin_x numeric not null default 50 check (pin_x between 0 and 100),
+  pin_y numeric not null default 50 check (pin_y between 0 and 100),
+  is_hub boolean not null default false,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column community_network_cities.pin_x is 'Pin position across the India map, in % from its left edge.';
+comment on column community_network_cities.pin_y is 'Pin position down the India map, in % from its top edge.';
+comment on column community_network_cities.is_hub is 'The RTG hub: drawn in orange, not clickable; a route runs from it to every other pin.';
+
+create table if not exists community_network_groups (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  monogram text,
+  group_type text not null default 'connected' check (group_type in ('connected', 'wider')),
+  city_slug text references community_network_cities(slug) on update cascade on delete set null,
+  location text,
+  sport text,
+  tagline text,
+  relation_label text,
+  connection_label text,
+  description text,
+  contact_person text,
+  reach text,
+  join_text text,
+  featured boolean not null default false,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column community_network_groups.group_type is 'connected = the "Connected with RTG" tab; wider = the "Wider Community" tab.';
+comment on column community_network_groups.tagline is 'Optional small line above the name (e.g. Delhi NCR • Cycling • Training). Falls back to location • sport.';
+
+create index if not exists community_network_groups_type_idx on community_network_groups (group_type);
+
+create table if not exists community_cities (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  context_line text,
+  caption text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists community_city_moments (
+  id uuid primary key default gen_random_uuid(),
+  city_slug text references community_cities(slug) on update cascade on delete cascade,
+  label text,
+  image_url text,
+  image_position text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column community_city_moments.image_position is 'Optional. Which part of the photo stays in view, as a CSS background-position (e.g. center 48%).';
+
+create index if not exists community_city_moments_city_idx on community_city_moments (city_slug);
+
 -- Same RLS pattern on every content table: public can read, only admins
 -- (rows in admin_profiles) can write.
 do $$
@@ -785,7 +913,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'leaderboard_challenges', 'leaderboard_sports', 'leaderboard_age_groups', 'leaderboard_entries', 'ridge_sessions', 'ridge_results', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'leaderboard_challenges', 'leaderboard_sports', 'leaderboard_age_groups', 'leaderboard_entries', 'ridge_sessions', 'ridge_results', 'community_paths', 'community_principles', 'community_milestones', 'community_network_cities', 'community_network_groups', 'community_cities', 'community_city_moments', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'size_guide', 'merch_reviews', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
   loop
     execute format('alter table %I enable row level security', t);
 

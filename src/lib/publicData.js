@@ -35,6 +35,7 @@ import {
   eventsPageCopy as staticEventsPageCopy,
   calendarPageCopy as staticCalendarPageCopy,
   leaderboardPageCopy as staticLeaderboardPageCopy,
+  communityPageCopy as staticCommunityPageCopy,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -888,6 +889,98 @@ export const LEADERBOARD_PAGE_FIELDS = [
 export const leaderboardPageKey = (field) => `text.leaderboard.${field}`;
 export const buildLeaderboardPageCopy = (settings) => buildCopy(settings, LEADERBOARD_PAGE_FIELDS, leaderboardPageKey, staticLeaderboardPageCopy);
 
+// Community page wording (pages/Community.jsx). SiteContentAdmin builds its
+// Community page from this list; `group` is the card a field sits in.
+export const COMMUNITY_PAGE_FIELDS = [
+  { group: "hero", field: "heroKicker", label: "Eyebrow (small line above the headline)", type: "text" },
+  { group: "hero", field: "heroTitle", label: "Headline — line 1", type: "text" },
+  { group: "hero", field: "heroTitleAccent", label: "Headline — line 2 (gradient-coloured)", type: "text" },
+  { group: "hero", field: "heroText", label: "Paragraph", type: "textarea" },
+  { group: "hero", field: "heroCtaLabel", label: "Button label", type: "text" },
+  { group: "hero", field: "heroCtaLink", label: "Button link (a page on this site, e.g. /calendar)", type: "text" },
+  { group: "hero", field: "heroNote", label: "Small line at the bottom right (desktop)", type: "text" },
+  { group: "hero", field: "heroPulseTop", label: "Phones — first row of moving tags at the bottom (comma-separated)", type: "text" },
+  { group: "hero", field: "heroPulseBottom", label: "Phones — second row of moving tags (comma-separated)", type: "text" },
+  { group: "place", field: "placeKicker", label: "Eyebrow", type: "text" },
+  { group: "place", field: "placeTitle", label: "Headline", type: "text" },
+  { group: "place", field: "placeTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "place", field: "placeText", label: "Paragraph", type: "textarea" },
+  { group: "place", field: "placePrevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { group: "place", field: "placeNextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+  { group: "way", field: "wayKicker", label: "Eyebrow", type: "text" },
+  { group: "way", field: "wayTitle", label: "Headline", type: "text" },
+  { group: "way", field: "wayTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "way", field: "wayText", label: "Paragraph", type: "textarea" },
+  { group: "way", field: "wayClosingText", label: "Small line beside the button", type: "text" },
+  { group: "way", field: "wayCtaLabel", label: "Button label", type: "text" },
+  { group: "way", field: "wayCtaLink", label: "Button link (#join-rtg scrolls to the Join band at the bottom)", type: "text" },
+  { group: "way", field: "wayPrevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { group: "way", field: "wayNextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+  { group: "motion", field: "motionKicker", label: "Eyebrow", type: "text" },
+  { group: "motion", field: "motionTitle", label: "Headline", type: "text" },
+  { group: "motion", field: "motionTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "motion", field: "motionText", label: "Paragraph", type: "textarea" },
+  { group: "motion", field: "motionCtaLabel", label: "Button label", type: "text" },
+  { group: "motion", field: "motionCtaLink", label: "Button link (e.g. /about)", type: "text" },
+  { group: "motion", field: "motionPrevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { group: "motion", field: "motionNextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+  { group: "network", field: "networkKicker", label: "Eyebrow", type: "text" },
+  { group: "network", field: "networkTitle", label: "Headline — line 1", type: "text" },
+  { group: "network", field: "networkTitleAccent", label: "Headline — line 2 (gradient-coloured)", type: "text" },
+  { group: "network", field: "networkText", label: "Paragraph", type: "textarea" },
+  { group: "network", field: "connectedTabLabel", label: "Tab 1 — name (groups filed under \"Connected with RTG\")", type: "text" },
+  { group: "network", field: "widerTabLabel", label: "Tab 2 — name (groups filed under \"Wider Community\")", type: "text" },
+  { group: "network", field: "mapLabel", label: "Map card — small label", type: "text" },
+  { group: "network", field: "mapWatermark", label: "Map card — big faint word", type: "text" },
+  { group: "network", field: "mapAlt", label: "Map card — description of the map for screen readers", type: "text" },
+  { group: "network", field: "connectedStatus", label: "Map card — line under the map on tab 1 ({count} = number of groups)", type: "text" },
+  { group: "network", field: "widerStatus", label: "Map card — line under the map on tab 2 ({count} = number of groups)", type: "text" },
+  { group: "network", field: "mapCreditLabel", label: "Map card — credit for the map picture", type: "text" },
+  { group: "network", field: "mapCreditLink", label: "Map card — link of that credit", type: "text" },
+  { group: "network", field: "stageLabel", label: "Community card — small label above it", type: "text" },
+  { group: "network", field: "contactLabel", label: "Community card — label of the contact box", type: "text" },
+  { group: "network", field: "reachLabel", label: "Community card — label of the \"how to reach\" box", type: "text" },
+  { group: "network", field: "joinLabel", label: "Community card — label of the \"how to join\" box", type: "text" },
+  { group: "network", field: "locationLabel", label: "Community card — label of the location", type: "text" },
+  { group: "network", field: "connectionLabel", label: "Community card — label of the connection", type: "text" },
+  { group: "network", field: "networkPrevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { group: "network", field: "networkNextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+  { group: "network", field: "networkEmptyText", label: "Message when a tab has no groups", type: "text" },
+  { group: "network", field: "networkNote", label: "Small note under the cards", type: "textarea" },
+  { group: "network", field: "networkQuote", label: "Line at the bottom of the section", type: "text" },
+  { group: "cities", field: "citiesKicker", label: "Eyebrow", type: "text" },
+  { group: "cities", field: "citiesTitle", label: "Headline", type: "text" },
+  { group: "cities", field: "citiesTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "cities", field: "citiesText", label: "Paragraph", type: "textarea" },
+  { group: "cities", field: "momentsLabel", label: "Photos — small label above the city name", type: "text" },
+  { group: "cities", field: "momentsHint", label: "Photos — hint on the right", type: "text" },
+  { group: "cities", field: "momentsEmptyText", label: "Photos — message when the city has no photos", type: "text" },
+  { group: "join", field: "joinEyebrow", label: "Eyebrow", type: "text" },
+  { group: "join", field: "joinTitle", label: "Headline", type: "text" },
+  { group: "join", field: "joinTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "join", field: "joinSubtitle", label: "Paragraph", type: "textarea" },
+  { group: "join", field: "joinPrimaryLabel", label: "First button — label (it opens the sign-up panel)", type: "text" },
+  { group: "join", field: "joinSecondaryLabel", label: "Second button — label", type: "text" },
+  { group: "join", field: "joinSecondaryLink", label: "Second button — link (e.g. /calendar)", type: "text" },
+];
+export const communityPageKey = (field) => `text.community.${field}`;
+export const buildCommunityPageCopy = (settings) => buildCopy(settings, COMMUNITY_PAGE_FIELDS, communityPageKey, staticCommunityPageCopy);
+
+// The Community page's own wording for the Join band at its foot, in the
+// shape JoinCTA draws (see buildJoinCopy below for every other page's).
+export function buildCommunityJoinCopy(settings) {
+  const copy = buildCommunityPageCopy(settings);
+  return {
+    eyebrow: copy.joinEyebrow,
+    title: copy.joinTitle,
+    titleAccent: copy.joinTitleAccent,
+    subtitle: copy.joinSubtitle,
+    primaryLabel: copy.joinPrimaryLabel,
+    secondaryLabel: copy.joinSecondaryLabel,
+    secondaryLink: copy.joinSecondaryLink,
+  };
+}
+
 // "Join the Movement" band + site footer (components/sections/JoinCTA.jsx,
 // shown on every page). SiteContentAdmin builds its Footer page from these.
 export const JOIN_FIELDS = [
@@ -1131,6 +1224,103 @@ export function useRidgeResults() {
       improvement: r.improvement_pct === null || r.improvement_pct === undefined ? null : Number(r.improvement_pct),
       score: Number(r.score) || 0,
     }),
+  }).items;
+}
+
+// ---- Community page ---------------------------------------------------------
+// No placeholder fallbacks, same as the calendar and leaderboard: only what
+// an admin has added.
+
+// "Find Your Place" carousel cards (Admin -> Community — Find Your Place).
+export function useCommunityPaths() {
+  return useSupabaseList("community_paths", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      title: r.title,
+      navLabel: r.nav_label || r.title,
+      desc: r.description,
+      image: r.image_url,
+      imagePosition: r.image_position,
+      link: r.link_url,
+    }),
+  }).items;
+}
+
+// "The RTG Way" cards (Admin -> Community — The RTG Way).
+export function useCommunityPrinciples() {
+  return useSupabaseList("community_principles", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      title: r.title,
+      label: r.label,
+      desc: r.description,
+      navLabel: r.nav_label || r.title,
+      ghostWord: r.ghost_word,
+      tags: parseTags(r.tags),
+      icon: r.icon,
+    }),
+  }).items;
+}
+
+// "RTG in Motion" timeline cards (Admin -> Community — RTG in Motion).
+export function useCommunityMilestones() {
+  return useSupabaseList("community_milestones", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, title: r.title, label: r.label, desc: r.description }),
+  }).items;
+}
+
+// Pins on the network's India map (Admin -> Community — Network Map Pins).
+// `x` / `y` are % across and down the map; the `isHub` pin is the RTG hub.
+export function useCommunityNetworkCities() {
+  return useSupabaseList("community_network_cities", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name, x: Number(r.pin_x) || 0, y: Number(r.pin_y) || 0, isHub: Boolean(r.is_hub) }),
+  }).items;
+}
+
+// The communities of "The RTG Network" (Admin -> Community — Network
+// Groups). `type` is "connected" or "wider" — the tab a group sits under.
+export function useCommunityNetworkGroups() {
+  return useSupabaseList("community_network_groups", {
+    staticFallback: [],
+    mapRow: (r) => ({
+      id: r.id,
+      name: r.name,
+      monogram: r.monogram,
+      type: r.group_type,
+      city: r.city_slug,
+      location: r.location,
+      sport: r.sport,
+      tagline: r.tagline || [r.location, r.sport].filter(Boolean).join(" • "),
+      relation: r.relation_label,
+      connection: r.connection_label,
+      desc: r.description,
+      contact: r.contact_person,
+      reach: r.reach,
+      join: r.join_text,
+      featured: Boolean(r.featured),
+    }),
+  }).items;
+}
+
+// City buttons of "One Community. Different Cities." (Admin -> Community —
+// Cities).
+export function useCommunityCities() {
+  return useSupabaseList("community_cities", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name, context: r.context_line, caption: r.caption }),
+  }).items;
+}
+
+// The photos that rotate beside those buttons (Admin -> Community — City
+// Photos).
+export function useCommunityCityMoments() {
+  return useSupabaseList("community_city_moments", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, city: r.city_slug, label: r.label, image: r.image_url, imagePosition: r.image_position }),
   }).items;
 }
 

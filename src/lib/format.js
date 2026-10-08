@@ -23,3 +23,10 @@ export function splitTitle(title = "", accent) {
   const cut = Math.ceil(words.length / 2);
   return [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
 }
+
+// A product with no price yet (blank in Admin -> Store — Products) is shown
+// as "to be announced" and can't be checked out.
+export const hasPrice = (item) => Number(item?.price) > 0;
+
+// 1799 -> "₹1,799"
+export const formatRupees = (n) => `₹${Number(n).toLocaleString("en-IN")}`;

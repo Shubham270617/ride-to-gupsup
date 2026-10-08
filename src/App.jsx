@@ -15,7 +15,7 @@ import WeeklyRides from "./pages/WeeklyRides";
 import WeeklySessionDetail from "./pages/WeeklySessionDetail";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
-import Merchandise from "./pages/Merchandise";
+import Merchandise from "./pages/Store";
 import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -113,6 +113,13 @@ export default function App() {
           <Route path="leaderboard-age-groups" element={<ResourceAdminPage resource={resources.leaderboardAgeGroups} />} />
           <Route path="ridge-results" element={<ResourceAdminPage resource={resources.ridgeResults} />} />
           <Route path="ridge-sessions" element={<ResourceAdminPage resource={resources.ridgeSessions} />} />
+          <Route path="community-paths" element={<ResourceAdminPage resource={resources.communityPaths} />} />
+          <Route path="community-way" element={<ResourceAdminPage resource={resources.communityPrinciples} />} />
+          <Route path="community-motion" element={<ResourceAdminPage resource={resources.communityMilestones} />} />
+          <Route path="community-network" element={<ResourceAdminPage resource={resources.communityNetworkGroups} />} />
+          <Route path="community-network-pins" element={<ResourceAdminPage resource={resources.communityNetworkCities} />} />
+          <Route path="community-cities" element={<ResourceAdminPage resource={resources.communityCities} />} />
+          <Route path="community-city-photos" element={<ResourceAdminPage resource={resources.communityCityMoments} />} />
           <Route path="weekly-sessions" element={<ResourceAdminPage resource={resources.weeklySessions} />} />
           <Route path="faqs" element={<ResourceAdminPage resource={resources.faqs} />} />
           <Route path="ride-faqs" element={<ResourceAdminPage resource={resources.rideFaqs} />} />

@@ -42,7 +42,8 @@ export default function ResourceAdminPage({ resource }) {
 
   const handleDelete = async (row) => {
     const ok = await confirm({
-      title: `Delete "${row.title || row.name}"?`,
+      // Rows without a title or name (a city photo, say) are named by what they are.
+      title: `Delete ${row.title || row.name ? `"${row.title || row.name}"` : `this ${resource.singular.toLowerCase()}`}?`,
       message: "This can't be undone.",
     });
     if (!ok) return;
@@ -67,7 +68,7 @@ export default function ResourceAdminPage({ resource }) {
         <p className="text-rtg-orange-400 text-sm">{error}</p>
       ) : (
         <>
-          <ResourceTable rows={pageRows} columns={resource.listColumns} onEdit={setEditing} onDelete={handleDelete} />
+          <ResourceTable rows={pageRows} columns={resource.listColumns} fields={resource.fields} onEdit={setEditing} onDelete={handleDelete} />
           <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         </>
       )}

@@ -506,6 +506,85 @@ export const leaderboardPageCopy = {
   ridgeNote: "Demo ridge data • Live version can use the existing Ridge Repeats app timestamps, loop scores and rider profiles.",
 };
 
+// Community page (/community) wording. The cards, communities, map pins,
+// cities and photos are the rows of the community_* tables (Admin ->
+// Community — …); this is every heading, label and paragraph around them,
+// editable in Admin -> Site Content -> Community under
+// "text.community.<field>". The page draws its small labels in capitals
+// itself, so they are typed normally here.
+export const communityPageCopy = {
+  heroKicker: "This Is the RTG Community",
+  heroTitle: "Move Together.",
+  heroTitleAccent: "Connect Beyond Sport.",
+  heroText: "Cyclists, runners and explorers brought together through regular sessions, shared challenges, new places and the people we meet along the way.",
+  heroCtaLabel: "Explore Activities",
+  heroCtaLink: "/calendar",
+  heroNote: "Ride • Run • Explore • Connect",
+  heroPulseTop: "Ride, Run, Explore, Connect, Train, Travel",
+  heroPulseBottom: "Chai, Friendship, Stories, Challenges, Trails, Tours",
+  placeKicker: "Find Your Place",
+  placeTitle: "How Do You Want to",
+  placeTitleAccent: "Move?",
+  placeText: "There is no single way to be part of RTG. Join the side of the community that feels most like you — or move between all four.",
+  placePrevLabel: "Previous community path",
+  placeNextLabel: "Next community path",
+  wayKicker: "The RTG Way",
+  wayTitle: "Come for the Activity.",
+  wayTitleAccent: "Stay for the People.",
+  wayText: "RTG is not defined by pace, distance or city. It is shaped by how we show up for ourselves and how we show up for each other.",
+  wayClosingText: "This Is the RTG Way.",
+  wayCtaLabel: "Be Part of RTG",
+  wayCtaLink: "#join-rtg",
+  wayPrevLabel: "Previous RTG principle",
+  wayNextLabel: "Next RTG principle",
+  motionKicker: "RTG in Motion",
+  motionTitle: "Started with Rides.",
+  motionTitleAccent: "Growing into Something Bigger.",
+  motionText: "RTG keeps evolving with the people who show up. What began with simple rides and chai is becoming a broader community of movement, challenge, shared experiences and stronger connections.",
+  motionCtaLabel: "Discover the RTG Story",
+  motionCtaLink: "/about",
+  motionPrevLabel: "Previous RTG milestone",
+  motionNextLabel: "Next RTG milestone",
+  networkKicker: "The RTG Network",
+  networkTitle: "Different Communities.",
+  networkTitleAccent: "One Bigger Movement.",
+  networkText: "RTG grows stronger when communities move together. We believe in sharing roads, trails, ideas and opportunities — not building walls between groups.",
+  connectedTabLabel: "Connected with RTG",
+  widerTabLabel: "Wider Community",
+  mapLabel: "India Network View",
+  mapWatermark: "India",
+  mapAlt: "Outline map of India",
+  connectedStatus: "{count} connected communities • Delhi NCR + Chandigarh",
+  widerStatus: "Public ecosystem view • no RTG affiliation implied",
+  mapCreditLabel: "India Outline • Wikimedia Commons • CC BY-SA 3.0",
+  mapCreditLink: "https://commons.wikimedia.org/wiki/File:India_outline.svg",
+  stageLabel: "Community Connection",
+  contactLabel: "Contact Person",
+  reachLabel: "How to Reach",
+  joinLabel: "Best Way to Join",
+  locationLabel: "Location",
+  connectionLabel: "Connection",
+  networkPrevLabel: "Previous community",
+  networkNextLabel: "Next community",
+  networkEmptyText: "Communities will be listed here soon.",
+  networkNote: "Connected with RTG reflects relationships and community links already known to us. Wider Community is a public ecosystem view and does not imply an RTG affiliation.",
+  networkQuote: "The road gets better when communities share it.",
+  citiesKicker: "Connected Across Cities",
+  citiesTitle: "One Community.",
+  citiesTitleAccent: "Different Cities.",
+  citiesText: "Every city brings its own routes, people and energy. Choose a city to explore its RTG moments — the faces, roads, trails and community stories that make each place feel different while still feeling RTG.",
+  momentsLabel: "Community Moments",
+  momentsHint: "Choose a City ←",
+  momentsEmptyText: "Photos from this city are coming soon.",
+  joinEyebrow: "Join the Community",
+  joinTitle: "Your Next Mile Doesn't Have to Be",
+  joinTitleAccent: "Solo.",
+  joinSubtitle: "Ride with us. Run with us. Explore with us. Or simply come for the chai and stay for the people.",
+  joinPrimaryLabel: "Join RTG Community",
+  joinSecondaryLabel: "See Upcoming Activities",
+  joinSecondaryLink: "/calendar",
+};
+
 // "Join the Movement" band above the footer, on every page. Fallback
 // defaults — editable in Admin -> Site Content -> Footer under
 // "text.join.<field>".
@@ -627,14 +706,6 @@ export const weeklySessions = [
   },
 ];
 
-// The Community page's "What RTG Feels Like" four-moment collage.
-export const rtgMoments = [
-  { key: "communityCyclists", title: "Riding", desc: "Weekend rides, mountain climbs, and city loops — wheels down, together." },
-  { key: "communityRunners", title: "Running", desc: "Sunrise 5Ks to marathon training blocks, every pace welcome." },
-  { key: "communityChai", title: "Chai & Conversation", desc: "Every ride ends the same way — chai, stories, and no rush to leave." },
-  { key: "communityCelebration", title: "Celebration & Volunteering", desc: "Finish lines, medal ceremonies, and the volunteers who make it all happen." },
-];
-
 export const rideSafety = [
   "Wear a helmet at all times — non-negotiable.",
   "Use front & rear lights before sunrise.",
@@ -721,18 +792,6 @@ export const sponsorOpportunities = [
 
 export const instagramPlaceholderCount = 8;
 
-// ---- Community: "How to Join" flow + founding timeline ----
-
-export const joinSteps = [
-  { step: 1, title: "Choose City", desc: "Pick the RTG chapter nearest you — 8+ cities and growing." },
-  { step: 2, title: "Choose Sport", desc: "Cycling, running, swimming, or triathlon — or all of them." },
-  { step: 3, title: "Join WhatsApp", desc: "Get added to your city's group for ride announcements and updates." },
-  { step: 4, title: "Fill Form", desc: "A two-minute sign-up so we know your pace, goals, and experience." },
-  { step: 5, title: "Show Up on Friday", desc: "Come to Friday Bricks at Nehru Park — no registration needed." },
-  { step: 6, title: "Find Your People", desc: "Ride, run, and share chai with athletes at your pace." },
-  { step: 7, title: "Grow Together", desc: "Train consistently, chase new distances, and mentor the next beginner." },
-];
-
 // ---- About: Leadership (fallback shown until real team members are added
 // via the admin Team screen — see src/lib/publicData.js useTeamMembers) ----
 
@@ -745,15 +804,6 @@ export const teamMembers = [
   { name: "Harshad", role: "Core Team", city: "Delhi", sport: "Cycling", avatarKey: "avatar5", instagramUrl: "https://instagram.com/RideTeaGupShup" },
   { name: "Yash", role: "Core Team", city: "Delhi", sport: "Running", avatarKey: "avatar6", instagramUrl: "https://instagram.com/RideTeaGupShup" },
   { name: "Hojo", role: "Core Team", city: "Delhi", sport: "Cycling", avatarKey: "avatar7", instagramUrl: "https://instagram.com/RideTeaGupShup" },
-];
-
-// Community page's "Ways to Participate" quick-entry cards.
-export const waysToParticipate = [
-  { title: "Join a Ride", desc: "Weekend rides, mountain climbs, and city loops.", to: "/weekly-rides", icon: "bike" },
-  { title: "Join a Run", desc: "Sunrise 5Ks to marathon training blocks.", to: "/weekly-rides", icon: "footprints" },
-  { title: "Take a Challenge", desc: "Pan-India virtual distance and elevation goals.", to: "/challenges", icon: "flame" },
-  { title: "Attend a Meetup", desc: "Chai, stories, and planning the next big ride.", to: "/events", icon: "users" },
-  { title: "Volunteer with RTG", desc: "Marshalling, logistics, photography, and more.", to: "#volunteer", icon: "heart-handshake" },
 ];
 
 // ---- Race Results (fallback shown until real results are added via the

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import Reveal from "../ui/Reveal";
 import SmartLink from "../ui/SmartLink";
 import Footer from "../Footer";
-import { useSiteImages, useSiteSettings, buildJoinCopy } from "../../lib/publicData";
+import { useSiteImages, useSiteSettings, buildJoinCopy, buildCommunityJoinCopy } from "../../lib/publicData";
 import useIsMobile from "../../hooks/useIsMobile";
 
 const CTA_BUTTON =
@@ -18,11 +18,13 @@ const CTA_PRIMARY = `${CTA_BUTTON} btn-shine bg-gradient-to-r from-[#f45b18] to-
 //
 // `onPrimaryClick`, when given, replaces the first button's link with an
 // action (the Community page uses it to open the sign-up panel).
-export default function JoinCTA({ onPrimaryClick }) {
+// `community` swaps in the Community page's own wording for the band
+// (Site Content -> Community) in place of the shared one.
+export default function JoinCTA({ onPrimaryClick, community = false }) {
   const images = useSiteImages();
   const settings = useSiteSettings();
   const isMobile = useIsMobile();
-  const join = useMemo(() => buildJoinCopy(settings), [settings]);
+  const join = useMemo(() => (community ? buildCommunityJoinCopy(settings) : buildJoinCopy(settings)), [settings, community]);
 
   return (
     <section id="join-rtg" className="theme-night relative isolate overflow-hidden bg-[#21143c]">

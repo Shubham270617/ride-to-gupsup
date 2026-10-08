@@ -10,6 +10,8 @@
 // optional: true a blank box is saved as "no value" instead of 0.
 // field.showWhen = { field, in: [...] } shows the field only while another
 // field of the same form holds one of those values.
+// field.listLabel is the column heading when the field is one of the
+// resource's listColumns (otherwise the column's own name is shown).
 
 // Keys of the line-art icons drawn by components/sections/WhyRtg.jsx
 // (WHY_ICONS) — keep the two in step.
@@ -22,6 +24,15 @@ const WHY_ICON_OPTIONS = [
   { value: "recognition", label: "Star medal (recognition)" },
   { value: "adventure", label: "Mountains + flag (adventure)" },
   { value: "memories", label: "Route with pins (memories)" },
+];
+
+// Keys of the line-art icons drawn by pages/Community.jsx (WAY_ICONS) —
+// keep the two in step.
+const COMMUNITY_ICON_OPTIONS = [
+  { value: "people", label: "Two people (community)" },
+  { value: "target", label: "Target (consistency)" },
+  { value: "chat", label: "Speech bubbles (conversations)" },
+  { value: "shield", label: "Shield with tick (respect)" },
 ];
 
 export const resources = {
@@ -290,6 +301,138 @@ export const resources = {
       { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Results are filed under this code — leave it as it is." },
       { name: "loop_count", label: "Loops in the Session", type: "number", default: 5, hint: "A rider's completion % is their recorded loops out of this." },
       { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order in the dropdown." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityPaths: {
+    table: "community_paths",
+    title: "Community — Find Your Place",
+    singular: "Card",
+    orderBy: "sort_order",
+    listColumns: ["image_url", "title", "nav_label", "link_url", "sort_order", "published"],
+    fields: [
+      { name: "title", label: "Title", type: "text", required: true, placeholder: "e.g. Ride.", hint: "Each card is one photo of the Community page's \"Find Your Place\" carousel. The section's own heading is in Site Content → Community." },
+      { name: "nav_label", label: "Word on the Button Under the Carousel", listLabel: "Button word", type: "text", placeholder: "e.g. Ride", hint: "Optional. If empty, the title is used." },
+      { name: "description", label: "Description", type: "textarea", placeholder: "One short sentence." },
+      { name: "image_url", label: "Photo", listLabel: "Photo", type: "image", folder: "community" },
+      { name: "image_position", label: "Photo Focus", type: "text", placeholder: "e.g. center 45%", hint: "Optional. Which part of the photo stays in view: \"center 0%\" keeps the top, \"center 50%\" the middle, \"center 100%\" the bottom." },
+      { name: "link_url", label: "Link", listLabel: "Link", type: "text", placeholder: "e.g. /weekly-rides", hint: "Where the card goes when clicked while it is in front: a page on this site (starts with /), a full web address (https://…), or a part of this page — #rtg-way, #rtg-motion, #rtg-network, #cities, #join-rtg." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Cards are numbered 01, 02, 03… in this order." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityPrinciples: {
+    table: "community_principles",
+    title: "Community — The RTG Way",
+    singular: "Principle",
+    orderBy: "sort_order",
+    listColumns: ["title", "label", "nav_label", "sort_order", "published"],
+    fields: [
+      { name: "title", label: "Heading", type: "text", required: true, placeholder: "e.g. Shared Wins Matter More.", hint: "Each principle is one card of the Community page's dark \"The RTG Way\" band." },
+      { name: "label", label: "Small Line Above the Heading", listLabel: "Small line", type: "text", placeholder: "e.g. Community Over Competition" },
+      { name: "description", label: "Paragraph", type: "textarea", hint: "Shown while the card is open." },
+      { name: "tags", label: "Tags at the Bottom of the Card", type: "text", placeholder: "No Ego, Encourage Others, Celebrate Progress", hint: "Comma-separated. Three fit best." },
+      { name: "nav_label", label: "Word on the Button Under the Cards", listLabel: "Button word", type: "text", placeholder: "e.g. Community", hint: "Optional. If empty, the heading is used." },
+      { name: "ghost_word", label: "Big Faint Word Behind the Cards", type: "text", placeholder: "e.g. No Ego", hint: "Optional. Shown across the background while this card is open." },
+      { name: "icon", label: "Icon", type: "select", options: COMMUNITY_ICON_OPTIONS, default: "people" },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Cards are numbered 01, 02, 03… in this order. Four fit best." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityMilestones: {
+    table: "community_milestones",
+    title: "Community — RTG in Motion",
+    singular: "Milestone",
+    orderBy: "sort_order",
+    listColumns: ["title", "label", "sort_order", "published"],
+    fields: [
+      { name: "title", label: "Heading", type: "text", required: true, placeholder: "e.g. Come Ride. Have Chai.", hint: "Each milestone is one card of the Community page's \"RTG in Motion\" timeline." },
+      { name: "label", label: "Small Line Above the Heading", listLabel: "Small line", type: "text", placeholder: "e.g. The Beginning" },
+      { name: "description", label: "Paragraph", type: "textarea" },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Oldest first. Cards are numbered 01, 02, 03… in this order." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityNetworkGroups: {
+    table: "community_network_groups",
+    title: "Community — Network Groups",
+    singular: "Group",
+    orderBy: "sort_order",
+    listColumns: ["name", "group_type", "city_slug", "featured", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. iRide2Reach" },
+      { name: "monogram", label: "Initials", type: "text", placeholder: "e.g. IR2R", hint: "Two to four letters, shown in the coloured square." },
+      {
+        name: "group_type",
+        label: "Listed Under",
+        listLabel: "Listed under",
+        type: "select",
+        required: true,
+        default: "connected",
+        options: [
+          { value: "connected", label: "Connected with RTG" },
+          { value: "wider", label: "Wider Community" },
+        ],
+        hint: "The tab this group sits under. The tabs' names are in Site Content → Community.",
+      },
+      { name: "city_slug", label: "Map Pin", listLabel: "Map pin", type: "relation", table: "community_network_cities", valueColumn: "slug", labelColumn: "name", hint: "The pin that lights up on the India map while this group is shown. Add pins in Community — Network Map Pins." },
+      { name: "location", label: "Location", type: "text", placeholder: "e.g. Delhi NCR" },
+      { name: "sport", label: "Sport", type: "text", placeholder: "e.g. Cycling" },
+      { name: "tagline", label: "Small Line Above the Name", type: "text", placeholder: "e.g. Delhi NCR • Cycling • Training", hint: "Optional. If empty, the location and sport are used." },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "relation_label", label: "Badge", type: "text", placeholder: "e.g. Featured Connection", hint: "The pill at the top right of the card." },
+      { name: "connection_label", label: "Connection", type: "text", placeholder: "e.g. Close RTG Connection", hint: "Shown at the bottom of the card." },
+      { name: "contact_person", label: "Contact Person", type: "text", placeholder: "e.g. Manish Jayal", hint: "Optional — the box is hidden when empty. Only list contact details the group has agreed to share." },
+      { name: "reach", label: "How to Reach", type: "text", placeholder: "e.g. Instagram • @iride2reach", hint: "Optional — the box is hidden when empty." },
+      { name: "join_text", label: "Best Way to Join", type: "text", placeholder: "e.g. Message admin • Join a training ride", hint: "Optional — the box is hidden when empty." },
+      { name: "featured", label: "Featured (orange highlight on its card)", type: "boolean", default: false },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order within its tab. The first one is shown when the page opens." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityNetworkCities: {
+    table: "community_network_cities",
+    title: "Community — Network Map Pins",
+    singular: "Pin",
+    orderBy: "sort_order",
+    listColumns: ["name", "pin_x", "pin_y", "is_hub", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Delhi", hint: "Shown under the pin on the India map of \"The RTG Network\"." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Groups are filed under this code — leave it as it is." },
+      { name: "pin_x", label: "Position Across the Map (%)", listLabel: "Across %", type: "number", step: "any", default: 50, hint: "0 = the map's left edge, 100 = its right edge. Delhi is about 35." },
+      { name: "pin_y", label: "Position Down the Map (%)", listLabel: "Down %", type: "number", step: "any", default: 50, hint: "0 = the map's top edge, 100 = its bottom edge. Delhi is about 25." },
+      { name: "is_hub", label: "This pin is the RTG hub", listLabel: "RTG hub", type: "boolean", default: false, hint: "The hub is drawn in orange and a dashed route runs from it to every other pin. Tick it on one pin only." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0 },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityCities: {
+    table: "community_cities",
+    title: "Community — Cities",
+    singular: "City",
+    orderBy: "sort_order",
+    listColumns: ["name", "context_line", "sort_order", "published"],
+    fields: [
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Delhi NCR", hint: "Each city is a button of the Community page's \"One Community. Different Cities.\" section. Its photos are added in Community — City Photos." },
+      { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Photos are filed under this code — leave it as it is." },
+      { name: "context_line", label: "Line Under the Buttons", listLabel: "Line under the buttons", type: "text", placeholder: "e.g. Delhi NCR • Rides • Runs • Community", hint: "Shown while this city is picked." },
+      { name: "caption", label: "Caption Under the Photos", type: "text", placeholder: "e.g. A glimpse of RTG life in Delhi NCR." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "Order of the buttons. The first city is shown when the page opens." },
+      { name: "published", label: "Published", type: "boolean", default: true },
+    ],
+  },
+  communityCityMoments: {
+    table: "community_city_moments",
+    title: "Community — City Photos",
+    singular: "Photo",
+    orderBy: "sort_order",
+    listColumns: ["image_url", "city_slug", "label", "sort_order", "published"],
+    fields: [
+      { name: "city_slug", label: "City", listLabel: "City", type: "relation", table: "community_cities", valueColumn: "slug", labelColumn: "name", required: true, hint: "Add cities in Community — Cities." },
+      { name: "image_url", label: "Photo", listLabel: "Photo", type: "image", folder: "community" },
+      { name: "label", label: "Word on the Photo", listLabel: "Word on photo", type: "text", placeholder: "e.g. Together", hint: "Optional. The small pill at the bottom left of the photo." },
+      { name: "image_position", label: "Photo Focus", type: "text", placeholder: "e.g. center 48%", hint: "Optional. Which part of the photo stays in view: \"center 0%\" keeps the top, \"center 50%\" the middle, \"center 100%\" the bottom." },
+      { name: "sort_order", label: "Sort Order", type: "number", default: 0, hint: "A city's photos rotate through its three frames in this order. Six or more per city look best." },
       { name: "published", label: "Published", type: "boolean", default: true },
     ],
   },

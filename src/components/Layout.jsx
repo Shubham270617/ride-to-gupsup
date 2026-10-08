@@ -30,9 +30,9 @@ export default function Layout() {
         <Outlet />
       </main>
       {hasJoinBand ? (
-        // On Community the first button opens the sign-up panel instead of
-        // following its link.
-        <JoinCTA onPrimaryClick={isCommunity ? () => requestLogin("signup") : undefined} />
+        // On Community the band has its own wording, and its first button
+        // opens the sign-up panel instead of following a link.
+        <JoinCTA community={isCommunity} onPrimaryClick={isCommunity ? () => requestLogin("signup") : undefined} />
       ) : (
         <Footer />
       )}
