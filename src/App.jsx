@@ -99,6 +99,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="events" element={<ResourceAdminPage resource={resources.events} />} />
           <Route path="products" element={<ResourceAdminPage resource={resources.products} />} />
+          <Route path="store-categories" element={<ResourceAdminPage resource={resources.storeCategories} />} />
           <Route path="blog" element={<ResourceAdminPage resource={resources.blog} />} />
           <Route path="sponsors" element={<ResourceAdminPage resource={resources.sponsors} />} />
           <Route path="testimonials" element={<ResourceAdminPage resource={resources.testimonials} />} />
@@ -132,8 +133,6 @@ export default function App() {
           <Route path="general-safety" element={<ResourceAdminPage resource={resources.generalSafety} />} />
           <Route path="sponsor-tiers" element={<ResourceAdminPage resource={resources.sponsorTiers} />} />
           <Route path="sponsor-opportunities" element={<ResourceAdminPage resource={resources.sponsorOpportunities} />} />
-          <Route path="size-guide" element={<ResourceAdminPage resource={resources.sizeGuide} />} />
-          <Route path="merch-reviews" element={<ResourceAdminPage resource={resources.merchReviews} />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />

@@ -172,9 +172,6 @@ export const images = {
   // ---- CONTACT ----
   contactHero: placeholder,
 
-  // ---- MERCHANDISE ----
-  merchHero: rtg.community,
-
   // ---- FAQ ----
   faqHero: placeholder,
 

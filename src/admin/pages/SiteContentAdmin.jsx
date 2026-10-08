@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy } from "../../data/content";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
 import {
   COMMUNITY_PAGE_FIELDS,
   communityPageKey,
+  STORE_PAGE_FIELDS,
+  storePageKey,
   HOME_EVENTS_FIELDS,
   HOME_MERCH_FIELDS,
   EVENTS_PAGE_FIELDS,
@@ -53,11 +55,6 @@ const SECTIONS = [
   { page: "Blog", key: "blog.hero", label: "From the Journal", eyebrow: "Latest", title: "From the Journal", subtitle: "" },
 
   { page: "Challenges", key: "challenges.hero", label: "Current Challenges", eyebrow: "Live & Upcoming", title: "Current Challenges", subtitle: "" },
-
-  { page: "Merchandise", key: "merch.hero", label: "All Merchandise", eyebrow: "Shop", title: "All Merchandise", subtitle: "Free community pride, premium quality — order yours today." },
-  { page: "Merchandise", key: "merch.perks", label: "Members Save 10%", eyebrow: "Member Perks", title: "Members Save 10%", subtitle: "" },
-  { page: "Merchandise", key: "merch.sizeChart", label: "Size Chart", eyebrow: "Fit Guide", title: "Size Chart", subtitle: "" },
-  { page: "Merchandise", key: "merch.reviews", label: "What Riders Say About Our Gear", eyebrow: "Athlete Reviews", title: "What Riders Say About Our Gear", subtitle: "" },
 
   { page: "Race Results", key: "raceResults.hero", label: "Past Race Results", eyebrow: "Results Archive", title: "Past Race Results", subtitle: "" },
 
@@ -135,6 +132,17 @@ const COMMUNITY_GROUP_HEADINGS = {
   network: "Community page — The RTG Network",
   cities: "Community page — cities & photos",
   join: "Community page — Join band at the bottom",
+};
+
+// Store page, bag drawer and checkout — same arrangement again.
+const STORE_GROUP_HEADINGS = {
+  hero: "Store page — hero",
+  drop: "Store page — The Drop (product list)",
+  kit: "Store page — Build Your Kit",
+  limited: "Store page — Limited / Event Edition card",
+  modal: "Store page — product quick view",
+  bag: "Bag (the cart drawer on every page)",
+  checkout: "Checkout page",
 };
 
 const CUSTOM_GROUPS = {
@@ -234,6 +242,36 @@ const CUSTOM_GROUPS = {
       type: f.type,
     })),
   })),
+  // The products and the tabs are admin screens of their own (Merchandise /
+  // Store — Categories).
+  Store: [
+    ...Object.entries(STORE_GROUP_HEADINGS).map(([group, heading]) => ({
+      heading,
+      fields: STORE_PAGE_FIELDS.filter((f) => f.group === group).map((f) => ({
+        key: storePageKey(f.field),
+        label: f.label,
+        fallback: storePageCopy[f.field],
+        type: f.type,
+      })),
+    })),
+    {
+      heading: "Payment (self-hosted UPI)",
+      fields: [
+        {
+          key: "payment.upiId",
+          label: "Your UPI ID (e.g. rtg@okhdfcbank — shown as a QR code and \"Pay in UPI App\" link at checkout; leave blank to hide the payment step until set)",
+          fallback: "",
+          type: "text",
+        },
+        {
+          key: "payment.payeeName",
+          label: "Payee Name (shown in the buyer's UPI app)",
+          fallback: "Ride Tea GupShup",
+          type: "text",
+        },
+      ],
+    },
+  ],
   // The cards, network groups, map pins, cities and city photos are admin
   // screens of their own (Community — …).
   Community: Object.entries(COMMUNITY_GROUP_HEADINGS).map(([group, heading]) => ({
@@ -308,48 +346,6 @@ const CUSTOM_GROUPS = {
           key: "text.about.roadAhead",
           label: "Paragraph",
           fallback: "We're building RTG step by step — stronger local communities, better events, meaningful challenges, structured training opportunities, memorable endurance experiences and a digital ecosystem that keeps everything connected.",
-          type: "textarea",
-        },
-      ],
-    },
-  ],
-  Merchandise: [
-    {
-      heading: "Payment (self-hosted UPI)",
-      fields: [
-        {
-          key: "payment.upiId",
-          label: "Your UPI ID (e.g. rtg@okhdfcbank — shown as a QR code and \"Pay in UPI App\" link at checkout; leave blank to hide the payment step until set)",
-          fallback: "",
-          type: "text",
-        },
-        {
-          key: "payment.payeeName",
-          label: "Payee Name (shown in the buyer's UPI app)",
-          fallback: "Ride Tea GupShup",
-          type: "text",
-        },
-      ],
-    },
-    {
-      heading: "Shipping, Returns & Member Discount",
-      fields: [
-        {
-          key: "text.merch.shipping",
-          label: "Shipping",
-          fallback: "Free shipping on orders above ₹2,000. Delivery in 5–7 business days across India.",
-          type: "textarea",
-        },
-        {
-          key: "text.merch.returns",
-          label: "Returns",
-          fallback: "Not happy with the fit? Returns accepted within 7 days of delivery, unworn and with tags attached.",
-          type: "textarea",
-        },
-        {
-          key: "text.merch.memberDiscount",
-          label: "Member Discount banner",
-          fallback: "RTG members get 10% off all merchandise — log in before checkout to apply your discount automatically.",
           type: "textarea",
         },
       ],

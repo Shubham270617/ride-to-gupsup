@@ -1,46 +1,71 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Loader2, ShoppingBag, QrCode, ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useCart } from "../lib/CartContext";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
-import { useSiteSettings, pickText } from "../lib/publicData";
-import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { useSiteSettings, pickText, buildStorePageCopy } from "../lib/publicData";
+import { supabase } from "../lib/supabaseClient";
 import { buildUpiUri, buildUpiQrDataUrl } from "../lib/upi";
-import Section from "../components/ui/Section";
-import GlassCard from "../components/ui/GlassCard";
 import Reveal from "../components/ui/Reveal";
-import Button from "../components/ui/Button";
+
+// ============================================================================
+// CHECKOUT PAGE — delivery details, UPI payment and the order summary, in
+// the Store's "Drop Lab" look. How an order is placed is unchanged: the
+// buyer pays by UPI, types in the payment reference, and the order and its
+// lines are saved for an admin to verify (Admin -> Orders).
+//
+// Its wording is in Admin -> Site Content -> Store ("Checkout page"); the
+// UPI ID and payee name are on that same Store page of Site Content. Layout is in
+// index.css under "CHECKOUT PAGE" (.rtg-co-*).
+// ============================================================================
 
 function formatPrice(n) {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
-function LoggedOutPrompt() {
-  const { requestLogin } = useAuthGate();
+// "Pay {amount} to {upi}" -> the sentence with each {name} swapped for its
+// highlighted value.
+function fillParts(template, parts) {
+  return (template || "").split(/(\{\w+\})/g).map((piece, i) => {
+    const key = piece.match(/^\{(\w+)\}$/)?.[1];
+    return key && key in parts ? <b key={i}>{parts[key]}</b> : piece;
+  });
+}
+
+// The page with one centred card: not logged in, or nothing in the bag.
+function Notice({ title, text, children }) {
   return (
-    <Section>
-      <GlassCard className="max-w-md mx-auto text-center py-14">
-        <ShoppingBag className="text-rtg-orange-400 mx-auto mb-4" size={32} />
-        <h1 className="font-display text-3xl mb-2">Checkout</h1>
-        <p className="text-rtg-mist mb-8">Log in to place your order — this ties it to your account so you can track it from your dashboard.</p>
-        <Button onClick={() => requestLogin("login")} size="lg">Log In</Button>
-      </GlassCard>
-    </Section>
+    <div className="rtg-co">
+      <div className="rtg-co-shell">
+        <Reveal className="rtg-co-card rtg-co-notice">
+          <h1>{title}</h1>
+          <p>{text}</p>
+          {children}
+        </Reveal>
+      </div>
+    </div>
   );
 }
 
-function EmptyCart() {
+function LoggedOutPrompt({ copy }) {
+  const { requestLogin } = useAuthGate();
   return (
-    <Section>
-      <GlassCard className="max-w-md mx-auto text-center py-14">
-        <ShoppingBag className="text-rtg-mist mx-auto mb-4" size={32} />
-        <h1 className="font-display text-3xl mb-2">Your Cart is Empty</h1>
-        <p className="text-rtg-mist mb-8">Add something from the store before checking out.</p>
-        <Button to="/merchandise" size="lg">Browse Merchandise</Button>
-      </GlassCard>
-    </Section>
+    <Notice title={copy.loginTitle} text={copy.loginText}>
+      <button type="button" className="rtg-co-submit" onClick={() => requestLogin("login")}>
+        {copy.loginButtonLabel}
+      </button>
+    </Notice>
+  );
+}
+
+function EmptyCart({ copy }) {
+  return (
+    <Notice title={copy.emptyTitle} text={copy.emptyText}>
+      <Link to="/merchandise" className="rtg-co-submit">
+        {copy.emptyButtonLabel}
+      </Link>
+    </Notice>
   );
 }
 
@@ -48,6 +73,7 @@ export default function Checkout() {
   const { user, loading: sessionLoading } = useSession();
   const { items, subtotal, clear } = useCart();
   const settings = useSiteSettings();
+  const copy = useMemo(() => buildStorePageCopy(settings), [settings]);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ customer_name: "", phone: "", address: "", city: "", pincode: "" });
@@ -78,7 +104,7 @@ export default function Checkout() {
     e.preventDefault();
     setError("");
     if (!utr.trim()) {
-      setError("Enter the UPI transaction reference (UTR) you received after paying.");
+      setError(copy.utrMissingError);
       return;
     }
     setSubmitting(true);
@@ -115,7 +141,7 @@ export default function Checkout() {
       clear();
       navigate(`/order-confirmation/${order.id}`);
     } catch (err) {
-      setError(err.message || "Something went wrong placing your order. Please try again.");
+      setError(err.message || copy.orderError);
     } finally {
       setSubmitting(false);
     }
@@ -129,144 +155,89 @@ export default function Checkout() {
     );
   }
 
-  if (!user) return <LoggedOutPrompt />;
-  if (items.length === 0) return <EmptyCart />;
+  if (!user) return <LoggedOutPrompt copy={copy} />;
+  if (items.length === 0) return <EmptyCart copy={copy} />;
 
   return (
-    <div className="pt-32 pb-10">
-      <Section eyebrow="Almost There" title="Checkout" center>
-        <div className="grid lg:grid-cols-5 gap-10">
-          <Reveal direction="right" className="lg:col-span-3">
-            <GlassCard>
-              <h3 className="font-display text-2xl mb-6">Shipping Details</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                  required
-                  name="customer_name"
-                  value={form.customer_name}
-                  onChange={handleChange}
-                  placeholder="Full Name"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
-                />
-                <input
-                  required
-                  name="phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                  placeholder="Phone Number"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
-                />
-                <textarea
-                  required
-                  name="address"
-                  value={form.address}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="Delivery Address"
-                  className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors resize-none"
-                />
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <input
-                    required
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder="City"
-                    className="rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
-                  />
-                  <input
-                    required
-                    name="pincode"
-                    value={form.pincode}
-                    onChange={handleChange}
-                    placeholder="Pincode"
-                    className="rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
-                  />
-                </div>
+    <div className="rtg-co">
+      <div className="rtg-co-shell">
+        <Reveal className="rtg-co-head">
+          <span>{copy.checkoutKicker}</span>
+          <h1>
+            {copy.checkoutTitle} <b>{copy.checkoutTitleAccent}</b>
+          </h1>
+          <p>{copy.checkoutText}</p>
+        </Reveal>
 
-                <div className="pt-4 border-t border-white/10">
-                  <h3 className="font-display text-2xl mb-4">Pay via UPI</h3>
-                  {!upiId ? (
-                    <p className="text-sm text-rtg-mist">
-                      Payment isn't set up yet — an admin needs to add a UPI ID in Admin → Site Content.
-                    </p>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row gap-6 items-start">
-                      {qrDataUrl && (
-                        <img src={qrDataUrl} alt="UPI QR code" className="w-40 h-40 rounded-2xl bg-white p-2 shrink-0" />
-                      )}
-                      <div className="flex-1 space-y-3">
-                        <p className="text-sm text-rtg-mist">
-                          Scan the QR, or tap below to pay <strong className="text-rtg-white">{formatPrice(total)}</strong> directly to{" "}
-                          <span className="text-rtg-orange-400 font-semibold">{upiId}</span>.
-                        </p>
-                        <a
-                          href={upiUri}
-                          className="inline-flex items-center gap-2 text-sm font-semibold rounded-full bg-white/5 px-4 py-2.5 hover:bg-white/10 transition-colors"
-                        >
-                          <QrCode size={15} /> Pay in UPI App <ExternalLink size={13} />
-                        </a>
-                      </div>
-                    </div>
-                  )}
+        <div className="rtg-co-grid">
+          <Reveal direction="right">
+            <form onSubmit={handleSubmit} className="rtg-co-card rtg-co-form">
+              <h2>
+                <i>01</i> {copy.shippingHeading}
+              </h2>
+              <input required name="customer_name" value={form.customer_name} onChange={handleChange} placeholder={copy.namePlaceholder} aria-label={copy.namePlaceholder} />
+              <input required name="phone" value={form.phone} onChange={handleChange} placeholder={copy.phonePlaceholder} aria-label={copy.phonePlaceholder} />
+              <textarea required name="address" value={form.address} onChange={handleChange} rows={3} placeholder={copy.addressPlaceholder} aria-label={copy.addressPlaceholder} />
+              <div className="rtg-co-pair">
+                <input required name="city" value={form.city} onChange={handleChange} placeholder={copy.cityPlaceholder} aria-label={copy.cityPlaceholder} />
+                <input required name="pincode" value={form.pincode} onChange={handleChange} placeholder={copy.pincodePlaceholder} aria-label={copy.pincodePlaceholder} />
+              </div>
 
-                  <div className="mt-5">
-                    <input
-                      required
-                      value={utr}
-                      onChange={(e) => setUtr(e.target.value)}
-                      placeholder="UPI Transaction Reference (UTR) — from your payment app"
-                      className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3.5 text-sm focus:outline-none focus:border-rtg-orange-400 transition-colors"
-                    />
-                    <p className="text-xs text-rtg-mist mt-2">
-                      We'll verify this against our bank/UPI records and confirm your order within 24 hours.
-                    </p>
+              <h2 className="rtg-co-pay-head">
+                <i>02</i> {copy.payHeading}
+              </h2>
+              {!upiId ? (
+                <p className="rtg-co-muted">{copy.payNotSetText}</p>
+              ) : (
+                <div className="rtg-co-pay">
+                  {qrDataUrl && <img src={qrDataUrl} alt={copy.qrAlt} />}
+                  <div>
+                    <p className="rtg-co-muted">{fillParts(copy.payText, { amount: formatPrice(total), upi: upiId })}</p>
+                    <a href={upiUri}>{copy.payButtonLabel} ↗</a>
                   </div>
                 </div>
+              )}
 
-                {error && <p className="text-sm text-rtg-orange-400">{error}</p>}
+              <input required value={utr} onChange={(e) => setUtr(e.target.value)} placeholder={copy.utrPlaceholder} aria-label={copy.utrPlaceholder} />
+              <p className="rtg-co-help">{copy.utrHelpText}</p>
 
-                <motion.button
-                  type="submit"
-                  disabled={submitting}
-                  whileHover={{ scale: submitting ? 1 : 1.02 }}
-                  whileTap={{ scale: submitting ? 1 : 0.98 }}
-                  className="w-full rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-4 flex items-center justify-center gap-2 hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
-                >
-                  {submitting ? (
-                    <>
-                      Placing Order… <Loader2 size={16} className="animate-spin" />
-                    </>
-                  ) : (
-                    "I've Paid — Submit Order"
-                  )}
-                </motion.button>
-              </form>
-            </GlassCard>
+              {error && <p className="rtg-co-error">{error}</p>}
+
+              <button type="submit" disabled={submitting} className="rtg-co-submit">
+                {submitting ? (
+                  <>
+                    {copy.submittingLabel} <Loader2 size={16} className="animate-spin" />
+                  </>
+                ) : (
+                  copy.submitLabel
+                )}
+              </button>
+            </form>
           </Reveal>
 
-          <Reveal direction="left" delay={0.1} className="lg:col-span-2">
-            <GlassCard>
-              <h3 className="font-display text-2xl mb-6">Order Summary</h3>
-              <div className="space-y-4 mb-6">
+          <Reveal direction="left" delay={0.1}>
+            <aside className="rtg-co-card rtg-co-summary">
+              <h2>{copy.summaryHeading}</h2>
+              <div className="rtg-co-lines">
                 {items.map((item) => (
-                  <div key={`${item.productId}-${item.size || ""}`} className="flex justify-between gap-3 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate">{item.name}{item.size ? ` (${item.size})` : ""} × {item.quantity}</p>
-                    </div>
-                    <span className="text-rtg-white/90 shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                  <div key={`${item.productId}-${item.size || ""}`}>
+                    {item.image && <img src={item.image} alt="" />}
+                    <p>
+                      <strong>{item.name}</strong>
+                      <span>{[item.size, `× ${item.quantity}`].filter(Boolean).join(" ")}</span>
+                    </p>
+                    <b>{formatPrice(item.price * item.quantity)}</b>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                <span className="text-rtg-mist">Total</span>
-                <span className="font-display text-3xl">{formatPrice(total)}</span>
+              <div className="rtg-co-total">
+                <span>{copy.totalLabel}</span>
+                <strong>{formatPrice(total)}</strong>
               </div>
-            </GlassCard>
+            </aside>
           </Reveal>
         </div>
-      </Section>
+      </div>
     </div>
   );
 }
-

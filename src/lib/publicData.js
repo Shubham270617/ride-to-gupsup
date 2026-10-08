@@ -15,8 +15,6 @@ import {
   generalSafety as staticGeneralSafety,
   sponsorTiers as staticSponsorTiers,
   sponsorOpportunities as staticSponsorOpportunities,
-  sizeGuide as staticSizeGuide,
-  merchReviews as staticMerchReviews,
   heroSlides as staticHeroSlides,
   heroCopy as staticHeroCopy,
   stats as staticStats,
@@ -36,6 +34,7 @@ import {
   calendarPageCopy as staticCalendarPageCopy,
   leaderboardPageCopy as staticLeaderboardPageCopy,
   communityPageCopy as staticCommunityPageCopy,
+  storePageCopy as staticStorePageCopy,
   brand,
 } from "../data/content";
 import { images as staticImages } from "../data/images";
@@ -144,7 +143,26 @@ const mapProductRow = (r) => ({
   description: r.description,
   sizes: r.sizes || [],
   inStock: r.in_stock !== false,
+  // Store page extras (Admin -> Merchandise) — all optional.
+  category: r.category_slug,
+  use: r.use_text,
+  drop: r.drop_text,
+  watermark: r.watermark,
+  color: HEX_COLOR.test((r.color || "").trim()) ? r.color.trim() : null,
+  colorAlt: HEX_COLOR.test((r.color_alt || "").trim()) ? r.color_alt.trim() : null,
+  featured: Boolean(r.featured),
+  inKit: Boolean(r.in_kit),
+  kitLabel: r.kit_label,
+  limited: Boolean(r.limited),
 });
+
+// The tabs above the Store page's product list (Admin -> Store — Categories).
+export function useStoreCategories() {
+  return useSupabaseList("store_categories", {
+    staticFallback: [],
+    mapRow: (r) => ({ id: r.id, slug: r.slug, name: r.name }),
+  }).items;
+}
 
 export function useProducts() {
   return useSupabaseList("products", {
@@ -393,20 +411,6 @@ export function useSponsorOpportunities() {
   return useSupabaseList("sponsor_opportunities", {
     staticFallback: staticSponsorOpportunities,
     mapRow: (r) => ({ title: r.title, desc: r.description }),
-  }).items;
-}
-
-export function useSizeGuide() {
-  return useSupabaseList("size_guide", {
-    staticFallback: staticSizeGuide,
-    mapRow: (r) => ({ size: r.size, chest: r.chest, length: r.length }),
-  }).items;
-}
-
-export function useMerchReviews() {
-  return useSupabaseList("merch_reviews", {
-    staticFallback: staticMerchReviews,
-    mapRow: (r) => ({ name: r.name, product: r.product, rating: r.rating, quote: r.quote }),
   }).items;
 }
 
@@ -888,6 +892,104 @@ export const LEADERBOARD_PAGE_FIELDS = [
 ];
 export const leaderboardPageKey = (field) => `text.leaderboard.${field}`;
 export const buildLeaderboardPageCopy = (settings) => buildCopy(settings, LEADERBOARD_PAGE_FIELDS, leaderboardPageKey, staticLeaderboardPageCopy);
+
+// Store page, bag drawer and checkout wording (pages/Store.jsx,
+// components/CartDrawer.jsx, pages/Checkout.jsx). SiteContentAdmin builds
+// its Store page from this list; `group` is the card a field sits in.
+export const STORE_PAGE_FIELDS = [
+  { group: "hero", field: "heroMetaLabel", label: "Small label (left, coloured)", type: "text" },
+  { group: "hero", field: "heroMetaIndex", label: "Small label (right, grey)", type: "text" },
+  { group: "hero", field: "heroTitle", label: "Headline — line 1", type: "text" },
+  { group: "hero", field: "heroTitleAccent", label: "Headline — line 2 (gradient-coloured)", type: "text" },
+  { group: "hero", field: "heroText", label: "Paragraph", type: "textarea" },
+  { group: "hero", field: "heroTags", label: "Tags under the paragraph (comma-separated)", type: "text" },
+  { group: "hero", field: "heroCtaLabel", label: "First button (scrolls to the products)", type: "text" },
+  { group: "hero", field: "heroBagLabel", label: "Second button (opens the bag)", type: "text" },
+  { group: "hero", field: "stageLabel", label: "Featured product card — small label", type: "text" },
+  { group: "hero", field: "heroPrevLabel", label: "Screen-reader name of the previous arrow", type: "text" },
+  { group: "hero", field: "heroNextLabel", label: "Screen-reader name of the next arrow", type: "text" },
+  { group: "drop", field: "dropNumber", label: "Big number beside the heading", type: "text" },
+  { group: "drop", field: "dropIndexLabel", label: "Small label under that number", type: "text" },
+  { group: "drop", field: "dropKicker", label: "Eyebrow", type: "text" },
+  { group: "drop", field: "dropTitle", label: "Headline", type: "text" },
+  { group: "drop", field: "dropTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "drop", field: "dropText", label: "Paragraph", type: "textarea" },
+  { group: "drop", field: "allTabLabel", label: "Name of the \"all products\" tab", type: "text" },
+  { group: "drop", field: "useLabel", label: "Label of the Use box", type: "text" },
+  { group: "drop", field: "dropLabel", label: "Label of the Drop box", type: "text" },
+  { group: "drop", field: "priceLabel", label: "Label of the Price box", type: "text" },
+  { group: "drop", field: "addLabel", label: "Button — add to bag (also in the quick view)", type: "text" },
+  { group: "drop", field: "chooseSizeLabel", label: "Button — product with sizes (opens the quick view to pick one)", type: "text" },
+  { group: "drop", field: "soldOutLabel", label: "Button — product not in stock", type: "text" },
+  { group: "drop", field: "quickViewLabel", label: "Quick view button", type: "text" },
+  { group: "drop", field: "dropEmptyText", label: "Message when a tab has no products", type: "text" },
+  { group: "kit", field: "kitKicker", label: "Eyebrow", type: "text" },
+  { group: "kit", field: "kitTitle", label: "Headline", type: "text" },
+  { group: "kit", field: "kitTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "kit", field: "kitText", label: "Paragraph", type: "textarea" },
+  { group: "kit", field: "kitNote", label: "Small line with the green dot", type: "text" },
+  { group: "kit", field: "kitCountLabel", label: "Label above the number of pieces picked", type: "text" },
+  { group: "kit", field: "kitTotalLabel", label: "Label above the kit's total price", type: "text" },
+  { group: "kit", field: "kitSizeLabel", label: "Label of a piece's size picker", type: "text" },
+  { group: "kit", field: "kitAddLabel", label: "Button label", type: "text" },
+  { group: "limited", field: "limitedNumber", label: "Big faint number", type: "text" },
+  { group: "limited", field: "limitedKicker", label: "Eyebrow", type: "text" },
+  { group: "limited", field: "limitedTitle", label: "Headline", type: "text" },
+  { group: "limited", field: "limitedTitleAccent", label: "Headline — yellow part", type: "text" },
+  { group: "limited", field: "limitedText", label: "Paragraph", type: "textarea" },
+  { group: "limited", field: "limitedButtonLabel", label: "Button label (shown when a product is marked Limited)", type: "text" },
+  { group: "modal", field: "modalSizeLabel", label: "Label of the size picker", type: "text" },
+  { group: "modal", field: "modalStatusLabel", label: "Label of the Status box", type: "text" },
+  { group: "modal", field: "modalInStockText", label: "Status — product in stock", type: "text" },
+  { group: "modal", field: "modalSoldOutText", label: "Status — product not in stock", type: "text" },
+  { group: "modal", field: "modalDropLabel", label: "Label of the Drop Type box", type: "text" },
+  { group: "modal", field: "modalPriceLabel", label: "Label of the Price box", type: "text" },
+  { group: "modal", field: "modalDetailsLabel", label: "Link to the product's own page", type: "text" },
+  { group: "modal", field: "modalCloseLabel", label: "Screen-reader name of the close button", type: "text" },
+  { group: "bag", field: "bagKicker", label: "Eyebrow", type: "text" },
+  { group: "bag", field: "bagTitle", label: "Heading", type: "text" },
+  { group: "bag", field: "bagItemLabel", label: "Word for one item", type: "text" },
+  { group: "bag", field: "bagItemsLabel", label: "Word for several items", type: "text" },
+  { group: "bag", field: "bagSubtotalLabel", label: "Label of the subtotal", type: "text" },
+  { group: "bag", field: "bagSizeLabel", label: "Word before an item's size", type: "text" },
+  { group: "bag", field: "bagRemoveLabel", label: "Remove button", type: "text" },
+  { group: "bag", field: "bagEmptyText", label: "Message when the bag is empty", type: "text" },
+  { group: "bag", field: "bagBrowseLabel", label: "Button shown with that message", type: "text" },
+  { group: "bag", field: "bagNote", label: "Small paragraph above the checkout button", type: "textarea" },
+  { group: "bag", field: "bagCheckoutLabel", label: "Checkout button", type: "text" },
+  { group: "bag", field: "bagCloseLabel", label: "Screen-reader name of the close button", type: "text" },
+  { group: "checkout", field: "checkoutKicker", label: "Eyebrow", type: "text" },
+  { group: "checkout", field: "checkoutTitle", label: "Headline", type: "text" },
+  { group: "checkout", field: "checkoutTitleAccent", label: "Headline — gradient-coloured part", type: "text" },
+  { group: "checkout", field: "checkoutText", label: "Paragraph", type: "textarea" },
+  { group: "checkout", field: "shippingHeading", label: "Shipping card — heading", type: "text" },
+  { group: "checkout", field: "namePlaceholder", label: "Hint inside the name box", type: "text" },
+  { group: "checkout", field: "phonePlaceholder", label: "Hint inside the phone box", type: "text" },
+  { group: "checkout", field: "addressPlaceholder", label: "Hint inside the address box", type: "text" },
+  { group: "checkout", field: "cityPlaceholder", label: "Hint inside the city box", type: "text" },
+  { group: "checkout", field: "pincodePlaceholder", label: "Hint inside the pincode box", type: "text" },
+  { group: "checkout", field: "payHeading", label: "Payment — heading", type: "text" },
+  { group: "checkout", field: "payNotSetText", label: "Payment — message when no UPI ID is saved", type: "textarea" },
+  { group: "checkout", field: "payText", label: "Payment — sentence ({amount} = order total, {upi} = your UPI ID)", type: "textarea" },
+  { group: "checkout", field: "payButtonLabel", label: "Payment — button that opens the UPI app", type: "text" },
+  { group: "checkout", field: "qrAlt", label: "Payment — description of the QR code for screen readers", type: "text" },
+  { group: "checkout", field: "utrPlaceholder", label: "Hint inside the payment reference box", type: "text" },
+  { group: "checkout", field: "utrHelpText", label: "Small line under the payment reference box", type: "textarea" },
+  { group: "checkout", field: "utrMissingError", label: "Error — payment reference left empty", type: "text" },
+  { group: "checkout", field: "orderError", label: "Error — the order could not be saved", type: "text" },
+  { group: "checkout", field: "submitLabel", label: "Submit button", type: "text" },
+  { group: "checkout", field: "submittingLabel", label: "Submit button — while the order is being saved", type: "text" },
+  { group: "checkout", field: "summaryHeading", label: "Order summary — heading", type: "text" },
+  { group: "checkout", field: "totalLabel", label: "Order summary — label of the total", type: "text" },
+  { group: "checkout", field: "loginTitle", label: "Not logged in — heading", type: "text" },
+  { group: "checkout", field: "loginText", label: "Not logged in — paragraph", type: "textarea" },
+  { group: "checkout", field: "loginButtonLabel", label: "Not logged in — button", type: "text" },
+  { group: "checkout", field: "emptyTitle", label: "Empty bag — heading", type: "text" },
+  { group: "checkout", field: "emptyText", label: "Empty bag — paragraph", type: "text" },
+  { group: "checkout", field: "emptyButtonLabel", label: "Empty bag — button", type: "text" },
+];
+export const storePageKey = (field) => `text.store.${field}`;
+export const buildStorePageCopy = (settings) => buildCopy(settings, STORE_PAGE_FIELDS, storePageKey, staticStorePageCopy);
 
 // Community page wording (pages/Community.jsx). SiteContentAdmin builds its
 // Community page from this list; `group` is the card a field sits in.

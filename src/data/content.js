@@ -585,6 +585,105 @@ export const communityPageCopy = {
   joinSecondaryLink: "/calendar",
 };
 
+// Store page (/merchandise), bag drawer and checkout page wording. The
+// products are the rows of `products` (Admin -> Merchandise) and the tabs
+// the rows of `store_categories` (Admin -> Store — Categories); this is
+// every heading, label and paragraph around them, editable in Admin -> Site
+// Content -> Store under "text.store.<field>". The pages draw their small
+// labels in capitals themselves, so they are typed normally here.
+export const storePageCopy = {
+  heroMetaLabel: "RTG Drop Lab",
+  heroMetaIndex: "001 / Community Goods",
+  heroTitle: "Wear the",
+  heroTitleAccent: "Movement.",
+  heroText: "Performance pieces, community identity and future event drops — designed for the miles in between.",
+  heroTags: "Ride Tested, Run Ready, Community Built",
+  heroCtaLabel: "Explore the Drop ↓",
+  heroBagLabel: "Open Bag",
+  stageLabel: "Featured Drop",
+  heroPrevLabel: "Previous featured product",
+  heroNextLabel: "Next featured product",
+  dropNumber: "01",
+  dropIndexLabel: "The Drop",
+  dropKicker: "Choose Your Lane",
+  dropTitle: "Gear with a",
+  dropTitleAccent: "Point of View.",
+  dropText: "Not a generic merchandise wall. Explore by the way you move — performance, everyday community, event editions and ride essentials.",
+  allTabLabel: "All Drops",
+  useLabel: "Use",
+  dropLabel: "Drop",
+  priceLabel: "Price",
+  addLabel: "Add to Bag",
+  chooseSizeLabel: "Choose Size",
+  soldOutLabel: "Sold Out",
+  quickViewLabel: "Quick View ↗",
+  dropEmptyText: "Nothing in this lane yet — check back soon.",
+  kitKicker: "02 / Build Your Kit",
+  kitTitle: "Stack Your",
+  kitTitleAccent: "RTG Set.",
+  kitText: "Pick a few pieces and build your own kit combination, then add the whole set to your bag in one go.",
+  kitNote: "Pick any pieces • Sizes can be changed in the list",
+  kitCountLabel: "Selected",
+  kitTotalLabel: "Kit Total",
+  kitSizeLabel: "Size",
+  kitAddLabel: "Add Selected Kit to Bag →",
+  limitedNumber: "03",
+  limitedKicker: "Limited / Event Edition",
+  limitedTitle: "The Finish Line",
+  limitedTitleAccent: "Doesn't End the Story.",
+  limitedText: "Race jerseys, finisher tees and challenge-specific drops live here — tied directly to RTG flagship events.",
+  limitedButtonLabel: "Preview Event Drop ↗",
+  modalSizeLabel: "Size",
+  modalStatusLabel: "Status",
+  modalInStockText: "In Stock",
+  modalSoldOutText: "Sold Out",
+  modalDropLabel: "Drop Type",
+  modalPriceLabel: "Price",
+  modalDetailsLabel: "Full Details →",
+  modalCloseLabel: "Close product preview",
+  bagKicker: "Bag / RTG Drop Lab",
+  bagTitle: "Your Kit.",
+  bagItemLabel: "Item",
+  bagItemsLabel: "Items",
+  bagSubtotalLabel: "Subtotal",
+  bagSizeLabel: "Size",
+  bagRemoveLabel: "Remove",
+  bagEmptyText: "Your RTG bag is empty. Build a kit or add a drop.",
+  bagBrowseLabel: "Browse the Drop",
+  bagNote: "Shipping is confirmed at checkout. You pay by UPI and your order is confirmed once the payment is verified.",
+  bagCheckoutLabel: "Checkout →",
+  bagCloseLabel: "Close bag",
+  checkoutKicker: "Almost There",
+  checkoutTitle: "Secure Your",
+  checkoutTitleAccent: "Kit.",
+  checkoutText: "Add your delivery details, pay by UPI and send us the payment reference — we confirm every order by hand.",
+  shippingHeading: "Shipping Details",
+  namePlaceholder: "Full Name",
+  phonePlaceholder: "Phone Number",
+  addressPlaceholder: "Delivery Address",
+  cityPlaceholder: "City",
+  pincodePlaceholder: "Pincode",
+  payHeading: "Pay via UPI",
+  payNotSetText: "Payment isn't set up yet — an admin needs to add a UPI ID in Admin → Site Content → Store.",
+  payText: "Scan the QR, or tap below to pay {amount} directly to {upi}.",
+  payButtonLabel: "Pay in UPI App",
+  qrAlt: "UPI QR code",
+  utrPlaceholder: "UPI Transaction Reference (UTR) — from your payment app",
+  utrHelpText: "We'll verify this against our bank/UPI records and confirm your order within 24 hours.",
+  utrMissingError: "Enter the UPI transaction reference (UTR) you received after paying.",
+  orderError: "Something went wrong placing your order. Please try again.",
+  submitLabel: "I've Paid — Submit Order",
+  submittingLabel: "Placing Order…",
+  summaryHeading: "Order Summary",
+  totalLabel: "Total",
+  loginTitle: "Checkout",
+  loginText: "Log in to place your order — this ties it to your account so you can track it from your dashboard.",
+  loginButtonLabel: "Log In",
+  emptyTitle: "Your Bag Is Empty",
+  emptyText: "Add something from the store before checking out.",
+  emptyButtonLabel: "Browse the Store",
+};
+
 // "Join the Movement" band above the footer, on every page. Fallback
 // defaults — editable in Admin -> Site Content -> Footer under
 // "text.join.<field>".
@@ -837,25 +936,6 @@ export const sponsorTiers = [
 ];
 
 // ---- Merchandise: size guide, reviews, policies ----
-
-export const sizeGuide = [
-  { size: "S", chest: "36–38 in", length: "27 in" },
-  { size: "M", chest: "39–41 in", length: "28 in" },
-  { size: "L", chest: "42–44 in", length: "29 in" },
-  { size: "XL", chest: "45–47 in", length: "30 in" },
-];
-
-export const merchReviews = [
-  { name: "Ananya S.", product: "RTG Jersey", rating: 5, quote: "Fits true to size, breathes well even in Delhi summer rides. Worth every rupee." },
-  { name: "Rohit M.", product: "Hoodie", rating: 5, quote: "Warm enough for winter Friday Bricks and doesn't look like typical sportswear — wear it everywhere." },
-  { name: "Karan V.", product: "Cap", rating: 4, quote: "Solid quality, adjustable strap fits well. Would love more colour options." },
-];
-
-export const shippingInfo = {
-  shipping: "Free shipping on orders above ₹2,000. Delivery in 5–7 business days across India.",
-  returns: "Not happy with the fit? Returns accepted within 7 days of delivery, unworn and with tags attached.",
-  memberDiscount: "RTG members get 10% off all merchandise — log in before checkout to apply your discount automatically.",
-};
 
 // ---- Safety page (general guidelines — see rideSafety above for the
 // Friday Bricks–specific checklist) ----

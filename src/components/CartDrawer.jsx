@@ -1,109 +1,98 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "../lib/CartContext";
-import Button from "./ui/Button";
+import { useSiteSettings, buildStorePageCopy } from "../lib/publicData";
 
 function formatPrice(n) {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
+// The bag: slides in from the right on any page (the navbar's bag button,
+// or adding a product). Its wording is in Admin -> Site Content -> Store;
+// its look is in index.css under "BAG DRAWER" (.rtg-bag-*).
 export default function CartDrawer() {
-  const { items, updateQuantity, removeItem, subtotal, open, setOpen } = useCart();
+  const { items, updateQuantity, removeItem, subtotal, count, open, setOpen } = useCart();
+  const settings = useSiteSettings();
+  const copy = useMemo(() => buildStorePageCopy(settings), [settings]);
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          <motion.div
-            className="fixed inset-0 bg-black/60 z-[70]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setOpen(false)}
-          />
+          <motion.div className="rtg-bag-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOpen(false)} />
           <motion.aside
-            className="theme-night fixed top-0 right-0 h-full w-full sm:w-[420px] bg-rtg-purple-950 text-rtg-white border-l border-rtg-border z-[71] flex flex-col"
-            initial={{ x: "100%" }}
+            className="rtg-bag"
+            aria-label={copy.bagTitle}
+            initial={{ x: "105%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 320, damping: 34 }}
+            exit={{ x: "105%" }}
+            transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
           >
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-              <h2 className="font-display text-2xl">Your Cart</h2>
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close cart"
-                className="w-9 h-9 rounded-full glass flex items-center justify-center hover:text-rtg-orange-400 transition-colors"
-              >
-                <X size={18} />
+            <div className="rtg-bag-head">
+              <div>
+                <span>{copy.bagKicker}</span>
+                <h2>{copy.bagTitle}</h2>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} aria-label={copy.bagCloseLabel}>
+                ×
               </button>
             </div>
 
+            <div className="rtg-bag-count">
+              <span>
+                {count} {count === 1 ? copy.bagItemLabel : copy.bagItemsLabel}
+              </span>
+              <b>
+                {copy.bagSubtotalLabel} {formatPrice(subtotal)}
+              </b>
+            </div>
+
             {items.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center px-8 gap-3">
-                <ShoppingBag className="text-rtg-mist" size={32} />
-                <p className="text-rtg-mist">Your cart is empty.</p>
-                <Button to="/merchandise" onClick={() => setOpen(false)} size="md" variant="secondary">
-                  Browse Merchandise
-                </Button>
+              <div className="rtg-bag-items">
+                <div className="rtg-bag-empty">
+                  <p>{copy.bagEmptyText}</p>
+                  <Link to="/merchandise" onClick={() => setOpen(false)}>
+                    {copy.bagBrowseLabel}
+                  </Link>
+                </div>
               </div>
             ) : (
               <>
-                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                <div className="rtg-bag-items">
                   {items.map((item) => (
-                    <div key={`${item.productId}-${item.size || ""}`} className="flex gap-4">
-                      {item.image && (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-16 h-16 rounded-xl object-cover shrink-0 bg-white/5"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{item.name}</p>
-                        {item.size && <p className="text-xs text-rtg-mist">Size: {item.size}</p>}
-                        <p className="text-xs text-rtg-orange-400 font-semibold mt-0.5">{formatPrice(item.price)}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)}
-                            aria-label="Decrease quantity"
-                            className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className="text-sm w-5 text-center">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
-                            aria-label="Increase quantity"
-                            className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <button
-                            onClick={() => removeItem(item.productId, item.size)}
-                            aria-label="Remove item"
-                            className="ml-2 text-rtg-mist hover:text-rtg-orange-400 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                    <div key={`${item.productId}-${item.size || ""}`} className="rtg-bag-row">
+                      {item.image && <img src={item.image} alt={item.name} />}
+                      <div className="rtg-bag-info">
+                        <strong>{item.name}</strong>
+                        <span>
+                          {[item.size && `${copy.bagSizeLabel} ${item.size}`, formatPrice(item.price)].filter(Boolean).join(" • ")}
+                        </span>
+                        <button type="button" className="rtg-bag-remove" onClick={() => removeItem(item.productId, item.size)}>
+                          {copy.bagRemoveLabel}
+                        </button>
+                      </div>
+                      <div className="rtg-bag-qty">
+                        <button type="button" onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)} aria-label={`− ${item.name}`}>
+                          −
+                        </button>
+                        <b>{item.quantity}</b>
+                        <button type="button" onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)} aria-label={`+ ${item.name}`}>
+                          +
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="px-6 py-5 border-t border-white/10 space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-rtg-mist">Subtotal</span>
-                    <span className="font-display text-2xl">{formatPrice(subtotal)}</span>
+                <div className="rtg-bag-foot">
+                  <div className="rtg-bag-total">
+                    <span>{copy.bagSubtotalLabel}</span>
+                    <strong>{formatPrice(subtotal)}</strong>
                   </div>
-                  <Link
-                    to="/checkout"
-                    onClick={() => setOpen(false)}
-                    className="btn-shine block w-full text-center rounded-full bg-rtg-orange-500 text-white font-semibold px-6 py-4 hover:bg-rtg-orange-400 transition-colors"
-                  >
-                    Checkout
+                  {copy.bagNote && <p>{copy.bagNote}</p>}
+                  <Link to="/checkout" onClick={() => setOpen(false)}>
+                    {copy.bagCheckoutLabel}
                   </Link>
                 </div>
               </>
