@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Package, AlertTriangle, Camera, Sparkles, BadgeCheck, ArrowUpRight, Mail, FlaskConical, Ticket, CalendarDays, ShoppingBag, Phone, Cake, AtSign, Droplet, ShieldAlert } from "lucide-react";
+import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Package, AlertTriangle, Camera, Sparkles, BadgeCheck, ArrowUpRight, Mail, Phone, Cake, AtSign, Droplet, ShieldAlert } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
@@ -12,6 +12,7 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
 import { uploadToSupabaseStorage } from "../lib/supabaseUpload";
+import { announceAvatar } from "../lib/useMyAvatar";
 import { ConnectWithStrava, PoweredByStrava } from "../components/lab/StravaBrand";
 
 const ORDER_STATUS = {
@@ -31,13 +32,6 @@ const MEMBERSHIP_STATUS = {
   expired: { label: "Expired", className: "bg-rtg-purple-600/10 text-rtg-mist" },
   cancelled: { label: "Cancelled", className: "bg-rtg-purple-600/10 text-rtg-mist" },
 };
-
-const SHORTCUTS = [
-  { to: "/lab", label: "RTG Lab", hint: "Your challenges", Icon: FlaskConical },
-  { to: "/membership", label: "Membership", hint: "Club and packs", Icon: Ticket },
-  { to: "/events", label: "Events", hint: "What's on", Icon: CalendarDays },
-  { to: "/store", label: "Store", hint: "Merchandise", Icon: ShoppingBag },
-];
 
 function formatPrice(n) {
   return `₹${Number(n).toLocaleString("en-IN")}`;
@@ -193,6 +187,7 @@ export default function Dashboard() {
       const { url } = await uploadToSupabaseStorage(file, "avatar", null, { ownAvatar: true });
       setForm((f) => ({ ...f, avatar_url: url }));
       await supabase.from("profiles").update({ avatar_url: url }).eq("id", user.id);
+      announceAvatar(url); // the navbar's account button shows it straight away
     } catch (err) {
       setAvatarError(err.message || "Upload failed");
     } finally {
@@ -373,22 +368,6 @@ export default function Dashboard() {
             </div>
           </section>
         )}
-
-        {/* ---- Where to next ---- */}
-        <nav className="dash-links" aria-label="Shortcuts">
-          {SHORTCUTS.map(({ to, label, hint, Icon }) => (
-            <Link key={to} to={to} className="dash-link">
-              <span className="dash-link-icon">
-                <Icon size={18} />
-              </span>
-              <span className="min-w-0">
-                <strong>{label}</strong>
-                <small>{hint}</small>
-              </span>
-              <ArrowUpRight size={15} className="dash-link-arrow" />
-            </Link>
-          ))}
-        </nav>
 
         {myMemberships.length > 0 && (
           <section>

@@ -89,7 +89,13 @@ function AccessWindow({ copy, steps, user, registered, stravaLinked, canConnect,
       <Link to="/lab" className="close" aria-label={copy.backLabel}>
         ×
       </Link>
-      <div className="eyebrow">{copy.accessEyebrow}</div>
+      {/* Strava's logo stays on this window: the board it opens is Strava data. */}
+      <div className="access-brand">
+        <div className="eyebrow">{copy.accessEyebrow}</div>
+        <a href={STRAVA_URL} target="_blank" rel="noopener noreferrer" aria-label={copy.stravaLinkLabel}>
+          <PoweredByStrava alt={copy.poweredAlt} />
+        </a>
+      </div>
       <h2 id="lab-access-title">{copy.accessTitle}</h2>
       <p>{copy.accessText}</p>
 

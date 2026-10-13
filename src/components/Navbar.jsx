@@ -15,6 +15,7 @@ import { brand } from "../data/content";
 import Button from "./ui/Button";
 import LiveClock from "./ui/LiveClock";
 import useSession from "../lib/useSession";
+import useMyAvatar from "../lib/useMyAvatar";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
@@ -121,6 +122,12 @@ function AccountIndicator({ className = "" }) {
    ========================================================= */
 
 function ProfileIcon({ className = "" }) {
+  const { user } = useSession();
+  const avatar = useMyAvatar(user);
+  // A photo that fails to load falls back to the person icon.
+  const [broken, setBroken] = useState("");
+  const showPhoto = avatar && broken !== avatar;
+
   return (
     <div
       className={`
@@ -141,12 +148,17 @@ function ProfileIcon({ className = "" }) {
           flex
           items-center
           justify-center
+          overflow-hidden
           hover:text-rtg-orange-400
           hover:border-rtg-orange-400/60
           transition-colors
         "
       >
-        <User size={18} />
+        {showPhoto ? (
+          <img src={avatar} alt="" referrerPolicy="no-referrer" onError={() => setBroken(avatar)} className="w-full h-full object-cover" />
+        ) : (
+          <User size={18} />
+        )}
       </Link>
 
       <button

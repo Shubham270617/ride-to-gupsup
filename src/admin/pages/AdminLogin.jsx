@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Lock, Mail, User, Loader2, X, Phone } from "lucide-react";
+import { Lock, Mail, User, Loader2, X, Phone, ShieldCheck, CalendarDays, ShoppingBag, TrendingUp } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../../lib/supabaseClient";
 import { signInWithPhone } from "../../lib/phoneAuth";
 import { claimBootstrapAdmin } from "../../lib/adminBootstrap";
@@ -18,6 +18,16 @@ const GoogleMark = (props) => (
     <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
   </svg>
 );
+
+// What the left-hand panel says the admin is for.
+const HIGHLIGHTS = [
+  { Icon: CalendarDays, title: "Events and calendar", text: "Publish rides, runs and race days." },
+  { Icon: ShoppingBag, title: "Store and orders", text: "Products, payments and memberships." },
+  { Icon: TrendingUp, title: "Visitors and members", text: "See who is on the site and who joined." },
+];
+
+const FIELD =
+  "w-full rounded-2xl bg-white border border-rtg-border pr-4 py-3.5 text-sm text-rtg-white placeholder:text-rtg-mist/70 transition focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -136,156 +146,188 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6">
-      <div className="relative glass rounded-3xl p-8 md:p-10 w-full max-w-sm shadow-xl shadow-rtg-purple-950/10">
-        <button
-          onClick={() => navigate("/")}
-          aria-label="Close"
-          className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-orange-500 hover:bg-rtg-purple-950/5 transition-colors"
-        >
-          <X size={18} />
-        </button>
-        <img src={images.logoNav} alt={brand.name} className="h-11 w-auto mx-auto mb-6" />
-        <h1 className="font-display text-3xl text-center mb-1">Admin</h1>
-        <p className="text-rtg-mist text-sm text-center mb-8">Manage RTG's events, gallery, store, and more.</p>
+    <div className="min-h-svh bg-rtg-ink lg:grid lg:grid-cols-[1.05fr_1fr]">
+      {/* LEFT — brand panel (large screens) */}
+      <aside className="theme-night relative isolate hidden lg:flex flex-col justify-between overflow-hidden p-12 xl:p-16 text-white bg-[#1b1130]">
+        <div aria-hidden="true" className="absolute inset-0 -z-20 bg-cover bg-center" style={{ backgroundImage: `url(${images.homeCTA})` }} />
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,rgba(27,17,48,0.94)_0%,rgba(53,36,111,0.86)_55%,rgba(247,107,28,0.55)_130%)]" />
+        <div aria-hidden="true" className="absolute -right-40 -top-40 -z-10 h-[520px] w-[520px] rounded-full border border-white/10 shadow-[0_0_0_70px_rgba(255,255,255,0.03),0_0_0_150px_rgba(255,255,255,0.02)]" />
 
-        {notAuthorized && (
-          <div className="mb-5 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3 text-center">
-            <p className="text-sm font-semibold text-rtg-orange-300">Access Denied</p>
-            <p className="text-xs text-rtg-mist mt-1">
-              You're signed in, but that account isn't authorized as an admin. Ask an existing admin to grant you
-              access from the Admins screen.
-            </p>
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleGoogle}
-          className="w-full inline-flex items-center justify-center gap-2.5 rounded-full px-4 py-3 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 hover:bg-rtg-purple-950/5 transition-colors mb-5"
-        >
-          <GoogleMark /> Continue with Google
-        </button>
-
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-px flex-1 bg-rtg-border" />
-          <span className="text-xs text-rtg-mist uppercase tracking-wide">or continue with</span>
-          <div className="h-px flex-1 bg-rtg-border" />
+        <div className="inline-flex self-start rounded-2xl bg-white px-4 py-2.5 shadow-lg">
+          <img src={images.logoNav} alt={brand.name} className="h-9 w-auto" />
         </div>
 
-        <div className="flex glass rounded-full p-1 mb-3">
-          <button
-            onClick={() => switchMode("login")}
-            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-              mode === "login" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
-            }`}
-          >
-            Log In
-          </button>
-          <button
-            onClick={() => switchMode("signup")}
-            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${
-              mode === "signup" ? "bg-rtg-orange-500 text-white" : "text-rtg-mist"
-            }`}
-          >
-            Sign Up
-          </button>
+        <div>
+          <p className="mb-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">
+            <ShieldCheck size={14} /> RTG Control Room
+          </p>
+          <h2 className="font-display text-6xl xl:text-7xl leading-[0.9]">
+            Run the ride.
+            <span className="block text-gradient">Behind the scenes.</span>
+          </h2>
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-white/75">Everything members see on the site is managed from here — no code, just the admin.</p>
+
+          <ul className="mt-9 space-y-3 max-w-md">
+            {HIGHLIGHTS.map(({ Icon, title, text }) => (
+              <li key={title} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3.5 backdrop-blur-sm">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#f45b18,#ff8a3d)]">
+                  <Icon size={18} />
+                </span>
+                <span>
+                  <strong className="block text-sm font-semibold">{title}</strong>
+                  <small className="block text-xs text-white/65">{text}</small>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {mode === "login" && (
-          <div className="flex gap-4 mb-5 text-sm justify-center">
-            <button
-              type="button"
-              onClick={() => setMethod("email")}
-              className={`pb-1 border-b-2 transition-colors ${
-                method === "email" ? "border-rtg-orange-400 text-rtg-white" : "border-transparent text-rtg-mist"
-              }`}
-            >
-              Email
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod("phone")}
-              className={`pb-1 border-b-2 transition-colors ${
-                method === "phone" ? "border-rtg-orange-400 text-rtg-white" : "border-transparent text-rtg-mist"
-              }`}
-            >
-              Phone Number
-            </button>
-          </div>
-        )}
+        <p className="text-xs text-white/55">Authorised RTG staff only.</p>
+      </aside>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {mode === "signup" && (
-            <div className="relative">
-              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full name"
-                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
-              />
+      {/* RIGHT — the form */}
+      <main className="relative isolate flex min-h-svh items-center justify-center overflow-hidden px-5 py-10">
+        <div aria-hidden="true" className="absolute -left-24 top-10 -z-10 h-72 w-72 rounded-full bg-rtg-orange-400/15 blur-3xl" />
+        <div aria-hidden="true" className="absolute -right-20 bottom-0 -z-10 h-80 w-80 rounded-full bg-rtg-purple-600/15 blur-3xl" />
+
+        <div className="relative w-full max-w-md rounded-[2rem] border border-rtg-border bg-white p-7 sm:p-10 shadow-[0_30px_80px_-30px_rgba(53,36,111,0.35)]">
+          <span aria-hidden="true" className="absolute inset-x-10 top-0 h-1 rounded-b-full bg-[linear-gradient(90deg,#f45b18,#ff8a3d,#b981d8)]" />
+          <button
+            onClick={() => navigate("/")}
+            aria-label="Close"
+            className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-rtg-mist hover:text-rtg-orange-500 hover:bg-rtg-purple-950/5 transition-colors"
+          >
+            <X size={18} />
+          </button>
+
+          <img src={images.logoNav} alt={brand.name} className="h-10 w-auto mb-6 lg:hidden" />
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-rtg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-rtg-orange-600">
+            <ShieldCheck size={12} /> Staff only
+          </p>
+          <h1 className="font-display text-4xl leading-none mb-2">{mode === "login" ? "Welcome back" : "Create your admin login"}</h1>
+          <p className="text-rtg-mist text-sm mb-7">Manage RTG's events, gallery, store, and more.</p>
+
+          {notAuthorized && (
+            <div className="mb-6 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3">
+              <p className="text-sm font-semibold text-rtg-orange-600">Access denied</p>
+              <p className="text-xs text-rtg-mist mt-1">
+                You're signed in, but that account isn't authorized as an admin. Ask an existing admin to grant you access from the Admins screen.
+              </p>
             </div>
           )}
-
-          {(mode === "signup" || method === "phone") && (
-            <div className="relative">
-              <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-              <span className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-rtg-mist">{COUNTRY_CODE}</span>
-              <input
-                type="tel"
-                required
-                inputMode="numeric"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="98765 43210"
-                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-[4.5rem] pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
-              />
-            </div>
-          )}
-
-          {(mode === "signup" || method === "email") && (
-            <div className="relative">
-              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
-              />
-            </div>
-          )}
-
-          <div className="relative">
-            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full rounded-full bg-rtg-white/5 border border-rtg-white/15 pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60"
-            />
-          </div>
-
-          {error && <p className="text-xs text-rtg-orange-400 text-center">{error}</p>}
-          {notice && <p className="text-xs text-rtg-mist text-center">{notice}</p>}
 
           <button
-            type="submit"
-            disabled={submitting}
-            className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+            type="button"
+            onClick={handleGoogle}
+            className="w-full inline-flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3.5 text-sm font-semibold bg-white border border-rtg-border text-rtg-purple-600 shadow-[0_8px_20px_-14px_rgba(53,36,111,0.5)] hover:-translate-y-0.5 hover:border-rtg-purple-600/30 transition mb-5"
           >
-            {submitting && <Loader2 size={16} className="animate-spin" />}
-            {mode === "login" ? "Log In" : "Create Account"}
+            <GoogleMark /> Continue with Google
           </button>
-        </form>
-      </div>
+
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px flex-1 bg-rtg-border" />
+            <span className="text-[10px] font-semibold text-rtg-mist uppercase tracking-[0.14em]">or with your details</span>
+            <div className="h-px flex-1 bg-rtg-border" />
+          </div>
+
+          <div className="flex rounded-2xl bg-rtg-purple-950/5 p-1 mb-4">
+            {[
+              ["login", "Log In"],
+              ["signup", "Sign Up"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchMode(key)}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  mode === key ? "bg-white text-rtg-purple-600 shadow-sm" : "text-rtg-mist hover:text-rtg-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {mode === "login" && (
+            <div className="flex gap-5 mb-5 text-sm">
+              {[
+                ["email", "Email"],
+                ["phone", "Phone Number"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMethod(key)}
+                  className={`pb-1 border-b-2 font-medium transition-colors ${
+                    method === key ? "border-rtg-orange-400 text-rtg-white" : "border-transparent text-rtg-mist hover:text-rtg-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {mode === "signup" && (
+              <div className="relative">
+                <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+                <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className={`${FIELD} pl-11`} />
+              </div>
+            )}
+
+            {(mode === "signup" || method === "phone") && (
+              <div className="relative">
+                <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+                <span className="absolute left-11 top-1/2 -translate-y-1/2 text-sm text-rtg-mist">{COUNTRY_CODE}</span>
+                <input
+                  type="tel"
+                  required
+                  inputMode="numeric"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                  placeholder="98765 43210"
+                  className={`${FIELD} pl-[4.5rem]`}
+                />
+              </div>
+            )}
+
+            {(mode === "signup" || method === "email") && (
+              <div className="relative">
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className={`${FIELD} pl-11`} />
+              </div>
+            )}
+
+            <div className="relative">
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className={`${FIELD} pl-11`}
+              />
+            </div>
+
+            {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700 text-center">{error}</p>}
+            {notice && <p className="rounded-xl bg-rtg-purple-950/5 px-3 py-2 text-xs text-rtg-mist text-center">{notice}</p>}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(90deg,#f45b18,#ff7a1a)] text-white font-semibold py-3.5 text-sm shadow-[0_14px_28px_-12px_rgba(247,107,28,0.7)] hover:-translate-y-0.5 transition disabled:opacity-60"
+            >
+              {submitting && <Loader2 size={16} className="animate-spin" />}
+              {mode === "login" ? "Log In" : "Create Account"}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-[11px] leading-relaxed text-rtg-mist">Only accounts an existing admin has approved can get in.</p>
+        </div>
+      </main>
     </div>
   );
 }

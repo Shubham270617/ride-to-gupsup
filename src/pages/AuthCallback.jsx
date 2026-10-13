@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, UserPlus } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import { claimBootstrapAdmin } from "../lib/adminBootstrap";
 
@@ -126,7 +126,7 @@ export default function AuthCallback() {
 
   return (
     <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6 text-center">
-      <div className="glass rounded-3xl px-8 py-12 max-w-sm w-full">
+      <div className="max-w-sm w-full rounded-[2rem] border border-rtg-border bg-white px-8 py-11 shadow-[0_30px_80px_-30px_rgba(53,36,111,0.35)]">
         {status === "working" && (
           <>
             <Loader2 className="animate-spin mx-auto mb-4 text-rtg-orange-400" size={32} />
@@ -190,15 +190,19 @@ export default function AuthCallback() {
         )}
         {status === "no_account" && (
           <>
-            <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
-            <p className="font-display text-2xl mb-2">No account found</p>
-            <p className="text-rtg-mist text-sm mb-6">
-              {noAccountEmail ? <>There's no account for <strong className="text-rtg-white">{noAccountEmail}</strong> yet.</> : "That email isn't registered yet."}{" "}
-              Use Sign Up instead of Log In to create one.
-            </p>
+            <span className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-rtg-purple-600 text-white shadow-[0_14px_28px_-12px_rgba(53,36,111,0.7)]">
+              <UserPlus size={24} />
+            </span>
+            <p className="font-display text-3xl leading-none mb-3">You're new here</p>
+            {noAccountEmail && (
+              <p className="mx-auto mb-3 inline-block max-w-full break-all rounded-full bg-rtg-purple-950/5 px-3.5 py-1.5 text-xs font-semibold text-rtg-white">
+                {noAccountEmail}
+              </p>
+            )}
+            <p className="text-rtg-mist text-sm mb-7">There's no account for this email yet. Go back and choose <b className="text-rtg-white">Sign Up</b> instead of Log In to create one.</p>
             <button
               onClick={() => navigate(isAdminFlow ? "/admin/login" : "/", { replace: true })}
-              className="inline-flex items-center justify-center rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+              className="btn-shine inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(90deg,#f45b18,#ff7a1a)] text-white font-semibold px-6 py-3 text-sm shadow-[0_14px_28px_-12px_rgba(247,107,28,0.7)] hover:-translate-y-0.5 transition"
             >
               {isAdminFlow ? "Back to Admin Login" : "Back to RTG"}
             </button>
