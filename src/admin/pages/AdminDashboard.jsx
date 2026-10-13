@@ -35,7 +35,8 @@ const cards = [
   { table: "challenges", label: "Challenges", icon: Flame, to: "/admin/challenges" },
   { table: "team_members", label: "Team Members", icon: Users, to: "/admin/team" },
   { table: "race_results", label: "Race Results", icon: Trophy, to: "/admin/race-results" },
-  { table: "leaderboard_entries", label: "Leaderboard Athletes", icon: Medal, to: "/admin/leaderboard" },
+  { table: "ridge_results", label: "Ridge Repeats Results", icon: Medal, to: "/admin/ridge-results" },
+  { table: "membership_purchases", label: "Membership Purchases", icon: Package, to: "/admin/membership-purchases" },
   { table: "community_network_groups", label: "Community Network Groups", icon: Users, to: "/admin/community-network" },
   { table: "community_city_moments", label: "Community City Photos", icon: Images, to: "/admin/community-city-photos" },
 ];

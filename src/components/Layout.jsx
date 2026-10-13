@@ -7,6 +7,7 @@ import AiWidget from "./ai/AiWidget";
 import CartDrawer from "./CartDrawer";
 import SiteBackground from "./ui/SiteBackground";
 import { JoinCommunityProvider, useJoinCommunity } from "../lib/JoinCommunityContext";
+import useVisitTracker from "../lib/useVisitTracker";
 
 // Pages that end with the photo-backed "Join the Movement" band, which
 // carries the footer inside it. Every other page ends with the plain dark
@@ -16,6 +17,8 @@ const JOIN_BAND_PAGES = ["/", "/community"];
 function Page() {
   const location = useLocation();
   const joinCommunity = useJoinCommunity();
+  // Every public page is counted for Admin -> Visitors (the admin itself isn't).
+  useVisitTracker();
   const isCommunity = location.pathname === "/community";
   const hasJoinBand = JOIN_BAND_PAGES.includes(location.pathname);
 

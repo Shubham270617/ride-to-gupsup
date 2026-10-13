@@ -184,6 +184,8 @@ export const images = {
 
   // ---- RACE RESULTS ----
   raceResultsHero: rtg.cycling,
+  // Photo behind the Ridge Repeats lab's title band (/lab/ridge).
+  ridgeHero: rtg.cycling,
 
   // ---- SAFETY ----
   safetyHero: placeholder,

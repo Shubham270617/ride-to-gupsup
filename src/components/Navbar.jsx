@@ -37,8 +37,12 @@ const links = [
     label: "Events",
   },
   {
-    to: "/leaderboard",
-    label: "Leaderboard",
+    to: "/lab",
+    label: "Lab",
+  },
+  {
+    to: "/membership",
+    label: "Membership",
   },
   {
     to: "/merchandise",

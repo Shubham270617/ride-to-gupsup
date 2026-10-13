@@ -22,7 +22,11 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Challenges from "./pages/Challenges";
 import Calendar from "./pages/Calendar";
 import RaceResults from "./pages/RaceResults";
-import Leaderboard from "./pages/Leaderboard";
+import Lab from "./pages/Lab";
+import LabStrava from "./pages/LabStrava";
+import LabRidge from "./pages/LabRidge";
+import Membership from "./pages/Membership";
+import MembershipCheckout from "./pages/MembershipCheckout";
 import Safety from "./pages/Safety";
 import Dashboard from "./pages/Dashboard";
 import Blog from "./pages/Blog";
@@ -48,6 +52,7 @@ const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
 const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
+const VisitorsAdmin = lazy(() => import("./admin/pages/VisitorsAdmin"));
 const AiAdmin = lazy(() => import("./admin/pages/AiAdmin"));
 
 function AdminFallback() {
@@ -108,12 +113,24 @@ export default function App() {
           <Route path="race-results" element={<ResourceAdminPage resource={resources.raceResults} />} />
           <Route path="calendar" element={<ResourceAdminPage resource={resources.calendarActivities} />} />
           <Route path="calendar-types" element={<ResourceAdminPage resource={resources.calendarCategories} />} />
-          <Route path="leaderboard" element={<ResourceAdminPage resource={resources.leaderboardEntries} />} />
-          <Route path="leaderboard-challenges" element={<ResourceAdminPage resource={resources.leaderboardChallenges} />} />
-          <Route path="leaderboard-sports" element={<ResourceAdminPage resource={resources.leaderboardSports} />} />
-          <Route path="leaderboard-age-groups" element={<ResourceAdminPage resource={resources.leaderboardAgeGroups} />} />
-          <Route path="ridge-results" element={<ResourceAdminPage resource={resources.ridgeResults} />} />
+          <Route path="lab-labs" element={<ResourceAdminPage resource={resources.labProgrammes} />} />
+          <Route path="lab-periods" element={<ResourceAdminPage resource={resources.labPeriods} />} />
+          <Route path="lab-hero-tiles" element={<ResourceAdminPage resource={resources.labHighlights} />} />
+          <Route path="lab-principles" element={<ResourceAdminPage resource={resources.labPrinciples} />} />
+          <Route path="lab-access-steps" element={<ResourceAdminPage resource={resources.labAccessSteps} />} />
+          <Route path="lab-sports" element={<ResourceAdminPage resource={resources.labSports} />} />
+          <Route path="lab-age-categories" element={<ResourceAdminPage resource={resources.labAgeGroups} />} />
+          <Route path="lab-activities" element={<ResourceAdminPage resource={resources.labActivities} />} />
           <Route path="ridge-sessions" element={<ResourceAdminPage resource={resources.ridgeSessions} />} />
+          <Route path="ridge-results" element={<ResourceAdminPage resource={resources.ridgeResults} />} />
+          <Route path="ridge-awards" element={<ResourceAdminPage resource={resources.ridgeAwards} />} />
+          <Route path="ridge-spotlight" element={<ResourceAdminPage resource={resources.ridgeSpotlights} />} />
+          <Route path="membership-plans" element={<ResourceAdminPage resource={resources.membershipPlans} />} />
+          <Route path="membership-perks" element={<ResourceAdminPage resource={resources.membershipPerks} />} />
+          <Route path="membership-guides" element={<ResourceAdminPage resource={resources.membershipGuides} />} />
+          <Route path="membership-steps" element={<ResourceAdminPage resource={resources.membershipSteps} />} />
+          <Route path="membership-faqs" element={<ResourceAdminPage resource={resources.membershipFaqs} />} />
+          <Route path="membership-purchases" element={<ResourceAdminPage resource={resources.membershipPurchases} />} />
           <Route path="community-paths" element={<ResourceAdminPage resource={resources.communityPaths} />} />
           <Route path="community-way" element={<ResourceAdminPage resource={resources.communityPrinciples} />} />
           <Route path="community-motion" element={<ResourceAdminPage resource={resources.communityMilestones} />} />
@@ -140,6 +157,7 @@ export default function App() {
           <Route path="orders" element={<OrdersAdmin />} />
           <Route path="ai" element={<AiAdmin />} />
           <Route path="admins" element={<AdminsAdmin />} />
+          <Route path="visitors" element={<VisitorsAdmin />} />
         </Route>
 
         <Route element={<Layout />}>
@@ -159,7 +177,13 @@ export default function App() {
           {/* The page's old address — kept so existing links still land. */}
           <Route path="/race-calendar" element={<Navigate to="/calendar" replace />} />
           <Route path="/race-results" element={<RaceResults />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/lab" element={<Lab />} />
+          <Route path="/lab/strava" element={<LabStrava />} />
+          <Route path="/lab/ridge" element={<LabRidge />} />
+          <Route path="/membership" element={<Membership />} />
+          <Route path="/membership/checkout" element={<MembershipCheckout />} />
+          {/* The Lab replaced the Leaderboard page — old links still land. */}
+          <Route path="/leaderboard" element={<Navigate to="/lab" replace />} />
           <Route path="/safety" element={<Safety />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/blog" element={<Blog />} />

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, homeJoinCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, leaderboardPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
+import { LAB_PAGE_TEXT, LAB_GROUP_HEADINGS, RIDGE_PAGE_TEXT, RIDGE_GROUP_HEADINGS, MEMBERSHIP_PAGE_TEXT, MEMBERSHIP_GROUP_HEADINGS } from "../../data/labContent";
+import { labPageKey, ridgePageKey, membershipPageKey } from "../../lib/labData";
+import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, homeJoinCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
 import {
   COMMUNITY_PAGE_FIELDS,
   communityPageKey,
@@ -13,8 +15,6 @@ import {
   eventsPageKey,
   CALENDAR_PAGE_FIELDS,
   calendarPageKey,
-  LEADERBOARD_PAGE_FIELDS,
-  leaderboardPageKey,
   JOIN_FIELDS,
   FOOTER_FIELDS,
   joinKey,
@@ -115,15 +115,13 @@ const CALENDAR_GROUP_HEADINGS = {
   modal: "Calendar page — activity detail window",
 };
 
-// Leaderboard page — same arrangement as the Calendar page above.
-const LEADERBOARD_GROUP_HEADINGS = {
-  top: "Leaderboard page — top strip",
-  filters: "Leaderboard page — filters",
-  numbers: "Leaderboard page — numbers & total boxes",
-  panels: "Leaderboard page — top 3, charts & analysis cards",
-  board: "Leaderboard page — ranking table",
-  ridge: "Leaderboard page — Ridge Repeats",
-};
+// RTG Lab, Ridge Repeats and Membership — one card per part of the page,
+// from the lists in data/labContent.js (which also hold the starting wording).
+const labContentGroups = (texts, headings, keyOf) =>
+  Object.entries(headings).map(([group, heading]) => ({
+    heading,
+    fields: texts.filter((f) => f.group === group).map((f) => ({ key: keyOf(f.field), label: f.label, fallback: f.text, type: f.type })),
+  }));
 
 // Community page — same arrangement again.
 const COMMUNITY_GROUP_HEADINGS = {
@@ -239,17 +237,11 @@ const CUSTOM_GROUPS = {
       type: f.type,
     })),
   })),
-  // The athletes, challenges, sports, age groups and Ridge Repeats results
-  // are admin screens of their own (Leaderboard — … / Ridge Repeats — …).
-  Leaderboard: Object.entries(LEADERBOARD_GROUP_HEADINGS).map(([group, heading]) => ({
-    heading,
-    fields: LEADERBOARD_PAGE_FIELDS.filter((f) => f.group === group).map((f) => ({
-      key: leaderboardPageKey(f.field),
-      label: f.label,
-      fallback: leaderboardPageCopy[f.field],
-      type: f.type,
-    })),
-  })),
+  // The labs, periods, sports, sessions, results, plans … are admin screens
+  // of their own (Lab — … / Ridge Repeats — … / Membership — …).
+  Lab: labContentGroups(LAB_PAGE_TEXT, LAB_GROUP_HEADINGS, labPageKey),
+  "Ridge Repeats": labContentGroups(RIDGE_PAGE_TEXT, RIDGE_GROUP_HEADINGS, ridgePageKey),
+  Membership: labContentGroups(MEMBERSHIP_PAGE_TEXT, MEMBERSHIP_GROUP_HEADINGS, membershipPageKey),
   // The products and the tabs are admin screens of their own (Merchandise /
   // Store — Categories).
   Store: [

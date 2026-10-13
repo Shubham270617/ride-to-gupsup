@@ -10,6 +10,7 @@ import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
 import { uploadToSupabaseStorage } from "../lib/supabaseUpload";
+import { ConnectWithStrava, PoweredByStrava } from "../components/lab/StravaBrand";
 
 const ORDER_STATUS = {
   pending_verification: { label: "Pending Verification", className: "bg-amber-500/15 text-amber-300" },
@@ -27,11 +28,11 @@ function formatKm(meters) {
   return `${(Number(meters || 0) / 1000).toFixed(1)} km`;
 }
 
-const StravaMark = (props) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width={16} height={16} {...props}>
-    <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M9.395 0L3.638 11.61h3.462L9.6 6.859l2.5 4.751h3.467L9.395 0z" />
-  </svg>
-);
+// Strava's name and button on this page are Strava's own artwork
+// (components/lab/StravaBrand.jsx) — never a redrawn mark or a look-alike
+// button.
+const STRAVA_LOGO_ALT = "Powered by Strava";
+const STRAVA_CONNECT_ALT = "Connect with Strava";
 
 function LoggedOutPrompt() {
   const { requestLogin } = useAuthGate();
@@ -233,21 +234,15 @@ export default function Dashboard() {
           connected it yet is asked to, once signed in. */}
       {!profile?.strava_athlete_id && authProviders.strava && (
         <div className="max-w-4xl mx-auto mb-6 glass rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-          <span className="shrink-0 w-12 h-12 rounded-2xl grid place-items-center bg-[#FC4C02]/10">
-            <StravaMark width={24} height={24} />
-          </span>
           <div className="flex-1 min-w-0">
+            <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto mb-3" />
             <h2 className="font-display text-2xl leading-none mb-1.5">Connect Your Strava</h2>
             <p className="text-sm text-rtg-mist">Link your Strava account so your rides and runs show up on your RTG profile automatically.</p>
           </div>
-          <button
-            onClick={handleConnectStrava}
-            disabled={connectingStrava}
-            className="btn-shine shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-[#FC4C02] text-white font-semibold px-5 py-3 text-sm hover:brightness-110 transition disabled:opacity-60"
-          >
-            {connectingStrava && <Loader2 size={14} className="animate-spin" />}
-            Connect Strava
-          </button>
+          <div className="shrink-0 flex items-center gap-3">
+            {connectingStrava && <Loader2 size={16} className="animate-spin text-rtg-orange-400" />}
+            <ConnectWithStrava onClick={handleConnectStrava} alt={STRAVA_CONNECT_ALT} disabled={connectingStrava} />
+          </div>
         </div>
       )}
       <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-8">
@@ -325,9 +320,12 @@ export default function Dashboard() {
       {profile?.strava_athlete_id && (
         <div className="max-w-4xl mx-auto mb-10">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-2xl">My Strava Activity</h2>
-            <Link to="/leaderboard" className="text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors">
-              View Leaderboard →
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <h2 className="font-display text-2xl">My Strava Activity</h2>
+              <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
+            </div>
+            <Link to="/lab/strava" className="text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors">
+              Open Strava Challenge →
             </Link>
           </div>
           {myLeaderboardStats && myLeaderboardStats.activity_count > 0 && (
@@ -400,18 +398,11 @@ export default function Dashboard() {
           </p>
           <div className="flex items-center justify-center gap-2 text-xs text-rtg-mist">
             {profile?.strava_athlete_id ? (
-              <span className="inline-flex items-center gap-1.5 text-rtg-orange-400">
-                <StravaMark /> Strava Connected
+              <span className="inline-flex items-center gap-2 text-rtg-orange-400">
+                <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-3.5 w-auto" /> Connected
               </span>
             ) : authProviders.strava ? (
-              <button
-                onClick={handleConnectStrava}
-                disabled={connectingStrava}
-                className="inline-flex items-center gap-1.5 rounded-full glass px-3.5 py-1.5 hover:text-rtg-orange-400 hover:border-rtg-orange-400/60 transition-colors disabled:opacity-60"
-              >
-                {connectingStrava ? <Loader2 size={13} className="animate-spin" /> : <StravaMark />}
-                Connect Strava
-              </button>
+              <ConnectWithStrava onClick={handleConnectStrava} alt={STRAVA_CONNECT_ALT} disabled={connectingStrava} />
             ) : (
               <span>No Strava connected</span>
             )}

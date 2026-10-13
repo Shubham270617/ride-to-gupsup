@@ -682,107 +682,314 @@ begin
 end $$;
 
 -- ============================================================================
--- Leaderboard page (/leaderboard) — six tables of its own, each with an
--- admin screen. Every ranking, total and chart on the page is worked out
--- from their rows; its headings and labels live in site_settings under
--- "text.leaderboard.<field>" (Admin -> Site Content -> Leaderboard). Starter
--- rows are in supabase/migrations/011_leaderboard.sql.
---   leaderboard_challenges  the "Event / Challenge" dropdown
---   leaderboard_sports      sport filter pills + Sport Mix ring colours
---   leaderboard_age_groups  age filter pills + Age Distribution bars
---   leaderboard_entries     one row per athlete per challenge
---   ridge_sessions          the Ridge Repeats "Session" dropdown
---   ridge_results           one row per rider per Ridge Repeats session
+-- RTG Lab (/lab, /lab/strava, /lab/ridge) and Membership (/membership). The
+-- Lab replaced the Leaderboard page in migration 016. Every list on these
+-- pages is a table with its own admin screen (Lab — … / Ridge Repeats — … /
+-- Membership — …); their headings and labels live in site_settings under
+-- "text.lab.<field>", "text.ridge.<field>" and "text.membership.<field>".
+-- Starter rows are in supabase/migrations/016_lab_and_membership.sql.
 -- (The Strava totals further down — leaderboard_stats — are a separate,
 -- automatic thing shown on each member's own dashboard.)
 -- ============================================================================
 
-create table if not exists leaderboard_challenges (
+-- The lab cards of the Lab page.
+create table if not exists lab_programmes (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
-  name text not null,
+  title text not null,
+  number_label text,
+  pill text,
+  art_word text,
+  eyebrow text,
+  description text,
+  tags text[],
+  tone text not null default 'orange' check (tone in ('orange', 'purple')),
+  button_label text,
+  link text,
+  secondary_label text,
+  secondary_link text,
+  about_title text,
+  about_body text,
+  availability_note text,
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-create table if not exists leaderboard_sports (
+comment on column lab_programmes.slug is 'Members'' registrations are filed under this code. The Strava Challenge must be ''strava-challenge'' — lab_strava_board() and the /lab/strava page look for it.';
+comment on column lab_programmes.secondary_link is 'Where the second link goes. Empty = it opens the "About" window (about_title / about_body) instead.';
+
+-- Reward periods: the Lab page's numbered strip and the Strava dashboard's
+-- period buttons.
+create table if not exists lab_periods (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   name text not null,
-  filter_label text,
-  color text not null default '#6568ff',
+  kind text not null default 'week' check (kind in ('week', 'month', 'quarter', 'half_year', 'year')),
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-comment on column leaderboard_sports.filter_label is 'Optional longer wording for the filter pill (e.g. Mixed / Events). Falls back to name.';
-comment on column leaderboard_sports.color is 'Hex colour (#rrggbb) of this sport''s slice of the Sport Mix ring.';
+comment on column lab_periods.kind is 'How the dashboard works out the period''s dates: week (Mon–Sun), month, quarter, half_year or year — all by the calendar.';
 
-create table if not exists leaderboard_age_groups (
+-- The three tiles floating around the Lab hero's ring card.
+create table if not exists lab_highlights (
   id uuid primary key default gen_random_uuid(),
-  slug text unique not null,
-  name text not null,
-  filter_label text,
+  icon text,
+  label text not null,
+  text text not null,
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-comment on column leaderboard_age_groups.filter_label is 'Optional shorter wording for the filter pill (e.g. U25). Falls back to name.';
+-- "More than a rank".
+create table if not exists lab_principles (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  text text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
 
-create table if not exists leaderboard_entries (
+-- The numbered steps of the Strava Challenge's access window.
+create table if not exists lab_access_steps (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  text text,
+  step_key text not null default 'login' check (step_key in ('login', 'register', 'open')),
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column lab_access_steps.step_key is 'When the window ticks the step off for a member: login = logged in, register = registered for the challenge, open = registered and Strava connected.';
+
+-- The sports of the Strava Challenge — one board each.
+create table if not exists lab_sports (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  strava_types text not null default '',
+  speed_min_activities int not null default 3,
+  speed_min_avg_km numeric not null default 0,
+  show_pace boolean not null default false,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column lab_sports.strava_types is 'Strava''s own activity types that count for this sport, comma-separated (e.g. Ride, VirtualRide, GravelRide).';
+comment on column lab_sports.speed_min_activities is 'Speed board: an athlete needs at least this many activities in the period …';
+comment on column lab_sports.speed_min_avg_km is '… and at least this average distance per activity, in km.';
+
+-- The age categories of the Strava Challenge.
+create table if not exists lab_age_groups (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  min_age int,
+  max_age int,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column lab_age_groups.max_age is 'Empty = no upper limit (e.g. 50+).';
+
+-- Activities typed in by hand, for athletes who are not on Strava — and the
+-- SAMPLE athletes (is_sample) that fill the board until a member registers.
+create table if not exists lab_activities (
   id uuid primary key default gen_random_uuid(),
   athlete_name text not null,
   city text,
-  challenge_slug text references leaderboard_challenges(slug) on update cascade on delete set null,
-  sport_slug text references leaderboard_sports(slug) on update cascade on delete set null,
-  gender text check (gender in ('Male', 'Female', 'Other')),
-  age_group_slug text references leaderboard_age_groups(slug) on update cascade on delete set null,
-  sessions int not null default 0,
+  gender text check (gender in ('Male', 'Female')),
+  age int,
+  sport_slug text references lab_sports(slug) on update cascade on delete cascade,
+  activity_date date not null,
   distance_km numeric not null default 0,
-  consistency int not null default 0 check (consistency between 0 and 100),
-  points int not null default 0,
-  trend text,
-  sort_order int not null default 0,
+  moving_minutes numeric not null default 0,
+  elevation_m numeric not null default 0,
+  is_sample boolean not null default false,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-comment on column leaderboard_entries.consistency is 'Completion index, 0–100 (%).';
-comment on column leaderboard_entries.trend is 'Checkpoint scores, oldest first, comma-separated (e.g. 66, 72, 79, 86, 92, 100). Draws the athlete''s trend line and the Momentum chart.';
+comment on column lab_activities.is_sample is 'A made-up athlete. Sample rows are only counted while lab_registrations has no member of the Strava Challenge.';
 
-create index if not exists leaderboard_entries_challenge_idx on leaderboard_entries (challenge_slug);
+create index if not exists lab_activities_sport_date_idx on lab_activities (sport_slug, activity_date);
 
+-- Who registered for which lab. Registering is a member's consent to have
+-- their Strava totals shown on that lab's public board.
+create table if not exists lab_registrations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  programme_slug text not null references lab_programmes(slug) on update cascade on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, programme_slug)
+);
+
+-- Ridge Repeats: one row per Saturday session.
 create table if not exists ridge_sessions (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   name text not null,
-  loop_count int not null default 5 check (loop_count > 0),
+  session_date date,
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
-comment on column ridge_sessions.loop_count is 'Loops a rider is meant to complete — a rider''s completion % is their recorded loops out of this.';
+comment on column ridge_sessions.session_date is 'The day it was ridden. The board orders sessions by it; a session without a date is not shown.';
 
+-- Ridge Repeats: one row per rider per session. Progress points, completion
+-- points and distance are all worked out from loop_times by the page.
 create table if not exists ridge_results (
   id uuid primary key default gen_random_uuid(),
   athlete_name text not null,
   session_slug text references ridge_sessions(slug) on update cascade on delete cascade,
   loop_times text,
-  improvement_pct numeric,
-  score numeric not null default 0,
+  spotlight_points numeric not null default 0,
+  adjustment_points numeric not null default 0,
+  photo_url text,
   sort_order int not null default 0,
   published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
 comment on column ridge_results.loop_times is 'Loop times in order, mm:ss, comma-separated (e.g. 21:16, 20:58, 20:29).';
-comment on column ridge_results.improvement_pct is 'Optional. Improvement in %; when empty it is worked out from the first and last loop time.';
+comment on column ridge_results.spotlight_points is 'Bonus for a Spotlight award — added to the rider''s Ridge points.';
+comment on column ridge_results.adjustment_points is 'Organiser correction — added to the rider''s Ridge points (may be negative).';
 
 create index if not exists ridge_results_session_idx on ridge_results (session_slug);
+
+-- Ridge Repeats: the Session Spotlight awards …
+create table if not exists ridge_awards (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  description text,
+  tone text not null default 'leader' check (tone in ('leader', 'endurance', 'fastest', 'improvement', 'finish', 'consistent')),
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column ridge_awards.tone is 'The award card''s colour: leader purple, endurance orange, fastest blue, improvement teal, finish pink, consistent green.';
+
+-- … and who won them in each session (one row per rider).
+create table if not exists ridge_spotlights (
+  id uuid primary key default gen_random_uuid(),
+  session_slug text not null references ridge_sessions(slug) on update cascade on delete cascade,
+  award_slug text not null references ridge_awards(slug) on update cascade on delete cascade,
+  athlete_name text not null,
+  metric text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists ridge_spotlights_session_idx on ridge_spotlights (session_slug);
+
+-- Membership: the Club membership and the Ridge Repeats session packs.
+create table if not exists membership_plans (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  name text not null,
+  kind text not null default 'ridge' check (kind in ('club', 'ridge')),
+  sessions int not null default 0,
+  price numeric(10, 2) not null default 0,
+  club_price numeric(10, 2),
+  billing_label text,
+  validity_weeks int not null default 0,
+  featured boolean not null default false,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column membership_plans.sessions is 'Ridge packs: sessions in the pack. The 1-session plan''s price is the full price every pack''s saving is measured against.';
+comment on column membership_plans.club_price is 'Optional lower price for a member who holds an active Club membership.';
+comment on column membership_plans.validity_weeks is 'Ridge packs: weeks the pack lasts from the first attended session (0 for a single session).';
+
+-- Membership: what the Club gives.
+create table if not exists membership_perks (
+  id uuid primary key default gen_random_uuid(),
+  icon text,
+  title text not null,
+  text text,
+  review_label text,
+  review_value text,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+comment on column membership_perks.review_label is 'Optional: adds a row (review_label / review_value) to the Club''s "Your plan at a glance" window.';
+
+-- Membership: the "Two offers. One community." cards.
+create table if not exists membership_guides (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  text text not null,
+  link_label text,
+  link_action text not null default 'plans' check (link_action in ('plans', 'example')),
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Membership: the three steps of "Your next chapter".
+create table if not exists membership_steps (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  text text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Membership: the questions.
+create table if not exists membership_faqs (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  answer text not null,
+  sort_order int not null default 0,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Membership: what a member bought. Paid by UPI the same way as a Store
+-- order — the member types in the payment reference and an admin verifies
+-- it (Admin -> Membership — Purchases). plan_name / amount are a snapshot,
+-- so a later price change never rewrites a past purchase.
+create table if not exists membership_purchases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  plan_slug text,
+  plan_name text not null,
+  kind text not null default 'ridge' check (kind in ('club', 'ridge')),
+  sessions_total int not null default 0,
+  sessions_used int not null default 0,
+  amount numeric(10, 2) not null default 0,
+  club_rate boolean not null default false,
+  customer_name text not null,
+  phone text,
+  email text,
+  utr_reference text,
+  status text not null default 'pending_verification'
+    check (status in ('pending_verification', 'active', 'rejected', 'expired', 'cancelled')),
+  valid_until date,
+  admin_note text,
+  created_at timestamptz not null default now()
+);
+
+comment on column membership_purchases.user_id is 'Empty for a purchase an admin typed in for someone without an account.';
+comment on column membership_purchases.club_rate is 'The Club member price was used.';
+
+create index if not exists membership_purchases_user_idx on membership_purchases (user_id);
 
 -- ============================================================================
 -- Community page (/community) — seven tables of its own, each with an admin
@@ -919,7 +1126,7 @@ declare
   t text;
   has_published boolean;
 begin
-  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'leaderboard_challenges', 'leaderboard_sports', 'leaderboard_age_groups', 'leaderboard_entries', 'ridge_sessions', 'ridge_results', 'community_paths', 'community_principles', 'community_milestones', 'community_network_cities', 'community_network_groups', 'community_cities', 'community_city_moments', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
+  foreach t in array array['events', 'gallery_items', 'products', 'blog_posts', 'sponsors', 'testimonials', 'challenges', 'site_images', 'team_members', 'race_results', 'calendar_categories', 'calendar_activities', 'lab_programmes', 'lab_periods', 'lab_highlights', 'lab_principles', 'lab_access_steps', 'lab_sports', 'lab_age_groups', 'lab_activities', 'ridge_sessions', 'ridge_results', 'ridge_awards', 'ridge_spotlights', 'membership_plans', 'membership_perks', 'membership_guides', 'membership_steps', 'membership_faqs', 'community_paths', 'community_principles', 'community_milestones', 'community_network_cities', 'community_network_groups', 'community_cities', 'community_city_moments', 'weekly_sessions', 'site_settings', 'faqs', 'ride_faqs', 'ride_safety', 'what_to_bring', 'general_safety', 'sponsor_tiers', 'sponsor_opportunities', 'home_why_reasons', 'home_ways', 'home_training_formats', 'footer_links']
   loop
     execute format('alter table %I enable row level security', t);
 
@@ -1279,4 +1486,383 @@ create policy "strava_activities own read" on strava_activities
 drop policy if exists "leaderboard_stats public read" on leaderboard_stats;
 create policy "leaderboard_stats public read" on leaderboard_stats
   for select using (true);
+-- ============================================================================
+
+-- ============================================================================
+-- PART — RTG Lab registrations, Membership purchases and the Strava
+-- Challenge board (migration 016). These come last because the board reads
+-- strava_activities, defined just above.
+-- ============================================================================
+
+-- A member can register themselves, see their own registrations and withdraw
+-- (which takes them off the board again); admins see everyone's.
+alter table lab_registrations enable row level security;
+
+drop policy if exists "lab_registrations own read" on lab_registrations;
+create policy "lab_registrations own read" on lab_registrations
+  for select using (auth.uid() = user_id or is_admin());
+
+drop policy if exists "lab_registrations own insert" on lab_registrations;
+create policy "lab_registrations own insert" on lab_registrations
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "lab_registrations own delete" on lab_registrations;
+create policy "lab_registrations own delete" on lab_registrations
+  for delete using (auth.uid() = user_id or is_admin());
+
+-- A member can place a purchase for themselves — always as "payment being
+-- verified", never already active, and never for less than the plan costs —
+-- and read their own. Only an admin can change or delete one.
+alter table membership_purchases enable row level security;
+
+drop policy if exists "membership_purchases own insert" on membership_purchases;
+create policy "membership_purchases own insert" on membership_purchases
+  for insert with check (
+    is_admin()
+    or (
+      auth.uid() = user_id
+      and status = 'pending_verification'
+      and sessions_used = 0
+      and valid_until is null
+      and exists (
+        select 1 from membership_plans p
+        where p.slug = plan_slug
+          and p.published
+          and amount >= least(p.price, coalesce(p.club_price, p.price))
+      )
+    )
+  );
+
+drop policy if exists "membership_purchases own read" on membership_purchases;
+create policy "membership_purchases own read" on membership_purchases
+  for select using (auth.uid() = user_id or is_admin());
+
+drop policy if exists "membership_purchases admin update" on membership_purchases;
+create policy "membership_purchases admin update" on membership_purchases
+  for update using (is_admin());
+
+drop policy if exists "membership_purchases admin delete" on membership_purchases;
+create policy "membership_purchases admin delete" on membership_purchases
+  for delete using (is_admin());
+
+-- A Club membership that becomes active without an end date runs for one
+-- month. (A Ridge pack's end date depends on the first attended session, so
+-- an admin sets it.)
+create or replace function membership_purchase_defaults()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.status = 'active' and new.kind = 'club' and new.valid_until is null then
+    new.valid_until := (current_date + interval '1 month')::date;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists membership_purchase_defaults on membership_purchases;
+create trigger membership_purchase_defaults
+  before insert or update on membership_purchases
+  for each row execute function membership_purchase_defaults();
+
+-- The Strava Challenge board: one sport's totals per athlete for a period
+-- (p_start up to, not including, p_end), the same for the period before it,
+-- and seven running totals through the period for the journey chart.
+--
+-- It adds up
+--   * the synced Strava activities of members who REGISTERED for the
+--     challenge (lab_registrations) — nobody else's are ever read, and
+--   * the activities typed in by hand (lab_activities); the sample ones only
+--     while no member has registered.
+-- It runs with the owner's rights so the public page can read these totals
+-- without any read access to strava_activities or profiles themselves. Only
+-- a name, city, photo, gender and age leave it — never an activity.
+create or replace function lab_strava_board(
+  p_sport text,
+  p_start date,
+  p_end date,
+  p_prev_start date,
+  p_prev_end date
+)
+returns table (
+  athlete_key text,
+  athlete_name text,
+  city text,
+  avatar_url text,
+  gender text,
+  age int,
+  is_sample boolean,
+  distance_km numeric,
+  moving_hours numeric,
+  elevation_m numeric,
+  activities int,
+  prev_distance_km numeric,
+  prev_moving_hours numeric,
+  prev_elevation_m numeric,
+  prev_activities int,
+  series_distance numeric[],
+  series_hours numeric[],
+  series_elevation numeric[]
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with sport as (
+    select string_to_array(replace(coalesce(s.strava_types, ''), ' ', ''), ',') as types
+    from lab_sports s
+    where s.slug = p_sport and s.published
+  ),
+  members as (
+    select exists (select 1 from lab_registrations r where r.programme_slug = 'strava-challenge') as any_registered
+  ),
+  acts as (
+    select
+      'm:' || p.id::text as athlete_key,
+      coalesce(nullif(trim(p.full_name), ''), 'RTG Member') as athlete_name,
+      p.city,
+      p.avatar_url,
+      lower(coalesce(p.gender, '')) as gender,
+      coalesce(extract(year from age(current_date, p.dob))::int, p.age) as age,
+      false as is_sample,
+      (sa.start_date at time zone 'Asia/Kolkata')::date as day,
+      coalesce(sa.distance_meters, 0) / 1000.0 as km,
+      coalesce(sa.moving_time_seconds, 0) / 3600.0 as hours,
+      coalesce(sa.elevation_gain_meters, 0) as elev
+    from strava_activities sa
+    join lab_registrations r on r.user_id = sa.user_id and r.programme_slug = 'strava-challenge'
+    join profiles p on p.id = sa.user_id
+    cross join sport
+    where sa.type = any (sport.types)
+    union all
+    select
+      'x:' || lower(trim(la.athlete_name)),
+      la.athlete_name,
+      la.city,
+      null,
+      lower(coalesce(la.gender, '')),
+      la.age,
+      la.is_sample,
+      la.activity_date,
+      la.distance_km,
+      la.moving_minutes / 60.0,
+      la.elevation_m
+    from lab_activities la
+    cross join members
+    where la.published
+      and la.sport_slug = p_sport
+      and (not la.is_sample or not members.any_registered)
+  ),
+  cur as (
+    select a.athlete_key,
+           least(6, ((a.day - p_start) * 7) / greatest(1, p_end - p_start)) as bin,
+           a.km, a.hours, a.elev
+    from acts a
+    where a.day >= p_start and a.day < p_end
+  ),
+  totals as (
+    select c.athlete_key, sum(c.km) as km, sum(c.hours) as hours, sum(c.elev) as elev, count(*)::int as n
+    from cur c
+    group by c.athlete_key
+  ),
+  prev as (
+    select a.athlete_key, sum(a.km) as km, sum(a.hours) as hours, sum(a.elev) as elev, count(*)::int as n
+    from acts a
+    where a.day >= p_prev_start and a.day < p_prev_end
+    group by a.athlete_key
+  ),
+  bins as (
+    select t.athlete_key, g.bin,
+           coalesce(sum(c.km), 0) as km, coalesce(sum(c.hours), 0) as hours, coalesce(sum(c.elev), 0) as elev
+    from totals t
+    cross join generate_series(0, 6) as g(bin)
+    left join cur c on c.athlete_key = t.athlete_key and c.bin = g.bin
+    group by t.athlete_key, g.bin
+  ),
+  running as (
+    select b.athlete_key, b.bin,
+           sum(b.km) over w as km, sum(b.hours) over w as hours, sum(b.elev) over w as elev
+    from bins b
+    window w as (partition by b.athlete_key order by b.bin)
+  ),
+  series as (
+    select r.athlete_key,
+           array_agg(round(r.km, 2) order by r.bin) as km,
+           array_agg(round(r.hours, 4) order by r.bin) as hours,
+           array_agg(round(r.elev, 0) order by r.bin) as elev
+    from running r
+    group by r.athlete_key
+  ),
+  who as (
+    select distinct on (a.athlete_key)
+           a.athlete_key, a.athlete_name, a.city, a.avatar_url, a.gender, a.age, a.is_sample
+    from acts a
+    order by a.athlete_key
+  )
+  select w.athlete_key, w.athlete_name, w.city, w.avatar_url, w.gender, w.age, w.is_sample,
+         round(t.km, 2), round(t.hours, 4), round(t.elev, 0), t.n,
+         round(coalesce(p.km, 0), 2), round(coalesce(p.hours, 0), 4), round(coalesce(p.elev, 0), 0), coalesce(p.n, 0),
+         s.km, s.hours, s.elev
+  from totals t
+  join who w on w.athlete_key = t.athlete_key
+  join series s on s.athlete_key = t.athlete_key
+  left join prev p on p.athlete_key = t.athlete_key;
+$$;
+
+revoke all on function lab_strava_board(text, date, date, date, date) from public;
+grant execute on function lab_strava_board(text, date, date, date, date) to anon, authenticated;
+-- ============================================================================
+
+-- ============================================================================
+-- PART — Visitor statistics (Admin -> Visitors, migration 017)
+--
+-- One row per visit to the public site and one per page opened, written only
+-- through track_site_visit() (called by src/lib/useVisitTracker.js) and read
+-- only by admins, through site_traffic(). Stored about a visitor: a random
+-- id their browser makes up, the pages they opened, when, and — if logged
+-- in — which member. No IP address, location or device details.
+-- ============================================================================
+
+create table if not exists site_sessions (
+  id uuid primary key,
+  visitor_id uuid not null,
+  user_id uuid references auth.users(id) on delete set null,
+  started_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  page_views int not null default 1,
+  entry_path text,
+  last_path text
+);
+
+comment on column site_sessions.visitor_id is 'Random id kept in the visitor''s browser — the same person on the same browser across visits. Not tied to an account.';
+comment on column site_sessions.user_id is 'The member, if they were logged in at any point during the visit.';
+
+create index if not exists site_sessions_started_idx on site_sessions (started_at);
+create index if not exists site_sessions_last_seen_idx on site_sessions (last_seen_at);
+
+create table if not exists site_page_views (
+  id bigint generated always as identity primary key,
+  session_id uuid not null references site_sessions(id) on delete cascade,
+  path text not null,
+  viewed_at timestamptz not null default now()
+);
+
+create index if not exists site_page_views_viewed_idx on site_page_views (viewed_at);
+
+-- Only admins can read these tables, and nobody writes to them directly:
+-- every write goes through track_site_visit() below.
+alter table site_sessions enable row level security;
+alter table site_page_views enable row level security;
+
+drop policy if exists "site_sessions admin read" on site_sessions;
+create policy "site_sessions admin read" on site_sessions for select using (is_admin());
+
+drop policy if exists "site_page_views admin read" on site_page_views;
+create policy "site_page_views admin read" on site_page_views for select using (is_admin());
+
+-- Called by the public site (src/lib/useVisitTracker.js): once when a page
+-- opens (p_new_page = true) and every 30 seconds while the tab stays open
+-- (p_new_page = false). The member is taken from the login itself, never
+-- from what the browser sends.
+create or replace function track_site_visit(p_session uuid, p_visitor uuid, p_path text, p_new_page boolean)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  v_path text := left(coalesce(p_path, '/'), 200);
+  v_views int;
+begin
+  if p_session is null or p_visitor is null then
+    return;
+  end if;
+
+  insert into site_sessions (id, visitor_id, user_id, entry_path, last_path)
+  values (p_session, p_visitor, auth.uid(), v_path, v_path)
+  on conflict (id) do update
+    set last_seen_at = now(),
+        user_id = coalesce(auth.uid(), site_sessions.user_id),
+        last_path = v_path,
+        page_views = site_sessions.page_views + (case when p_new_page then 1 else 0 end)
+  returning page_views into v_views;
+
+  -- One visit never records more than 500 pages.
+  if p_new_page and v_views <= 500 then
+    insert into site_page_views (session_id, path) values (p_session, v_path);
+  end if;
+end;
+$$;
+
+revoke all on function track_site_visit(uuid, uuid, text, boolean) from public;
+grant execute on function track_site_visit(uuid, uuid, text, boolean) to anon, authenticated;
+
+-- The totals behind Admin -> Visitors, for the last p_days days (India
+-- time). Admins only.
+create or replace function site_traffic(p_days int default 30)
+returns json
+language plpgsql
+stable
+security definer set search_path = public
+as $$
+declare
+  v_days int := least(greatest(coalesce(p_days, 30), 1), 365);
+  v_today date := (now() at time zone 'Asia/Kolkata')::date;
+  v_from date := v_today - (v_days - 1);
+  v_result json;
+begin
+  if not is_admin() then
+    raise exception 'Admins only';
+  end if;
+
+  with visits as (
+    select
+      s.visitor_id,
+      s.user_id,
+      (s.started_at at time zone 'Asia/Kolkata')::date as day,
+      case
+        when s.user_id is not null then 'member'
+        when s.page_views <= 1 and s.last_seen_at - s.started_at < interval '30 seconds' then 'left'
+        else 'browsed'
+      end as kind
+    from site_sessions s
+    where (s.started_at at time zone 'Asia/Kolkata')::date >= v_from
+  ),
+  days as (
+    select d::date as day from generate_series(v_from, v_today, interval '1 day') as d
+  ),
+  per_day as (
+    select
+      d.day,
+      count(v.*) filter (where v.kind = 'left') as left_quickly,
+      count(v.*) filter (where v.kind = 'browsed') as browsed,
+      count(v.*) filter (where v.kind = 'member') as members,
+      count(distinct v.visitor_id) as people
+    from days d
+    left join visits v on v.day = d.day
+    group by d.day
+  ),
+  pages as (
+    select p.path, count(*) as views
+    from site_page_views p
+    where (p.viewed_at at time zone 'Asia/Kolkata')::date >= v_from
+    group by p.path
+    order by count(*) desc, p.path
+    limit 8
+  )
+  select json_build_object(
+    'days', (select coalesce(json_agg(json_build_object('day', day, 'left', left_quickly, 'browsed', browsed, 'members', members, 'people', people) order by day), '[]'::json) from per_day),
+    'pages', (select coalesce(json_agg(json_build_object('path', path, 'views', views) order by views desc, path), '[]'::json) from pages),
+    'people', (select count(distinct visitor_id) from visits),
+    'members', (select count(distinct user_id) from visits where user_id is not null),
+    'online', (select count(*) from site_sessions where last_seen_at > now() - interval '2 minutes'),
+    'online_members', (select count(*) from site_sessions where last_seen_at > now() - interval '2 minutes' and user_id is not null)
+  ) into v_result;
+
+  return v_result;
+end;
+$$;
+
+revoke all on function site_traffic(int) from public;
+grant execute on function site_traffic(int) to authenticated;
 -- ============================================================================
