@@ -91,7 +91,7 @@ export const LAB_PAGE_TEXT = [
   t("access", "openLabel", "Button — open the dashboard (registered member)", "Open your lab →"),
   t("access", "backLabel", "Button — back", "Back to Lab"),
   t("access", "connectAlt", "Strava button — description for screen readers", "Connect with Strava"),
-  t("access", "poweredAlt", "Strava logo — description for screen readers", "Powered by Strava"),
+  t("access", "poweredAlt", "Strava logo — description for screen readers", "Strava"),
   t("access", "stravaLinkLabel", "Link to Strava beside the logo", "View on Strava"),
 
   t("dash", "dashBackLabel", "Link back to the Lab", "← Back to RTG Lab"),

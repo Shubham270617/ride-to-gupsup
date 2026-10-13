@@ -13,7 +13,7 @@ import GlassCard from "../components/ui/GlassCard";
 import Button from "../components/ui/Button";
 import { uploadToSupabaseStorage } from "../lib/supabaseUpload";
 import { announceAvatar } from "../lib/useMyAvatar";
-import { ConnectWithStrava, PoweredByStrava } from "../components/lab/StravaBrand";
+import { ConnectWithStrava, StravaLogo } from "../components/lab/StravaBrand";
 
 const ORDER_STATUS = {
   pending_verification: { label: "Pending Verification", className: "bg-amber-100 text-amber-800" },
@@ -44,7 +44,7 @@ function formatKm(meters) {
 // Strava's name and button on this page are Strava's own artwork
 // (components/lab/StravaBrand.jsx) — never a redrawn mark or a look-alike
 // button.
-const STRAVA_LOGO_ALT = "Powered by Strava";
+const STRAVA_LOGO_ALT = "Strava";
 const STRAVA_CONNECT_ALT = "Connect with Strava";
 
 // One answer out of a few — the same chips as the sign-up form.
@@ -425,7 +425,7 @@ export default function Dashboard() {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <h2 className="dash-title !mb-0">My Strava Activity</h2>
-                <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
+                <StravaLogo alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
               </div>
               <Link to="/lab/strava" className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-orange-500 transition-colors hover:text-rtg-orange-600">
                 Open RTG Club Lab <ArrowUpRight size={13} />

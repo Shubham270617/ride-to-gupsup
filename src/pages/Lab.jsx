@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
 import RichText, { Lines } from "../components/lab/RichText";
-import { PoweredByStrava } from "../components/lab/StravaBrand";
+import { StravaLogo } from "../components/lab/StravaBrand";
 import { useSiteSettings } from "../lib/publicData";
 import {
   buildLabCopy,
@@ -100,7 +100,7 @@ function LabCard({ lab, onAbout, stravaAlt }) {
             ))}
         </div>
         {lab.note && <small className="availability">{lab.note}</small>}
-        {lab.slug === STRAVA_LAB && <PoweredByStrava alt={stravaAlt} className="card-strava" />}
+        {lab.slug === STRAVA_LAB && <StravaLogo alt={stravaAlt} className="card-strava" />}
       </div>
     </article>
   );

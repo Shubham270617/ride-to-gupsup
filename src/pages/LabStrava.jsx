@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
 import RichText from "../components/lab/RichText";
-import { ConnectWithStrava, PoweredByStrava, STRAVA_URL } from "../components/lab/StravaBrand";
+import { ConnectWithStrava, StravaLogo, STRAVA_URL } from "../components/lab/StravaBrand";
 import useSession from "../lib/useSession";
 import useAuthProviders from "../lib/useAuthProviders";
 import { useAuthGate } from "../lib/AuthGateContext";
@@ -93,7 +93,7 @@ function AccessWindow({ copy, steps, user, registered, stravaLinked, canConnect,
       <div className="access-brand">
         <div className="eyebrow">{copy.accessEyebrow}</div>
         <a href={STRAVA_URL} target="_blank" rel="noopener noreferrer" aria-label={copy.stravaLinkLabel}>
-          <PoweredByStrava alt={copy.poweredAlt} />
+          <StravaLogo alt={copy.poweredAlt} />
         </a>
       </div>
       <h2 id="lab-access-title">{copy.accessTitle}</h2>
@@ -326,7 +326,7 @@ export default function LabStrava() {
           </div>
           <div className="dash-side">
             <a href={STRAVA_URL} target="_blank" rel="noopener noreferrer" aria-label={copy.stravaLinkLabel}>
-              <PoweredByStrava alt={copy.poweredAlt} />
+              <StravaLogo alt={copy.poweredAlt} />
             </a>
             <button type="button" className="outline" onClick={() => setGate(true)}>
               {copy.dashAccessLabel}

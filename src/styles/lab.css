@@ -1334,8 +1334,8 @@
 .rtg-lab a.close { display: grid; place-items: center; line-height: 1; }
 .rtg-lab .access-brand { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-right: 46px; }
 .rtg-lab .access-brand a { display: block; flex: none; }
-.rtg-lab .strava-powered { display: block; width: auto; height: 17px; }
-.rtg-lab .access-brand .strava-powered { height: 15px; }
+.rtg-lab .strava-logo { display: block; width: auto; height: 17px; }
+.rtg-lab .access-brand .strava-logo { height: 15px; }
 .rtg-lab .lab-card .card-strava { margin-top: 20px; }
 .rtg-lab .access-steps li.done b { color: #1f8a70; background: #e7f6f0; }
 .rtg-lab .access-steps li.done span { color: #1f8a70; font-weight: 600; }

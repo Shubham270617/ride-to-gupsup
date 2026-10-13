@@ -1,7 +1,12 @@
-// Strava's own brand files, used exactly as Strava supplies them (see
-// https://developers.strava.com/guidelines/): the orange "Connect with
-// Strava" button and the "Powered by Strava" logo. They live in
-// /public/images/strava/ and must not be redrawn, recoloured or stretched.
+// Strava's brand artwork (see https://developers.strava.com/guidelines/):
+// the orange "Connect with Strava" button, exactly as Strava supplies it,
+// and the Strava wordmark. They live in /public/images/strava/ and must not
+// be redrawn, recoloured or stretched.
+//
+// The wordmark is Strava's "Powered by Strava" logo with the words "Powered
+// by" removed, at the site owner's request. Strava's guidelines ask API
+// apps to show the full "Powered by Strava" logo, so if Strava objects, the
+// original files are in git history (api_logo_pwrdBy_strava_*.svg).
 
 export const STRAVA_URL = "https://www.strava.com";
 
@@ -15,12 +20,9 @@ export function ConnectWithStrava({ onClick, alt, disabled = false }) {
   );
 }
 
-// `stack` puts "POWERED BY" above the wordmark; `white` is for dark panels.
-export function PoweredByStrava({ alt, stack = false, white = false, className = "" }) {
-  const file = white
-    ? "api_logo_pwrdBy_strava_horiz_white.svg"
-    : stack
-      ? "api_logo_pwrdBy_strava_stack_orange.svg"
-      : "api_logo_pwrdBy_strava_horiz_orange.svg";
-  return <img className={`strava-powered ${className}`.trim()} src={`/images/strava/${file}`} alt={alt} />;
+// The Strava wordmark on its own (no "Powered by"): Strava's own lettering,
+// cut from its logo file without redrawing it. `white` is for dark panels.
+export function StravaLogo({ alt, white = false, className = "" }) {
+  const file = white ? "strava_wordmark_white.svg" : "strava_wordmark_orange.svg";
+  return <img className={`strava-logo ${className}`.trim()} src={`/images/strava/${file}`} alt={alt} />;
 }
