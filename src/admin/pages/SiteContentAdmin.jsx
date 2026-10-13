@@ -3,6 +3,7 @@ import { Loader2, Check } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { LAB_PAGE_TEXT, LAB_GROUP_HEADINGS, RIDGE_PAGE_TEXT, RIDGE_GROUP_HEADINGS, MEMBERSHIP_PAGE_TEXT, MEMBERSHIP_GROUP_HEADINGS } from "../../data/labContent";
 import { labPageKey, ridgePageKey, membershipPageKey } from "../../lib/labData";
+import { ONBOARDING_PAGE_TEXT, ONBOARDING_GROUP_HEADINGS, onboardingKey } from "../../data/onboardingContent";
 import { heroSlides, heroCopy, stats, homeWhyCopy, homeWaysCopy, homeEventsCopy, homeMerchCopy, homeGalleryCopy, homeVoicesCopy, homeJoinCopy, joinCopy, footerCopy, eventsPageCopy, calendarPageCopy, communityPageCopy, storePageCopy } from "../../data/content";
 import {
   COMMUNITY_PAGE_FIELDS,
@@ -242,6 +243,8 @@ const CUSTOM_GROUPS = {
   Lab: labContentGroups(LAB_PAGE_TEXT, LAB_GROUP_HEADINGS, labPageKey),
   "Ridge Repeats": labContentGroups(RIDGE_PAGE_TEXT, RIDGE_GROUP_HEADINGS, ridgePageKey),
   Membership: labContentGroups(MEMBERSHIP_PAGE_TEXT, MEMBERSHIP_GROUP_HEADINGS, membershipPageKey),
+  // The page a new member fills in right after signing up.
+  Onboarding: labContentGroups(ONBOARDING_PAGE_TEXT, ONBOARDING_GROUP_HEADINGS, onboardingKey),
   // The products and the tabs are admin screens of their own (Merchandise /
   // Store — Categories).
   Store: [

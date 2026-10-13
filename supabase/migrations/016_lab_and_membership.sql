@@ -601,7 +601,7 @@ grant execute on function lab_strava_board(text, date, date, date, date) to anon
 insert into lab_programmes
   (slug, title, number_label, pill, art_word, eyebrow, description, tags, tone, button_label, link, secondary_label, secondary_link, about_title, about_body, availability_note, sort_order)
 select * from (values
-  ('strava-challenge', 'Strava Challenge', '01 / PAN INDIA', 'ONGOING PROGRAMME', 'RIDE. RUN. REPEAT.', 'CYCLING & RUNNING · ALL INDIA',
+  ('strava-challenge', 'RTG Club Lab', '01 / PAN INDIA', 'ONGOING PROGRAMME', 'RIDE. RUN. REPEAT.', 'CYCLING & RUNNING · ALL INDIA',
    'A year-round reason to show up. Track distance, speed and elevation, explore your progress and celebrate top athletes in each category.',
    array['Men & women', 'Age categories', '5 reward periods'], 'orange', 'Enter this lab ↗', '/lab/strava',
    'Explore dashboard →', '/lab/strava?view=board', null, null,

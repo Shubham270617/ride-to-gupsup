@@ -126,6 +126,9 @@ export function useLabAgeGroups() {
 export function useLabRegistration(userId, programmeSlug) {
   const [registered, setRegistered] = useState(false);
   const [loading, setLoading] = useState(Boolean(userId));
+  // Whose registration the answer above is for — so a member who has just
+  // logged in counts as "still checking" until their own answer arrives.
+  const [checkedFor, setCheckedFor] = useState("");
 
   useEffect(() => {
     if (!isSupabaseConfigured || !userId || !programmeSlug) {
@@ -144,6 +147,7 @@ export function useLabRegistration(userId, programmeSlug) {
       .then(({ data }) => {
         if (cancelled) return;
         setRegistered(Boolean(data));
+        setCheckedFor(userId);
         setLoading(false);
       });
     return () => {
@@ -160,7 +164,8 @@ export function useLabRegistration(userId, programmeSlug) {
     return true;
   }, [userId, programmeSlug]);
 
-  return { registered, loading, register };
+  const pending = isSupabaseConfigured && Boolean(userId && programmeSlug) && checkedFor !== userId;
+  return { registered: registered && !pending, loading: loading || pending, register };
 }
 
 // Has the signed-in member linked Strava? (null while unknown.)

@@ -1390,3 +1390,8 @@
 .rtg-ridge .rr-format-art { grid-template-columns: repeat(var(--rr-loops, 5), 1fr); }
 .rtg-ridge .rr-footer { padding-bottom: 8px; }
 .rtg-ridge .rr-footer .rr-text-button { color: var(--rr-purple); font-weight: 600; white-space: nowrap; }
+
+/* Ridge Repeats while the access window is up (not logged in, or not
+   registered): the board behind it is blurred and cannot be used. */
+.rtg-ridge.rr-locked { filter: blur(9px); pointer-events: none; user-select: none; max-height: 100svh; overflow: hidden; }
+.rtg-ridge.rr-locked + .rtg-mem-band { display: none; }

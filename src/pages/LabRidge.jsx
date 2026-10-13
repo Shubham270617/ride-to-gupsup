@@ -6,9 +6,12 @@ import RichText, { Inline } from "../components/lab/RichText";
 import RidgeCardMaker from "../components/lab/RidgeCardMaker";
 import MembershipPlans from "../components/lab/MembershipPlans";
 import { useJoinCommunity } from "../lib/JoinCommunityContext";
+import useSession from "../lib/useSession";
+import { useAuthGate } from "../lib/AuthGateContext";
 import { useSiteImages, useSiteSettings } from "../lib/publicData";
 import {
   averageProgress,
+  buildLabCopy,
   buildRidgeCopy,
   buildRidgeFeed,
   clockToSeconds,
@@ -20,6 +23,8 @@ import {
   sessionAwards,
   sessionProgressRank,
   trendPoints,
+  useLabAccessSteps,
+  useLabRegistration,
   useRidgeFeed,
 } from "../lib/labData";
 
@@ -435,9 +440,86 @@ function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard 
 // ----------------------------------------------------------------------------
 // PAGE
 // ----------------------------------------------------------------------------
+const PROGRAMME = "ridge-repeats"; // lab_programmes.slug of this lab
+
+// ----------------------------------------------------------------------------
+// ACCESS WINDOW — Ridge Repeats is for members who registered for it: log in,
+// register once, and the board opens. Until then the page stays locked
+// behind this window (it cannot be dismissed, only left with "Back to Lab").
+// ----------------------------------------------------------------------------
+function RidgeAccess({ copy, labCopy, steps, user, registered, onLogin, onRegister, busy, error }) {
+  const done = { login: Boolean(user), register: registered, open: registered };
+  const note = user ? [copy.noteMemberTitle, copy.noteMemberText] : [copy.noteGuestTitle, copy.noteGuestText];
+  return (
+    <>
+      <Link to="/lab" className="close" aria-label={labCopy.backLabel}>
+        ×
+      </Link>
+      <div className="eyebrow">{labCopy.accessEyebrow}</div>
+      <h2 id="rr-access-title">{copy.accessTitle}</h2>
+      <p>{copy.accessText}</p>
+
+      <ol className="access-steps">
+        {steps.map((step, i) => (
+          <li key={step.id} className={done[step.step] ? "done" : undefined}>
+            <b>{done[step.step] ? "✓" : String(i + 1).padStart(2, "0")}</b>
+            <div>
+              <strong>{step.title}</strong>
+              <span>{done[step.step] ? labCopy.stepDoneLabel : step.text}</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <div className="connection-note">
+        <b>{note[0]}</b>
+        <p>{note[1]}</p>
+      </div>
+      {error && <p className="access-error">{error}</p>}
+
+      <div className="modal-actions">
+        {user ? (
+          <button type="button" className="button purple" onClick={onRegister} disabled={busy}>
+            {busy ? labCopy.registeringLabel : labCopy.registerLabel}
+          </button>
+        ) : (
+          <button type="button" className="button purple" onClick={onLogin}>
+            {labCopy.loginLabel}
+          </button>
+        )}
+        <Link to="/lab" className="outline">
+          {labCopy.backLabel}
+        </Link>
+      </div>
+    </>
+  );
+}
+
 export default function LabRidge() {
   const settings = useSiteSettings();
   const copy = useMemo(() => buildRidgeCopy(settings), [settings]);
+  const labCopy = useMemo(() => buildLabCopy(settings), [settings]);
+
+  // Members only: logged in AND registered for Ridge Repeats.
+  const { user, loading: sessionLoading } = useSession();
+  const { requestLogin } = useAuthGate();
+  const accessSteps = useLabAccessSteps();
+  const registration = useLabRegistration(user?.id, PROGRAMME);
+  const checkingAccess = sessionLoading || registration.loading;
+  const locked = !registration.registered;
+  const [registering, setRegistering] = useState(false);
+  const [accessError, setAccessError] = useState("");
+  const handleRegister = async () => {
+    setRegistering(true);
+    setAccessError("");
+    try {
+      await registration.register();
+    } catch {
+      setAccessError(labCopy.registerError);
+    } finally {
+      setRegistering(false);
+    }
+  };
   const images = useSiteImages();
   const joinCommunity = useJoinCommunity();
   const raw = useRidgeFeed();
@@ -546,7 +628,7 @@ export default function LabRidge() {
 
   return (
     <>
-    <div className="rtg-ridge" data-mode={mode} style={{ "--rr-hero-photo": heroPhoto }}>
+    <div className={`rtg-ridge${locked ? " rr-locked" : ""}`} data-mode={mode} style={{ "--rr-hero-photo": heroPhoto }} inert={locked} aria-hidden={locked || undefined}>
       <LabBackdrop className="rr-rtg-background" />
 
       <header className="rr-brandbar">
@@ -909,6 +991,20 @@ export default function LabRidge() {
           {copy.joinLabel} <span aria-hidden="true">↗</span>
         </button>
       </footer>
+
+      <LabDialog open={locked && !checkingAccess} onClose={() => {}} className="access-dialog" labelledBy="rr-access-title">
+        <RidgeAccess
+          copy={copy}
+          labCopy={labCopy}
+          steps={accessSteps}
+          user={user}
+          registered={registration.registered}
+          onLogin={() => requestLogin("login")}
+          onRegister={handleRegister}
+          busy={registering}
+          error={accessError}
+        />
+      </LabDialog>
 
       <LabDialog open={Boolean(record)} onClose={() => setRecord(null)} scope="rtg-ridge" className="rr-rider-dialog" labelledBy="rr-rider-name">
         <div className="rr-dialog-header">

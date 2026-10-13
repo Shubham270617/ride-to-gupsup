@@ -84,6 +84,14 @@ export const images = {
   // same name (keep it short — under ~10s loop — and under ~8MB for fast load).
   introPoster: "/images/intro-poster.jpg",
 
+  // ---- ONBOARDING (/onboarding, "Complete your profile") ----
+  // The slow slideshow behind the form. onboardingBg may also be a VIDEO
+  // (upload an .mp4 in Admin -> Site Images) — then it plays alone, muted
+  // and looping, with onboardingBg2 as its still frame while it loads.
+  onboardingBg: rtg.community,
+  onboardingBg2: rtg.cycling,
+  onboardingBg3: rtg.running,
+
   // ---- HOME ----
   // Mapped the same way the brand reference itself maps them: community ->
   // hero, cycling -> weekly-rhythm band, adventure2 -> final CTA.

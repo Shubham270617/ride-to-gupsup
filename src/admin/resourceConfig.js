@@ -241,8 +241,8 @@ export const resources = {
     orderBy: "sort_order",
     listColumns: ["title", "number_label", "link", "sort_order", "published"],
     fields: [
-      { name: "title", label: "Name", type: "text", required: true, placeholder: "e.g. Strava Challenge", hint: "Each lab is one card on the Lab page." },
-      { name: "slug", label: "Short Code", type: "slug", from: "title", required: true, hint: "Auto-generated from the name. Members' registrations are filed under this code — leave it as it is. The Strava Challenge must stay \"strava-challenge\"." },
+      { name: "title", label: "Name", type: "text", required: true, placeholder: "e.g. RTG Club Lab", hint: "Each lab is one card on the Lab page." },
+      { name: "slug", label: "Short Code", type: "slug", from: "title", required: true, hint: "Auto-generated from the name. Members' registrations are filed under this code — leave it as it is. The RTG Club Lab must stay \"strava-challenge\"." },
       { name: "number_label", label: "Small Label (top left)", type: "text", placeholder: "e.g. 01 / PAN INDIA" },
       { name: "pill", label: "Badge (top right)", type: "text", placeholder: "e.g. ONGOING PROGRAMME" },
       { name: "art_word", label: "Big Words on the Artwork", type: "text", placeholder: "e.g. RIDE. RUN. REPEAT." },
@@ -277,7 +277,7 @@ export const resources = {
     orderBy: "sort_order",
     listColumns: ["name", "kind", "sort_order", "published"],
     fields: [
-      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Weekly", hint: "Shown on the Lab page's numbered strip and as a button on the Strava Challenge dashboard." },
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Weekly", hint: "Shown on the Lab page's numbered strip and as a button on the RTG Club Lab dashboard." },
       { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name." },
       {
         name: "kind",
@@ -358,7 +358,7 @@ export const resources = {
     orderBy: "sort_order",
     listColumns: ["name", "strava_types", "sort_order", "published"],
     fields: [
-      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Cycling", hint: "Each sport is a button on the Strava Challenge dashboard, with its own board." },
+      { name: "name", label: "Name", type: "text", required: true, placeholder: "e.g. Cycling", hint: "Each sport is a button on the RTG Club Lab dashboard, with its own board." },
       { name: "slug", label: "Short Code", type: "slug", from: "name", required: true, hint: "Auto-generated from the name. Activities are filed under this code — leave it as it is." },
       { name: "strava_types", label: "Strava Activity Types", type: "text", required: true, placeholder: "e.g. Ride, VirtualRide, GravelRide", hint: "Strava's own names for the activities that count for this sport, separated by commas — exactly as Strava spells them (Ride, VirtualRide, EBikeRide, MountainBikeRide, GravelRide, Run, TrailRun, VirtualRun, Walk …)." },
       { name: "speed_min_activities", label: "Speed Board — Minimum Activities", type: "number", default: 3, hint: "An athlete needs at least this many activities in the period to be ranked by speed." },
@@ -400,7 +400,7 @@ export const resources = {
       { name: "distance_km", label: "Distance (km)", type: "number", step: "any", default: 0 },
       { name: "moving_minutes", label: "Moving Time (minutes)", type: "number", step: "any", default: 0 },
       { name: "elevation_m", label: "Elevation Gain (m)", type: "number", step: "any", default: 0 },
-      { name: "is_sample", label: "Sample (not a real athlete)", type: "boolean", default: false, hint: "Sample activities are only shown while no member has registered for the Strava Challenge." },
+      { name: "is_sample", label: "Sample (not a real athlete)", type: "boolean", default: false, hint: "Sample activities are only shown while no member has registered for the RTG Club Lab." },
       { name: "published", label: "Published", type: "boolean", default: true },
     ],
   },

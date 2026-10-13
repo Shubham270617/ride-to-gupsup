@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Calendar, Trophy, ArrowRight, Package, AlertTriangle } from "lucide-react";
+import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Package, AlertTriangle, Camera, Sparkles, BadgeCheck, ArrowUpRight, Mail, FlaskConical, Ticket, CalendarDays, ShoppingBag, Phone, Cake, AtSign, Droplet, ShieldAlert } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
-import { useUpcomingEvent, useRaceResults, useMyStravaActivities, useMyLeaderboardStats } from "../lib/publicData";
+import { useMyStravaActivities, useMyLeaderboardStats } from "../lib/publicData";
+import { useMyMemberships, isActiveClub } from "../lib/labData";
+import { GENDERS, RIDER_TYPES, RIDE_FREQUENCIES, ageFromDob } from "../lib/profileFields";
 import useAuthProviders from "../lib/useAuthProviders";
 import Section from "../components/ui/Section";
 import GlassCard from "../components/ui/GlassCard";
@@ -13,12 +15,29 @@ import { uploadToSupabaseStorage } from "../lib/supabaseUpload";
 import { ConnectWithStrava, PoweredByStrava } from "../components/lab/StravaBrand";
 
 const ORDER_STATUS = {
-  pending_verification: { label: "Pending Verification", className: "bg-amber-500/15 text-amber-300" },
-  confirmed: { label: "Confirmed", className: "bg-green-500/15 text-green-300" },
-  rejected: { label: "Rejected", className: "bg-red-500/15 text-red-300" },
-  shipped: { label: "Shipped", className: "bg-blue-500/15 text-blue-300" },
-  delivered: { label: "Delivered", className: "bg-rtg-orange-500/15 text-rtg-orange-300" },
+  pending_verification: { label: "Pending Verification", className: "bg-amber-100 text-amber-800" },
+  confirmed: { label: "Confirmed", className: "bg-green-100 text-green-800" },
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-700" },
+  shipped: { label: "Shipped", className: "bg-blue-100 text-blue-800" },
+  delivered: { label: "Delivered", className: "bg-rtg-orange-500/15 text-rtg-orange-600" },
 };
+
+// A membership or Ridge pack bought on /membership — an admin marks it
+// active once the UPI payment is checked.
+const MEMBERSHIP_STATUS = {
+  pending_verification: { label: "Pending Verification", className: "bg-amber-100 text-amber-800" },
+  active: { label: "Active", className: "bg-green-100 text-green-800" },
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-700" },
+  expired: { label: "Expired", className: "bg-rtg-purple-600/10 text-rtg-mist" },
+  cancelled: { label: "Cancelled", className: "bg-rtg-purple-600/10 text-rtg-mist" },
+};
+
+const SHORTCUTS = [
+  { to: "/lab", label: "RTG Lab", hint: "Your challenges", Icon: FlaskConical },
+  { to: "/membership", label: "Membership", hint: "Club and packs", Icon: Ticket },
+  { to: "/events", label: "Events", hint: "What's on", Icon: CalendarDays },
+  { to: "/store", label: "Store", hint: "Merchandise", Icon: ShoppingBag },
+];
 
 function formatPrice(n) {
   return `₹${Number(n).toLocaleString("en-IN")}`;
@@ -33,6 +52,51 @@ function formatKm(meters) {
 // button.
 const STRAVA_LOGO_ALT = "Powered by Strava";
 const STRAVA_CONNECT_ALT = "Connect with Strava";
+
+// One answer out of a few — the same chips as the sign-up form.
+function ChipChoice({ label, options, value, onChange }) {
+  return (
+    <div>
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-2">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            aria-pressed={value === opt}
+            onClick={() => onChange(opt)}
+            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+              value === opt
+                ? "border-rtg-orange-500 bg-rtg-orange-500 text-white shadow-md shadow-rtg-orange-500/25"
+                : "border-rtg-purple-600/20 bg-white text-rtg-white/80 hover:border-rtg-orange-400"
+            }`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The profile columns the member can edit here, as the form holds them.
+const EMPTY_FORM = {
+  full_name: "",
+  city: "",
+  sport: "",
+  bio: "",
+  avatar_url: "",
+  dob: "",
+  age: "",
+  gender: "",
+  rider_type: "",
+  ride_frequency: "",
+  instagram_id: "",
+  blood_group: "",
+  emergency_contact: "",
+  medical_conditions: "",
+  join_reason: "",
+};
 
 function LoggedOutPrompt() {
   const { requestLogin } = useAuthGate();
@@ -56,15 +120,15 @@ const STRAVA_NOTICES = {
 
 export default function Dashboard() {
   const { user, loading: sessionLoading } = useSession();
-  const upcomingEvent = useUpcomingEvent();
-  const raceResults = useRaceResults();
   const myStravaActivities = useMyStravaActivities(user?.id);
   const myLeaderboardStats = useMyLeaderboardStats(user?.id);
+  const myMemberships = useMyMemberships(user?.id);
+  const clubMember = isActiveClub(myMemberships);
   const authProviders = useAuthProviders();
   const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ full_name: "", city: "", sport: "", bio: "", avatar_url: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -112,13 +176,8 @@ export default function Dashboard() {
       .then(({ data }) => {
         if (data) {
           setProfile(data);
-          setForm({
-            full_name: data.full_name || "",
-            city: data.city || "",
-            sport: data.sport || "",
-            bio: data.bio || "",
-            avatar_url: data.avatar_url || "",
-          });
+          // Every editable column, blank where the member has not answered.
+          setForm(Object.fromEntries(Object.keys(EMPTY_FORM).map((k) => [k, data[k] == null ? "" : String(data[k])])));
         }
         setLoading(false);
       });
@@ -147,7 +206,9 @@ export default function Dashboard() {
     setSaved(false);
     setError("");
     try {
-      const { error: err } = await supabase.from("profiles").update(form).eq("id", user.id);
+      // Blank answers are saved as "no answer", not as empty text or 0.
+      const updates = { ...form, dob: form.dob || null, age: form.age ? Number(form.age) : null, medical_conditions: form.medical_conditions || null, join_reason: form.join_reason || null };
+      const { error: err } = await supabase.from("profiles").update(updates).eq("id", user.id);
       if (err) throw err;
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -204,7 +265,7 @@ export default function Dashboard() {
 
   if (sessionLoading || (user && loading)) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[70vh] flex items-center justify-center bg-rtg-ink">
         <Loader2 className="animate-spin text-rtg-orange-400" size={28} />
       </div>
     );
@@ -213,303 +274,371 @@ export default function Dashboard() {
   if (!user) return <LoggedOutPrompt />;
 
   const inputClass =
-    "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
+    "w-full rounded-xl bg-white border border-rtg-purple-600/20 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/60 shadow-[0_1px_2px_rgba(53,36,111,0.05)] focus:outline-none focus:border-rtg-orange-400 focus:ring-2 focus:ring-rtg-orange-400/15";
+  const labelClass = "flex items-center gap-1.5 text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5";
 
-  const myResults = form.full_name
-    ? raceResults.filter((r) => r.athleteName.trim().toLowerCase() === form.full_name.trim().toLowerCase())
-    : [];
+  const name = form.full_name || "Athlete";
+  const stravaLinked = Boolean(profile?.strava_athlete_id);
+  const hasStats = Boolean(myLeaderboardStats && myLeaderboardStats.activity_count > 0);
+  const joinedOn = profile?.community_joined_at || profile?.created_at;
+  const shortDate = (value, withYear = true) =>
+    new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}) });
 
   return (
-    <Section eyebrow="Member Dashboard" title={`Welcome, ${form.full_name || "Athlete"}`}>
-      {stravaNotice && (
-        <p
-          className={`max-w-4xl mx-auto mb-6 text-center text-sm rounded-full py-2.5 px-4 ${
-            stravaNotice.tone === "good" ? "bg-green-500/15 text-green-300" : "bg-red-500/15 text-red-300"
-          }`}
-        >
-          {stravaNotice.text}
-        </p>
-      )}
-      {/* Strava is linked from here, not used to log in: a member who hasn't
-          connected it yet is asked to, once signed in. */}
-      {!profile?.strava_athlete_id && authProviders.strava && (
-        <div className="max-w-4xl mx-auto mb-6 glass rounded-3xl p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto mb-3" />
-            <h2 className="font-display text-2xl leading-none mb-1.5">Connect Your Strava</h2>
-            <p className="text-sm text-rtg-mist">Link your Strava account so your rides and runs show up on your RTG profile automatically.</p>
-          </div>
-          <div className="shrink-0 flex items-center gap-3">
-            {connectingStrava && <Loader2 size={16} className="animate-spin text-rtg-orange-400" />}
-            <ConnectWithStrava onClick={handleConnectStrava} alt={STRAVA_CONNECT_ALT} disabled={connectingStrava} />
-          </div>
-        </div>
-      )}
-      <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto mb-8">
-        {upcomingEvent && (
-          <Link to={`/events/${upcomingEvent.slug || upcomingEvent.id}`} className="group">
-            <GlassCard className="h-full hover:border-rtg-orange-400/40 transition-colors">
-              <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-rtg-orange-400 font-semibold mb-2">
-                <Calendar size={13} /> Upcoming Event
-              </span>
-              <p className="font-display text-xl mb-1">{upcomingEvent.title}</p>
-              <p className="text-rtg-mist text-sm mb-3">{upcomingEvent.date}</p>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-white group-hover:text-rtg-orange-400 transition-colors">
-                View details <ArrowRight size={12} />
-              </span>
-            </GlassCard>
-          </Link>
-        )}
-        <Link to="/race-results" className="group">
-          <GlassCard className="h-full hover:border-rtg-orange-400/40 transition-colors">
-            <span className="flex items-center gap-2 text-xs uppercase tracking-wide text-rtg-orange-400 font-semibold mb-2">
-              <Trophy size={13} /> Your Race Results
-            </span>
-            {myResults.length > 0 ? (
-              <>
-                <p className="font-display text-xl mb-1">{myResults.length} result{myResults.length > 1 ? "s" : ""} on record</p>
-                <p className="text-rtg-mist text-sm mb-3">
-                  Latest: {myResults[0].eventName} — {myResults[0].position || myResults[0].finishTime || "—"}
-                </p>
-              </>
-            ) : (
-              <p className="text-rtg-mist text-sm mb-3">
-                No results under "{form.full_name || "your name"}" yet — they'll show up here once RTG posts them.
-              </p>
-            )}
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-white group-hover:text-rtg-orange-400 transition-colors">
-              View all results <ArrowRight size={12} />
-            </span>
-          </GlassCard>
-        </Link>
-      </div>
-
-      {myOrders.length > 0 && (
-        <>
-          <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">My Orders</h2>
-          <div className="max-w-4xl mx-auto space-y-3 mb-10">
-            {myOrders.map((order) => {
-              const status = ORDER_STATUS[order.status] || ORDER_STATUS.pending_verification;
-              return (
-                <GlassCard key={order.id} className="!p-5">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-start gap-3">
-                      <Package size={18} className="text-rtg-orange-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {order.order_items.map((i) => i.product_name).join(", ")}
-                        </p>
-                        <p className="text-xs text-rtg-mist mt-0.5">
-                          {new Date(order.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                          {" · "}
-                          {formatPrice(order.total)}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`text-xs font-semibold px-3 py-1 rounded-full shrink-0 ${status.className}`}>
-                      {status.label}
-                    </span>
-                  </div>
-                </GlassCard>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {profile?.strava_athlete_id && (
-        <div className="max-w-4xl mx-auto mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <h2 className="font-display text-2xl">My Strava Activity</h2>
-              <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
-            </div>
-            <Link to="/lab/strava" className="text-xs font-semibold text-rtg-orange-400 hover:text-rtg-orange-300 transition-colors">
-              Open Strava Challenge →
-            </Link>
-          </div>
-          {myLeaderboardStats && myLeaderboardStats.activity_count > 0 && (
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <GlassCard className="!p-4 text-center">
-                <p className="font-display text-2xl">{formatKm(myLeaderboardStats.total_distance_meters)}</p>
-                <p className="text-xs text-rtg-mist mt-1">Total Distance</p>
-              </GlassCard>
-              <GlassCard className="!p-4 text-center">
-                <p className="font-display text-2xl">{myLeaderboardStats.activity_count}</p>
-                <p className="text-xs text-rtg-mist mt-1">Activities</p>
-              </GlassCard>
-              <GlassCard className="!p-4 text-center">
-                <p className="font-display text-2xl">{Math.round(myLeaderboardStats.total_moving_time_seconds / 3600)}h</p>
-                <p className="text-xs text-rtg-mist mt-1">Moving Time</p>
-              </GlassCard>
-            </div>
-          )}
-          {myStravaActivities.length === 0 ? (
-            <p className="text-rtg-mist text-sm">
-              No activities synced yet — they'll show up here after your next ride or run on Strava.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {myStravaActivities.map((a) => (
-                <GlassCard key={a.id} className="!p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Activity size={16} className="text-rtg-orange-400 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{a.name}</p>
-                      <p className="text-xs text-rtg-mist">
-                        {a.type} · {new Date(a.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-rtg-white/90 shrink-0">{formatKm(a.distance_meters)}</span>
-                </GlassCard>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <h2 className="font-display text-2xl mb-4 max-w-4xl mx-auto">Athlete Profile</h2>
-      <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        <GlassCard className="md:col-span-1 text-center">
-          <label className="relative inline-block cursor-pointer group mb-4">
+    <div className="dash">
+      {/* ---- Banner: who you are, at a glance ---- */}
+      <header className="dash-hero theme-night">
+        <div className="dash-hero-inner">
+          <label className="dash-avatar group" title="Change your photo">
             <img
               src={form.avatar_url || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(form.full_name || user.email)}&backgroundColor=f76b1c`}
-              alt={form.full_name}
-              className="w-24 h-24 rounded-full object-cover border-2 border-rtg-orange-400"
+              alt={name}
             />
-            <span className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-white transition-opacity">
-              {avatarUploading ? <Loader2 size={16} className="animate-spin" /> : "Change"}
-            </span>
+            <span className="dash-avatar-edit">{avatarUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}</span>
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
           </label>
-          {avatarError && <p className="text-xs text-rtg-orange-400 mb-2">{avatarError}</p>}
-          <p className="font-semibold text-rtg-white mb-1">{form.full_name || "Athlete"}</p>
-          <p className="text-xs text-rtg-mist mb-4">
-            {/* Strava/XFitConnect logins don't hand us a real email, so one
-                gets invented internally (a "@members." placeholder) just to
-                satisfy Supabase's auth system — that's plumbing, never
-                meant to be shown to the member as if it were their email. */}
-            {profile?.email?.includes("@members.") ? (
-              <span className="capitalize">Connected via {profile.auth_provider}</span>
-            ) : (
-              profile?.email || user.email
-            )}
+
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-rtg-orange-300">Member Dashboard</span>
+            <h1 className="font-display text-4xl leading-[0.95] text-white sm:text-5xl md:text-6xl">
+              Welcome, <span className="text-rtg-orange-400">{name}</span>
+            </h1>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {form.city && (
+                <span className="dash-chip">
+                  <MapPin size={12} /> {form.city}
+                </span>
+              )}
+              {form.sport && (
+                <span className="dash-chip">
+                  <Activity size={12} /> {form.sport}
+                </span>
+              )}
+              {joinedOn && (
+                <span className="dash-chip">
+                  <Sparkles size={12} /> Member since {new Date(joinedOn).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}
+                </span>
+              )}
+              {clubMember && (
+                <span className="dash-chip dash-chip-hot">
+                  <BadgeCheck size={12} /> RTG Club
+                </span>
+              )}
+              {stravaLinked && (
+                <span className="dash-chip">
+                  <CheckCircle2 size={12} /> Strava connected
+                </span>
+              )}
+            </div>
+            {avatarError && <p className="mt-3 text-xs text-rtg-orange-300">{avatarError}</p>}
+          </div>
+        </div>
+
+        {hasStats && (
+          <div className="dash-stats">
+            <div>
+              <strong>{formatKm(myLeaderboardStats.total_distance_meters)}</strong>
+              <span>Total distance</span>
+            </div>
+            <div>
+              <strong>{myLeaderboardStats.activity_count}</strong>
+              <span>Activities</span>
+            </div>
+            <div>
+              <strong>{Math.round(myLeaderboardStats.total_moving_time_seconds / 3600)}h</strong>
+              <span>Moving time</span>
+            </div>
+          </div>
+        )}
+      </header>
+
+      <div className="dash-body">
+        {stravaNotice && (
+          <p className={`dash-notice ${stravaNotice.tone === "good" ? "is-good" : "is-bad"}`}>
+            {stravaNotice.tone === "good" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />} {stravaNotice.text}
           </p>
-          <div className="flex items-center justify-center gap-2 text-xs text-rtg-mist">
-            {profile?.strava_athlete_id ? (
-              <span className="inline-flex items-center gap-2 text-rtg-orange-400">
-                <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-3.5 w-auto" /> Connected
-              </span>
-            ) : authProviders.strava ? (
+        )}
+
+        {/* Strava is linked from here, not used to log in: a member who hasn't
+            connected it yet is asked to, once signed in. */}
+        {!stravaLinked && authProviders.strava && (
+          <section className="dash-strava">
+            <div className="min-w-0 flex-1">
+              <h2 className="mb-1.5 font-display text-2xl leading-none md:text-3xl">Connect Your Strava</h2>
+              <p className="text-sm text-rtg-mist">Link your Strava account so your rides and runs show up on your RTG profile automatically.</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              {connectingStrava && <Loader2 size={16} className="animate-spin text-rtg-orange-500" />}
               <ConnectWithStrava onClick={handleConnectStrava} alt={STRAVA_CONNECT_ALT} disabled={connectingStrava} />
+            </div>
+          </section>
+        )}
+
+        {/* ---- Where to next ---- */}
+        <nav className="dash-links" aria-label="Shortcuts">
+          {SHORTCUTS.map(({ to, label, hint, Icon }) => (
+            <Link key={to} to={to} className="dash-link">
+              <span className="dash-link-icon">
+                <Icon size={18} />
+              </span>
+              <span className="min-w-0">
+                <strong>{label}</strong>
+                <small>{hint}</small>
+              </span>
+              <ArrowUpRight size={15} className="dash-link-arrow" />
+            </Link>
+          ))}
+        </nav>
+
+        {myMemberships.length > 0 && (
+          <section>
+            <h2 className="dash-title">My Memberships</h2>
+            <div className="dash-list">
+              {myMemberships.map((m) => {
+                const status = MEMBERSHIP_STATUS[m.status] || MEMBERSHIP_STATUS.pending_verification;
+                return (
+                  <article key={m.id} className="dash-row">
+                    <span className="dash-row-icon">
+                      <BadgeCheck size={17} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{m.plan_name}</p>
+                      <p className="mt-0.5 text-xs text-rtg-mist">
+                        {shortDate(m.created_at)} · {formatPrice(m.amount)}
+                        {m.valid_until ? ` · valid till ${shortDate(m.valid_until)}` : ""}
+                      </p>
+                    </div>
+                    <span className={`dash-pill ${status.className}`}>{status.label}</span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {myOrders.length > 0 && (
+          <section>
+            <h2 className="dash-title">My Orders</h2>
+            <div className="dash-list">
+              {myOrders.map((order) => {
+                const status = ORDER_STATUS[order.status] || ORDER_STATUS.pending_verification;
+                return (
+                  <article key={order.id} className="dash-row">
+                    <span className="dash-row-icon">
+                      <Package size={17} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">{order.order_items.map((i) => i.product_name).join(", ")}</p>
+                      <p className="mt-0.5 text-xs text-rtg-mist">
+                        {shortDate(order.created_at)} · {formatPrice(order.total)}
+                      </p>
+                    </div>
+                    <span className={`dash-pill ${status.className}`}>{status.label}</span>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {stravaLinked && (
+          <section>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <h2 className="dash-title !mb-0">My Strava Activity</h2>
+                <PoweredByStrava alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
+              </div>
+              <Link to="/lab/strava" className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-orange-500 transition-colors hover:text-rtg-orange-600">
+                Open RTG Club Lab <ArrowUpRight size={13} />
+              </Link>
+            </div>
+            {myStravaActivities.length === 0 ? (
+              <p className="dash-empty">No activities synced yet — they'll show up here after your next ride or run on Strava.</p>
             ) : (
-              <span>No Strava connected</span>
+              <div className="dash-list">
+                {myStravaActivities.map((a) => (
+                  <article key={a.id} className="dash-row">
+                    <span className="dash-row-icon">
+                      <Activity size={17} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{a.name}</p>
+                      <p className="mt-0.5 text-xs text-rtg-mist">
+                        {a.type} · {shortDate(a.start_date, false)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-display text-xl text-rtg-purple-600">{formatKm(a.distance_meters)}</span>
+                  </article>
+                ))}
+              </div>
             )}
-          </div>
-        </GlassCard>
+          </section>
+        )}
 
-        <GlassCard className="md:col-span-2">
-          <form onSubmit={handleSave} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Full Name</label>
-              <input
-                type="text"
-                value={form.full_name}
-                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                className={inputClass}
-              />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                  <MapPin size={12} /> City
-                </label>
-                <input
-                  type="text"
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="e.g. Delhi"
-                  className={inputClass}
-                />
+        {/* ---- Profile ---- */}
+        <section>
+          <h2 className="dash-title">Athlete Profile</h2>
+          <div className="dash-card">
+            <form onSubmit={handleSave} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>
+                    <User size={12} /> Full Name
+                  </label>
+                  <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    <Mail size={12} /> Account
+                  </label>
+                  {/* Strava/XFitConnect logins don't hand us a real email, so one
+                      gets invented internally (a "@members." placeholder) just to
+                      satisfy Supabase's auth system — that's plumbing, never
+                      meant to be shown to the member as if it were their email. */}
+                  <p className={`${inputClass} truncate !bg-rtg-purple-600/5 text-rtg-mist`}>
+                    {profile?.email?.includes("@members.") ? <span className="capitalize">Connected via {profile.auth_provider}</span> : profile?.email || user.email}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>
+                    <MapPin size={12} /> City
+                  </label>
+                  <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="e.g. Delhi" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    <Activity size={12} /> Sport
+                  </label>
+                  <input type="text" value={form.sport} onChange={(e) => setForm({ ...form, sport: e.target.value })} placeholder="e.g. Cycling, Running" className={inputClass} />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className={labelClass}>
+                    <Phone size={12} /> Phone
+                  </label>
+                  <p className={`${inputClass} truncate !bg-rtg-purple-600/5 text-rtg-mist`}>{profile?.phone || "—"}</p>
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    <Cake size={12} /> Date of Birth
+                  </label>
+                  <input
+                    type="date"
+                    value={form.dob}
+                    max={new Date().toLocaleDateString("en-CA")}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value, age: ageFromDob(e.target.value) })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Age</label>
+                  <p className={`${inputClass} !bg-rtg-purple-600/5 text-rtg-mist`}>{form.age || "—"}</p>
+                </div>
+              </div>
+
+              <ChipChoice label="Gender" options={GENDERS} value={form.gender} onChange={(v) => setForm({ ...form, gender: v })} />
+              <ChipChoice label="Rider, runner, or both?" options={RIDER_TYPES} value={form.rider_type} onChange={(v) => setForm({ ...form, rider_type: v })} />
+              <ChipChoice label="How often do you ride?" options={RIDE_FREQUENCIES} value={form.ride_frequency} onChange={(v) => setForm({ ...form, ride_frequency: v })} />
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass}>
+                    <AtSign size={12} /> Instagram ID
+                  </label>
+                  <input type="text" value={form.instagram_id} onChange={(e) => setForm({ ...form, instagram_id: e.target.value })} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    <Droplet size={12} /> Blood Group
+                  </label>
+                  <input type="text" value={form.blood_group} onChange={(e) => setForm({ ...form, blood_group: e.target.value })} placeholder="e.g. B+" className={inputClass} />
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                  <Activity size={12} /> Sport
+                <label className={labelClass}>
+                  <ShieldAlert size={12} /> Emergency Contact — Name &amp; Number
                 </label>
-                <input
-                  type="text"
-                  value={form.sport}
-                  onChange={(e) => setForm({ ...form, sport: e.target.value })}
-                  placeholder="e.g. Cycling, Running"
-                  className={inputClass}
+                <input type="text" value={form.emergency_contact} onChange={(e) => setForm({ ...form, emergency_contact: e.target.value })} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Medical conditions we should know (optional)</label>
+                <textarea value={form.medical_conditions} onChange={(e) => setForm({ ...form, medical_conditions: e.target.value })} rows={2} className={`${inputClass} resize-y`} />
+              </div>
+              <div>
+                <label className={labelClass}>Why did you join RTG? (optional)</label>
+                <textarea value={form.join_reason} onChange={(e) => setForm({ ...form, join_reason: e.target.value })} rows={2} className={`${inputClass} resize-y`} />
+              </div>
+              <div>
+                <label className={labelClass}>Bio</label>
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                  rows={4}
+                  placeholder="A little about your endurance journey..."
+                  className={`${inputClass} resize-y`}
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Bio</label>
-              <textarea
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                rows={4}
-                placeholder="A little about your endurance journey..."
-                className={`${inputClass} resize-y`}
-              />
-            </div>
 
-            {error && <p className="text-sm text-rtg-orange-400">{error}</p>}
+              {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
-              {saved ? "Saved" : "Save Changes"}
-            </button>
-          </form>
-        </GlassCard>
-      </div>
-
-      <div className="max-w-4xl mx-auto mt-10">
-        <GlassCard className="border-red-500/20">
-          <div className="flex items-start gap-3 mb-1">
-            <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={18} />
-            <h3 className="font-display text-xl">Delete My Account</h3>
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn-shine inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f45b18] via-rtg-orange-500 to-rtg-orange-400 px-7 py-3 text-sm font-semibold text-white shadow-[0_13px_28px_rgba(247,107,28,0.25)] transition hover:brightness-110 disabled:opacity-60"
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
+                  {saved ? "Saved" : "Save Changes"}
+                </button>
+                {stravaLinked ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-mist">
+                    <CheckCircle2 size={13} className="text-green-600" /> Strava connected
+                  </span>
+                ) : (
+                  !authProviders.strava && <span className="text-xs text-rtg-mist">No Strava connected</span>
+                )}
+              </div>
+            </form>
           </div>
-          <p className="text-rtg-mist text-sm mb-4">
-            Permanently deletes your account and all associated data (profile, orders). This can't be undone.
-          </p>
-          {deleteError && <p className="text-sm text-red-400 mb-4">{deleteError}</p>}
+        </section>
+
+        {/* ---- Danger zone ---- */}
+        <section className="dash-danger">
+          <div className="min-w-0 flex-1">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-red-700">
+              <AlertTriangle size={15} /> Delete My Account
+            </h3>
+            <p className="mt-1 text-xs text-rtg-mist">Permanently deletes your account and all associated data (profile, orders). This can't be undone.</p>
+            {deleteError && <p className="mt-2 text-xs text-red-600">{deleteError}</p>}
+          </div>
           {deleteStep === "idle" ? (
             <button
               onClick={() => setDeleteStep("confirming")}
-              className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors"
+              className="shrink-0 rounded-full border border-red-300 px-5 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
             >
               Delete my account
             </button>
           ) : (
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-rtg-white">Are you sure? This is permanent.</span>
+              <span className="text-xs font-semibold text-rtg-white">Are you sure? This is permanent.</span>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteStep === "deleting"}
-                className="inline-flex items-center gap-2 rounded-full bg-red-500 text-white font-semibold px-5 py-2 text-sm hover:bg-red-400 transition-colors disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-red-600 px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-60"
               >
                 {deleteStep === "deleting" && <Loader2 size={14} className="animate-spin" />}
                 Yes, delete permanently
               </button>
-              <button
-                onClick={() => setDeleteStep("idle")}
-                disabled={deleteStep === "deleting"}
-                className="text-sm text-rtg-mist hover:text-rtg-white transition-colors"
-              >
+              <button onClick={() => setDeleteStep("idle")} disabled={deleteStep === "deleting"} className="text-xs text-rtg-mist transition-colors hover:text-rtg-white">
                 Cancel
               </button>
             </div>
           )}
-        </GlassCard>
+        </section>
       </div>
-    </Section>
+    </div>
   );
 }

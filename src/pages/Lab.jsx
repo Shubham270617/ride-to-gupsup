@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
 import RichText, { Lines } from "../components/lab/RichText";
-import { PoweredByStrava } from "../components/lab/StravaBrand";
 import { useSiteSettings } from "../lib/publicData";
 import {
   buildLabCopy,
@@ -29,8 +28,6 @@ import {
 // ============================================================================
 
 const pad2 = (n) => String(n).padStart(2, "0");
-// lab_programmes.slug of the Strava Challenge — its card carries Strava's logo.
-const STRAVA_LAB = "strava-challenge";
 
 // The line chart behind a lab card's big word — one drawing per colour.
 function CardArt({ tone, word }) {
@@ -53,7 +50,7 @@ function CardArt({ tone, word }) {
   );
 }
 
-function LabCard({ lab, onAbout, stravaAlt }) {
+function LabCard({ lab, onAbout }) {
   const external = /^https?:\/\//.test(lab.link || "");
   return (
     <article className={lab.tone === "purple" ? "lab-card ridge-card" : "lab-card strava-card"}>
@@ -98,7 +95,6 @@ function LabCard({ lab, onAbout, stravaAlt }) {
             ))}
         </div>
         {lab.note && <small className="availability">{lab.note}</small>}
-        {lab.slug === STRAVA_LAB && <PoweredByStrava alt={stravaAlt} className="card-strava" />}
       </div>
     </article>
   );
@@ -219,7 +215,7 @@ export default function Lab() {
 
         <div className="lab-grid">
           {labs.map((lab) => (
-            <LabCard key={lab.id} lab={lab} stravaAlt={copy.poweredAlt} onAbout={(l) => setInfo({ title: l.aboutTitle || l.title, body: l.aboutBody })} />
+            <LabCard key={lab.id} lab={lab} onAbout={(l) => setInfo({ title: l.aboutTitle || l.title, body: l.aboutBody })} />
           ))}
         </div>
 

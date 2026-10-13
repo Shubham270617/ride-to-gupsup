@@ -19,19 +19,19 @@
 
 const t = (group, field, label, text, type = "text") => ({ group, field, label, type, text });
 
-// ---- RTG Lab hub + Strava Challenge (text.lab.*) ---------------------------
+// ---- RTG Lab hub + RTG Club Lab (text.lab.*) ---------------------------
 export const LAB_GROUP_HEADINGS = {
   hero: "Lab page — top of the page",
   strip: "Lab page — reward periods strip",
   labs: "Lab page — the labs",
   principles: "Lab page — \"More than a rank\"",
   info: "Lab page — \"How it works\" window",
-  access: "Strava Challenge — access window",
-  dash: "Strava Challenge — dashboard: top & filters",
-  dashStats: "Strava Challenge — dashboard: totals & podium",
-  dashCharts: "Strava Challenge — dashboard: charts",
-  dashTable: "Strava Challenge — dashboard: ranking table",
-  method: "Strava Challenge — \"How rankings work\" window",
+  access: "RTG Club Lab — access window",
+  dash: "RTG Club Lab — dashboard: top & filters",
+  dashStats: "RTG Club Lab — dashboard: totals & podium",
+  dashCharts: "RTG Club Lab — dashboard: charts",
+  dashTable: "RTG Club Lab — dashboard: ranking table",
+  method: "RTG Club Lab — \"How rankings work\" window",
 };
 
 export const LAB_PAGE_TEXT = [
@@ -69,16 +69,16 @@ export const LAB_PAGE_TEXT = [
   t("info", "infoEyebrow", "Eyebrow of every information window", "RTG LAB"),
   t("info", "infoCloseLabel", "Button that closes an information window", "Got it"),
   t("info", "aboutTitle", "\"How it works\" — heading", "A place for your next personal best."),
-  t("info", "aboutBody", "\"How it works\" — text", "RTG Lab brings challenges, performance and recognition together. Start with the Pan-India Strava Challenge or Ridge Repeats. Future challenges and event results will join the same hub.\n\n## Choose your challenge\nExplore its format, then log in to RTG and register for that challenge to appear on its board.\n\n## Choose your benchmark\nFor the Strava Challenge, cycling and running have separate distance, speed and elevation boards. Rankings can be viewed by gender and age category.\n\n## Celebrate the journey\nWeekly, monthly, quarterly, half-yearly and yearly recognition, with the rules published for each challenge.", "textarea"),
+  t("info", "aboutBody", "\"How it works\" — text", "RTG Lab brings challenges, performance and recognition together. Start with the Pan-India RTG Club Lab or Ridge Repeats. Future challenges and event results will join the same hub.\n\n## Choose your challenge\nExplore its format, then log in to RTG and register for that challenge to appear on its board.\n\n## Choose your benchmark\nFor the RTG Club Lab, cycling and running have separate distance, speed and elevation boards. Rankings can be viewed by gender and age category.\n\n## Celebrate the journey\nWeekly, monthly, quarterly, half-yearly and yearly recognition, with the rules published for each challenge.", "textarea"),
 
   t("access", "accessEyebrow", "Eyebrow", "YOUR RTG JOURNEY"),
-  t("access", "accessTitle", "Heading", "Your Strava Challenge lab."),
+  t("access", "accessTitle", "Heading", "Your RTG Club Lab."),
   t("access", "accessText", "Paragraph", "Member access uses your RTG account and your registration for this challenge.", "textarea"),
   t("access", "stepDoneLabel", "Word beside a completed step", "Done"),
   t("access", "noteGuestTitle", "Note box — visitor not logged in: heading", "Log in to take part."),
   t("access", "noteGuestText", "Note box — visitor not logged in: text", "Use your RTG account. You can explore the dashboard without logging in.", "textarea"),
   t("access", "noteMemberTitle", "Note box — logged in, not registered: heading", "One step left."),
-  t("access", "noteMemberText", "Note box — logged in, not registered: text", "Register for the Strava Challenge to appear on the board. Only registered members are ranked.", "textarea"),
+  t("access", "noteMemberText", "Note box — logged in, not registered: text", "Register for the RTG Club Lab to appear on the board. Only registered members are ranked.", "textarea"),
   t("access", "noteStravaTitle", "Note box — registered, Strava not connected: heading", "Connect your Strava."),
   t("access", "noteStravaText", "Note box — registered, Strava not connected: text", "Your rides and runs are counted from Strava. Connect your account so your activities reach the board.", "textarea"),
   t("access", "noteReadyTitle", "Note box — registered and connected: heading", "You are on the board."),
@@ -97,7 +97,7 @@ export const LAB_PAGE_TEXT = [
   t("dash", "dashBackLabel", "Link back to the Lab", "← Back to RTG Lab"),
   t("dash", "dashBadgeLive", "Badge — live results", "LIVE · REGISTERED MEMBERS"),
   t("dash", "dashBadgeSample", "Badge — sample results", "PREVIEW · SAMPLE ATHLETES"),
-  t("dash", "dashEyebrow", "Eyebrow", "RTG LAB / STRAVA CHALLENGE"),
+  t("dash", "dashEyebrow", "Eyebrow", "RTG LAB / RTG CLUB LAB"),
   t("dash", "dashTitle", "Headline", "Every effort."),
   t("dash", "dashTitleAccent", "Headline — orange part", "On the board."),
   t("dash", "dashTextLive", "Paragraph — live results", "Distance, speed and elevation from the Strava activities of registered RTG members."),
@@ -176,6 +176,7 @@ export const LAB_PAGE_TEXT = [
 
 // ---- Ridge Repeats lab (text.ridge.*) ---------------------------------------
 export const RIDGE_GROUP_HEADINGS = {
+  access: "Ridge Repeats — access window (log in and register first)",
   intro: "Ridge Repeats — top of the page",
   toolbar: "Ridge Repeats — ranking buttons & session",
   board: "Ridge Repeats — board headings & podium",
@@ -190,6 +191,12 @@ export const RIDGE_GROUP_HEADINGS = {
 };
 
 export const RIDGE_PAGE_TEXT = [
+  t("access", "accessTitle", "Heading", "Your Ridge Repeats lab."),
+  t("access", "accessText", "Paragraph", "Ridge Repeats is for registered RTG members. Log in and register once to open the board.", "textarea"),
+  t("access", "noteGuestTitle", "Note box — visitor not logged in: heading", "Log in to continue."),
+  t("access", "noteGuestText", "Note box — visitor not logged in: text", "Use your RTG account. New here? You can sign up from the same window.", "textarea"),
+  t("access", "noteMemberTitle", "Note box — logged in, not registered: heading", "One step left."),
+  t("access", "noteMemberText", "Note box — logged in, not registered: text", "Register for Ridge Repeats to open your lab.", "textarea"),
   t("intro", "loopKm", "Length of one loop in km (a number — every distance on the page is worked out from it)", "9.15"),
   t("intro", "maxLoops", "Most loops in one session (a number)", "5"),
   t("intro", "eyebrow", "Eyebrow", "YOU VS YOU · TALKATORA, DELHI"),

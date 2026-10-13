@@ -29,7 +29,7 @@ import {
 } from "../lib/labData";
 
 // ============================================================================
-// STRAVA CHALLENGE (/lab/strava) — opens with the access window (log in ->
+// RTG CLUB LAB (/lab/strava) — the Strava-fed challenge board — opens with the access window (log in ->
 // register -> open your lab) over the dashboard; "Explore dashboard" closes
 // it. /lab/strava?view=board goes straight to the dashboard.
 //
@@ -89,12 +89,7 @@ function AccessWindow({ copy, steps, user, registered, stravaLinked, canConnect,
       <Link to="/lab" className="close" aria-label={copy.backLabel}>
         ×
       </Link>
-      <div className="access-brand">
-        <div className="eyebrow">{copy.accessEyebrow}</div>
-        <a href={STRAVA_URL} target="_blank" rel="noopener noreferrer" aria-label={copy.stravaLinkLabel}>
-          <PoweredByStrava alt={copy.poweredAlt} />
-        </a>
-      </div>
+      <div className="eyebrow">{copy.accessEyebrow}</div>
       <h2 id="lab-access-title">{copy.accessTitle}</h2>
       <p>{copy.accessText}</p>
 
@@ -625,10 +620,6 @@ export default function LabStrava() {
 
         <div className="preview-footer">
           <b>{copy.footNoteTitle}</b> {sample ? copy.footNoteSample : copy.footNote}
-          <a className="strava-foot" href={STRAVA_URL} target="_blank" rel="noopener noreferrer">
-            <PoweredByStrava alt={copy.poweredAlt} />
-            <span>{copy.stravaLinkLabel}</span>
-          </a>
         </div>
       </section>
 
