@@ -53,7 +53,16 @@
   50% { transform: translateY(-14px); }
 }
 
+/* Set by Admin -> Appearance (see lib/appearance.js). Scaling the ROOT font
+   size is what lets an admin change text size without breaking the layout:
+   Tailwind's type and spacing scales are both in rem, so everything grows
+   together in proportion. Defaults to 1 when nothing has been chosen. */
+:root {
+  --rtg-text-scale: 1;
+}
+
 html {
+  font-size: calc(100% * var(--rtg-text-scale));
   scroll-behavior: smooth;
   width: 100%;
   /* `clip` (not `hidden`) — hides horizontal bleed exactly the same way,

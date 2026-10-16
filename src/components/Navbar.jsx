@@ -237,34 +237,6 @@ function CartButton({ className = "" }) {
 }
 
 /* =========================================================
-   HIDDEN ADMIN LINK
-   Keep exactly hidden.
-   Functionality/route remains available.
-   ========================================================= */
-
-function HiddenAdminLink({ className = "" }) {
-  return (
-    <Link
-      to="/admin/login"
-      aria-hidden="true"
-      tabIndex={-1}
-      className={`
-        inline-flex
-        items-center
-        justify-center
-        w-9
-        h-9
-        -m-2.5
-        shrink-0
-        ${className}
-      `}
-    >
-      <span className="w-2 h-2 rounded-full bg-transparent" />
-    </Link>
-  );
-}
-
-/* =========================================================
    NAVBAR
    ========================================================= */
 
@@ -278,12 +250,6 @@ export default function Navbar() {
 
   const { requestLogin } = useAuthGate();
   const { user } = useSession();
-
-  /*
-   * Keep admin functionality exactly as before.
-   * The link remains invisible.
-   */
-  const showAdminLink = !user;
 
   /* =======================================================
      SCROLL SHADOW
@@ -492,14 +458,6 @@ export default function Navbar() {
               >
                 Signup
               </Button>
-
-              {/* =================================================
-                  ADMIN LOGIN
-
-                  STILL HIDDEN — DO NOT REMOVE
-                  ================================================= */}
-
-              {showAdminLink && <HiddenAdminLink />}
             </>
           )}
         </div>
@@ -622,9 +580,6 @@ export default function Navbar() {
                 "
               >
                 <AccountIndicator />
-
-                {/* Admin stays hidden */}
-                {showAdminLink && <HiddenAdminLink />}
               </div>
 
               {/* Login + Signup */}

@@ -422,12 +422,13 @@ export default function Dashboard() {
 
         {stravaLinked && (
           <section>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <h2 className="dash-title !mb-0">My Strava Activity</h2>
-                <StravaLogo alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
-              </div>
-              <Link to="/lab/strava" className="inline-flex items-center gap-1 text-xs font-semibold text-rtg-orange-500 transition-colors hover:text-rtg-orange-600">
+            <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <h2 className="dash-title !mb-0">My Strava Activity</h2>
+              <StravaLogo alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
+              <Link
+                to="/lab/strava"
+                className="ml-auto shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-rtg-orange-500 transition-colors hover:text-rtg-orange-600"
+              >
                 Open RTG Club Lab <ArrowUpRight size={13} />
               </Link>
             </div>

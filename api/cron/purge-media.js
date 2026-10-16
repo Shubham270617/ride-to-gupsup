@@ -9,12 +9,17 @@ const GRACE_PERIOD_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 // for 2+ days, freeing storage without deleting a photo an admin might still
 // want to revert to a few minutes after replacing it.
 export default async function handler(req, res) {
-  if (process.env.CRON_SECRET) {
-    const auth = req.headers.authorization || "";
-    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
-      res.status(401).json({ error: "unauthorized" });
-      return;
-    }
+  // Checked unconditionally. This used to be skipped entirely when
+  // CRON_SECRET happened to be unset — which, since it was unset, left a
+  // destructive endpoint callable by anyone on the internet.
+  if (!process.env.CRON_SECRET) {
+    console.error("[cron/purge-media] CRON_SECRET is not set — refusing to run");
+    res.status(500).json({ error: "server_misconfigured" });
+    return;
+  }
+  if ((req.headers.authorization || "") !== `Bearer ${process.env.CRON_SECRET}`) {
+    res.status(401).json({ error: "unauthorized" });
+    return;
   }
 
   const supabaseAdmin = getSupabaseAdmin();

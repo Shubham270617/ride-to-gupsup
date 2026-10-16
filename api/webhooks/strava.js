@@ -42,7 +42,10 @@ export default async function handler(req, res) {
 
     const supabaseAdmin = getSupabaseAdmin();
     if (!supabaseAdmin) {
-      res.status(200).json({ received: true });
+      // Misconfiguration, not a bad event — fail loudly so Strava redelivers
+      // once the env is fixed, rather than silently dropping the activity.
+      console.error("[webhooks/strava] supabase admin unavailable");
+      res.status(500).json({ error: "server_misconfigured" });
       return;
     }
 
@@ -66,9 +69,13 @@ export default async function handler(req, res) {
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("[webhooks/strava] failed", err);
-    // Acknowledge anyway — Strava retries on a non-200, and retrying
-    // something that failed for a real (non-transient) reason just wastes
-    // rate-limit budget on both sides.
-    res.status(200).json({ received: true });
+    // Ask Strava to redeliver. This used to acknowledge with a 200 to avoid
+    // wasting rate-limit budget on permanent failures — but the common case
+    // here is transient (a token refresh blip, a brief database error), and
+    // swallowing it loses that activity permanently with nothing to go back
+    // for it. A retried event is idempotent: activities upsert on
+    // strava_activity_id, so a redelivery costs one request and changes
+    // nothing if the first attempt actually succeeded.
+    res.status(500).json({ error: "sync_failed" });
   }
 }

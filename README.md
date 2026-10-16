@@ -61,14 +61,57 @@ your project dashboard:
      var. It goes in `api/.env.local` for local dev, and in your deploy
      host's environment variable settings for production. This key bypasses
      all security rules — treat it like a master password.
-3. **Create your first admin**: fully automatic, no SQL needed — the very
-   first person to ever sign up (either from `/admin/login`'s Sign Up tab, or
-   the public site) is auto-promoted to admin by a database trigger. Every
-   admin after that one is added from inside the dashboard's Admins screen.
-   ⚠️ Whoever signs up first on your *production* database becomes the
-   founding admin — sign up yourself before sharing the live link. If
-   someone else beats you to it, `supabase/schema.sql` has the one-line SQL
-   fix at the bottom of the file.
+3. **Create your first admin**: admin access is an email allowlist, capped
+   at 3 people. Add your own address to it once, by hand:
+
+   ```sql
+   insert into admin_allowed_emails (email, note)
+   values ('you@example.com', 'founder')
+   on conflict (email) do nothing;
+   ```
+
+   Then sign in once at `/admin/login` and the seat is granted
+   automatically. From then on the allowlist is editable from **Admin →
+   Members**, so this is the only time you need SQL. Nobody can become an
+   admin by signing up first, or by being quick — an address that isn't on
+   the list is refused by the server and by the database.
+
+### 1b. Email sending (REQUIRED for password reset and login codes)
+
+Supabase's built-in email service is capped at **2 emails per hour for the
+whole project**. It is a test facility, not something to launch on — the
+third person to reset their password in an hour simply never gets the mail,
+with no error shown. Both the forgot-password flow and the "Email Code"
+login depend on this being fixed.
+
+The fix is a free custom SMTP provider, configured in the Supabase dashboard
+under **Authentication → Settings → SMTP**. No code changes.
+
+| Provider | Free tier | Notes |
+| --- | --- | --- |
+| **Brevo** (recommended) | **300/day, free forever** | Highest free daily limit, no card needed |
+| Resend | 3,000/month but only 100/day | The daily cap is the binding constraint here |
+| Gmail / Workspace | ~500/day | Works, but app-password based and sends from a gmail.com address |
+
+**Brevo is the one to use.** 300 emails a day is far beyond what this club
+will send, and unlike most "free trials" it does not expire.
+
+1. Sign up at <https://www.brevo.com> → **SMTP & API** → **SMTP**
+2. Copy the server (`smtp-relay.brevo.com`), port `587`, login and the
+   generated SMTP key
+3. Paste them into Supabase → Authentication → Settings → SMTP, with a
+   sender address on your own domain
+4. Add Brevo's **SPF and DKIM** records to the `rideteagupshup.com` DNS, or
+   reset emails will land in spam — which looks exactly like the feature
+   being broken
+5. Raise **Authentication → Rate Limits → Emails** from the default (it
+   lifts to 30/hour automatically once custom SMTP is on; 100/hour is a
+   sensible setting for a club this size)
+
+For the **"Email Code" login tab** specifically, also edit the **Magic Link**
+template under Authentication → Email Templates so it includes `{{ .Token }}`
+— that is the 6-digit code. Without it the email only contains a link, which
+doesn't work when someone reads the code on a different device.
 
 ### 2. Strava (for the "Continue with Strava" button)
 
@@ -83,6 +126,33 @@ Strava has a real, free public OAuth API. Register your own app:
 3. You'll get a **Client ID** and **Client Secret** — put both in
    `api/.env.local` (local) / your host's env vars (production) as
    `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET`
+4. Register the activity webhook once, so new rides arrive automatically:
+   set `STRAVA_WEBHOOK_VERIFY_TOKEN` to any random string, then run
+   `node scripts/register-strava-webhook.mjs`
+
+#### How an athlete's distance gets in
+
+Two separate mechanisms, and both are needed:
+
+- **The webhook** (`api/webhooks/strava.js`) delivers each ride as it is
+  recorded — but only from the moment someone connects. It knows nothing
+  about their past.
+- **The backfill** (`api/cron/strava-backfill.js`) pulls their history. It
+  walks backwards through every activity they have ever recorded, 200 at a
+  time, saving its position after each page so a run that is cut short
+  resumes instead of starting over. It runs hourly and marks each member
+  done once it has passed their very first activity.
+
+This is why **`CRON_SECRET` is required** — set it to anything random
+(`openssl rand -hex 32`) in your host's env vars. Both scheduled jobs
+refuse to run without it rather than running unauthenticated, so an
+unset value means histories silently never fill in.
+
+If totals ever look wrong, **Admin → Members → "Resync Strava"** (or
+`POST /api/admin/strava-resync`) clears the watermark and walks the history
+again from scratch. It is safe to run any time: activities are keyed on
+their Strava id, so a second pass corrects and fills rather than
+duplicating.
 
 ### 3. XFitConnect
 
@@ -187,19 +257,20 @@ final logo asset is available.
 
 ## Admin dashboard — day-to-day content management
 
-**Admin login is deliberately not linked anywhere visible.** The public
-navbar shows "Login" and "Sign Up" for members — no "Admin" button, no
-mention of `/admin` anywhere in the visible UI. The way in is a small,
-unlabeled dot immediately after the "Sign Up" button (both desktop and the
-mobile menu) — near-invisible against the dark navbar, brightens slightly on
-hover so someone who already knows it's there can find it, but there's no
-tooltip or label giving it away. Clicking it opens `/admin/login`, a
-dedicated Log In / Sign Up form separate from the member panel — signing up
-here creates a normal account, exactly like signing up on the public site
-does; it's not automatically an admin (see "Create your first admin" and
-"Adding more admins" below for how an account actually gets admin access).
-Anyone who isn't an admin who somehow lands on `/admin` itself gets
-redirected straight back to `/admin/login`.
+**Admin login is not linked from anywhere.** The public navbar shows
+"Login" and "Sign Up" for members and nothing else — admins go to
+`/admin/login` directly. There used to be a near-invisible dot after the
+"Sign Up" button; it was removed, both because it was discoverable in the
+mobile menu and because hiding a link was never what kept anyone out.
+
+What keeps people out is the allowlist. `/admin/login` is a Log In / Sign Up
+form separate from the member panel, and signing up there creates an
+ordinary member account like any other — it grants nothing. An account only
+reaches the dashboard if its email is on `admin_allowed_emails`, which is
+checked by the server (a 403 before anything happens) and again by the
+database on every query. So opening `/admin` directly, or calling the API
+with `curl`, is refused exactly the same way as being told "no" by the
+form.
 
 Once in, the dashboard manages, with no code: **Events, Gallery,
 Merchandise, Blog, Sponsors, Testimonials, Challenges**, every sitewide
@@ -219,14 +290,35 @@ Three things worth knowing:
   that has no admin screen yet (mission/vision/values, FAQs, weekly ride
   details, sponsorship opportunity descriptions) still lives in
   `src/data/content.js` and needs a code change to update.
-- **Adding more admins doesn't need SQL.** The first admin is automatic
-  (see "Create your first admin" above). After that, any admin can open the
-  **Admins** screen in the dashboard, search for a member by the email they
-  signed up with, and grant (or later revoke) admin access with one click.
+- **Adding or removing admins doesn't need SQL** (after the first one —
+  see "Create your first admin" above). Any admin can open the **Members**
+  screen, add an email address to the allowlist, and that person gets their
+  seat the next time they sign in. Removing an address revokes their access
+  immediately. Three seats, total.
 - **One account, two roles.** There's no such thing as a separate "admin
-  account" — a person is a normal member (in the `profiles` table) who
-  *additionally* has a row in `admin_profiles`. They keep using the exact
-  same login.
+  account" — a person is a normal member (in the `profiles` table) whose
+  email is on the allowlist and who *additionally* has a row in
+  `admin_profiles`. Both are required, and they keep using the same login.
+
+### Appearance — text size, font and colour
+
+**Admin → Appearance** changes how text looks across the whole public site:
+size, body typeface and text colour. Every option is a fixed preset rather
+than a free number or colour picker, on purpose — an arbitrary pixel size or
+hex value is precisely how this kind of control breaks a layout or makes
+text unreadable.
+
+- **Size** scales the root font size, so Tailwind's rem-based type *and*
+  spacing grow together and the layout keeps its proportions. Hard-coded px
+  values in the stylesheets deliberately don't scale, which is why the range
+  is kept narrow.
+- **Typeface** only offers fonts the site already loads, so switching costs
+  no extra page weight.
+- **Colour** options are all contrast-checked against the light background.
+
+Changes preview live in the dashboard and go live on save. The settings are
+three rows in `site_settings` (`text.theme.*`), applied as CSS variables —
+see [`src/lib/appearance.js`](src/lib/appearance.js).
 
 ## Changing text/content
 

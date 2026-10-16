@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { authStorage } from "./authStorage";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -14,16 +15,15 @@ if (!isSupabaseConfigured) {
   );
 }
 
-// storage: sessionStorage (not the default localStorage) so a session ends
-// when the browser/tab is actually closed, not just left indefinitely
-// active until the refresh token itself expires. Closing without clicking
-// Logout still requires signing in again next visit — persistSession keeps
-// it alive across page reloads/navigation within that same browser
-// session, and autoRefreshToken keeps the access token current while open.
+// storage: see lib/authStorage.js. It routes the session to localStorage or
+// sessionStorage depending on whether the member ticked "Remember me" (on by
+// default), instead of the hard-coded sessionStorage this used to use — which
+// signed everyone out whenever they closed the tab, and never shared a login
+// between two tabs.
 export const supabase = isSupabaseConfigured
   ? createClient(url, anonKey, {
       auth: {
-        storage: window.sessionStorage,
+        storage: authStorage,
         persistSession: true,
         autoRefreshToken: true,
       },

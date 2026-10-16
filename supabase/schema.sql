@@ -170,21 +170,57 @@ drop policy if exists "admin_profiles self read" on admin_profiles;
 create policy "admin_profiles self read" on admin_profiles
   for select using (auth.uid() = id);
 
--- Helper: is the current request from a known admin?
+-- ----------------------------------------------------------------------------
+-- The admin allowlist — the actual control over who can administer the site.
+-- ----------------------------------------------------------------------------
+-- Admin is NOT "whoever gets a row in admin_profiles". It is "an account
+-- whose email is on this list, which has also signed in at least once".
+-- Both halves are required, and is_admin() re-derives the answer from this
+-- table on every single request — so a stray admin_profiles row, however it
+-- got there (a bug, a hand-run SQL statement, a leaked service-role key),
+-- confers nothing at all on its own.
+create table if not exists admin_allowed_emails (
+  email text primary key,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+-- Helper: is the current request from a known admin? Every admin-gated RLS
+-- policy on every table in this file is written against this one function,
+-- so tightening it here tightens all of them at once.
 create or replace function is_admin()
 returns boolean
 language sql
 security definer set search_path = public
 stable
 as $$
-  select exists (select 1 from public.admin_profiles where id = auth.uid());
+  select exists (
+    select 1
+    from public.admin_profiles ap
+    join auth.users u on u.id = ap.id
+    where ap.id = auth.uid()
+      and lower(u.email) in (select lower(email) from public.admin_allowed_emails)
+  );
 $$;
 
--- Any existing admin can see the full admin team, and promote/revoke other
--- members to admin — this is what powers the in-app "Admins" screen, so
--- granting admin access doesn't require a developer running SQL by hand
--- (except for the very first admin, which is an unavoidable one-time
--- bootstrap step — see the bottom of this file).
+-- RLS on the allowlist itself: only an admin may read or change who is one.
+alter table admin_allowed_emails enable row level security;
+
+drop policy if exists "admin_allowed_emails admin read" on admin_allowed_emails;
+create policy "admin_allowed_emails admin read" on admin_allowed_emails
+  for select using (is_admin());
+
+drop policy if exists "admin_allowed_emails admin insert" on admin_allowed_emails;
+create policy "admin_allowed_emails admin insert" on admin_allowed_emails
+  for insert with check (is_admin());
+
+drop policy if exists "admin_allowed_emails admin delete" on admin_allowed_emails;
+create policy "admin_allowed_emails admin delete" on admin_allowed_emails
+  for delete using (is_admin());
+
+-- Any existing admin can see the full admin team and manage the allowlist —
+-- this is what powers the in-app "Members" screen, so granting or revoking
+-- admin access doesn't require a developer running SQL by hand.
 drop policy if exists "admin_profiles admin read all" on admin_profiles;
 create policy "admin_profiles admin read all" on admin_profiles
   for select using (is_admin());
@@ -198,26 +234,59 @@ create policy "admin_profiles admin delete" on admin_profiles
   for delete using (is_admin());
 
 -- Admins also need to browse/search all members (not just their own row) to
--- grant them admin access from the "Admins" screen.
+-- manage access from the "Members" screen.
 drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
 
--- Hard cap of 2 simultaneous admins, enforced here at the database level so
--- it applies no matter which path an insert comes through — the one-time
--- bootstrap endpoint (api/auth/claim-bootstrap-admin.js) is the only path
--- left that can grant admin (see the removed "Make Admin" button note at
--- the bottom of this file) — and can't be bypassed by calling the API
--- directly. Not "at signup" anymore: see handle_new_user() above, and the
--- bootstrapping note at the bottom of this file.
+-- Refuse to create an admin row for an account that isn't allowlisted.
+-- A trigger rather than a policy on purpose: triggers fire even for the
+-- service-role connection the /api functions use, so a mistake in
+-- api/auth/claim-bootstrap-admin.js still cannot mint an admin.
+create or replace function enforce_admin_allowlist()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  candidate_email text;
+begin
+  select lower(email) into candidate_email from auth.users where id = new.id;
+
+  if candidate_email is null then
+    raise exception 'Cannot grant admin: no account found for %', new.id;
+  end if;
+
+  if not exists (
+    select 1 from public.admin_allowed_emails where lower(email) = candidate_email
+  ) then
+    raise exception 'Cannot grant admin: % is not on the admin allowlist.', candidate_email;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists admin_allowlist_guard on admin_profiles;
+create trigger admin_allowlist_guard
+  before insert on admin_profiles
+  for each row execute function enforce_admin_allowlist();
+
+-- Hard cap of 3 simultaneous admins, enforced at the database level so it
+-- applies no matter which path an insert comes through. The advisory lock
+-- serialises the count against the insert that follows it — without it, two
+-- concurrent grants can both read "2 existing" under READ COMMITTED and both
+-- succeed.
 create or replace function enforce_admin_seat_cap()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  if (select count(*) from public.admin_profiles) >= 2 then
-    raise exception 'Admin seat cap of 2 reached — remove an existing admin first.';
+  perform pg_advisory_xact_lock(hashtext('admin_seat_cap'));
+
+  if (select count(*) from public.admin_profiles) >= 3 then
+    raise exception 'Admin seat cap of 3 reached — remove an existing admin first.';
   end if;
   return new;
 end;
@@ -227,6 +296,7 @@ drop trigger if exists admin_seat_cap on admin_profiles;
 create trigger admin_seat_cap
   before insert on admin_profiles
   for each row execute function enforce_admin_seat_cap();
+
 
 create table if not exists events (
   id uuid primary key default gen_random_uuid(),
@@ -1248,39 +1318,43 @@ drop policy if exists "contact_messages admin delete" on contact_messages;
 create policy "contact_messages admin delete" on contact_messages
   for delete using (is_admin());
 
--- Old, removed RPC — replaced by api/auth/claim-bootstrap-admin.js (same
--- idea — first 3 signups become admin — moved server-side so it's a real
--- HTTP endpoint that can be rate-limited/logged/audited later, instead of a
--- client-callable Postgres RPC).
+-- Old, removed RPC — replaced by api/auth/claim-bootstrap-admin.js, moved
+-- server-side so it's a real HTTP endpoint that can be rate-limited, logged
+-- and audited, instead of a client-callable Postgres RPC.
 drop function if exists claim_admin_if_seats_open();
 
 -- ============================================================================
--- Bootstrapping your admins: fully automatic, no SQL needed. The first 2
--- people to ever authenticate through /admin/login — email/password or
--- Google, Log In tab or Sign Up tab, doesn't matter which — become admins.
--- No allowlist, no pre-approval: whoever gets there first, up to 2, is an
--- admin. api/auth/claim-bootstrap-admin.js does the actual grant, checking
--- admin_profiles' row count server-side at the moment of the attempt so
--- concurrent signups can't race past the cap; the admin_seat_cap trigger
--- above enforces the same "at most 2" rule independently at the database
--- level regardless of which code path an insert comes through.
+-- Setting up your admins
+-- ============================================================================
+-- Admin access is an EMAIL ALLOWLIST, capped at 3 simultaneous admins.
 --
--- Once 2 admins exist, there is no way for anyone (including an existing
--- admin) to manually grant a third — the Admins screen only shows who's
--- currently an admin and lets an admin revoke another's access, it can no
--- longer promote a member. If a seat opens back up later (an admin's
--- profiles row got deleted, or their access was revoked — which, via
--- admin_profiles_profile_fk above, also removes their admin_profiles row),
--- it refills the same automatic way: the next person to authenticate
--- through /admin/login claims the open seat, no re-bootstrapping by hand.
+-- 1. Put the addresses in admin_allowed_emails:
 --
--- Caution: on a public production site, this means the first 2 people who
--- ever complete /admin/login — not necessarily the people you intend —
--- become the founding admins. Get your own 2 admins signed up first, or
--- promote a specific existing account by hand instead:
---   insert into admin_profiles (id, full_name)
---   select id, full_name from profiles where email = 'the-right-persons-email'
---   on conflict (id) do nothing;
+--      insert into admin_allowed_emails (email, note)
+--      values ('you@example.com', 'founder')
+--      on conflict (email) do nothing;
+--
+-- 2. That person signs in once at /admin/login (email/password or Google —
+--    either is fine). api/auth/claim-bootstrap-admin.js checks their email
+--    against the list and creates their admin_profiles row on the spot.
+--
+-- After the first admin exists, step 1 no longer needs SQL — the allowlist
+-- is editable from Admin -> Members.
+--
+-- Anyone NOT on the list is refused three times over, independently:
+--   * the endpoint returns 403 before granting anything;
+--   * the admin_allowlist_guard trigger rejects the insert even when it
+--     comes from the service-role connection the /api functions use;
+--   * is_admin() returns false, so every RLS policy on every table denies
+--     them, whatever row might exist in admin_profiles.
+--
+-- That last point is the important one: the dashboard's own interface is
+-- not a security boundary and never was. Opening /admin directly, or
+-- calling the API with curl, is refused by the database either way.
+--
+-- Removing an address from the allowlist revokes access immediately — there
+-- is no need to also delete their admin_profiles row, though the Members
+-- screen does both so the two never disagree.
 -- ============================================================================
 
 -- ============================================================================

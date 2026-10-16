@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Lock, Mail, User, Loader2, X, Phone, ShieldCheck, CalendarDays, ShoppingBag, TrendingUp } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../../lib/supabaseClient";
 import { signInWithPhone } from "../../lib/phoneAuth";
 import { claimBootstrapAdmin } from "../../lib/adminBootstrap";
+import { isRemembered, setRemembered } from "../../lib/authStorage";
 import { images } from "../../data/images";
 import { brand } from "../../data/content";
 
@@ -43,6 +44,7 @@ export default function AdminLogin() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [remember, setRemember] = useState(isRemembered);
 
   // Same field-carryover fix as the member panel: never let a password
   // typed into one tab linger, pre-filled, in the other.
@@ -63,6 +65,7 @@ export default function AdminLogin() {
       setError("The database isn't connected yet.");
       return;
     }
+    setRemembered(remember);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -87,6 +90,7 @@ export default function AdminLogin() {
     }
     setSubmitting(true);
     try {
+      setRemembered(remember);
       if (mode === "signup") {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -100,41 +104,35 @@ export default function AdminLogin() {
         setFullName("");
         setNotice(
           data.session
-            ? "Account created. Ask an existing admin to grant you access from the Admins screen."
-            : "Account created — please log in, then ask an existing admin to grant you access from the Admins screen."
+            ? "Account created. An existing admin must add your email to the admin allowlist before you can sign in here."
+            : "Account created — an existing admin must add your email to the admin allowlist before you can sign in here."
         );
         switchMode("login");
         return;
       }
 
-      const { data, error: signInError } =
+      const { error: signInError } =
         method === "email"
           ? await supabase.auth.signInWithPassword({ email, password })
           : await signInWithPhone(toE164(phone), password);
       if (signInError) throw signInError;
 
-      const { data: userData } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
-        .from("admin_profiles")
-        .select("id")
-        .eq("id", (data?.user || userData?.user)?.id)
-        .maybeSingle();
-
-      if (!profile) {
-        // Only ever succeeds for one of the first 3 people to ever
-        // authenticate through /admin/login — see
-        // api/auth/claim-bootstrap-admin.js. Everyone after that must be
-        // granted access from the Admins screen by an existing admin.
-        const { granted, reason } = await claimBootstrapAdmin();
-        if (!granted) {
-          await supabase.auth.signOut();
-          setError(
-            reason === "request_failed"
-              ? "Couldn't reach the server to check admin status — on a local dev server, run `vercel dev` instead of `vite`, or try this on the live site."
-              : "This account isn't authorized as an admin. Ask an existing admin to grant you access."
-          );
-          return;
-        }
+      // The server decides, not this page. api/auth/claim-bootstrap-admin
+      // checks the email allowlist and answers with a 403 for anyone who
+      // isn't on it — the same answer they would get calling it directly,
+      // because signing out here is only a courtesy an attacker would skip.
+      // The dashboard itself is protected independently by RLS (is_admin()),
+      // so this branch is about showing an honest message, not about keeping
+      // anyone out.
+      const { granted, reason, message } = await claimBootstrapAdmin();
+      if (!granted) {
+        await supabase.auth.signOut();
+        setError(
+          reason === "request_failed"
+            ? "Couldn't reach the server to check admin status — on a local dev server, run `vercel dev` instead of `vite`, or try this on the live site."
+            : message || "This account is not authorised to access the admin dashboard."
+        );
+        return;
       }
 
       navigate("/admin", { replace: true });
@@ -211,7 +209,7 @@ export default function AdminLogin() {
             <div className="mb-6 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3">
               <p className="text-sm font-semibold text-rtg-orange-600">Access denied</p>
               <p className="text-xs text-rtg-mist mt-1">
-                You're signed in, but that account isn't authorized as an admin. Ask an existing admin to grant you access from the Admins screen.
+                You're signed in, but that account is not on the admin allowlist. An existing admin can add your email from Admin → Members.
               </p>
             </div>
           )}
@@ -287,7 +285,7 @@ export default function AdminLogin() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                   placeholder="98765 43210"
-                  className={`${FIELD} pl-[4.5rem]`}
+                  className={`${FIELD} pl-[4.75rem]`}
                 />
               </div>
             )}
@@ -310,6 +308,23 @@ export default function AdminLogin() {
                 placeholder="Password"
                 className={`${FIELD} pl-11`}
               />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <label className="inline-flex items-center gap-2 text-xs text-rtg-mist cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-rtg-border accent-rtg-orange-500"
+                />
+                Remember me
+              </label>
+              {mode === "login" && (
+                <Link to="/forgot-password" className="text-xs text-rtg-mist hover:text-rtg-orange-500 transition-colors">
+                  Forgot password?
+                </Link>
+              )}
             </div>
 
             {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700 text-center">{error}</p>}
