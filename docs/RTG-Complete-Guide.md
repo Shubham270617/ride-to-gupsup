@@ -328,8 +328,8 @@ Permissions requested: `read,activity:read_all` (this includes activities the at
 | Mechanism | File | What it does |
 |---|---|---|
 | **Webhook** | `api/webhooks/strava.js` | Strava calls it whenever a connected athlete creates, updates or deletes an activity. The server fetches that one activity, saves it, and recalculates the member's totals. Errors return a 500 so Strava retries; saving is keyed on the Strava activity id, so a retry never duplicates. |
-| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **hourly** in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 5 members and about 45 seconds per run. When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. |
-| **Admin resync** | `POST /api/admin/strava-resync` (Admin → Members → "Resync Strava") | Clears everyone's position and starts the walk again. Safe any time; the hourly job finishes what one request cannot. |
+| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **once a day**, 03:00 IST, in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 5 members and about 45 seconds per run. When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. |
+| **Admin resync** | `POST /api/admin/strava-resync` (Admin → Members → "Resync Strava") | Clears everyone's position and starts the walk again. Safe any time; the daily job finishes what one request cannot. |
 
 Access tokens are refreshed automatically when within 5 minutes of expiry (`api-lib/stravaAuth.js`).
 
@@ -643,7 +643,7 @@ Vercel's Hobby plan allows **12 functions per deployment**, and `api/` is exactl
 | `/api/admin/strava-resync` | POST | Reset and re-walk Strava histories (all, or `userId`) | Admin only (checked on the server) |
 | `/api/ai/chat` | POST | Tapri replies | Anyone (member token optional) |
 | `/api/webhooks/strava` | GET / POST | GET: one-time Strava verification; POST: activity events | GET needs `STRAVA_WEBHOOK_VERIFY_TOKEN`; POST is open (Strava's format) |
-| `/api/cron/strava-backfill` | scheduled | Walk Strava histories (hourly); optional `?userId=` | `Authorization: Bearer <CRON_SECRET>` |
+| `/api/cron/strava-backfill` | scheduled | Walk Strava histories (daily); optional `?userId=` | `Authorization: Bearer <CRON_SECRET>` |
 | `/api/cron/purge-media` | scheduled | Delete replaced photos older than 2 days (daily 03:00 UTC) | `Authorization: Bearer <CRON_SECRET>` |
 
 Shared server code in `api-lib/`: `supabaseAdmin.js` (service-role client), `requireAdmin.js`, `providers.js`, `cookies.js`, `stravaAuth.js`, `stravaSync.js`, `storageDestroy.js`, `mailer.js` (Brevo), `emailLayout.js` (branded email frame), `passwordReset.js`, `welcomeEmail.js`, `phoneLogin.js`.
@@ -686,7 +686,7 @@ Common `site_settings` key families: `text.<page>.<field>` (page wording), `text
 | Bucket | `rtg-media` (public read) |
 | Who can write | Admins anywhere; members only `avatars/<their id>/` |
 | Daily 03:00 UTC | `/api/cron/purge-media`: empties the photo deletion queue (items older than 2 days, up to 200 per run) |
-| Hourly | `/api/cron/strava-backfill`: advances up to 5 members' Strava history |
+| Daily, 03:00 IST | `/api/cron/strava-backfill`: advances up to 5 members' Strava history |
 
 Both scheduled jobs **refuse to run** if `CRON_SECRET` is not set.
 
@@ -859,7 +859,7 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 
 **Local development:** `npm install`, then `npm run dev` for the frontend only (logins work; `/api` features do not), or `vercel dev` to run the site and the functions together.
 
-**Note on the hourly job:** `vercel.json` schedules the Strava backfill every hour. Vercel's Hobby plan has historically limited how often cron jobs may run. This is not stated in the repo; check in Vercel that the hourly schedule is accepted, or the history walk will run less often.
+**Note on the backfill schedule:** Vercel's Hobby plan only allows cron jobs that run once a day — an hourly schedule makes every deployment fail with "Hobby accounts are limited to daily cron jobs". The backfill therefore runs daily at 03:00 IST, so a long Strava history can take a few days to fill in completely (Admin → Members → Resync Strava advances it on demand). For faster catch-up without upgrading, a free external scheduler such as cron-job.org can call `/api/cron/strava-backfill` more often with the header `Authorization: Bearer <CRON_SECRET>`.
 
 ---
 
@@ -904,7 +904,7 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 | "Too many reset requests" | The per-email (5/hour) or per-network (15/hour) limit; wait an hour. |
 | Welcome email not sent | Migration 022 not run, Brevo not configured, account older than 7 days, or already sent (`profiles.welcome_email_sent_at` set). Clearing that column (and the browser's `rtg_welcome_checked_<id>` entry) allows a retry. |
 | Email images missing | `FRONTEND_URL` not set to the live site, or the site not yet deployed. |
-| Strava totals too low | `CRON_SECRET` missing (the backfill refuses to run); the hourly schedule not active; Strava rate limits (the job resumes). Use Admin → Members → Resync Strava. |
+| Strava totals too low | `CRON_SECRET` missing (the backfill refuses to run); the daily schedule not active; Strava rate limits (the job resumes). Use Admin → Members → Resync Strava. |
 | New rides not appearing | The webhook was never registered, or registered against a different domain; check function logs for `[webhooks/strava]`. |
 | "Connect Strava" not shown | `STRAVA_CLIENT_ID`/`SECRET` not set (`/api/auth/providers` reports `strava: false`). |
 | "That Strava account is already connected to a different RTG member" | Each Strava athlete can be linked to only one RTG account. |
@@ -966,7 +966,6 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 | Function file names | `schema.sql` and migration 021 comments mention `api/auth/password-reset.js` and `/api/auth/phone-login` | Code is `api-lib/passwordReset.js` and `api-lib/phoneLogin.js`, served by `api/auth/account.js`. |
 | Admin grant comment | `handle_new_user` comment in `schema.sql`: "the first 3 people to ever authenticate through /admin/login become admins" | Admin requires the allowlist (migration 020). |
 | Migration 020 header | "Deletes nothing" | Its last step deletes admin seats whose email is not on the allowlist. |
-| Backfill timing | Migration 019 and `strava-resync.js` comments: "nightly cron" | `vercel.json` runs it hourly. |
 | Domain | Emails, scripts and synthetic addresses: `rideteagupshup.com` | README Strava section and `api/.env.example`: `ridetegupshup.in`. |
 | Environment table | README lists `CLOUDINARY_*` and omits Brevo, `OTP_SECRET`, `CRON_SECRET`, `ANTHROPIC_API_KEY` | `api/.env.example` is the accurate list (plus `VITE_SUPABASE_ANON_KEY` on the server). |
 | Password length | Signup form accepts 6+ characters | Reset requires 8 to 72. |

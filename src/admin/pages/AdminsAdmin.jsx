@@ -85,7 +85,7 @@ export default function AdminsAdmin() {
 
   // Clears every connected member's sync watermark and starts walking their
   // Strava history again from today back to their first ever activity. The
-  // request finishes as much as it can and the hourly cron picks up the
+  // request finishes as much as it can and the daily cron picks up the
   // rest, so this returning is not the same as the walk being complete.
   const resyncStrava = async () => {
     const ok = await confirm({

@@ -166,7 +166,8 @@ Two separate mechanisms, and both are needed:
 - **The backfill** (`api/cron/strava-backfill.js`) pulls their history. It
   walks backwards through every activity they have ever recorded, 200 at a
   time, saving its position after each page so a run that is cut short
-  resumes instead of starting over. It runs hourly and marks each member
+  resumes instead of starting over. It runs once a day (03:00 IST — the Vercel Hobby plan
+  only allows daily cron jobs) and marks each member
   done once it has passed their very first activity.
 
 This is why **`CRON_SECRET` is required** — set it to anything random
