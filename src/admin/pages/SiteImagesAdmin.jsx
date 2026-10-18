@@ -5,6 +5,7 @@ import { images as staticImages } from "../../data/images";
 import { deleteFromSupabaseStorage, isSupabaseStorageUrl } from "../../lib/supabaseUpload";
 import ImageUploadField from "../components/ImageUploadField";
 import { useConfirm } from "../components/ConfirmDialog";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 // Every single-image key in images.js (skips `gallery`, which is an array
 // managed on the Gallery admin page instead).
@@ -93,11 +94,10 @@ export default function SiteImagesAdmin() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl mb-1">Site Photos</h1>
-      <p className="text-rtg-mist text-sm mb-8 max-w-2xl">
-        Every banner and background image used across the site, in one place. Replace any of them and the
-        change goes live immediately — no code, no developer needed.
-      </p>
+      <AdminPageHeader
+        title="Site Photos"
+        description={"Every banner and background image used across the site, in one place. Replace any of them and the change goes live immediately — no code, no developer needed."}
+      />
 
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>
@@ -148,7 +148,7 @@ export default function SiteImagesAdmin() {
                   key={n}
                   onClick={() => setPage(n)}
                   className={`w-9 h-9 rounded-full text-sm font-semibold transition-colors ${
-                    n === page ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-mist hover:text-rtg-white"
+                    n === page ? "bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)]" : "glass text-rtg-mist hover:text-rtg-white"
                   }`}
                 >
                   {n}

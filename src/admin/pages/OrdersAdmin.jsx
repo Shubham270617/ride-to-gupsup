@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Package, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import Pagination from "../components/Pagination";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 const PAGE_SIZE = 15;
 
@@ -14,11 +15,11 @@ const STATUSES = [
 ];
 
 const STATUS_STYLE = {
-  pending_verification: "bg-amber-500/15 text-amber-300",
-  confirmed: "bg-green-500/15 text-green-300",
-  rejected: "bg-red-500/15 text-red-300",
-  shipped: "bg-blue-500/15 text-blue-300",
-  delivered: "bg-rtg-orange-500/15 text-rtg-orange-300",
+  pending_verification: "bg-amber-500/15 text-amber-800",
+  confirmed: "bg-emerald-500/15 text-emerald-800",
+  rejected: "bg-red-500/15 text-red-700",
+  shipped: "bg-blue-500/15 text-blue-800",
+  delivered: "bg-rtg-purple-600/10 text-rtg-purple-600",
 };
 
 function formatPrice(n) {
@@ -71,17 +72,14 @@ export default function OrdersAdmin() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-display text-3xl">Orders</h1>
-        {pendingCount > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-amber-500/15 text-amber-300 px-3 py-1">
-            {pendingCount} pending verification
-          </span>
-        )}
-      </div>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Check each order's UTR against your bank/UPI app, then update its status.
-      </p>
+      <AdminPageHeader
+        title="Orders"
+        description="Check each order's UTR against your bank/UPI app, then update its status."
+        stats={[
+          { label: "orders", value: orders.length },
+          { label: "waiting for payment check", value: pendingCount },
+        ]}
+      />
 
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>
@@ -95,7 +93,7 @@ export default function OrdersAdmin() {
               <div key={order.id} className="glass rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setOpenId(isOpen ? null : order.id)}
-                  className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-rtg-purple-950/[0.04] transition-colors"
                 >
                   <Package size={16} className="text-rtg-orange-400 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -141,7 +139,7 @@ export default function OrdersAdmin() {
                         value={order.status}
                         onChange={(e) => updateStatus(order, e.target.value)}
                         disabled={busyId === order.id}
-                        className="rounded-lg bg-white/5 border border-white/15 px-3 py-1.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 transition-colors disabled:opacity-60"
+                        className="rounded-lg bg-white border border-rtg-border px-3 py-1.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 transition-colors disabled:opacity-60"
                       >
                         {STATUSES.map((s) => (
                           <option key={s.value} value={s.value} className="bg-rtg-ink">

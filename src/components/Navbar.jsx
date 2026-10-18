@@ -30,6 +30,10 @@ const links = [
     label: "Community",
   },
   {
+    to: "/chat",
+    label: "Chat",
+  },
+  {
     to: "/calendar",
     label: "Calendar",
   },

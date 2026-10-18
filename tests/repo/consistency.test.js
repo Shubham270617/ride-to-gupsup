@@ -111,3 +111,57 @@ describe("admin access: the first 3 people to sign in at /admin/login", () => {
     }
   });
 });
+
+describe("chat (migration 025)", () => {
+  const sql = () => read("supabase/migrations/025_chat.sql");
+
+  it("turns on row level security for every chat table", () => {
+    for (const t of ["chat_messages", "direct_messages", "chat_bans"]) {
+      expect(sql()).toMatch(new RegExp(`alter table ${t} enable row level security`));
+    }
+  });
+
+  it("lets only the two participants read a private message", () => {
+    expect(sql()).toMatch(/on direct_messages\s+for select using \(auth\.uid\(\) = sender_id or auth\.uid\(\) = recipient_id\)/);
+  });
+
+  it("has no update/delete policy on messages — removal goes through chat_delete_message()", () => {
+    expect(sql()).not.toMatch(/on chat_messages\s+for (update|delete)/);
+    expect(sql()).not.toMatch(/on direct_messages\s+for (update|delete)/);
+    expect(sql()).toMatch(/create or replace function chat_delete_message/);
+  });
+
+  it("stops muted members from posting and rate-limits everyone", () => {
+    expect(sql().match(/not chat_is_banned\(auth\.uid\(\)\)/g)).toHaveLength(2);
+    expect(sql()).toMatch(/v_recent >= 5/);
+  });
+
+  it("streams both message tables through Supabase Realtime", () => {
+    expect(sql()).toMatch(/alter publication supabase_realtime add table chat_messages/);
+    expect(sql()).toMatch(/alter publication supabase_realtime add table direct_messages/);
+  });
+
+  it("schema.sql carries the same chat definitions for fresh installs", () => {
+    const schema = read("supabase/schema.sql");
+    for (const name of ["create table if not exists chat_messages", "create table if not exists direct_messages", "create or replace function chat_people"]) {
+      expect(schema).toContain(name);
+    }
+  });
+
+  it("adds no serverless function (stays within Vercel Hobby's 12)", () => {
+    expect(existsSync(path.join(ROOT, "api/chat"))).toBe(false);
+  });
+});
+
+describe("admin menu (src/admin/adminNav.js)", () => {
+  it("has a sidebar entry for every /admin screen in App.jsx, and no dead links", async () => {
+    const app = read("src/App.jsx");
+    const block = app.slice(app.indexOf('path="/admin"'), app.indexOf("</Route>", app.indexOf('path="/admin"')));
+    const routes = [...block.matchAll(/<Route path="([a-z0-9-]+)"/g)].map((m) => `/admin/${m[1]}`);
+    const nav = read("src/admin/adminNav.js");
+    const links = [...nav.matchAll(/to: "(\/admin[^"]*)"/g)].map((m) => m[1]);
+    expect(routes.length).toBeGreaterThan(40);
+    for (const r of routes) expect(links, `missing sidebar link for ${r}`).toContain(r);
+    for (const l of links) if (l !== "/admin") expect(routes, `sidebar links to missing route ${l}`).toContain(l);
+  });
+});

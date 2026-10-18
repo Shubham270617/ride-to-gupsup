@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldOff, Search, Users, ShieldAlert, RefreshCw } from "lucide-react";
+import { ShieldCheck, ShieldOff, Search, ShieldAlert, RefreshCw } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import { useConfirm } from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 const PAGE_SIZE = 20;
 
@@ -158,27 +159,25 @@ export default function AdminsAdmin() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-display text-3xl">Members</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-sm text-rtg-mist">
-            <Users size={15} /> {members.length} signed up
-          </span>
+      <AdminPageHeader
+        title="Members"
+        description={`Everyone who has ever signed up, when they last logged in, and whether they have admin access. The first ${MAX_ADMIN_SEATS} people to sign in at /admin/login are the admins.`}
+        stats={[
+          { label: "signed up", value: members.length },
+          { label: `of ${MAX_ADMIN_SEATS} admin seats used`, value: seatsUsed },
+        ]}
+        actions={
           <button
             onClick={resyncStrava}
             disabled={resyncing}
             title="Pull every connected member's full Strava history again"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-white/5 text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-white/10 transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20 disabled:opacity-60"
           >
-            <RefreshCw size={13} className={resyncing ? "animate-spin" : ""} />
+            <RefreshCw size={15} className={resyncing ? "animate-spin" : ""} />
             {resyncing ? "Resyncing…" : "Resync Strava"}
           </button>
-        </div>
-      </div>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Everyone who has ever signed up, when they last logged in, and whether they have admin access. The first{" "}
-        {MAX_ADMIN_SEATS} people to sign in at /admin/login are the admins.
-      </p>
+        }
+      />
 
       {/* ---------------------------------------------------------------
           The 3 admin seats. A seat is taken by signing in at /admin/login
@@ -201,8 +200,8 @@ export default function AdminsAdmin() {
 
         <ul className="flex flex-col gap-2">
           {admins.map((m) => (
-            <li key={m.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 text-sm text-rtg-white">
-              <ShieldCheck size={14} className="shrink-0 text-rtg-orange-300" />
+            <li key={m.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-rtg-purple-950/[0.04] px-4 py-2.5 text-sm text-rtg-white">
+              <ShieldCheck size={14} className="shrink-0 text-rtg-orange-600" />
               <span className="min-w-0 break-all">
                 {m.full_name || m.email || "Admin"}
                 {m.full_name && m.email && <span className="text-xs text-rtg-mist"> · {m.email}</span>}
@@ -225,7 +224,7 @@ export default function AdminsAdmin() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name, email, or phone…"
-          className="w-full rounded-full bg-white/5 border border-white/10 pl-11 pr-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
+          className="w-full rounded-full bg-white border border-rtg-border pl-11 pr-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
         />
       </div>
 
@@ -262,14 +261,14 @@ export default function AdminsAdmin() {
                     <td className="sticky right-0 bg-[var(--glass-bg)] shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)] px-5 py-3 text-right">
                       {isAdmin ? (
                         m.id === user?.id ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-300">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-600">
                             <ShieldCheck size={13} /> Admin
                           </span>
                         ) : (
                           <button
                             onClick={() => revokeAdmin(m)}
                             disabled={busyId === m.id}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-white/5 text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-white/10 transition-colors disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-purple-950/[0.04] text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-rtg-purple-950/[0.07] transition-colors disabled:opacity-60"
                           >
                             <ShieldOff size={13} /> Revoke
                           </button>

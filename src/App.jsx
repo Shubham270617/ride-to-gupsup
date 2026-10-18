@@ -9,6 +9,7 @@ import Onboarding from "./pages/Onboarding";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { AuthGateProvider } from "./lib/AuthGateContext";
+import { ChatProvider } from "./lib/ChatContext";
 import { CartProvider } from "./lib/CartContext";
 import { useAppearance } from "./lib/appearance";
 import useWelcomeEmail from "./lib/useWelcomeEmail";
@@ -37,6 +38,7 @@ import Blog from "./pages/Blog";
 import Sponsors from "./pages/Sponsors";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
+import Chat from "./pages/Chat";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
 import LegalPage from "./pages/legal/LegalPage";
@@ -88,6 +90,7 @@ export default function App() {
   return (
     <CartProvider>
       <AuthGateProvider>
+        <ChatProvider>
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
@@ -207,6 +210,7 @@ export default function App() {
           <Route path="/sponsors" element={<Sponsors />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<LegalPage {...privacyPolicy} />} />
           <Route path="/terms" element={<LegalPage {...termsOfService} />} />
@@ -214,6 +218,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
         </Routes>
+        </ChatProvider>
       </AuthGateProvider>
     </CartProvider>
   );

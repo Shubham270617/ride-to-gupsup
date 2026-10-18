@@ -466,6 +466,18 @@ Changes preview live and apply on save. They are stored as `text.theme.*` in `si
 
 ---
 
+### Live chat (/chat)
+
+Logged-in members can talk to each other live, at **/chat** (also in the navbar, and through the round purple chat button that sits above the Tapri button on every page):
+
+- **Community Room** — one room everyone can read. Plan rides, ask where people are.
+- **Private messages** — one-to-one. Only the two people involved can read them; admins cannot.
+- **Online now** — everyone with the site open right now, with a green dot. Admins carry an orange **ADMIN** badge (it comes from the database, so it can't be faked).
+- **Unread** — the floating button shows a number for unread private messages and a dot for new room messages.
+- **Moderation** — a member can remove their own room messages; an admin can remove anyone's and **mute** a member (they can still read, but not post or send messages). Everyone is limited to 5 messages per 10 seconds and 1,000 characters per message.
+
+It runs on Supabase Realtime (no server functions, so it doesn't count toward Vercel's 12-function limit). The free Supabase plan allows about 200 people connected at once. Live location sharing on a map was discussed but is not built. Needs migration 025.
+
 ## 5. The admin panel
 
 ### 5.1 Getting access
@@ -812,6 +824,7 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 021 | `password_reset_codes` table |
 | 022 | `profiles.welcome_email_sent_at`; marks members older than a week as already welcomed |
 | 024 | Removes the admin email allowlist (and 023's clean-up): admins are the first 3 people to sign in at `/admin/login`; `is_admin()` = holds a seat; 3-seat cap kept. Supersedes 020/023 — do not re-run 020 afterwards. |
+| 025 | Live chat: `chat_messages` (community room), `direct_messages` (private, only the two people can read them), `chat_bans` (admin mutes), spam limit of 5 messages per 10 seconds, and Realtime streaming. |
 
 Each file starts with a header explaining what it does. Read it before running, especially those marked "deletes".
 
@@ -824,7 +837,7 @@ Each file starts with a header explaining what it does. Read it before running, 
 
 ### 8.5 Email (Brevo) and DNS
 
-1. Run migrations 021, 022 and 024.
+1. Run migrations 021, 022, 024 and 025.
 2. In Brevo, **verify the sending domain** (`rideteagupshup.com`) by adding the **SPF and DKIM** records Brevo shows you to the domain's DNS. The exact record values come from the Brevo dashboard; they are not in the repo. Without them, mail lands in spam, which looks exactly like the feature being broken.
 3. Brevo → SMTP & API → API Keys → create a key.
 4. In Vercel set `BREVO_API_KEY`, `MAIL_FROM_EMAIL` (an address on the verified domain), `MAIL_FROM_NAME` and `OTP_SECRET`. Redeploy.

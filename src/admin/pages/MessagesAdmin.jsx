@@ -3,6 +3,7 @@ import { Mail, MailOpen, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { useConfirm } from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 const PAGE_SIZE = 15;
 
@@ -58,15 +59,14 @@ export default function MessagesAdmin() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-display text-3xl">Messages</h1>
-        {unreadCount > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-orange-500/15 text-rtg-orange-300 px-3 py-1">
-            {unreadCount} unread
-          </span>
-        )}
-      </div>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">Everything submitted through the Contact page's form.</p>
+      <AdminPageHeader
+        title="Messages"
+        description="Everything submitted through the Contact page's form."
+        stats={[
+          { label: "messages", value: messages.length },
+          { label: "unread", value: unreadCount },
+        ]}
+      />
 
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>
@@ -80,7 +80,7 @@ export default function MessagesAdmin() {
               <div key={m.id} className="glass rounded-2xl overflow-hidden">
                 <button
                   onClick={() => toggleOpen(m)}
-                  className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-rtg-purple-950/[0.04] transition-colors"
                 >
                   {m.read ? (
                     <MailOpen size={16} className="text-rtg-mist shrink-0" />
@@ -101,14 +101,14 @@ export default function MessagesAdmin() {
                     <div className="flex items-center gap-3">
                       <a
                         href={`mailto:${m.email}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-orange-500/15 text-rtg-orange-300 px-3.5 py-1.5 hover:bg-rtg-orange-500/25 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-orange-500/15 text-rtg-orange-600 px-3.5 py-1.5 hover:bg-rtg-orange-500/25 transition-colors"
                       >
                         Reply by Email
                       </a>
                       <button
                         onClick={() => handleDelete(m)}
                         disabled={busyId === m.id}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-white/5 text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-white/10 transition-colors disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-purple-950/[0.04] text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-rtg-purple-950/[0.07] transition-colors disabled:opacity-60"
                       >
                         {busyId === m.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Delete
                       </button>

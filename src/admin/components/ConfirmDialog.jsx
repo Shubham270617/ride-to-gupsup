@@ -37,14 +37,14 @@ export function ConfirmProvider({ children }) {
       <AnimatePresence>
         {state && (
           <motion.div
-            className="fixed inset-0 z-[200] flex items-center justify-center px-4 bg-rtg-ink/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] flex items-center justify-center px-4 bg-rtg-purple-950/45 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => close(false)}
           >
             <motion.div
-              className="glass rounded-3xl p-6 w-full max-w-sm"
+              className="w-full max-w-sm rounded-3xl border border-rtg-border bg-white p-6 shadow-[0_30px_80px_-30px_rgba(27,17,48,0.6)]"
               initial={{ opacity: 0, y: 12, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -59,13 +59,13 @@ export function ConfirmProvider({ children }) {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => close(false)}
-                  className="flex-1 rounded-full glass py-2.5 text-sm font-semibold text-rtg-white hover:border-rtg-orange-400/40 transition-colors"
+                  className="flex-1 rounded-full border border-rtg-border bg-white py-2.5 text-sm font-semibold text-rtg-white hover:border-rtg-orange-400/40 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => close(true)}
-                  className="flex-1 rounded-full bg-rtg-orange-500 text-rtg-ink py-2.5 text-sm font-semibold hover:bg-rtg-orange-400 transition-colors"
+                  className="flex-1 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] py-2.5 text-sm font-semibold hover:bg-rtg-orange-400 transition-colors"
                 >
                   {state.confirmLabel}
                 </button>

@@ -1,0 +1,51 @@
+import { ShieldCheck } from "lucide-react";
+import { initials } from "../../lib/chatFormat";
+
+const SIZES = {
+  sm: "h-8 w-8 text-[11px]",
+  md: "h-10 w-10 text-xs",
+  lg: "h-12 w-12 text-sm",
+};
+
+// A member's photo, or their initials on the brand gradient. The green dot
+// shows when they have the site open right now.
+export function ChatAvatar({ person, online = false, size = "md" }) {
+  const name = person?.full_name || "RTG Member";
+  return (
+    <span className={`relative inline-flex shrink-0 ${SIZES[size]}`}>
+      {person?.avatar_url ? (
+        <img src={person.avatar_url} alt="" className="h-full w-full rounded-full object-cover ring-2 ring-white" />
+      ) : (
+        <span className="grid h-full w-full place-items-center rounded-full bg-[linear-gradient(135deg,#35246f,#5e43a1)] font-bold text-white ring-2 ring-white">
+          {initials(name)}
+        </span>
+      )}
+      {online && (
+        <span
+          aria-label="Online"
+          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white"
+        />
+      )}
+    </span>
+  );
+}
+
+export function AdminBadge({ className = "" }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_6px_14px_-8px_rgba(247,107,28,0.9)] ${className}`}
+    >
+      <ShieldCheck size={10} strokeWidth={3} /> Admin
+    </span>
+  );
+}
+
+// "Name [ADMIN]" on one line, truncating long names.
+export function ChatName({ person, className = "" }) {
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1.5 ${className}`}>
+      <span className="truncate font-semibold text-rtg-white">{person?.full_name || "RTG Member"}</span>
+      {person?.is_admin && <AdminBadge />}
+    </span>
+  );
+}

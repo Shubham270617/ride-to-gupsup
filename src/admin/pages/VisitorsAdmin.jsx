@@ -1,163 +1,97 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, Users, UserCheck, LogOut, Eye, Radio, ArrowUpRight, ArrowDownRight, Minus, AreaChart, BarChart3, Table2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import { GROUPS, dayLabel, percentChange, splitPeriods, sumGroups, visitsOn, weekdayAverages } from "../visitorStats";
+import { Legend, Sparkline, StackedArea, StackedBars, TopPages, VisitDonut, WeekdayBars } from "../components/VisitorCharts";
 
 // ============================================================================
 // VISITORS — how many people come to the public site, how many leave
 // straight away, how many are logged-in members, and who is on it right now.
 //
-// The numbers come from site_traffic() in the database (migration 017),
-// which adds up the visits recorded by src/lib/useVisitTracker.js. A visit
-// is one browser tab from arriving to leaving, and falls into one group:
+// Numbers come from site_traffic() (migration 017), which adds up the visits
+// recorded by src/lib/useVisitTracker.js. A visit is one browser tab from
+// arriving to leaving, and falls into one group:
 //   Logged-in member   logged in at some point during the visit
 //   Looked and left    not logged in, one page, gone within 30 seconds
 //   Browsed            not logged in, stayed longer or opened more pages
+//
+// Two calls per refresh: twice the range (so every tile can compare with the
+// period before) and the range itself (people, members and top pages for
+// exactly the period on screen).
 // ============================================================================
 
-// Each group keeps its colour everywhere on this page. The three were
-// checked together for colour-blind readers; the legend, the hover box and
-// the table carry the same numbers in words.
-const GROUPS = [
-  { key: "members", label: "Logged-in members", color: "#2a78d6" },
-  { key: "left", label: "Looked and left", color: "#eb6834" },
-  { key: "browsed", label: "Browsed without logging in", color: "#1baf7a" },
-];
-const PAGE_COLOR = "#2a78d6";
 const RANGES = [7, 30, 90];
 const REFRESH_MS = 30000;
-const GRID_LINES = 4;
+const VIEWS = [
+  { key: "area", label: "Area", icon: AreaChart },
+  { key: "bars", label: "Bars", icon: BarChart3 },
+  { key: "table", label: "Table", icon: Table2 },
+];
 
-const total = (day) => GROUPS.reduce((sum, g) => sum + day[g.key], 0);
-const dayLabel = (iso, options = { day: "numeric", month: "short" }) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-IN", options);
-const percent = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : "0%");
-
-// The smallest round number (4, 8, 20, 40, 80, 200 …) the tallest bar fits
-// under, so the grid lines land on whole visits.
-function axisTop(max) {
-  for (let step = 1; ; step *= 10) {
-    const top = [1, 2, 5].map((m) => m * step * GRID_LINES).find((t) => t >= max);
-    if (top) return top;
-  }
-}
-
-function Tile({ label, value, note }) {
+// "↑ 12% vs previous 30 days". For "looked and left", going up is bad, so
+// the arrow carries the direction and the words carry the meaning — no
+// red/green judgement colours.
+function Delta({ now, before, range, suffix = "" }) {
+  const change = percentChange(now, before);
+  if (change === null) return <span className="text-[11px] text-rtg-mist">new this period</span>;
+  const Icon = change > 0 ? ArrowUpRight : change < 0 ? ArrowDownRight : Minus;
   return (
-    <div className="glass rounded-2xl p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-rtg-mist mb-2">{label}</p>
-      <p className="font-display text-4xl leading-none text-rtg-white">{value}</p>
-      <p className="text-xs text-rtg-mist mt-2">{note}</p>
-    </div>
+    <span className="inline-flex items-center gap-1 text-[11px] text-rtg-mist">
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-rtg-purple-950/[0.06] px-1.5 py-0.5 font-semibold tabular-nums text-rtg-white">
+        <Icon size={12} />
+        {Math.abs(change)}%{suffix}
+      </span>
+      vs previous {range} days
+    </span>
   );
 }
 
-function Legend() {
+function StatTile({ icon: Icon, label, value, children, spark, accent }) {
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2">
-      {GROUPS.map((g) => (
-        <span key={g.key} className="inline-flex items-center gap-2 text-xs text-rtg-mist">
-          <i className="w-2.5 h-2.5 rounded-[3px]" style={{ background: g.color }} />
-          {g.label}
+    <div className="group relative overflow-hidden rounded-3xl border border-rtg-border bg-white p-5 shadow-[0_20px_50px_-35px_rgba(53,36,111,0.45)] transition-transform hover:-translate-y-0.5">
+      <span aria-hidden="true" className="absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-[0.08]" style={{ background: accent }} />
+      <div className="mb-3 flex items-center justify-between">
+        <span className="grid h-10 w-10 place-items-center rounded-2xl text-white" style={{ background: accent }}>
+          <Icon size={18} />
         </span>
-      ))}
+        {spark}
+      </div>
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rtg-mist">{label}</p>
+      <p className="mt-1 font-display text-4xl leading-none text-rtg-white tabular-nums">{value}</p>
+      <div className="mt-2">{children}</div>
     </div>
   );
 }
 
-// One stacked bar per day. Hovering (or tabbing to) a day shows its numbers.
-function DailyChart({ days }) {
-  const [active, setActive] = useState(null);
-  const top = axisTop(Math.max(...days.map(total), 1));
-  const everyNth = Math.ceil(days.length / 5); // about five date labels, so they never collide on a phone
-
+function Panel({ title, subtitle, action, children, className = "" }) {
   return (
-    <div>
-      <div className="flex gap-3">
-        <div className="flex flex-col justify-between h-60 text-[10px] text-rtg-mist text-right tabular-nums">
-          {Array.from({ length: GRID_LINES + 1 }, (_, i) => (
-            <span key={i} className="leading-none">
-              {top - (top / GRID_LINES) * i}
-            </span>
-          ))}
+    <section className={`rounded-3xl border border-rtg-border bg-white p-5 shadow-[0_20px_50px_-35px_rgba(53,36,111,0.45)] md:p-6 ${className}`}>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-2xl leading-none">{title}</h2>
+          {subtitle && <div className="mt-2 text-xs text-rtg-mist">{subtitle}</div>}
         </div>
-
-        <div className="relative flex-1 min-w-0">
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" aria-hidden="true">
-            {Array.from({ length: GRID_LINES + 1 }, (_, i) => (
-              <span key={i} className="block h-px bg-rtg-border" />
-            ))}
-          </div>
-
-          <div className="relative flex items-end h-60" onMouseLeave={() => setActive(null)}>
-            {days.map((day, i) => {
-              const parts = GROUPS.filter((g) => day[g.key] > 0);
-              return (
-                <button
-                  key={day.day}
-                  type="button"
-                  className={`relative flex-1 min-w-0 h-full flex flex-col-reverse items-center gap-[2px] rounded-t-md transition-colors ${active === i ? "bg-rtg-purple-950/5" : ""}`}
-                  aria-label={`${dayLabel(day.day, { weekday: "long", day: "numeric", month: "long" })}: ${GROUPS.map((g) => `${day[g.key]} ${g.label}`).join(", ")}`}
-                  onMouseEnter={() => setActive(i)}
-                  onFocus={() => setActive(i)}
-                  onBlur={() => setActive(null)}
-                >
-                  {parts.map((g, n) => (
-                    <span
-                      key={g.key}
-                      className={`block w-[70%] max-w-6 ${n === parts.length - 1 ? "rounded-t-[4px]" : ""}`}
-                      style={{ height: `${(day[g.key] / top) * 100}%`, background: g.color }}
-                    />
-                  ))}
-                </button>
-              );
-            })}
-
-            {active !== null && (
-              <div
-                className="absolute bottom-full mb-2 z-10 w-56 rounded-xl border border-rtg-border bg-white p-3 text-left shadow-lg pointer-events-none"
-                style={{ left: `clamp(0px, calc(${((active + 0.5) / days.length) * 100}% - 112px), calc(100% - 224px))` }}
-              >
-                <p className="text-xs font-semibold text-rtg-white mb-2">{dayLabel(days[active].day, { weekday: "short", day: "numeric", month: "short" })}</p>
-                {GROUPS.map((g) => (
-                  <p key={g.key} className="flex items-center gap-2 text-xs text-rtg-mist">
-                    <i className="w-2 h-2 rounded-[2px]" style={{ background: g.color }} />
-                    <span className="flex-1">{g.label}</span>
-                    <b className="text-rtg-white tabular-nums">{days[active][g.key]}</b>
-                  </p>
-                ))}
-                <p className="flex gap-2 text-xs text-rtg-mist mt-1.5 pt-1.5 border-t border-rtg-border">
-                  <span className="flex-1">Different people</span>
-                  <b className="text-rtg-white tabular-nums">{days[active].people}</b>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex mt-2">
-            {days.map((day, i) => (
-              <span key={day.day} className="flex-1 min-w-0 text-center text-[10px] text-rtg-mist whitespace-nowrap overflow-visible">
-                {(days.length - 1 - i) % everyNth === 0 ? dayLabel(day.day) : ""}
-              </span>
-            ))}
-          </div>
-        </div>
+        {action}
       </div>
-    </div>
+      {children}
+    </section>
   );
 }
 
 function DailyTable({ days }) {
   return (
-    <div className="overflow-x-auto max-h-80 overflow-y-auto">
+    <div className="max-h-80 overflow-x-auto overflow-y-auto">
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-white">
           <tr className="text-left text-xs uppercase tracking-wide text-rtg-mist">
             <th className="py-2 pr-4 font-semibold">Day</th>
             {GROUPS.map((g) => (
-              <th key={g.key} className="py-2 pr-4 font-semibold text-right">
+              <th key={g.key} className="py-2 pr-4 text-right font-semibold">
                 {g.label}
               </th>
             ))}
-            <th className="py-2 font-semibold text-right">Different people</th>
+            <th className="py-2 pr-4 text-right font-semibold">All visits</th>
+            <th className="py-2 text-right font-semibold">Different people</th>
           </tr>
         </thead>
         <tbody>
@@ -169,6 +103,7 @@ function DailyTable({ days }) {
                   {day[g.key]}
                 </td>
               ))}
+              <td className="py-2 pr-4 text-right font-semibold tabular-nums">{visitsOn(day)}</td>
               <td className="py-2 text-right tabular-nums">{day.people}</td>
             </tr>
           ))}
@@ -178,42 +113,32 @@ function DailyTable({ days }) {
   );
 }
 
-// The most opened pages, longest bar first, each with its number beside it.
-function TopPages({ pages }) {
-  const most = Math.max(...pages.map((p) => p.views), 1);
-  return (
-    <div className="space-y-3">
-      {pages.map((p) => (
-        <div key={p.path} className="grid grid-cols-[minmax(0,10rem)_1fr_3rem] items-center gap-3 text-sm">
-          <span className="truncate text-rtg-white" title={p.path}>
-            {p.path === "/" ? "Home" : p.path}
-          </span>
-          <span className="block h-3">
-            <i className="block h-full rounded-r-[4px]" style={{ width: `${(p.views / most) * 100}%`, minWidth: 2, background: PAGE_COLOR }} />
-          </span>
-          <b className="text-right tabular-nums text-rtg-white">{p.views}</b>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function VisitorsAdmin() {
   const [range, setRange] = useState(30);
-  const [data, setData] = useState(null);
+  const [wide, setWide] = useState(null); // 2 × range, for comparisons
+  const [data, setData] = useState(null); // exactly the range
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [asTable, setAsTable] = useState(false);
+  const [view, setView] = useState("area");
+  const [updatedAt, setUpdatedAt] = useState(null);
 
   const load = useCallback(async () => {
-    const { data: result, error: failure } = await supabase.rpc("site_traffic", { p_days: range });
+    const [both, exact] = await Promise.all([
+      supabase.rpc("site_traffic", { p_days: Math.min(range * 2, 365) }),
+      supabase.rpc("site_traffic", { p_days: range }),
+    ]);
+    const failure = both.error || exact.error;
     setError(failure ? failure.message : "");
-    if (!failure) setData(result);
+    if (!failure) {
+      setWide(both.data);
+      setData(exact.data);
+      setUpdatedAt(new Date());
+    }
     setLoading(false);
   }, [range]);
 
-  // Loads on arrival and when the range changes, then again every 30
-  // seconds so "online now" stays current.
+  // On arrival, on a range change, then every 30 seconds so "online now"
+  // stays current.
   useEffect(() => {
     if (!supabase) return undefined;
     load();
@@ -221,85 +146,173 @@ export default function VisitorsAdmin() {
     return () => clearInterval(timer);
   }, [load]);
 
-  const sums = useMemo(() => {
-    const days = data?.days || [];
-    const byGroup = Object.fromEntries(GROUPS.map((g) => [g.key, days.reduce((sum, d) => sum + d[g.key], 0)]));
-    return { ...byGroup, visits: GROUPS.reduce((sum, g) => sum + byGroup[g.key], 0) };
-  }, [data]);
+  const stats = useMemo(() => {
+    if (!wide || !data) return null;
+    const { current, previous } = splitPeriods(wide.days || [], range);
+    const now = sumGroups(current);
+    const before = sumGroups(previous);
+    const leftShare = now.visits ? Math.round((now.left / now.visits) * 100) : 0;
+    const leftShareBefore = before.visits ? Math.round((before.left / before.visits) * 100) : 0;
+    return {
+      days: current,
+      now,
+      before,
+      leftShare,
+      leftShareBefore,
+      dailyVisits: current.map(visitsOn),
+      dailyPeople: current.map((d) => d.people),
+      dailyMembers: current.map((d) => d.members),
+      weekdays: weekdayAverages(current),
+    };
+  }, [wide, data, range]);
 
   return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
-        <div>
-          <h1 className="font-display text-3xl mb-1">Visitors</h1>
-          <p className="text-rtg-mist text-sm">Who comes to the site, who leaves straight away and who is logged in.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {RANGES.map((days) => (
-            <button
-              key={days}
-              type="button"
-              aria-pressed={range === days}
-              onClick={() => {
-                setLoading(true);
-                setRange(days);
-              }}
-              className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${range === days ? "bg-rtg-orange-500 text-white" : "glass text-rtg-mist hover:text-rtg-white"}`}
-            >
-              Last {days} days
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#1b1130_0%,#35246f_60%,#5e43a1_100%)] p-6 text-white md:p-8">
+        <span aria-hidden="true" className="absolute -right-16 -top-24 h-64 w-64 rounded-full border border-white/10 shadow-[0_0_0_50px_rgba(255,255,255,0.03),0_0_0_110px_rgba(255,255,255,0.02)]" />
+        <span aria-hidden="true" className="absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-rtg-orange-500/30 blur-3xl" />
+        <div className="relative flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">Audience</p>
+            <h1 className="mt-1 font-display text-5xl leading-none">Visitors</h1>
+            <p className="mt-2 max-w-md text-sm text-white/70">Who comes to the site, who leaves straight away, who's logged in — and who's on it right now.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-full bg-white/10 p-1 backdrop-blur">
+              {RANGES.map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  aria-pressed={range === days}
+                  onClick={() => {
+                    setLoading(true);
+                    setRange(days);
+                  }}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${range === days ? "bg-white text-rtg-purple-950" : "text-white/75 hover:text-white"}`}
+                >
+                  {days} days
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={load} aria-label="Refresh" className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/80 backdrop-blur transition-colors hover:text-white">
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
             </button>
-          ))}
-          <button type="button" onClick={load} aria-label="Refresh" className="glass rounded-full p-2 text-rtg-mist hover:text-rtg-white transition-colors">
-            {loading ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
-          </button>
+          </div>
         </div>
+        {updatedAt && (
+          <p className="relative mt-4 text-[11px] text-white/50">
+            Updates every 30 seconds · last {updatedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </p>
+        )}
       </div>
 
       {error && (
-        <p className="glass rounded-2xl p-5 text-sm text-rtg-white mb-6">
+        <p className="rounded-2xl border border-rtg-border bg-white p-5 text-sm text-rtg-white">
           The visitor numbers could not be loaded. If this is the first time, run <b>supabase/migrations/017_site_visits.sql</b> in the Supabase SQL Editor.
-          <span className="block text-xs text-rtg-mist mt-1">{error}</span>
+          <span className="mt-1 block text-xs text-rtg-mist">{error}</span>
         </p>
       )}
 
-      {data && (
+      {stats && data && (
         <>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <Tile label="Online now" value={data.online} note={`${data.online_members} logged in · seen in the last 2 minutes`} />
-            <Tile label="People" value={data.people} note={`different browsers in the last ${range} days`} />
-            <Tile label="Logged-in members" value={data.members} note={`${sums.members} of ${sums.visits} visits were by a member`} />
-            <Tile label="Looked and left" value={percent(sums.left, sums.visits)} note={`${sums.left} of ${sums.visits} visits ended within 30 seconds`} />
+          {/* Tiles */}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile icon={Radio} label="Online now" value={data.online} accent="linear-gradient(135deg,#0f9d6b,#1baf7a)" spark={
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+              </span>
+            }>
+              <span className="text-[11px] text-rtg-mist">
+                <b className="text-rtg-white">{data.online_members}</b> logged in · <b className="text-rtg-white">{Math.max(0, data.online - data.online_members)}</b> guests · last 2 min
+              </span>
+            </StatTile>
+            <StatTile icon={Eye} label="Visits" value={stats.now.visits} accent="linear-gradient(135deg,#35246f,#5e43a1)" spark={<Sparkline values={stats.dailyVisits} />}>
+              <Delta now={stats.now.visits} before={stats.before.visits} range={range} />
+            </StatTile>
+            <StatTile icon={UserCheck} label="Member visits" value={stats.now.members} accent="linear-gradient(135deg,#1d5fb0,#2a78d6)" spark={<Sparkline values={stats.dailyMembers} color="#2a78d6" />}>
+              <span className="text-[11px] text-rtg-mist">
+                <b className="text-rtg-white">{data.members}</b> different members · <Delta now={stats.now.members} before={stats.before.members} range={range} />
+              </span>
+            </StatTile>
+            <StatTile icon={LogOut} label="Looked and left" value={`${stats.leftShare}%`} accent="linear-gradient(135deg,#d94f0e,#eb6834)">
+              <span className="block text-[11px] text-rtg-mist">
+                {stats.now.left} of {stats.now.visits} visits ended within 30 s · was {stats.leftShareBefore}%
+              </span>
+            </StatTile>
           </div>
 
-          <div className="glass rounded-2xl p-5 md:p-6 mb-6">
-            <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
-              <div>
-                <h2 className="font-display text-2xl leading-none mb-2">Visits per day</h2>
-                <Legend />
+          {/* Main chart */}
+          <Panel
+            title="Visits per day"
+            subtitle={<Legend sums={stats.now} />}
+            action={
+              <div className="flex rounded-full bg-rtg-purple-950/[0.05] p-1">
+                {VIEWS.map((v) => (
+                  <button
+                    key={v.key}
+                    type="button"
+                    aria-pressed={view === v.key}
+                    onClick={() => setView(v.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${view === v.key ? "bg-white text-rtg-white shadow-sm" : "text-rtg-mist hover:text-rtg-white"}`}
+                  >
+                    <v.icon size={13} /> {v.label}
+                  </button>
+                ))}
               </div>
-              <button type="button" onClick={() => setAsTable((v) => !v)} className="text-xs font-semibold text-rtg-orange-500 hover:text-rtg-orange-600 transition-colors">
-                {asTable ? "Show as graph" : "Show as table"}
-              </button>
-            </div>
-            {sums.visits === 0 ? (
-              <p className="text-sm text-rtg-mist py-10 text-center">No visits recorded in this period yet.</p>
-            ) : asTable ? (
-              <DailyTable days={data.days} />
+            }
+          >
+            {stats.now.visits === 0 ? (
+              <p className="py-14 text-center text-sm text-rtg-mist">No visits recorded in this period yet.</p>
+            ) : view === "table" ? (
+              <DailyTable days={stats.days} />
+            ) : view === "bars" ? (
+              <StackedBars days={stats.days} />
             ) : (
-              <DailyChart days={data.days} />
+              <StackedArea days={stats.days} />
             )}
+          </Panel>
+
+          {/* Mix + weekday rhythm */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Panel title="Visit mix" subtitle={`What the ${stats.now.visits} visits in the last ${range} days were`}>
+              {stats.now.visits === 0 ? <p className="py-10 text-center text-sm text-rtg-mist">Nothing to show yet.</p> : <VisitDonut sums={stats.now} />}
+            </Panel>
+            <Panel title="Weekly rhythm" subtitle="Average visits on each day of the week — the busiest day is highlighted">
+              {stats.now.visits === 0 ? <p className="py-10 text-center text-sm text-rtg-mist">Nothing to show yet.</p> : <WeekdayBars weekdays={stats.weekdays} />}
+            </Panel>
           </div>
 
-          <div className="glass rounded-2xl p-5 md:p-6">
-            <h2 className="font-display text-2xl leading-none mb-1.5">Most opened pages</h2>
-            <p className="text-xs text-rtg-mist mb-5">Times each page was opened in the last {range} days.</p>
-            {data.pages.length === 0 ? <p className="text-sm text-rtg-mist py-6 text-center">No pages opened in this period yet.</p> : <TopPages pages={data.pages} />}
+          {/* Pages + people */}
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+            <Panel title="Most opened pages" subtitle={`Times each page was opened in the last ${range} days`}>
+              {data.pages.length === 0 ? <p className="py-6 text-center text-sm text-rtg-mist">No pages opened in this period yet.</p> : <TopPages pages={data.pages} />}
+            </Panel>
+            <Panel title="People" subtitle="Different browsers, not visits — one person visiting five times counts once">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-rtg-purple-950/[0.04] p-4">
+                  <Users size={18} className="text-rtg-mist" />
+                  <p className="mt-3 font-display text-4xl leading-none tabular-nums">{data.people}</p>
+                  <p className="mt-1 text-xs text-rtg-mist">people in {range} days</p>
+                </div>
+                <div className="rounded-2xl bg-rtg-purple-950/[0.04] p-4">
+                  <UserCheck size={18} className="text-rtg-mist" />
+                  <p className="mt-3 font-display text-4xl leading-none tabular-nums">{data.members}</p>
+                  <p className="mt-1 text-xs text-rtg-mist">of them logged in</p>
+                </div>
+              </div>
+              <div className="mt-5">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-rtg-mist">Different people per day</p>
+                <Sparkline values={stats.dailyPeople} width={320} height={56} />
+              </div>
+            </Panel>
           </div>
         </>
       )}
 
       {!data && !error && (
-        <div className="py-20 grid place-items-center">
+        <div className="grid place-items-center py-20">
           <Loader2 className="animate-spin text-rtg-orange-400" size={26} />
         </div>
       )}

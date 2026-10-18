@@ -4,6 +4,7 @@ import { uploadToSupabaseStorage, deleteFromSupabaseStorage } from "../../lib/su
 import useTable from "../useTable";
 import { useConfirm } from "../components/ConfirmDialog";
 import UploadProgressModal from "../components/UploadProgressModal";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 const CATEGORIES = ["Cycling", "Running", "Swimming", "Events", "Volunteers"];
 const PAGE_SIZE = 24;
@@ -77,13 +78,16 @@ export default function GalleryAdmin() {
   return (
     <div>
       <UploadProgressModal active={uploading} {...progressState} />
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="font-display text-3xl">Gallery</h1>
+      <AdminPageHeader
+        title="Gallery"
+        description="Photos and videos for the gallery, the homepage and each event's page. Pick a category, add an optional label, then upload."
+      />
+      <div className="glass mb-6 rounded-3xl p-4">
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+            className="rounded-full bg-white border border-rtg-border px-4 py-2.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c} className="bg-rtg-ink">
@@ -97,7 +101,7 @@ export default function GalleryAdmin() {
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Label (optional)"
             title="Shown on the photo on the homepage gallery, e.g. Community, Run, Ride. If empty, the category is shown instead."
-            className="w-40 rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
+            className="w-40 rounded-full bg-white border border-rtg-border px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
           />
           <input
             type="text"
@@ -105,9 +109,9 @@ export default function GalleryAdmin() {
             onChange={(e) => setEventSlug(e.target.value)}
             placeholder="Event slug (optional)"
             title="Matches an Event's URL slug so these photos show on that event's page too"
-            className="w-44 rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
+            className="w-44 rounded-full bg-white border border-rtg-border px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
           />
-          <label className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors cursor-pointer">
+          <label className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] font-semibold px-5 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors cursor-pointer">
             {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {uploading ? "Uploading…" : "Upload"}
             <input
@@ -132,7 +136,7 @@ export default function GalleryAdmin() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             {pageRows.map((row) => (
-              <div key={row.id} className="relative group rounded-xl overflow-hidden aspect-square bg-white/5">
+              <div key={row.id} className="relative group rounded-xl overflow-hidden aspect-square bg-rtg-purple-950/[0.04]">
                 {row.media_type === "video" ? (
                   <video src={row.media_url} className="w-full h-full object-cover" muted />
                 ) : (
@@ -167,7 +171,7 @@ export default function GalleryAdmin() {
                   key={n}
                   onClick={() => setPage(n)}
                   className={`w-9 h-9 rounded-full text-sm font-semibold transition-colors ${
-                    n === page ? "bg-rtg-orange-500 text-rtg-ink" : "glass text-rtg-mist hover:text-rtg-white"
+                    n === page ? "bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)]" : "glass text-rtg-mist hover:text-rtg-white"
                   }`}
                 >
                   {n}

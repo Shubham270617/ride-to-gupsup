@@ -4,7 +4,7 @@ import ImageUploadField from "./ImageUploadField";
 import { supabase } from "../../lib/supabaseClient";
 
 const inputClass =
-  "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60";
+  "w-full rounded-xl bg-white border border-rtg-border px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15";
 
 // Sanitizes any input into a safe URL slug — lowercase, hyphen-separated,
 // no stray spaces/typos in casing/punctuation like "enduare -league 2".
@@ -120,7 +120,7 @@ function RelationsField({ field, value, onChange }) {
       {options.map((o) => {
         const v = o[field.valueColumn];
         return (
-          <label key={v} className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-rtg-white cursor-pointer">
+          <label key={v} className="flex items-center gap-2 rounded-xl bg-white border border-rtg-border px-3 py-2 text-sm text-rtg-white cursor-pointer">
             <input type="checkbox" checked={value.includes(v)} onChange={() => toggle(v)} className="w-4 h-4 accent-rtg-orange-500" />
             {o[field.labelColumn]}
           </label>
@@ -208,7 +208,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
       {fields.filter((f) => isShown(f, values)).map((f) => (
         <div key={f.name}>
           {f.type !== "boolean" && f.type !== "image" && (
-            <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">{f.label}</label>
+            <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-rtg-mist">{f.label}</label>
           )}
 
           {f.type === "text" && (
@@ -229,7 +229,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
                 value={/^#[0-9a-f]{6}$/i.test(values[f.name]) ? values[f.name] : "#000000"}
                 onChange={(e) => setField(f.name, e.target.value)}
                 aria-label={f.label}
-                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-transparent p-1"
+                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-rtg-border bg-transparent p-1"
               />
               <input
                 type="text"
@@ -367,13 +367,14 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
         </div>
       ))}
 
-      {error && <p className="text-sm text-rtg-orange-400">{error}</p>}
+      {error && <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-      <div className="flex items-center gap-3 pt-2">
+      {/* Pinned to the bottom of the edit panel so Save is always in reach. */}
+      <div className="sticky -bottom-6 -mx-6 -mb-6 mt-6 flex items-center gap-3 border-t border-rtg-border bg-white/95 px-6 py-4 backdrop-blur">
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
         >
           {submitting && <Loader2 size={14} className="animate-spin" />}
           Save
@@ -381,7 +382,7 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
         <button
           type="button"
           onClick={onCancel}
-          className="text-sm text-rtg-mist hover:text-rtg-white transition-colors"
+          className="rounded-full px-4 py-2.5 text-sm font-semibold text-rtg-mist hover:bg-rtg-purple-950/[0.05] hover:text-rtg-white transition-colors"
         >
           Cancel
         </button>

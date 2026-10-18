@@ -46,7 +46,7 @@ export default function ImageUploadField({
       <UploadProgressModal active={uploading} fileName={fileName} index={1} total={1} progress={progress} />
       {label && <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-2">{label}</label>}
       <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-xl overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-xl overflow-hidden bg-white border border-rtg-border shrink-0 flex items-center justify-center">
           {value ? (
             isVideo ? (
               <video src={value} className="w-full h-full object-cover" muted />

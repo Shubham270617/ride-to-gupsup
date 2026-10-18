@@ -38,6 +38,7 @@ import {
   heroCopyKey,
   heroSlideDefaults,
 } from "../../lib/publicData";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 // Every <Section contentKey="..."> on the public site reads its
 // eyebrow/title/subtitle from "text.<key>.{eyebrow,title,subtitle}" in
@@ -368,7 +369,7 @@ function Field({ label, value, fallback, multiline, onChange }) {
           value={value ?? fallback}
           onChange={(e) => onChange(e.target.value)}
           placeholder={fallback}
-          className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+          className="w-full rounded-2xl bg-white border border-rtg-border px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
         />
       ) : (
         <input
@@ -376,7 +377,7 @@ function Field({ label, value, fallback, multiline, onChange }) {
           value={value ?? fallback}
           onChange={(e) => onChange(e.target.value)}
           placeholder={fallback}
-          className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+          className="w-full rounded-full bg-white border border-rtg-border px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
         />
       )}
     </div>
@@ -389,7 +390,7 @@ function SaveButton({ status, onClick }) {
       type="button"
       onClick={onClick}
       disabled={status === "saving"}
-      className="mt-5 inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+      className="mt-5 inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] font-semibold px-5 py-2 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
     >
       {status === "saving" && <Loader2 size={14} className="animate-spin" />}
       {status === "saved" && <Check size={14} />}
@@ -444,11 +445,10 @@ export default function SiteContentAdmin() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl mb-1">Site Content</h1>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Edit the wording used on the public site, page by page. Make your changes, then hit Save on that section —
-        it goes live immediately, no code, no developer needed.
-      </p>
+      <AdminPageHeader
+        title="Site Content"
+        description={"Edit the wording used on the public site, page by page. Make your changes, then hit Save on that section — it goes live immediately, no code, no developer needed."}
+      />
 
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>
@@ -459,7 +459,7 @@ export default function SiteContentAdmin() {
             <select
               value={page}
               onChange={(e) => setPage(e.target.value)}
-              className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+              className="w-full rounded-full bg-white border border-rtg-border px-4 py-2.5 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
             >
               {PAGES.map((p) => (
                 <option key={p} value={p} className="bg-rtg-ink">

@@ -4,6 +4,7 @@ import Footer from "./Footer";
 import JoinCTA from "./sections/JoinCTA";
 import ScrollToTop from "./ScrollToTop";
 import AiWidget from "./ai/AiWidget";
+import ChatLauncher from "./chat/ChatLauncher";
 import CartDrawer from "./CartDrawer";
 import SiteBackground from "./ui/SiteBackground";
 import { JoinCommunityProvider, useJoinCommunity } from "../lib/JoinCommunityContext";
@@ -39,6 +40,7 @@ function Page() {
       ) : (
         <Footer />
       )}
+      <ChatLauncher />
       <AiWidget />
       <CartDrawer />
     </div>

@@ -6169,3 +6169,26 @@ html {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+
+/* ===========================================================================
+   ADMIN — every screen inside the admin shell (src/admin/AdminLayout.jsx
+   wraps them in .admin-ui). Cards are solid white with a soft purple
+   shadow instead of the public site's translucent glass, so dense tables
+   and forms stay crisp to read.
+   =========================================================================== */
+.admin-ui .glass {
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--color-rtg-border);
+  box-shadow: 0 20px 50px -35px rgba(53, 36, 111, 0.45);
+}
+
+.admin-ui .admin-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.admin-ui .admin-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(247, 107, 28, 0.35);
+  box-shadow: 0 26px 60px -34px rgba(53, 36, 111, 0.55);
+}

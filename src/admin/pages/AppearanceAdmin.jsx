@@ -9,6 +9,7 @@ import {
   applyAppearance,
   resolveAppearance,
 } from "../../lib/appearance";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 // Admin -> Appearance. Three choices — text size, typeface, text colour —
 // each a fixed set of presets rather than free input, so nothing an admin
@@ -28,7 +29,7 @@ function OptionCard({ option, selected, onSelect, children }) {
       className={`relative text-left rounded-2xl border p-4 transition-colors ${
         selected
           ? "border-rtg-orange-400 bg-rtg-orange-500/10"
-          : "border-rtg-border bg-white/5 hover:border-rtg-orange-400/50"
+          : "border-rtg-border bg-rtg-purple-950/[0.04] hover:border-rtg-orange-400/50"
       }`}
     >
       {selected && (
@@ -126,12 +127,10 @@ export default function AppearanceAdmin() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl mb-1">Appearance</h1>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Change how text looks across the whole public site — no code needed. Every option is a preset chosen to stay
-        within the design, so none of them can break the layout or the mobile view. Changes preview here instantly and
-        go live when you save.
-      </p>
+      <AdminPageHeader
+        title="Appearance"
+        description={"Change how text looks across the whole public site — no code needed. Every option is a preset chosen to stay within the design, so none of them can break the layout or the mobile view. Changes preview here instantly and go live when you save."}
+      />
 
       <Group
         icon={CaseSensitive}
@@ -197,14 +196,14 @@ export default function AppearanceAdmin() {
         <button
           onClick={save}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-full bg-rtg-orange-500/90 text-white font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-500 transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] font-semibold px-6 py-2.5 text-sm hover:bg-rtg-orange-500 transition-colors disabled:opacity-60"
         >
           {saving && <Loader2 size={15} className="animate-spin" />}
           {saved ? "Saved" : "Save changes"}
         </button>
         <button
           onClick={reset}
-          className="rounded-full bg-white/5 text-rtg-mist px-5 py-2.5 text-sm font-semibold hover:text-rtg-orange-400 hover:bg-white/10 transition-colors"
+          className="rounded-full bg-rtg-purple-950/[0.04] text-rtg-mist px-5 py-2.5 text-sm font-semibold hover:text-rtg-orange-400 hover:bg-rtg-purple-950/[0.07] transition-colors"
         >
           Reset to defaults
         </button>

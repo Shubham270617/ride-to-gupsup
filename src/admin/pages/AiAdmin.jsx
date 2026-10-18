@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Check, MessageCircle, ChevronDown } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import Pagination from "../components/Pagination";
+import AdminPageHeader from "../components/AdminPageHeader";
 
 const SETTINGS_KEYS = ["ai.enabled", "ai.name", "ai.greeting", "ai.systemPrompt"];
 const PAGE_SIZE = 15;
@@ -98,11 +99,10 @@ export default function AiAdmin() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl mb-1">AI Assistant</h1>
-      <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Tapri — the floating chat widget on the public site. Configure how it introduces itself and review what
-        people have been asking it.
-      </p>
+      <AdminPageHeader
+        title="AI Assistant"
+        description={"Tapri — the floating chat widget on the public site. Configure how it introduces itself and review what people have been asking it."}
+      />
 
       {loadingSettings ? (
         <p className="text-rtg-mist text-sm mb-8">Loading…</p>
@@ -131,7 +131,7 @@ export default function AiAdmin() {
                 type="text"
                 value={settings["ai.name"] ?? "Tapri"}
                 onChange={(e) => setField("ai.name", e.target.value)}
-                className="w-full rounded-full bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-full bg-white border border-rtg-border px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
               />
             </div>
 
@@ -141,7 +141,7 @@ export default function AiAdmin() {
                 rows={2}
                 value={settings["ai.greeting"] ?? "Hey, I'm Tapri! Ask me about events, weekly rides, or tell me what you're looking for."}
                 onChange={(e) => setField("ai.greeting", e.target.value)}
-                className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-2xl bg-white border border-rtg-border px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
               />
             </div>
 
@@ -154,7 +154,7 @@ export default function AiAdmin() {
                 value={settings["ai.systemPrompt"] ?? ""}
                 placeholder="e.g. Always mention the Friday Bricks session when someone asks about cycling…"
                 onChange={(e) => setField("ai.systemPrompt", e.target.value)}
-                className="w-full rounded-2xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/40 focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full rounded-2xl bg-white border border-rtg-border px-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/40 focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15"
               />
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function AiAdmin() {
             type="button"
             onClick={saveSettings}
             disabled={saveStatus === "saving"}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-rtg-orange-500 text-rtg-ink font-semibold px-5 py-2 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)] font-semibold px-5 py-2 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
           >
             {saveStatus === "saving" && <Loader2 size={14} className="animate-spin" />}
             {saveStatus === "saved" && <Check size={14} />}
@@ -190,7 +190,7 @@ export default function AiAdmin() {
                 <div key={c.id} className="glass rounded-2xl overflow-hidden">
                   <button
                     onClick={() => toggleOpen(c)}
-                    className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-rtg-purple-950/[0.04] transition-colors"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-rtg-white font-medium truncate">
@@ -209,7 +209,7 @@ export default function AiAdmin() {
                           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                             <div
                               className={`max-w-[80%] rounded-xl px-3.5 py-2 text-sm whitespace-pre-wrap ${
-                                m.role === "user" ? "bg-rtg-orange-500/15 text-rtg-white" : "bg-white/5 text-rtg-white/85"
+                                m.role === "user" ? "bg-rtg-orange-500/15 text-rtg-white" : "bg-rtg-purple-950/[0.04] text-rtg-white/85"
                               }`}
                             >
                               {m.content}
