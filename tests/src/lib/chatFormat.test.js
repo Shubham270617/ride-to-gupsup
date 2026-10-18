@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chatErrorMessage, formatChatTime, groupMessages, initials, mergeMessage } from "../../../src/lib/chatFormat.js";
+import { chatErrorMessage, dayLabel, formatChatTime, groupMessages, initials, mergeMessage, receiptOf, typingLabel } from "../../../src/lib/chatFormat.js";
 
 describe("formatChatTime()", () => {
   const now = Date.parse("2026-10-18T12:00:00Z"); // 17:30 IST
@@ -104,5 +104,47 @@ describe("chatErrorMessage()", () => {
 
   it("has a generic fallback", () => {
     expect(chatErrorMessage(null)).toMatch(/Couldn't send/);
+  });
+});
+
+
+describe("dayLabel()", () => {
+  const now = Date.parse("2026-10-18T12:00:00Z"); // 17:30 IST, a Sunday
+  it("names today and yesterday in India time", () => {
+    expect(dayLabel("2026-10-18T01:00:00Z", now)).toBe("Today");
+    expect(dayLabel("2026-10-17T20:00:00Z", now)).toBe("Today"); // 01:30 IST on the 18th
+    expect(dayLabel("2026-10-17T10:00:00Z", now)).toBe("Yesterday");
+  });
+  it("uses the weekday within the week and a date beyond it", () => {
+    expect(dayLabel("2026-10-14T10:00:00Z", now)).toBe("Wednesday");
+    expect(dayLabel("2026-09-01T10:00:00Z", now)).toMatch(/1 Sept? 2026/);
+  });
+});
+
+describe("groupMessages() day and group edges", () => {
+  it("starts a new group on a new day and marks the last message of each group", () => {
+    const out = groupMessages([
+      { id: 1, user_id: "a", created_at: "2026-10-17T15:00:00Z" },
+      { id: 2, user_id: "a", created_at: "2026-10-17T15:01:00Z" },
+      { id: 3, user_id: "a", created_at: "2026-10-18T03:00:00Z" },
+    ]);
+    expect(out.map((m) => [m.startsDay, m.startsGroup, m.endsGroup])).toEqual([
+      [true, true, false],
+      [false, false, true],
+      [true, true, true],
+    ]);
+  });
+});
+
+describe("receiptOf() / typingLabel()", () => {
+  it("is 'seen' once read_at is set, 'sent' before", () => {
+    expect(receiptOf({ created_at: "x", read_at: null })).toEqual({ state: "sent", at: "x" });
+    expect(receiptOf({ created_at: "x", read_at: "y" })).toEqual({ state: "seen", at: "y" });
+  });
+  it("words who is typing", () => {
+    expect(typingLabel([])).toBe("");
+    expect(typingLabel(["Priya"])).toBe("Priya is typing…");
+    expect(typingLabel(["Priya", "Rahul"])).toBe("Priya and Rahul are typing…");
+    expect(typingLabel(["A", "B", "C"])).toBe("3 people are typing…");
   });
 });

@@ -165,3 +165,13 @@ describe("admin menu (src/admin/adminNav.js)", () => {
     for (const l of links) if (l !== "/admin") expect(routes, `sidebar links to missing route ${l}`).toContain(l);
   });
 });
+
+describe("online now (migration 026)", () => {
+  it("counts people, not browser tabs", () => {
+    for (const file of ["supabase/schema.sql", "supabase/migrations/026_online_people_not_tabs.sql"]) {
+      const sql = read(file);
+      expect(sql, file).toMatch(/'online', \(select count\(distinct coalesce\(user_id::text, 'v:' \|\| visitor_id::text\)\)/);
+      expect(sql, file).toMatch(/'online_members', \(select count\(distinct user_id\)/);
+    }
+  });
+});

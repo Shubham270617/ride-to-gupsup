@@ -1856,8 +1856,10 @@ begin
     'pages', (select coalesce(json_agg(json_build_object('path', path, 'views', views) order by views desc, path), '[]'::json) from pages),
     'people', (select count(distinct visitor_id) from visits),
     'members', (select count(distinct user_id) from visits where user_id is not null),
-    'online', (select count(*) from site_sessions where last_seen_at > now() - interval '2 minutes'),
-    'online_members', (select count(*) from site_sessions where last_seen_at > now() - interval '2 minutes' and user_id is not null)
+    -- People, not tabs: a member with the site open in four tabs (or on a
+    -- phone and a laptop) is one person online; a guest is one browser.
+    'online', (select count(distinct coalesce(user_id::text, 'v:' || visitor_id::text)) from site_sessions where last_seen_at > now() - interval '2 minutes'),
+    'online_members', (select count(distinct user_id) from site_sessions where last_seen_at > now() - interval '2 minutes' and user_id is not null)
   ) into v_result;
 
   return v_result;

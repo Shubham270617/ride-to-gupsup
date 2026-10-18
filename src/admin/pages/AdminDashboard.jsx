@@ -225,7 +225,7 @@ export default function AdminDashboard() {
           label="Online now"
           value={traffic?.online}
           accent="linear-gradient(135deg,#0f9d6b,#1baf7a)"
-          note={traffic ? `${traffic.online_members} logged in · ${Math.max(0, traffic.online - traffic.online_members)} guests` : "…"}
+          note={traffic ? `${traffic.online_members} logged-in member${traffic.online_members === 1 ? "" : "s"} · ${Math.max(0, traffic.online - traffic.online_members)} guest${traffic.online - traffic.online_members === 1 ? "" : "s"} · last 2 min` : "…"}
           side={
             <span className="relative flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />

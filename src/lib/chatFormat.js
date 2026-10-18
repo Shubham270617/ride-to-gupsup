@@ -33,17 +33,50 @@ export function initials(name) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
-// Marks which messages start a new visual group (new author, or a gap of
-// more than five minutes) so only those show a name and avatar.
+const istDay = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }); // YYYY-MM-DD
+
+// "Today", "Yesterday", "Monday", or "12 Oct 2026" — the label on the day
+// divider between messages (India time).
+export function dayLabel(iso, now = Date.now()) {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "";
+  const day = istDay(t);
+  if (day === istDay(now)) return "Today";
+  if (day === istDay(now - 24 * 60 * 60 * 1000)) return "Yesterday";
+  if (now - t < 6 * 24 * 60 * 60 * 1000) return new Date(t).toLocaleDateString("en-IN", { weekday: "long", timeZone: "Asia/Kolkata" });
+  return new Date(t).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
+}
+
+// Marks which messages start a new visual group (new author, a gap of more
+// than five minutes, or a new day) so only those show a name and avatar,
+// and which start a new day (so a divider is drawn above them). The last
+// message of each group is marked too — that's where the time goes.
 export function groupMessages(messages, authorOf = (m) => m.user_id) {
-  return messages.map((m, i) => {
+  const out = messages.map((m, i) => {
     const prev = messages[i - 1];
+    const startsDay = !prev || istDay(prev.created_at) !== istDay(m.created_at);
     const startsGroup =
-      !prev ||
+      startsDay ||
       authorOf(prev) !== authorOf(m) ||
       new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() > GROUP_WINDOW_MS;
-    return { ...m, startsGroup };
+    return { ...m, startsGroup, startsDay };
   });
+  return out.map((m, i) => ({ ...m, endsGroup: !out[i + 1] || out[i + 1].startsGroup }));
+}
+
+// The read receipt on one of your private messages.
+export function receiptOf(message) {
+  if (!message) return null;
+  return message.read_at ? { state: "seen", at: message.read_at } : { state: "sent", at: message.created_at };
+}
+
+// "Priya is typing…", "Priya and Rahul are typing…", "3 people are typing…"
+export function typingLabel(names) {
+  const list = names.filter(Boolean);
+  if (!list.length) return "";
+  if (list.length === 1) return `${list[0]} is typing…`;
+  if (list.length === 2) return `${list[0]} and ${list[1]} are typing…`;
+  return `${list.length} people are typing…`;
 }
 
 // Turns a Postgres/Supabase error from posting into something to show.

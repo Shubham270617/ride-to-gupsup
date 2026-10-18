@@ -172,6 +172,8 @@ export function ChatProvider({ children }) {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `recipient_id=eq.${userId}` }, emitDirect)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `sender_id=eq.${userId}` }, emitDirect)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `recipient_id=eq.${userId}` }, emitDirect)
+      // Read receipts: the other person opening your message sets read_at.
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "direct_messages", filter: `sender_id=eq.${userId}` }, emitDirect)
       .subscribe();
 
     return () => {
