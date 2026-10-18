@@ -302,7 +302,9 @@ async function completeReset(supabaseAdmin, res, body) {
 }
 
 function resetEmail(code, link, site) {
-  const subject = `${code} is your RTG password reset code`;
+  // The code stays inside the email — not in the subject or the preview
+  // line, where it would show on lock screens and in the inbox list.
+  const subject = "Reset your Ride Tea GupShup password";
   const text = [
     "Someone asked to reset the password on your Ride Tea GupShup account.",
     "",
@@ -337,7 +339,7 @@ function resetEmail(code, link, site) {
 
   const html = emailLayout({
     site,
-    preheader: `Your RTG reset code is ${code}. It expires in ${TTL_MINUTES} minutes.`,
+    preheader: `Your one-time code and reset link are inside. They expire in ${TTL_MINUTES} minutes.`,
     content,
     footerNote: "You're getting this because a password reset was requested for your RTG account.",
   });

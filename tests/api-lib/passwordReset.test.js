@@ -135,7 +135,8 @@ describe("action: request", () => {
     expect(url).toBe("https://api.brevo.com/v3/smtp/email");
     const mail = sentEmail();
     expect(mail.to).toEqual([{ email: EMAIL }]);
-    const code = mail.subject.match(/^(\d{6}) is your RTG password reset code$/)[1];
+    expect(mail.subject).toBe("Reset your Ride Tea GupShup password");
+    const code = mail.textContent.match(/Your code: (\d{6})/)[1];
     const token = mail.textContent.match(/reset-password\?token=([\w-]+)/)[1];
     // trailing slash on FRONTEND_URL is trimmed
     expect(mail.textContent).toContain(`https://rideteagupshup.com/reset-password?token=${token}`);
@@ -310,7 +311,7 @@ describe("action: request", () => {
     const spy = vi.spyOn(crypto, "randomInt").mockReturnValue(42);
     setupRequest();
     await call({ action: "request", email: EMAIL });
-    expect(sentEmail().subject).toBe("000042 is your RTG password reset code");
+    expect(sentEmail().textContent).toContain("Your code: 000042");
     spy.mockRestore();
   });
 });
@@ -594,7 +595,7 @@ describe("request → verify round trip", () => {
   it("the code in the email verifies against the stored hash", async () => {
     setupRequest();
     await call({ action: "request", email: EMAIL });
-    const code = sentEmail().subject.slice(0, 6);
+    const code = sentEmail().textContent.match(/Your code: (\d{6})/)[1];
     const stored = db.queriesFor(TABLE, "insert")[0].payload;
 
     db = createFakeSupabase();
@@ -623,7 +624,8 @@ describe("request → verify round trip", () => {
 describe("resetEmail()", () => {
   it("builds subject, text and branded HTML containing the code and link", () => {
     const { subject, text, html } = resetEmail("012345", "https://x.test/reset-password?token=abc", "https://x.test");
-    expect(subject).toBe("012345 is your RTG password reset code");
+    expect(subject).toBe("Reset your Ride Tea GupShup password");
+    expect(subject).not.toMatch(/\d/);
     expect(text).toContain("Your code: 012345");
     expect(text).toContain("https://x.test/reset-password?token=abc");
     expect(text).toContain("expire in 30 minutes");
