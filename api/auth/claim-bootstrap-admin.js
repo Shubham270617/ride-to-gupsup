@@ -57,11 +57,22 @@ export default async function handler(req, res) {
   }
 
   // THE GATE. Everything above this line is identity; this is authority.
-  const { data: allowed, error: allowErr } = await supabaseAdmin
+  //
+  // Case-insensitive, like is_admin() and the admin_allowlist_guard trigger
+  // in the database: an address typed into the list as "Name@Gmail.com" by
+  // hand in SQL used to pass those two but fail this exact match, so a
+  // correctly listed admin was told they weren't authorised. ilike with
+  // LIKE wildcards escaped is an exact, case-blind comparison.
+  if (!email) {
+    res.status(403).json({ granted: false, reason: "not_authorised", message: "This account has no email address, so it can't be an admin." });
+    return;
+  }
+  const { data: allowedRows, error: allowErr } = await supabaseAdmin
     .from("admin_allowed_emails")
     .select("email")
-    .eq("email", email)
-    .maybeSingle();
+    .ilike("email", email.replace(/[\\%_]/g, (c) => `\\${c}`))
+    .limit(1);
+  const allowed = allowedRows?.[0] || null;
   if (allowErr) {
     res.status(500).json({ error: "query_failed", message: allowErr.message });
     return;
@@ -76,9 +87,25 @@ export default async function handler(req, res) {
     return;
   }
 
+  const fullName = user.user_metadata?.full_name || user.user_metadata?.name || null;
+
+  // admin_profiles.id has a foreign key to profiles.id, so an account with
+  // no profiles row (created before the signup trigger existed, or whose
+  // row was deleted by hand) could never be granted a seat — the insert
+  // below failed with a foreign-key error. Make sure the row exists first;
+  // ignoreDuplicates leaves an existing row untouched.
+  const { error: profileErr } = await supabaseAdmin
+    .from("profiles")
+    .upsert({ id: user.id, email: user.email, full_name: fullName }, { onConflict: "id", ignoreDuplicates: true });
+  if (profileErr) {
+    console.error("[claim-bootstrap-admin] profiles upsert", profileErr);
+    res.status(500).json({ granted: false, reason: "grant_failed", message: profileErr.message });
+    return;
+  }
+
   const { error: insertErr } = await supabaseAdmin
     .from("admin_profiles")
-    .insert({ id: user.id, full_name: user.user_metadata?.full_name || null });
+    .insert({ id: user.id, full_name: fullName });
 
   if (insertErr) {
     // The seat-cap and allowlist triggers both surface as insert errors.

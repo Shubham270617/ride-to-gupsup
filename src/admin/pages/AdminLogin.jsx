@@ -137,6 +137,15 @@ export default function AdminLogin() {
 
       navigate("/admin", { replace: true });
     } catch (err) {
+      // Supabase refuses password logins for unconfirmed addresses when
+      // "Confirm email" is on (Authentication → Providers → Email) — say what
+      // to do instead of echoing its terse message.
+      if (/email not confirmed/i.test(err.message || "")) {
+        setError(
+          "This email hasn't been confirmed yet. Click the link in the confirmation email from Supabase, or ask whoever runs the Supabase project to confirm the user (Authentication → Users) or turn off \"Confirm email\"."
+        );
+        return;
+      }
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);

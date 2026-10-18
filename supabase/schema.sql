@@ -1976,3 +1976,25 @@ alter table password_reset_codes enable row level security;
 -- ============================================================================
 alter table profiles add column if not exists welcome_email_sent_at timestamptz;
 -- ============================================================================
+
+-- ============================================================================
+-- PART — Admin allowlist addresses are stored lower-cased (migration 023)
+--
+-- api/auth/claim-bootstrap-admin.js matches the allowlist case-blind, like
+-- is_admin(); this keeps the stored addresses clean so every check agrees.
+-- ============================================================================
+create or replace function normalize_admin_allowed_email()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.email := lower(trim(new.email));
+  return new;
+end;
+$$;
+
+drop trigger if exists admin_allowed_emails_normalize on admin_allowed_emails;
+create trigger admin_allowed_emails_normalize
+  before insert or update on admin_allowed_emails
+  for each row execute function normalize_admin_allowed_email();
+-- ============================================================================

@@ -814,6 +814,7 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 020 | Admin email allowlist, 3-seat cap, new `is_admin()` (carries over current admins; removes seats not on the list) |
 | 021 | `password_reset_codes` table |
 | 022 | `profiles.welcome_email_sent_at`; marks members older than a week as already welcomed |
+| 023 | Admin allowlist stored lower-cased (with a trigger) and a `profiles` row ensured for every allowlisted account, so a listed admin is never refused over capital letters or a missing profile. Includes a read-only status query. |
 
 Each file starts with a header explaining what it does. Read it before running, especially those marked "deletes".
 
@@ -826,7 +827,7 @@ Each file starts with a header explaining what it does. Read it before running, 
 
 ### 8.5 Email (Brevo) and DNS
 
-1. Run migrations 021 and 022.
+1. Run migrations 021, 022 and 023.
 2. In Brevo, **verify the sending domain** (`rideteagupshup.com`) by adding the **SPF and DKIM** records Brevo shows you to the domain's DNS. The exact record values come from the Brevo dashboard; they are not in the repo. Without them, mail lands in spam, which looks exactly like the feature being broken.
 3. Brevo → SMTP & API → API Keys → create a key.
 4. In Vercel set `BREVO_API_KEY`, `MAIL_FROM_EMAIL` (an address on the verified domain), `MAIL_FROM_NAME` and `OTP_SECRET`. Redeploy.
