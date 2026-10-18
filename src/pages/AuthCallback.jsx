@@ -75,21 +75,17 @@ export default function AuthCallback() {
       // so the callback (shared with the member popup) knows to check for
       // admin access instead of just dropping them on the homepage.
       if (params.get("admin") === "1") {
-        const { data: adminRow } = await supabase
-          .from("admin_profiles")
-          .select("id")
-          .eq("id", data.session.user.id)
-          .maybeSingle();
-        if (!adminRow) {
-          // Only ever succeeds for one of the first 3 people to ever
-          // authenticate through /admin/login — see
-          // api/auth/claim-bootstrap-admin.js.
-          const { granted, reason } = await claimBootstrapAdmin();
-          if (!granted) {
-            await supabase.auth.signOut();
-            setStatus(reason === "request_failed" ? "server_unreachable" : "not_admin");
-            return;
-          }
+        // ?admin=1 is just a hint about where the sign-in started — it is
+        // part of a URL anyone can type, so it grants nothing. The server
+        // re-decides from the email allowlist on every attempt
+        // (api/auth/claim-bootstrap-admin.js), which is why there is no
+        // client-side admin_profiles lookup here anymore: checking in the
+        // browser only ever produced a nicer message, never a boundary.
+        const { granted, reason } = await claimBootstrapAdmin();
+        if (!granted) {
+          await supabase.auth.signOut();
+          setStatus(reason === "request_failed" ? "server_unreachable" : "not_admin");
+          return;
         }
         setStatus("success");
         setTimeout(() => navigate("/admin", { replace: true }), 900);

@@ -451,14 +451,18 @@ export function buildRidgeFeed({ sessions, results, awards, spotlights }, maxLoo
     bySession.get(row.session).push(row);
   });
 
+  // Sessions with no date are kept, not dropped. session_date was added
+  // later (migration 016) and only backfilled for two sample rows, so every
+  // session created before that has a null here — and silently filtering
+  // them out made a board full of real results look completely empty.
+  // Undated sessions sort to the bottom and render without a date instead.
   const list = sessions
-    .filter((s) => s.session_date)
     .map((s) => ({
       slug: s.slug,
       name: s.name,
-      date: s.session_date,
-      stamp: Date.parse(`${s.session_date}T00:00:00Z`),
-      riders: (bySession.get(s.slug) || []).map((row) => ({ ...row, date: s.session_date })),
+      date: s.session_date || null,
+      stamp: s.session_date ? Date.parse(`${s.session_date}T00:00:00Z`) : 0,
+      riders: (bySession.get(s.slug) || []).map((row) => ({ ...row, date: s.session_date || null })),
     }))
     .sort((a, b) => b.stamp - a.stamp);
   list.forEach((s) => s.riders.forEach((row) => (row.stamp = s.stamp)));

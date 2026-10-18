@@ -33,7 +33,7 @@ const COUNTRY_CODE = "+91";
 const toE164 = (localNumber) => `${COUNTRY_CODE}${localNumber.replace(/\D/g, "")}`;
 
 const inputClass =
-  "w-full rounded-full bg-white border border-rtg-purple-600/20 shadow-[0_1px_2px_rgba(53,36,111,0.05)] pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60";
+  "w-full min-w-0 rounded-full bg-white border border-rtg-purple-600/20 shadow-[0_1px_2px_rgba(53,36,111,0.05)] pl-11 pr-4 py-3 text-sm text-rtg-white placeholder:text-rtg-mist/70 focus:outline-none focus:border-rtg-orange-400/60";
 
 function RadioGroup({ label, options, value, onChange }) {
   return (
@@ -45,7 +45,7 @@ function RadioGroup({ label, options, value, onChange }) {
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+            className={`max-w-full rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
               value === opt
                 ? "bg-rtg-orange-500 border-rtg-orange-500 text-white shadow-md shadow-rtg-orange-500/25"
                 : "bg-white border-rtg-purple-600/20 text-rtg-white/80 hover:border-rtg-orange-400"
@@ -65,7 +65,7 @@ function RadioGroup({ label, options, value, onChange }) {
 // age, gender, rider/runner, ride frequency, Strava, Instagram, emergency
 // contact, medical conditions, blood group, why join), plus a photo and,
 // for Google sign-ins only, a password so they can also log in by phone
-// afterward (phone login checks a password — see /api/auth/phone-login).
+// afterward (phone login checks a password — see api-lib/phoneLogin.js).
 export default function Onboarding() {
   const navigate = useNavigate();
   // Sent here by a "Join Community" button (lib/JoinCommunityContext.jsx).
@@ -249,8 +249,8 @@ export default function Onboarding() {
                 inputMode="numeric"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                placeholder="Phone number — 98765 43210"
-                className={`${inputClass} pl-[4.5rem]`}
+                placeholder="98765 43210"
+                className={`${inputClass} pl-[4.75rem]`}
               />
             </div>
           )}
@@ -299,7 +299,7 @@ export default function Onboarding() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Date of Birth</label>
               <input
@@ -311,23 +311,25 @@ export default function Onboarding() {
                   setDob(e.target.value);
                   setAge(ageFromDob(e.target.value));
                 }}
-                className="w-full rounded-full bg-white border border-rtg-purple-600/20 shadow-[0_1px_2px_rgba(53,36,111,0.05)] px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
+                className="w-full min-w-0 rounded-full bg-white border border-rtg-purple-600/20 shadow-[0_1px_2px_rgba(53,36,111,0.05)] px-4 py-3 text-sm text-rtg-white focus:outline-none focus:border-rtg-orange-400/60"
               />
             </div>
-            <div className="relative">
+            <div>
               <label className="block text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5">Age</label>
-              <Cake size={16} className="absolute left-4 top-[2.6rem] text-rtg-mist" />
-              <input
-                type="number"
-                required
-                min={10}
-                max={100}
-                value={age}
-                readOnly
-                tabIndex={-1}
-                placeholder="Filled from date of birth"
-                className={`${inputClass} bg-rtg-purple-600/5 cursor-default`}
-              />
+              <div className="relative">
+                <Cake size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
+                <input
+                  type="number"
+                  required
+                  min={10}
+                  max={100}
+                  value={age}
+                  readOnly
+                  tabIndex={-1}
+                  placeholder="From date of birth"
+                  className={`${inputClass} bg-rtg-purple-600/5 cursor-default`}
+                />
+              </div>
             </div>
           </div>
 

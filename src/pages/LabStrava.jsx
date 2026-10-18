@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
 import RichText from "../components/lab/RichText";
+import StravaCardMaker from "../components/lab/StravaCardMaker";
 import { ConnectWithStrava, StravaLogo, STRAVA_URL } from "../components/lab/StravaBrand";
 import useSession from "../lib/useSession";
 import useAuthProviders from "../lib/useAuthProviders";
@@ -245,6 +246,8 @@ export default function LabStrava() {
     { distance: 0, elevation: 0, activities: 0 }
   );
   const podium = rows.slice(0, 3);
+  // The winner card currently open, or null. Top three only.
+  const [cardRequest, setCardRequest] = useState(null);
   const chosen = rows.find((a) => a.id === athleteId) || rows[0] || null;
   const query = search.trim().toLowerCase();
   const tableRows = rows.filter((a) => `${a.name} ${a.city}`.toLowerCase().includes(query));
@@ -464,6 +467,23 @@ export default function LabStrava() {
                   {fmt(a.value, metric === "elevation" ? 0 : 1)} <small>{unit}</small>
                 </div>
                 <div className={a.change !== null && a.change < 0 ? "gain loss" : "gain"}>{gainLine(a)}</div>
+                <button
+                  type="button"
+                  className="podium-card-cta"
+                  onClick={() =>
+                    setCardRequest({
+                      athlete: { ...a, displayValue: fmt(a.value, metric === "elevation" ? 0 : 1) },
+                      rank: a.rank,
+                      metricName,
+                      unit,
+                      period: [period?.name, range && `${formatDay(range.start)} – ${formatDay(range.cutoff - DAY)}`].filter(Boolean).join(" · "),
+                      sport: sport?.name,
+                      ageGroup: ageGroup?.name,
+                    })
+                  }
+                >
+                  Get winner card
+                </button>
               </article>
             ))
           ) : (
@@ -659,6 +679,7 @@ export default function LabStrava() {
           {copy.infoCloseLabel}
         </button>
       </LabDialog>
+          <StravaCardMaker request={cardRequest} onClose={() => setCardRequest(null)} />
     </div>
   );
 }

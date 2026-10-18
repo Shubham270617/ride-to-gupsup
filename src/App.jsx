@@ -6,8 +6,12 @@ import Preloader from "./components/Preloader";
 import AuthGate from "./components/AuthGate";
 import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { AuthGateProvider } from "./lib/AuthGateContext";
 import { CartProvider } from "./lib/CartContext";
+import { useAppearance } from "./lib/appearance";
+import useWelcomeEmail from "./lib/useWelcomeEmail";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
@@ -50,6 +54,7 @@ const OrdersAdmin = lazy(() => import("./admin/pages/OrdersAdmin"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
+const AppearanceAdmin = lazy(() => import("./admin/pages/AppearanceAdmin"));
 const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
 const VisitorsAdmin = lazy(() => import("./admin/pages/VisitorsAdmin"));
@@ -66,11 +71,17 @@ function AdminFallback() {
 // Routes that manage their own full-screen UI and should never be covered by
 // the video intro / login prompt (an in-progress OAuth callback, and later
 // the /admin dashboard).
-const INTRO_EXEMPT_PREFIXES = ["/auth/callback", "/onboarding", "/admin"];
+const INTRO_EXEMPT_PREFIXES = ["/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
 
 export default function App() {
   const location = useLocation();
   const [introDone, setIntroDone] = useState(false);
+
+  // Applies the sitewide text size / typeface / colour an admin chose.
+  useAppearance();
+
+  // Sends a brand-new member their welcome email, once (api-lib/welcomeEmail.js).
+  useWelcomeEmail();
 
   const exempt = INTRO_EXEMPT_PREFIXES.some((p) => location.pathname.startsWith(p));
 
@@ -82,6 +93,11 @@ export default function App() {
         <Routes>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
+        {/* Password recovery — outside <Layout>, like the other auth
+            screens: they draw their own frame and must not be covered by
+            the intro video or the login prompt. */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/admin/login"
@@ -153,6 +169,7 @@ export default function App() {
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
+          <Route path="appearance" element={<AppearanceAdmin />} />
           <Route path="messages" element={<MessagesAdmin />} />
           <Route path="orders" element={<OrdersAdmin />} />
           <Route path="ai" element={<AiAdmin />} />
