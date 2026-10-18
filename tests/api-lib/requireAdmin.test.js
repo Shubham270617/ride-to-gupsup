@@ -31,32 +31,24 @@ describe("requireAdmin()", () => {
     expect(await requireAdmin(req())).toEqual({ ok: false, status: 401, error: "invalid_session" });
   });
 
-  it("403 not_authorised for an account with no email", async () => {
-    db.signIn({ id: "x", email: "" });
-    expect(await requireAdmin(req())).toEqual({ ok: false, status: 403, error: "not_authorised" });
-  });
-
-  it("403 not_authorised when the email is not on the allowlist, even with an admin row", async () => {
+  it("403 not_admin for a signed-in member who holds no admin seat", async () => {
     db.signIn(admin);
-    db.on("admin_allowed_emails", { data: null });
-    db.on("admin_profiles", { data: { id: "admin-1" } });
-    expect(await requireAdmin(req())).toEqual({ ok: false, status: 403, error: "not_authorised" });
-  });
-
-  it("403 not_admin when allowlisted but no seat is held", async () => {
-    db.signIn(admin);
-    db.on("admin_allowed_emails", { data: { email: "boss@rtg.com" } });
     db.on("admin_profiles", { data: null });
     expect(await requireAdmin(req())).toEqual({ ok: false, status: 403, error: "not_admin" });
   });
 
-  it("ok for an allowlisted admin, checking the lowercased email and the user id", async () => {
+  it("ok for an account that holds an admin seat, checked by user id", async () => {
     db.signIn(admin);
-    db.on("admin_allowed_emails", { data: { email: "boss@rtg.com" } });
     db.on("admin_profiles", { data: { id: "admin-1" } });
     const result = await requireAdmin(req());
     expect(result).toEqual({ ok: true, user: admin, supabaseAdmin: db });
-    expect(db.queriesFor("admin_allowed_emails")[0].hasFilter("eq", "email", "boss@rtg.com")).toBe(true);
     expect(db.queriesFor("admin_profiles")[0].hasFilter("eq", "id", "admin-1")).toBe(true);
+  });
+
+  it("never consults an email list", async () => {
+    db.signIn(admin);
+    db.on("admin_profiles", { data: { id: "admin-1" } });
+    await requireAdmin(req());
+    expect(db.queriesFor("admin_allowed_emails")).toHaveLength(0);
   });
 });

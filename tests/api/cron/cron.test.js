@@ -92,7 +92,7 @@ describe("cron: purge-media", () => {
 });
 
 describe("cron: strava-backfill", () => {
-  it("advances up to 5 pending members, oldest watermark first", async () => {
+  it("advances up to 25 pending members per (daily) run, oldest watermark first", async () => {
     db.on("profiles", { data: [{ id: "a" }, { id: "b" }] }, { action: "select" });
     advanceStravaBackfill.mockResolvedValue({ done: false, fetched: 200 });
     const res = await call(stravaBackfill, { auth: "Bearer cron-secret" });
@@ -105,7 +105,7 @@ describe("cron: strava-backfill", () => {
       ],
     });
     const [q] = db.queriesFor("profiles", "select");
-    expect(q.limit).toBe(5);
+    expect(q.limit).toBe(25);
     expect(q.hasFilter("eq", "strava_backfill_done", false)).toBe(true);
     expect(q.order[0]).toMatchObject({ column: "strava_synced_through", ascending: true, nullsFirst: true });
     expect(advanceStravaBackfill).toHaveBeenCalledWith(db, "a", { deadline: expect.any(Number) });

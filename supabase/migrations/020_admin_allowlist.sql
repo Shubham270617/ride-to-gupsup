@@ -1,4 +1,11 @@
 -- ============================================================================
+-- !! SUPERSEDED by migration 024 — do not run this on its own any more. !!
+-- The email allowlist below was removed: admins are now simply the first 3
+-- people to sign in at /admin/login (see 024_first_three_admins.sql). If
+-- you are setting up a database from scratch and run every migration in
+-- order, 024 undoes this one; re-running this file AFTER 024 would bring the
+-- allowlist back and lock out any admin who isn't on it.
+-- ============================================================================
 -- Migration 020 — Admin access is an email allowlist, enforced in Postgres
 -- ============================================================================
 -- Run AFTER 019, in the Supabase SQL Editor. Safe to re-run. Deletes nothing.

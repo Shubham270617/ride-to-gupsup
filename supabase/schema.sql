@@ -171,56 +171,32 @@ create policy "admin_profiles self read" on admin_profiles
   for select using (auth.uid() = id);
 
 -- ----------------------------------------------------------------------------
--- The admin allowlist — the actual control over who can administer the site.
+-- Who is an admin: whoever holds one of the 3 rows in admin_profiles. The
+-- first 3 people to sign in at /admin/login take them
+-- (api/auth/claim-bootstrap-admin.js); the admin_seat_cap trigger below
+-- refuses a 4th.
 -- ----------------------------------------------------------------------------
--- Admin is NOT "whoever gets a row in admin_profiles". It is "an account
--- whose email is on this list, which has also signed in at least once".
--- Both halves are required, and is_admin() re-derives the answer from this
--- table on every single request — so a stray admin_profiles row, however it
--- got there (a bug, a hand-run SQL statement, a leaked service-role key),
--- confers nothing at all on its own.
-create table if not exists admin_allowed_emails (
-  email text primary key,
-  note text,
-  created_at timestamptz not null default now()
-);
 
--- Helper: is the current request from a known admin? Every admin-gated RLS
+-- Helper: is the current request from an admin? Every admin-gated RLS
 -- policy on every table in this file is written against this one function,
--- so tightening it here tightens all of them at once.
+-- so changing it here changes all of them at once.
 create or replace function is_admin()
 returns boolean
 language sql
 security definer set search_path = public
 stable
 as $$
-  select exists (
-    select 1
-    from public.admin_profiles ap
-    join auth.users u on u.id = ap.id
-    where ap.id = auth.uid()
-      and lower(u.email) in (select lower(email) from public.admin_allowed_emails)
-  );
+  select exists (select 1 from public.admin_profiles ap where ap.id = auth.uid());
 $$;
 
--- RLS on the allowlist itself: only an admin may read or change who is one.
-alter table admin_allowed_emails enable row level security;
+-- The email allowlist that used to sit here was removed in migration 024.
+drop trigger if exists admin_allowlist_guard on admin_profiles;
+drop function if exists enforce_admin_allowlist();
+drop table if exists admin_allowed_emails cascade;
+drop function if exists normalize_admin_allowed_email();
 
-drop policy if exists "admin_allowed_emails admin read" on admin_allowed_emails;
-create policy "admin_allowed_emails admin read" on admin_allowed_emails
-  for select using (is_admin());
-
-drop policy if exists "admin_allowed_emails admin insert" on admin_allowed_emails;
-create policy "admin_allowed_emails admin insert" on admin_allowed_emails
-  for insert with check (is_admin());
-
-drop policy if exists "admin_allowed_emails admin delete" on admin_allowed_emails;
-create policy "admin_allowed_emails admin delete" on admin_allowed_emails
-  for delete using (is_admin());
-
--- Any existing admin can see the full admin team and manage the allowlist —
--- this is what powers the in-app "Members" screen, so granting or revoking
--- admin access doesn't require a developer running SQL by hand.
+-- Any existing admin can see the full admin team and revoke a seat — this
+-- is what powers the in-app "Members" screen.
 drop policy if exists "admin_profiles admin read all" on admin_profiles;
 create policy "admin_profiles admin read all" on admin_profiles
   for select using (is_admin());
@@ -238,39 +214,6 @@ create policy "admin_profiles admin delete" on admin_profiles
 drop policy if exists "profiles admin read all" on profiles;
 create policy "profiles admin read all" on profiles
   for select using (is_admin());
-
--- Refuse to create an admin row for an account that isn't allowlisted.
--- A trigger rather than a policy on purpose: triggers fire even for the
--- service-role connection the /api functions use, so a mistake in
--- api/auth/claim-bootstrap-admin.js still cannot mint an admin.
-create or replace function enforce_admin_allowlist()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-declare
-  candidate_email text;
-begin
-  select lower(email) into candidate_email from auth.users where id = new.id;
-
-  if candidate_email is null then
-    raise exception 'Cannot grant admin: no account found for %', new.id;
-  end if;
-
-  if not exists (
-    select 1 from public.admin_allowed_emails where lower(email) = candidate_email
-  ) then
-    raise exception 'Cannot grant admin: % is not on the admin allowlist.', candidate_email;
-  end if;
-
-  return new;
-end;
-$$;
-
-drop trigger if exists admin_allowlist_guard on admin_profiles;
-create trigger admin_allowlist_guard
-  before insert on admin_profiles
-  for each row execute function enforce_admin_allowlist();
 
 -- Hard cap of 3 simultaneous admins, enforced at the database level so it
 -- applies no matter which path an insert comes through. The advisory lock
@@ -1326,35 +1269,19 @@ drop function if exists claim_admin_if_seats_open();
 -- ============================================================================
 -- Setting up your admins
 -- ============================================================================
--- Admin access is an EMAIL ALLOWLIST, capped at 3 simultaneous admins.
+-- The first 3 people to sign in at /admin/login (email/password or Google)
+-- are the admins. api/auth/claim-bootstrap-admin.js gives each of them a
+-- row in admin_profiles; the admin_seat_cap trigger refuses a 4th.
 --
--- 1. Put the addresses in admin_allowed_emails:
+-- While a seat is free, ANYONE who signs in at /admin/login takes it — so
+-- fill all 3 seats yourselves. Once they are full, everyone else is refused:
+--   * the endpoint answers 409 "seats_full" and grants nothing;
+--   * is_admin() returns false for them, so every RLS policy on every table
+--     denies them — opening /admin directly or calling the API with curl
+--     changes nothing.
 --
---      insert into admin_allowed_emails (email, note)
---      values ('you@example.com', 'founder')
---      on conflict (email) do nothing;
---
--- 2. That person signs in once at /admin/login (email/password or Google —
---    either is fine). api/auth/claim-bootstrap-admin.js checks their email
---    against the list and creates their admin_profiles row on the spot.
---
--- After the first admin exists, step 1 no longer needs SQL — the allowlist
--- is editable from Admin -> Members.
---
--- Anyone NOT on the list is refused three times over, independently:
---   * the endpoint returns 403 before granting anything;
---   * the admin_allowlist_guard trigger rejects the insert even when it
---     comes from the service-role connection the /api functions use;
---   * is_admin() returns false, so every RLS policy on every table denies
---     them, whatever row might exist in admin_profiles.
---
--- That last point is the important one: the dashboard's own interface is
--- not a security boundary and never was. Opening /admin directly, or
--- calling the API with curl, is refused by the database either way.
---
--- Removing an address from the allowlist revokes access immediately — there
--- is no need to also delete their admin_profiles row, though the Members
--- screen does both so the two never disagree.
+-- Revoking an admin (Admin -> Members) deletes their admin_profiles row and
+-- frees the seat for the next person who signs in at /admin/login.
 -- ============================================================================
 
 -- ============================================================================
@@ -1975,26 +1902,4 @@ alter table password_reset_codes enable row level security;
 -- time a new member signs in, and stamps it here so it never goes twice.
 -- ============================================================================
 alter table profiles add column if not exists welcome_email_sent_at timestamptz;
--- ============================================================================
-
--- ============================================================================
--- PART — Admin allowlist addresses are stored lower-cased (migration 023)
---
--- api/auth/claim-bootstrap-admin.js matches the allowlist case-blind, like
--- is_admin(); this keeps the stored addresses clean so every check agrees.
--- ============================================================================
-create or replace function normalize_admin_allowed_email()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.email := lower(trim(new.email));
-  return new;
-end;
-$$;
-
-drop trigger if exists admin_allowed_emails_normalize on admin_allowed_emails;
-create trigger admin_allowed_emails_normalize
-  before insert or update on admin_allowed_emails
-  for each row execute function normalize_admin_allowed_email();
 -- ============================================================================

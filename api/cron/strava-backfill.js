@@ -1,10 +1,11 @@
 import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
 import { advanceStravaBackfill } from "../../api-lib/stravaSync.js";
 
-// How many members to advance in a single invocation. Each one can take a
-// few seconds of Strava round trips, so this is kept low and the rest wait
-// for the next run — their watermarks mean nothing is lost by waiting.
-const MEMBERS_PER_RUN = 5;
+// How many members to pick up in a single invocation. The job only runs
+// once a day (Vercel Hobby), so it takes a generous batch; the time budget
+// below still stops it cleanly, and anyone it doesn't reach waits for the
+// next run — their watermarks mean nothing is lost by waiting.
+const MEMBERS_PER_RUN = 25;
 
 // Leave headroom before the platform kills the function. Every page is
 // committed to the watermark as it lands, so being cut off early is safe —

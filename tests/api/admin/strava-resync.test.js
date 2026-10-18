@@ -42,7 +42,7 @@ describe("POST /api/admin/strava-resync", () => {
 
   it("resets then advances one member", async () => {
     const res = await call({ body: { userId: "u1" } });
-    expect(res.body).toEqual({ queued: 1, advanced: 1, results: [{ userId: "u1", fetched: 10, done: false }] });
+    expect(res.body).toMatchObject({ queued: 1, advanced: 1, results: [{ userId: "u1", fetched: 10, done: false }], rateLimited: false });
     expect(resetStravaBackfill).toHaveBeenCalledWith(db, "u1");
     expect(resetStravaBackfill.mock.invocationCallOrder[0]).toBeLessThan(
       advanceStravaBackfill.mock.invocationCallOrder[0]
@@ -71,5 +71,30 @@ describe("POST /api/admin/strava-resync", () => {
     const res = await call({ body: {} });
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({ error: "query_failed", message: "down" });
+  });
+
+  it("continue mode advances only unfinished walks and resets nothing", async () => {
+    db.on("profiles", { data: [{ id: "a" }] }, { action: "select", match: (q) => !q.selectOptions?.head });
+    db.on("profiles", { count: 1 }, { action: "select", match: (q) => q.selectOptions?.head === true });
+    const res = await call({ body: { mode: "continue" } });
+    expect(resetStravaBackfill).not.toHaveBeenCalled();
+    expect(advanceStravaBackfill).toHaveBeenCalledWith(db, "a", expect.any(Object));
+    const list = db.queriesFor("profiles", "select").find((q) => !q.selectOptions?.head);
+    expect(list.hasFilter("eq", "strava_backfill_done", false)).toBe(true);
+    expect(res.body).toMatchObject({ queued: 1, remaining: 1, rateLimited: false });
+  });
+
+  it("reports how many members are still unfinished", async () => {
+    db.on("profiles", { count: 0 }, { action: "select", match: (q) => q.selectOptions?.head === true });
+    const res = await call({ body: { userId: "u1" } });
+    expect(res.body.remaining).toBe(0);
+  });
+
+  it("stops advancing other members once Strava rate-limits", async () => {
+    db.on("profiles", { data: [{ id: "a" }, { id: "b" }] }, { action: "select", match: (q) => !q.selectOptions?.head });
+    advanceStravaBackfill.mockResolvedValueOnce({ done: false, fetched: 5, rateLimited: true });
+    const res = await call({ body: { mode: "continue" } });
+    expect(advanceStravaBackfill).toHaveBeenCalledTimes(1);
+    expect(res.body.rateLimited).toBe(true);
   });
 });

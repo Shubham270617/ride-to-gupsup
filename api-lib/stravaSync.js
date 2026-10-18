@@ -183,6 +183,7 @@ export async function advanceStravaBackfill(
 
   let fetched = 0;
   let done = false;
+  let rateLimited = false;
 
   for (let page = 0; page < maxPages; page++) {
     if (Date.now() > deadline) break;
@@ -191,9 +192,10 @@ export async function advanceStravaBackfill(
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
     if (res.status === 429) {
-      // Rate limited — stop cleanly and let the next cron run resume. The
+      // Rate limited — stop cleanly and let the next run resume. The
       // watermark is already persisted, so nothing is lost or re-fetched.
       console.warn("[stravaSync] rate limited, pausing backfill for", userId);
+      rateLimited = true;
       break;
     }
     if (!res.ok) {
@@ -226,11 +228,11 @@ export async function advanceStravaBackfill(
       .update({ strava_synced_through: new Date(cursor * 1000).toISOString() })
       .eq("id", userId);
 
-    // A short page means there was nothing older left to return.
-    if (activities.length < STRAVA_PAGE_SIZE) {
-      done = true;
-      break;
-    }
+    // Only an EMPTY page (above) ends the walk. A short page used to count
+    // as "reached the first activity", but Strava can return fewer than
+    // per_page while older activities still exist — and since the member is
+    // then marked done for good, everything older was never fetched. One
+    // extra request per member is the price of never stopping early.
   }
 
   if (done) {
@@ -239,7 +241,7 @@ export async function advanceStravaBackfill(
 
   if (fetched > 0 || done) await recomputeLeaderboard(supabaseAdmin, userId);
 
-  return { done, fetched };
+  return rateLimited ? { done, fetched, rateLimited } : { done, fetched };
 }
 
 // Called from the OAuth connect/login flow. Deliberately small: it grabs

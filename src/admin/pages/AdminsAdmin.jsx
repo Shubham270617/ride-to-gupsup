@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldOff, Search, Users, Plus, Trash2, ShieldAlert, RefreshCw } from "lucide-react";
+import { ShieldCheck, ShieldOff, Search, Users, ShieldAlert, RefreshCw } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -18,22 +18,15 @@ const MAX_ADMIN_SEATS = 3;
 // their contact info, when they last logged in, and whether they currently
 // have admin access.
 //
-// Admin access is an EMAIL ALLOWLIST (admin_allowed_emails), capped at 3
-// simultaneous seats. Being on the list doesn't make someone an admin by
-// itself — they still have to sign in once at /admin/login, at which point
-// the seat is granted. Anyone NOT on the list is refused by the server
-// (api/auth/claim-bootstrap-admin.js returns 403) and by the database
-// (is_admin() re-checks the list on every single query), so removing an
-// address here revokes access everywhere, immediately, no matter what the
-// interface happens to be showing.
+// Admin access is 3 seats (admin_profiles rows): the first 3 people to sign
+// in at /admin/login take them (api/auth/claim-bootstrap-admin.js), and the
+// database refuses a 4th (the admin_seat_cap trigger). Revoking an admin
+// here frees their seat for the next person who signs in there.
 export default function AdminsAdmin() {
   const { user } = useAdminSession();
   const confirm = useConfirm();
   const [members, setMembers] = useState([]);
   const [adminIds, setAdminIds] = useState(new Set());
-  const [allowed, setAllowed] = useState([]);
-  const [newEmail, setNewEmail] = useState("");
-  const [addBusy, setAddBusy] = useState(false);
   const [resyncing, setResyncing] = useState(false);
   const [resyncNote, setResyncNote] = useState("");
   const [loading, setLoading] = useState(true);
@@ -44,14 +37,12 @@ export default function AdminsAdmin() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profileRows }, { data: adminRows }, { data: allowRows }] = await Promise.all([
+    const [{ data: profileRows }, { data: adminRows }] = await Promise.all([
       supabase.from("profiles").select("id, full_name, email, phone, last_login_at, created_at").order("created_at", { ascending: false }),
       supabase.from("admin_profiles").select("id"),
-      supabase.from("admin_allowed_emails").select("email, note, created_at").order("created_at", { ascending: true }),
     ]);
     setMembers(profileRows || []);
     setAdminIds(new Set((adminRows || []).map((r) => r.id)));
-    setAllowed(allowRows || []);
     setLoading(false);
   };
 
@@ -62,7 +53,7 @@ export default function AdminsAdmin() {
   const revokeAdmin = async (member) => {
     const ok = await confirm({
       title: "Remove admin access?",
-      message: `${member.email || member.full_name} will lose access to the admin dashboard.`,
+      message: `${member.email || member.full_name} will lose access to the admin dashboard, and their seat goes to the next person who signs in at /admin/login.`,
       confirmLabel: "Remove access",
     });
     if (!ok) return;
@@ -87,33 +78,62 @@ export default function AdminsAdmin() {
   // Strava history again from today back to their first ever activity. The
   // request finishes as much as it can and the daily cron picks up the
   // rest, so this returning is not the same as the walk being complete.
+  //
+  // One request only gets ~40 seconds, so this keeps calling the endpoint
+  // ("continue") until every member's history is in, showing progress as
+  // it goes. Leaving the page just stops early — the daily cron finishes
+  // whatever is left.
   const resyncStrava = async () => {
     const ok = await confirm({
       title: "Resync Strava histories?",
       message:
-        "Every connected member's full history will be pulled from Strava again. Safe to run any time — it corrects and fills in missing rides rather than duplicating them. Large histories finish in the background over the next few hours.",
+        "Every connected member's full history will be pulled from Strava again. Safe to run any time — it corrects and fills in missing rides rather than duplicating them. Keep this page open until it says it's finished (usually a few minutes).",
       confirmLabel: "Start resync",
     });
     if (!ok) return;
     setResyncing(true);
     setError("");
     setResyncNote("");
+    const MAX_ROUNDS = 40;
+    let pulled = 0;
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const res = await fetch("/api/admin/strava-resync", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${sessionData?.session?.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`);
-      const fetched = (body?.results || []).reduce((n, r) => n + (r.fetched || 0), 0);
-      setResyncNote(
-        `Queued ${body?.queued ?? 0} member(s); ${fetched} activities pulled so far. The rest continues in the background.`
-      );
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const res = await fetch("/api/admin/strava-resync", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionData?.session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ mode: round === 0 ? "restart" : "continue" }),
+        });
+        const body = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(body?.error || `Request failed (${res.status})`);
+
+        const fetchedNow = (body?.results || []).reduce((n, r) => n + (r.fetched || 0), 0);
+        const finishedNow = (body?.results || []).some((r) => r.done);
+        pulled += fetchedNow;
+        const remaining = body?.remaining;
+
+        if (remaining === 0) {
+          setResyncNote(`Done — every connected member's full Strava history is in (${pulled} activities pulled).`);
+          return;
+        }
+        if (body?.rateLimited) {
+          setResyncNote(
+            `${pulled} activities pulled so far; ${remaining} member(s) still to finish. Strava's hourly limit was reached — press Resync Strava again in about 15 minutes, or the daily sync will finish it.`
+          );
+          return;
+        }
+        if (round > 0 && fetchedNow === 0 && !finishedNow) {
+          setResyncNote(
+            `${pulled} activities pulled so far; ${remaining} member(s) couldn't be synced right now (their Strava connection may need reconnecting). The daily sync will keep trying.`
+          );
+          return;
+        }
+        setResyncNote(`Syncing… ${pulled} activities pulled so far, ${remaining ?? "some"} member(s) still to finish. Keep this page open.`);
+      }
+      setResyncNote(`${pulled} activities pulled so far. Press Resync Strava again to continue — or the daily sync will finish it.`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -121,55 +141,8 @@ export default function AdminsAdmin() {
     }
   };
 
-  const addAllowedEmail = async (e) => {
-    e.preventDefault();
-    const email = newEmail.trim().toLowerCase();
-    if (!email) return;
-    setAddBusy(true);
-    setError("");
-    try {
-      const { error: err } = await supabase.from("admin_allowed_emails").insert({ email, note: `added by ${user?.email || "an admin"}` });
-      if (err) throw err;
-      setNewEmail("");
-      await loadAll();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setAddBusy(false);
-    }
-  };
-
-  // Removing an address also drops any admin seat it currently holds —
-  // otherwise the row would linger as a grant that is_admin() ignores,
-  // which reads as "still an admin" on this screen while actually having
-  // no access. Better that the two always agree.
-  const removeAllowedEmail = async (row) => {
-    const holder = members.find((m) => m.email?.toLowerCase() === row.email.toLowerCase());
-    const ok = await confirm({
-      title: "Remove from the admin allowlist?",
-      message: `${row.email} will lose admin access immediately and won't be able to sign in to the dashboard again until re-added.`,
-      confirmLabel: "Remove access",
-    });
-    if (!ok) return;
-    setBusyId(row.email);
-    setError("");
-    try {
-      if (holder && adminIds.has(holder.id)) {
-        const { error: seatErr } = await supabase.from("admin_profiles").delete().eq("id", holder.id);
-        if (seatErr) throw seatErr;
-      }
-      const { error: err } = await supabase.from("admin_allowed_emails").delete().eq("email", row.email);
-      if (err) throw err;
-      await loadAll();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const allowedSet = new Set(allowed.map((a) => a.email.toLowerCase()));
   const seatsUsed = adminIds.size;
+  const admins = members.filter((m) => adminIds.has(m.id));
 
   const q = query.trim().toLowerCase();
   const filtered = q
@@ -203,85 +176,46 @@ export default function AdminsAdmin() {
         </div>
       </div>
       <p className="text-rtg-mist text-sm mb-6 max-w-2xl">
-        Everyone who has ever signed up, when they last logged in, and whether they have admin access. Admin is
-        limited to the {MAX_ADMIN_SEATS} email addresses on the allowlist below — anyone else is refused by the
-        server, even if they open the admin address directly.
+        Everyone who has ever signed up, when they last logged in, and whether they have admin access. The first{" "}
+        {MAX_ADMIN_SEATS} people to sign in at /admin/login are the admins.
       </p>
 
       {/* ---------------------------------------------------------------
-          The allowlist. This is the actual control over who can administer
-          the site; the table underneath is just the member directory.
+          The 3 admin seats. A seat is taken by signing in at /admin/login
+          while one is free; revoking an admin frees theirs.
           --------------------------------------------------------------- */}
       <div className="glass rounded-2xl p-5 mb-8 max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
           <h2 className="font-display text-xl flex items-center gap-2">
-            <ShieldCheck size={17} className="text-rtg-orange-400" /> Admin allowlist
+            <ShieldCheck size={17} className="text-rtg-orange-400" /> Admin seats
           </h2>
           <span className="text-xs text-rtg-mist">
             {seatsUsed} of {MAX_ADMIN_SEATS} seats in use
           </span>
         </div>
         <p className="text-rtg-mist text-xs mb-4">
-          Adding an address lets that person sign in at /admin/login — their seat is granted the first time they
-          do. Removing one revokes their access straight away.
+          {seatsUsed < MAX_ADMIN_SEATS
+            ? `${MAX_ADMIN_SEATS - seatsUsed} seat${MAX_ADMIN_SEATS - seatsUsed === 1 ? " is" : "s are"} free — the next person to sign in at /admin/login becomes an admin.`
+            : "All seats are taken. Revoke an admin below to free a seat for the next person who signs in at /admin/login."}
         </p>
 
-        <ul className="flex flex-col gap-2 mb-4">
-          {allowed.map((row) => {
-            const holder = members.find((m) => m.email?.toLowerCase() === row.email.toLowerCase());
-            const active = holder && adminIds.has(holder.id);
-            return (
-              <li
-                key={row.email}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/5 px-4 py-2.5"
-              >
-                <span className="min-w-0 flex items-center gap-2 text-sm text-rtg-white break-all">
-                  {active ? (
-                    <ShieldCheck size={14} className="shrink-0 text-rtg-orange-300" />
-                  ) : (
-                    <ShieldAlert size={14} className="shrink-0 text-rtg-mist" />
-                  )}
-                  {row.email}
-                  <span className="text-xs text-rtg-mist">{active ? "(signed in as admin)" : "(not signed in yet)"}</span>
-                </span>
-                <button
-                  onClick={() => removeAllowedEmail(row)}
-                  disabled={busyId === row.email}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-white/5 text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-white/10 transition-colors disabled:opacity-60"
-                >
-                  <Trash2 size={13} /> Remove
-                </button>
-              </li>
-            );
-          })}
-          {allowed.length === 0 && !loading && (
-            <li className="text-sm text-rtg-mist">
-              Nobody is allowlisted — nobody can administer the site. Add an address to restore access.
+        <ul className="flex flex-col gap-2">
+          {admins.map((m) => (
+            <li key={m.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 text-sm text-rtg-white">
+              <ShieldCheck size={14} className="shrink-0 text-rtg-orange-300" />
+              <span className="min-w-0 break-all">
+                {m.full_name || m.email || "Admin"}
+                {m.full_name && m.email && <span className="text-xs text-rtg-mist"> · {m.email}</span>}
+                {m.id === user?.id && <span className="text-xs text-rtg-mist"> (you)</span>}
+              </span>
             </li>
-          )}
+          ))}
+          {Array.from({ length: Math.max(0, MAX_ADMIN_SEATS - seatsUsed) }, (_, i) => (
+            <li key={`free-${i}`} className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 px-4 py-2.5 text-sm text-rtg-mist">
+              <ShieldAlert size={14} className="shrink-0" /> Free seat
+            </li>
+          ))}
         </ul>
-
-        <form onSubmit={addAllowedEmail} className="flex flex-wrap gap-2">
-          <input
-            type="email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            placeholder="name@example.com"
-            className="min-w-0 flex-1 rounded-full bg-white/5 border border-white/10 px-4 py-2.5 text-sm text-rtg-white placeholder:text-rtg-mist/50 focus:outline-none focus:border-rtg-orange-400/60"
-          />
-          <button
-            type="submit"
-            disabled={addBusy || !newEmail.trim() || allowed.length >= MAX_ADMIN_SEATS}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full bg-rtg-orange-500/90 text-white px-5 py-2.5 hover:bg-rtg-orange-500 transition-colors disabled:opacity-50"
-          >
-            <Plus size={15} /> Add
-          </button>
-        </form>
-        {allowed.length >= MAX_ADMIN_SEATS && (
-          <p className="text-xs text-rtg-mist mt-2">
-            The allowlist is full. Remove an address before adding another.
-          </p>
-        )}
       </div>
 
       <div className="relative mb-5 max-w-sm">
@@ -340,10 +274,6 @@ export default function AdminsAdmin() {
                             <ShieldOff size={13} /> Revoke
                           </button>
                         )
-                      ) : allowedSet.has((m.email || "").toLowerCase()) ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-mist">
-                          <ShieldAlert size={13} /> Allowlisted
-                        </span>
                       ) : (
                         <span className="text-xs text-rtg-mist">Member</span>
                       )}

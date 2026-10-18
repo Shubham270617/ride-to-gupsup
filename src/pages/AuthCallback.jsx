@@ -22,6 +22,7 @@ export default function AuthCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("working");
   const [noAccountEmail, setNoAccountEmail] = useState("");
+  const [adminRefusal, setAdminRefusal] = useState({ reason: "", message: "", email: "" });
 
   const providerError = params.get("error");
   const isAdminFlow = params.get("admin") === "1";
@@ -81,9 +82,13 @@ export default function AuthCallback() {
         // (api/auth/claim-bootstrap-admin.js), which is why there is no
         // client-side admin_profiles lookup here anymore: checking in the
         // browser only ever produced a nicer message, never a boundary.
-        const { granted, reason } = await claimBootstrapAdmin();
+        const { granted, reason, message } = await claimBootstrapAdmin();
         if (!granted) {
           await supabase.auth.signOut();
+          // Keep the server's actual reason: "not on the allowlist", "all
+          // seats taken" and "the grant itself failed" need different fixes,
+          // and one generic message made them impossible to tell apart.
+          setAdminRefusal({ reason, message, email: user.email || "" });
           setStatus(reason === "request_failed" ? "server_unreachable" : "not_admin");
           return;
         }
@@ -154,10 +159,18 @@ export default function AuthCallback() {
         {status === "not_admin" && (
           <>
             <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
-            <p className="font-display text-2xl mb-2">Not an admin yet</p>
+            <p className="font-display text-2xl mb-2">
+              {adminRefusal.reason === "seats_full" ? "All admin seats are taken" : "Couldn't grant admin access"}
+            </p>
+            {adminRefusal.email && (
+              <p className="mx-auto mb-3 inline-block max-w-full break-all rounded-full bg-rtg-purple-950/5 px-3.5 py-1.5 text-xs font-semibold text-rtg-white">
+                {adminRefusal.email}
+              </p>
+            )}
             <p className="text-rtg-mist text-sm mb-6">
-              That Google account isn't set up as an admin. Ask an existing admin to grant you access from the
-              Admins screen, then try again.
+              {adminRefusal.reason === "seats_full"
+                ? "RTG has 3 admins and all 3 seats are in use. An existing admin must remove someone in Admin → Members first."
+                : `Something went wrong while saving admin access: ${adminRefusal.message || "unknown error"}. Please try again.`}
             </p>
             <button
               onClick={() => navigate("/admin/login", { replace: true })}

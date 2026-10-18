@@ -102,12 +102,25 @@ export default function AdminLogin() {
         setPhone("");
         setPassword("");
         setFullName("");
-        setNotice(
-          data.session
-            ? "Account created. An existing admin must add your email to the admin allowlist before you can sign in here."
-            : "Account created — an existing admin must add your email to the admin allowlist before you can sign in here."
-        );
-        switchMode("login");
+        if (!data.session) {
+          // Only when Supabase's "Confirm email" setting is on.
+          setNotice("Account created. Confirm your email from the link Supabase sent, then log in here to take a free admin seat.");
+          switchMode("login");
+          return;
+        }
+        // Signed in straight away — take a seat now if one is free.
+        const claim = await claimBootstrapAdmin();
+        if (!claim.granted) {
+          await supabase.auth.signOut();
+          switchMode("login");
+          setError(
+            claim.reason === "request_failed"
+              ? "Couldn't reach the server to check admin status — on a local dev server, run `vercel dev` instead of `vite`, or try this on the live site."
+              : claim.message || "Couldn't give this account admin access."
+          );
+          return;
+        }
+        navigate("/admin", { replace: true });
         return;
       }
 
@@ -118,12 +131,10 @@ export default function AdminLogin() {
       if (signInError) throw signInError;
 
       // The server decides, not this page. api/auth/claim-bootstrap-admin
-      // checks the email allowlist and answers with a 403 for anyone who
-      // isn't on it — the same answer they would get calling it directly,
-      // because signing out here is only a courtesy an attacker would skip.
+      // lets an existing admin in, gives a free seat to anyone else while
+      // fewer than 3 admins exist, and refuses with "seats_full" after that.
       // The dashboard itself is protected independently by RLS (is_admin()),
-      // so this branch is about showing an honest message, not about keeping
-      // anyone out.
+      // so this branch is about showing an honest message.
       const { granted, reason, message } = await claimBootstrapAdmin();
       if (!granted) {
         await supabase.auth.signOut();
@@ -218,7 +229,7 @@ export default function AdminLogin() {
             <div className="mb-6 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3">
               <p className="text-sm font-semibold text-rtg-orange-600">Access denied</p>
               <p className="text-xs text-rtg-mist mt-1">
-                You're signed in, but that account is not on the admin allowlist. An existing admin can add your email from Admin → Members.
+                You're signed in, but that account isn't one of the 3 admins. Log in again here to take a seat if one is free.
               </p>
             </div>
           )}

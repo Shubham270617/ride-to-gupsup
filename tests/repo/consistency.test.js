@@ -85,3 +85,29 @@ describe("database migrations match the code", () => {
     expect(schema).toContain("add column if not exists welcome_email_sent_at");
   });
 });
+
+describe("admin access: the first 3 people to sign in at /admin/login", () => {
+  const schema = () => read("supabase/schema.sql");
+
+  it("schema.sql's is_admin() only checks for an admin_profiles seat", () => {
+    const fn = schema().match(/create or replace function is_admin\(\)[\s\S]*?\$\$;/)[0];
+    expect(fn).toContain("admin_profiles");
+    expect(fn).not.toContain("admin_allowed_emails");
+  });
+
+  it("schema.sql only mentions the old email allowlist to drop it", () => {
+    const lines = schema().split("\n").filter((l) => /admin_allowed_emails|enforce_admin_allowlist/.test(l));
+    for (const line of lines) expect(line, line).toMatch(/^\s*(--|drop )/);
+  });
+
+  it("the 3-seat cap is still enforced in the database", () => {
+    expect(schema()).toMatch(/count\(\*\) from public\.admin_profiles\) >= 3/);
+    expect(read("supabase/migrations/024_first_three_admins.sql")).toMatch(/>= 3/);
+  });
+
+  it("no app code reads the old allowlist table", () => {
+    for (const file of ["api/auth/claim-bootstrap-admin.js", "api-lib/requireAdmin.js", "src/admin/pages/AdminsAdmin.jsx"]) {
+      expect(read(file), file).not.toContain("admin_allowed_emails");
+    }
+  });
+});

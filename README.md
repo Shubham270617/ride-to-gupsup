@@ -61,20 +61,11 @@ your project dashboard:
      var. It goes in `api/.env.local` for local dev, and in your deploy
      host's environment variable settings for production. This key bypasses
      all security rules — treat it like a master password.
-3. **Create your first admin**: admin access is an email allowlist, capped
-   at 3 people. Add your own address to it once, by hand:
-
-   ```sql
-   insert into admin_allowed_emails (email, note)
-   values ('you@example.com', 'founder')
-   on conflict (email) do nothing;
-   ```
-
-   Then sign in once at `/admin/login` and the seat is granted
-   automatically. From then on the allowlist is editable from **Admin →
-   Members**, so this is the only time you need SQL. Nobody can become an
-   admin by signing up first, or by being quick — an address that isn't on
-   the list is refused by the server and by the database.
+3. **Create your admins**: the first 3 people to sign in at
+   `/admin/login` (Log In or Sign Up, email/password or Google) become the
+   admins — no SQL needed. A 4th is refused until an existing admin is
+   revoked in **Admin → Members**, which frees that seat. While a seat is
+   free, *anyone* who signs in there takes it, so fill all 3 yourselves.
 
 ### 1b. Email sending (REQUIRED for password reset and login codes)
 
@@ -290,14 +281,12 @@ final logo asset is available.
 "Sign Up" button; it was removed, both because it was discoverable in the
 mobile menu and because hiding a link was never what kept anyone out.
 
-What keeps people out is the allowlist. `/admin/login` is a Log In / Sign Up
-form separate from the member panel, and signing up there creates an
-ordinary member account like any other — it grants nothing. An account only
-reaches the dashboard if its email is on `admin_allowed_emails`, which is
-checked by the server (a 403 before anything happens) and again by the
-database on every query. So opening `/admin` directly, or calling the API
-with `curl`, is refused exactly the same way as being told "no" by the
-form.
+What keeps people out is the 3-seat limit. `/admin/login` is a Log In /
+Sign Up form separate from the member panel; signing in there gives the
+account an admin seat if one of the 3 is free, and is refused with "all
+admin seats are taken" otherwise. The seat is checked by the database on
+every query (`is_admin()`), so opening `/admin` directly, or calling the
+API with `curl`, is refused the same way.
 
 Once in, the dashboard manages, with no code: **Events, Gallery,
 Merchandise, Blog, Sponsors, Testimonials, Challenges**, every sitewide
@@ -317,15 +306,13 @@ Three things worth knowing:
   that has no admin screen yet (mission/vision/values, FAQs, weekly ride
   details, sponsorship opportunity descriptions) still lives in
   `src/data/content.js` and needs a code change to update.
-- **Adding or removing admins doesn't need SQL** (after the first one —
-  see "Create your first admin" above). Any admin can open the **Members**
-  screen, add an email address to the allowlist, and that person gets their
-  seat the next time they sign in. Removing an address revokes their access
-  immediately. Three seats, total.
+- **Adding or removing admins doesn't need SQL.** Revoke an admin on the
+  **Members** screen to free their seat; the next person to sign in at
+  `/admin/login` takes it. Three seats, total.
 - **One account, two roles.** There's no such thing as a separate "admin
-  account" — a person is a normal member (in the `profiles` table) whose
-  email is on the allowlist and who *additionally* has a row in
-  `admin_profiles`. Both are required, and they keep using the same login.
+  account" — an admin is a normal member (in the `profiles` table) who
+  *additionally* holds one of the 3 rows in `admin_profiles`. They keep
+  using the same login.
 
 ### Appearance — text size, font and colour
 

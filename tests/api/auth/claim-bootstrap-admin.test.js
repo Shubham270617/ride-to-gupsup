@@ -52,42 +52,21 @@ describe("POST /api/auth/claim-bootstrap-admin", () => {
     expect(db.queriesFor("admin_profiles", "insert")).toHaveLength(0);
   });
 
-  it("403 for an account that is not on the allowlist — and grants nothing", async () => {
-    db.on("admin_allowed_emails", { data: [] });
-    const res = await call();
-    expect(res.statusCode).toBe(403);
-    expect(res.body).toMatchObject({ granted: false, reason: "not_authorised" });
-    expect(db.queriesFor("admin_profiles", "insert")).toHaveLength(0);
-    expect(db.queriesFor("admin_allowed_emails")[0].hasFilter("ilike", "email", "new.admin@rtg.com")).toBe(true);
-  });
-
-  it("500 query_failed when the allowlist lookup errors", async () => {
-    db.on("admin_allowed_emails", { error: { message: "boom" } });
-    const res = await call();
-    expect(res.statusCode).toBe(500);
-    expect(res.body).toEqual({ error: "query_failed", message: "boom" });
-  });
-
-  it("grants a seat to an allowlisted account", async () => {
-    db.on("admin_allowed_emails", { data: [{ email: "new.admin@rtg.com" }] });
+  it("gives a free seat to any signed-in account — no email list involved", async () => {
     const res = await call();
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ granted: true });
     expect(db.queriesFor("admin_profiles", "insert")[0].payload).toEqual({ id: "u1", full_name: "New Admin" });
+    expect(db.queriesFor("admin_allowed_emails")).toHaveLength(0);
   });
 
-  it("matches the allowlist case-blind, escaping LIKE wildcards in the address", async () => {
-    db.signIn({ id: "u2", email: "Simran_Game%1@Gmail.com", user_metadata: {} });
-    db.on("admin_allowed_emails", { data: [{ email: "simran_game%1@gmail.com" }] });
-    const res = await call();
-    expect(res.body).toEqual({ granted: true });
-    const lookup = db.queriesFor("admin_allowed_emails")[0];
-    expect(lookup.hasFilter("ilike", "email", "simran\\_game\\%1@gmail.com")).toBe(true);
-    expect(lookup.hasFilter("eq", "email")).toBe(false);
+  it("uses Google's `name` when there is no full_name", async () => {
+    db.signIn({ id: "u3", email: "g@x.com", user_metadata: { name: "Google Name" } });
+    await call();
+    expect(db.queriesFor("admin_profiles", "insert")[0].payload).toEqual({ id: "u3", full_name: "Google Name" });
   });
 
   it("creates a missing profiles row before granting the seat (admin_profiles has a foreign key to it)", async () => {
-    db.on("admin_allowed_emails", { data: [{ email: "new.admin@rtg.com" }] });
     const res = await call();
     expect(res.body).toEqual({ granted: true });
     const [upsert] = db.queriesFor("profiles", "upsert");
@@ -99,7 +78,6 @@ describe("POST /api/auth/claim-bootstrap-admin", () => {
 
   it("reports grant_failed and inserts no seat when the profiles row can't be created", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    db.on("admin_allowed_emails", { data: [{ email: "new.admin@rtg.com" }] });
     db.on("profiles", { error: { message: "rls" } }, { action: "upsert" });
     const res = await call();
     expect(res.statusCode).toBe(500);
@@ -107,19 +85,18 @@ describe("POST /api/auth/claim-bootstrap-admin", () => {
     expect(db.queriesFor("admin_profiles", "insert")).toHaveLength(0);
   });
 
-  it("maps the seat-cap trigger error to 409 seats_full", async () => {
-    db.on("admin_allowed_emails", { data: [{ email: "new.admin@rtg.com" }] });
-    db.on("admin_profiles", { error: { message: "Admin seat cap reached (3)" } }, { action: "insert" });
+  it("maps the seat-cap trigger error (all 3 seats taken) to 409 seats_full", async () => {
+    db.on("admin_profiles", { error: { message: "Admin seat cap of 3 reached — remove an existing admin first." } }, { action: "insert" });
     const res = await call();
     expect(res.statusCode).toBe(409);
     expect(res.body).toMatchObject({ granted: false, reason: "seats_full" });
   });
 
   it("maps any other insert error to 500 grant_failed", async () => {
-    db.on("admin_allowed_emails", { data: [{ email: "new.admin@rtg.com" }] });
-    db.on("admin_profiles", { error: { message: "not on allowlist" } }, { action: "insert" });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    db.on("admin_profiles", { error: { message: "boom" } }, { action: "insert" });
     const res = await call();
     expect(res.statusCode).toBe(500);
-    expect(res.body).toEqual({ granted: false, reason: "grant_failed", message: "not on allowlist" });
+    expect(res.body).toEqual({ granted: false, reason: "grant_failed", message: "boom" });
   });
 });

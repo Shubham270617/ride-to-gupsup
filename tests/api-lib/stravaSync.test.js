@@ -173,13 +173,15 @@ describe("advanceStravaBackfill()", () => {
     );
   });
 
-  it("walks pages, stepping the cursor one second past the oldest, until a short page", async () => {
+  it("walks pages, stepping the cursor one second past the oldest, until an empty page", async () => {
     db.on("profiles", { data: { strava_synced_through: null } }, { action: "select" });
     fetchMock
       .mockResolvedValueOnce(jsonResponse(fullPage("2025-01-01T00:00:10Z")))
-      .mockResolvedValueOnce(jsonResponse([activity(999, "2024-12-01T00:00:00Z")]));
+      .mockResolvedValueOnce(jsonResponse([activity(999, "2024-12-01T00:00:00Z")]))
+      .mockResolvedValueOnce(jsonResponse([]));
     const result = await advanceStravaBackfill(db, "u1");
     expect(result).toEqual({ done: true, fetched: 201 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[1][0]).toContain(`before=${Date.parse("2025-01-01T00:00:10Z") / 1000 - 1}`);
     const watermarks = db
       .queriesFor("profiles", "update")
@@ -188,6 +190,28 @@ describe("advanceStravaBackfill()", () => {
     expect(watermarks[0]).toBe("2025-01-01T00:00:09.000Z");
     expect(db.queriesFor("profiles", "update").some((q) => q.payload.strava_backfill_done === true)).toBe(true);
     expect(db.queriesFor("leaderboard_stats", "upsert")).toHaveLength(1);
+  });
+
+  // Regression: a short page used to end the walk and mark the member done
+  // for good, so older history was never fetched (e.g. 1,382 km shown for
+  // an athlete with 13,277 km year-to-date).
+  it("keeps walking after a short page — only an empty page means done", async () => {
+    db.on("profiles", { data: {} }, { action: "select" });
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse([activity(1, "2025-05-01T00:00:00Z"), activity(2, "2025-04-01T00:00:00Z")]))
+      .mockResolvedValueOnce(jsonResponse(fullPage("2024-01-01T00:00:00Z")))
+      .mockResolvedValueOnce(jsonResponse([]));
+    const result = await advanceStravaBackfill(db, "u1");
+    expect(result).toEqual({ done: true, fetched: 202 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not mark a member done when a short page is the last thing it had time for", async () => {
+    db.on("profiles", { data: {} }, { action: "select" });
+    fetchMock.mockResolvedValueOnce(jsonResponse([activity(1, "2025-05-01T00:00:00Z")]));
+    const result = await advanceStravaBackfill(db, "u1", { maxPages: 1 });
+    expect(result).toEqual({ done: false, fetched: 1 });
+    expect(db.queriesFor("profiles", "update").some((q) => q.payload.strava_backfill_done === true)).toBe(false);
   });
 
   it("marks done when Strava returns an empty page", async () => {
@@ -199,7 +223,7 @@ describe("advanceStravaBackfill()", () => {
   it("stops cleanly on a 429 without marking done", async () => {
     db.on("profiles", { data: {} }, { action: "select" });
     fetchMock.mockResolvedValue(jsonResponse({}, { status: 429 }));
-    expect(await advanceStravaBackfill(db, "u1")).toEqual({ done: false, fetched: 0 });
+    expect(await advanceStravaBackfill(db, "u1")).toEqual({ done: false, fetched: 0, rateLimited: true });
     expect(db.queriesFor("profiles", "update")).toHaveLength(0);
     expect(db.queriesFor("leaderboard_stats")).toHaveLength(0);
   });

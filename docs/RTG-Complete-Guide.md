@@ -328,8 +328,8 @@ Permissions requested: `read,activity:read_all` (this includes activities the at
 | Mechanism | File | What it does |
 |---|---|---|
 | **Webhook** | `api/webhooks/strava.js` | Strava calls it whenever a connected athlete creates, updates or deletes an activity. The server fetches that one activity, saves it, and recalculates the member's totals. Errors return a 500 so Strava retries; saving is keyed on the Strava activity id, so a retry never duplicates. |
-| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **once a day**, 03:00 IST, in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 5 members and about 45 seconds per run. When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. |
-| **Admin resync** | `POST /api/admin/strava-resync` (Admin → Members → "Resync Strava") | Clears everyone's position and starts the walk again. Safe any time; the daily job finishes what one request cannot. |
+| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **once a day**, 03:00 IST, in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 25 members and about 45 seconds per run. Only an empty page from Strava ends a member's walk (a short page used to stop it early and leave older history out). When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. |
+| **Admin resync** | `POST /api/admin/strava-resync` (Admin → Members → "Resync Strava") | Clears everyone's position and walks every connected member's full history again. The button keeps going (about 40 seconds per round) and shows progress until every member is done, usually within minutes; if Strava's rate limit is hit it says so, and pressing it again later (or the daily job) finishes the rest. |
 
 Access tokens are refreshed automatically when within 5 minutes of expiry (`api-lib/stravaAuth.js`).
 
@@ -471,16 +471,13 @@ Changes preview live and apply on save. They are stored as `text.theme.*` in `si
 ### 5.1 Getting access
 
 - **Address:** `/admin/login`. There is no visible link. In the current uncommitted code, the navbar contains an **invisible** link to `/admin/login` (a transparent dot after Signup) for logged-out visitors; the README says such a dot was removed. Either way, hiding the link is not the protection.
-- **The real protection is an email allowlist** (`admin_allowed_emails`), capped at **3 admin seats**.
-- **How someone becomes an admin:**
-  1. An existing admin adds their email in **Admin → Members** (or, for the very first admin, one SQL insert; see 8.6).
-  2. The person signs in at `/admin/login` with that email (email/password, phone/password or Google).
-  3. The server (`/api/auth/claim-bootstrap-admin`) checks the allowlist and creates their seat (`admin_profiles`).
-- **Refused three times over if not allowlisted:** the server answers 403; a database trigger (`admin_allowlist_guard`) rejects the seat even from server code; and `is_admin()`, used by every security rule, requires both a seat **and** an allowlisted email.
+- **The rule: the first 3 people to sign in at `/admin/login` are the admins.** Signing in there (Log In or Sign Up, email/password, phone/password or Google) gives the account a seat (`admin_profiles`) through `/api/auth/claim-bootstrap-admin` if one of the 3 is free.
+- **While a seat is free, anyone who signs in there takes it**, so the team should fill all 3 seats themselves.
+- **Once all 3 are taken**, everyone else is refused ("All admin seats are taken"), and `is_admin()`, used by every security rule, returns false for them.
 - **Seat cap:** a database trigger (`admin_seat_cap`) refuses a 4th seat.
-- **Signing up at `/admin/login`** only creates an ordinary member account; it grants nothing.
+- **Revoking an admin** in Admin → Members deletes their seat and frees it for the next person who signs in at `/admin/login`.
 - **One account, two roles:** an admin is a normal member with a seat. They use the same login.
-- Removing an email from the allowlist revokes access immediately; the Members screen also removes the seat so the two never disagree.
+- The email allowlist used by earlier versions (migrations 020 and 023) was removed in migration 024.
 
 ### 5.2 Every admin screen
 
@@ -492,7 +489,7 @@ The sidebar lists these screens (in this order). "Generic" screens share one lis
 |---|---|
 | Dashboard | Row counts for the main tables, with links |
 | Visitors | Traffic statistics (4.15) |
-| Members (`/admin/admins`) | Every member (name, email, phone, last login, joined), admin seats, the allowlist (add/remove), and **Resync Strava** |
+| Members (`/admin/admins`) | Every member (name, email, phone, last login, joined), the 3 admin seats (with revoke), and **Resync Strava** |
 | Messages | Contact form submissions; mark read, delete |
 | AI Assistant | Tapri settings and conversation logs |
 
@@ -638,7 +635,7 @@ Vercel's Hobby plan allows **12 functions per deployment**, and `api/` is exactl
 | `/api/auth/account?op=phone-login` | POST | Phone + password to a session | Anyone (credentials checked) |
 | `/api/auth/account?op=password-reset` | POST | `action`: `request`, `verify`, `complete` | Anyone (rate-limited) |
 | `/api/auth/account?op=welcome` | POST | Send the welcome email once | Logged-in member |
-| `/api/auth/claim-bootstrap-admin` | POST | Grant an admin seat if allowlisted | Logged-in member; refused (403) unless allowlisted |
+| `/api/auth/claim-bootstrap-admin` | POST | Give the caller a free admin seat (first 3 rule) | Logged-in member; 409 `seats_full` once 3 admins exist |
 | `/api/auth/delete-account` | POST | Delete the caller's own account | Logged-in member |
 | `/api/admin/strava-resync` | POST | Reset and re-walk Strava histories (all, or `userId`) | Admin only (checked on the server) |
 | `/api/ai/chat` | POST | Tapri replies | Anyone (member token optional) |
@@ -657,7 +654,7 @@ All tables are in Supabase Postgres. `supabase/schema.sql` creates everything ex
 | Area | Tables | Purpose |
 |---|---|---|
 | Accounts | `profiles` | One row per member: contact, registration answers, Strava tokens and sync position, onboarding/community flags, last login, welcome email stamp |
-| Admin | `admin_profiles`, `admin_allowed_emails` | Admin seats (max 3) and the allowlist |
+| Admin | `admin_profiles` | The 3 admin seats |
 | Password reset | `password_reset_codes` | Scrambled reset codes and links, attempts, expiry; server-only |
 | Site-wide | `site_settings`, `site_images`, `footer_links`, `media_pending_deletions` | Editable text and settings (key/value), image overrides, footer, photo deletion queue |
 | Home | `home_why_reasons`, `home_ways`, `home_training_formats` | Home page cards |
@@ -675,7 +672,7 @@ All tables are in Supabase Postgres. `supabase/schema.sql` creates everything ex
 | Analytics | `site_sessions`, `site_page_views` | Visitor statistics |
 | AI | `ai_conversations`, `ai_messages` | Tapri chat logs (from `ai_schema.sql`) |
 
-Database functions: `is_admin()`, `handle_new_user()` (creates a profile on signup), `sync_last_login()`, `enforce_admin_allowlist()`, `enforce_admin_seat_cap()`, `membership_purchase_defaults()` (one-month Club validity), `lab_strava_board()`, `track_site_visit()`, `site_traffic()`.
+Database functions: `is_admin()`, `handle_new_user()` (creates a profile on signup), `sync_last_login()`, `enforce_admin_seat_cap()`, `membership_purchase_defaults()` (one-month Club validity), `lab_strava_board()`, `track_site_visit()`, `site_traffic()`.
 
 Common `site_settings` key families: `text.<page>.<field>` (page wording), `text.theme.*` (appearance), `text.home.stat.*`, `text.home.citiesList`, `text.home.statesList`, `payment.upiId`, `payment.payeeName`, `ai.enabled`, `ai.name`, `ai.greeting`, `ai.systemPrompt`, `sponsor_deck_url`.
 
@@ -702,7 +699,7 @@ Both scheduled jobs **refuse to run** if `CRON_SECRET` is not set.
   - `contact_messages`: anyone can submit; admins read and manage.
   - `site_sessions` / `site_page_views`: admins read; writes only through `track_site_visit()`.
   - `password_reset_codes`: RLS on with **no** rules, so only the server can touch it.
-- **`is_admin()`** requires an admin seat **and** an allowlisted email, checked on every query.
+- **`is_admin()`** is true when the account holds one of the 3 admin seats, checked on every query.
 - **Service-role key** (bypasses RLS) exists only in server environment variables, never in `VITE_*` variables.
 - **OAuth safety:** a random `state` cookie on every flow; the Strava "connect" flow carries a signed, 10-minute ticket naming the member.
 - **The admin interface is not the boundary.** `ProtectedRoute` and `useAdminSession` only decide what to show; opening `/admin` directly or calling the API by hand is refused by the database and server either way.
@@ -811,10 +808,10 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 017 | Visitor statistics |
 | 018 | Renames "Strava Challenge" lab to "RTG Club Lab" |
 | 019 | Full Strava history sync columns; re-queues every connected member |
-| 020 | Admin email allowlist, 3-seat cap, new `is_admin()` (carries over current admins; removes seats not on the list) |
+| 020 | (Superseded by 024.) Added an admin email allowlist and the 3-seat cap |
 | 021 | `password_reset_codes` table |
 | 022 | `profiles.welcome_email_sent_at`; marks members older than a week as already welcomed |
-| 023 | Admin allowlist stored lower-cased (with a trigger) and a `profiles` row ensured for every allowlisted account, so a listed admin is never refused over capital letters or a missing profile. Includes a read-only status query. |
+| 024 | Removes the admin email allowlist (and 023's clean-up): admins are the first 3 people to sign in at `/admin/login`; `is_admin()` = holds a seat; 3-seat cap kept. Supersedes 020/023 — do not re-run 020 afterwards. |
 
 Each file starts with a header explaining what it does. Read it before running, especially those marked "deletes".
 
@@ -827,22 +824,16 @@ Each file starts with a header explaining what it does. Read it before running, 
 
 ### 8.5 Email (Brevo) and DNS
 
-1. Run migrations 021, 022 and 023.
+1. Run migrations 021, 022 and 024.
 2. In Brevo, **verify the sending domain** (`rideteagupshup.com`) by adding the **SPF and DKIM** records Brevo shows you to the domain's DNS. The exact record values come from the Brevo dashboard; they are not in the repo. Without them, mail lands in spam, which looks exactly like the feature being broken.
 3. Brevo → SMTP & API → API Keys → create a key.
 4. In Vercel set `BREVO_API_KEY`, `MAIL_FROM_EMAIL` (an address on the verified domain), `MAIL_FROM_NAME` and `OTP_SECRET`. Redeploy.
 
 **Optional, only for the Email Code login tab:** in Supabase → Authentication → Settings → SMTP, enter Brevo's SMTP details (`smtp-relay.brevo.com`, port 587, your login and SMTP key) with a sender on your domain; raise Authentication → Rate Limits → Emails (the README suggests 100/hour); add `{{ .Token }}` to the Magic Link template; then set `OTP_LOGIN_ENABLED = true`.
 
-### 8.6 First admin
+### 8.6 First admins
 
-```sql
-insert into admin_allowed_emails (email, note)
-values ('you@example.com', 'founder')
-on conflict (email) do nothing;
-```
-
-Use the exact email the person signs in with, in lower case. Then sign in once at `/admin/login`; the seat is granted automatically. After that, the allowlist is managed in Admin → Members.
+No SQL needed: after migration 024, the first 3 people to sign in at `/admin/login` become the admins. Fill all 3 seats with the team straight away, because any free seat goes to whoever signs in there next.
 
 ### 8.7 Strava set-up
 
@@ -888,9 +879,8 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 
 ### 9.2 Adding or removing an admin
 
-1. Admin → Members → add the person's email to the allowlist.
-2. They sign in at `/admin/login` with that email (if they have no account, they sign up there first, then log in).
-3. If all 3 seats are used, remove someone first. Removing an email revokes access immediately.
+1. All 3 seats taken? Revoke one in Admin → Members to free it.
+2. The new person signs in at `/admin/login` (signing up there first if they have no account). They take the free seat automatically.
 
 ### 9.3 Changing images and text in code
 
@@ -910,7 +900,7 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 | "Connect Strava" not shown | `STRAVA_CLIENT_ID`/`SECRET` not set (`/api/auth/providers` reports `strava: false`). |
 | "That Strava account is already connected to a different RTG member" | Each Strava athlete can be linked to only one RTG account. |
 | Phone login always says incorrect | `VITE_SUPABASE_ANON_KEY` not available to the server functions, or the phone saved in the profile differs (stored as `+91…`). |
-| Admin login says "not authorised" | The email is not on the allowlist (exact, lower case). |
+| Admin login says "All admin seats are taken" | 3 admins already exist. Revoke one in Admin → Members first. |
 | "All 3 admin seats are in use" | Remove an admin in Members first. |
 | "Couldn't reach the server to check admin status" | Running `npm run dev` (no `/api`); use `vercel dev` or the live site. |
 | A deploy fails after adding an API file | The 12-function Hobby limit (6.3). Fold the new endpoint into `api/auth/account.js` as another `op`. |
@@ -965,8 +955,6 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 | Editable content | README: mission/values/FAQs/weekly ride details need code changes | FAQs and weekly sessions have admin screens; mission, vision and About paragraphs are in Site Content. Core values and some About lists are still code-only. |
 | Logo file | README: `public/images/rtg-logo.svg` | The `public/images/` folder holds `rtg-logo-nav.png`, `rtg-logo-horizontal.png`, `rtg-logo-square.png`. |
 | Function file names | `schema.sql` and migration 021 comments mention `api/auth/password-reset.js` and `/api/auth/phone-login` | Code is `api-lib/passwordReset.js` and `api-lib/phoneLogin.js`, served by `api/auth/account.js`. |
-| Admin grant comment | `handle_new_user` comment in `schema.sql`: "the first 3 people to ever authenticate through /admin/login become admins" | Admin requires the allowlist (migration 020). |
-| Migration 020 header | "Deletes nothing" | Its last step deletes admin seats whose email is not on the allowlist. |
 | Domain | Emails, scripts and synthetic addresses: `rideteagupshup.com` | README Strava section and `api/.env.example`: `ridetegupshup.in`. |
 | Environment table | README lists `CLOUDINARY_*` and omits Brevo, `OTP_SECRET`, `CRON_SECRET`, `ANTHROPIC_API_KEY` | `api/.env.example` is the accurate list (plus `VITE_SUPABASE_ANON_KEY` on the server). |
 | Password length | Signup form accepts 6+ characters | Reset requires 8 to 72. |
@@ -1013,7 +1001,6 @@ Use the exact email the person signs in with, in lower case. Then sign in once a
 | **DLT** | India's mandatory registration for sending commercial SMS |
 | **Onboarding** | The "Complete Your Profile" registration form after signup |
 | **Community member** | An account that has submitted onboarding (`community_joined`) |
-| **Allowlist** | The list of emails allowed to hold admin seats (`admin_allowed_emails`) |
 | **Admin seat** | A row in `admin_profiles`; at most 3 |
 | **Supabase** | Hosted Postgres database plus login and file storage |
 | **RLS (Row Level Security)** | Database rules deciding who can read or change each row |
