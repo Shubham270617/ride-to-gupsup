@@ -12,7 +12,8 @@ export function parseCookies(header = "") {
 
 export function serializeCookie(name, value, { maxAge } = {}) {
   const parts = [`${name}=${encodeURIComponent(value)}`, "Path=/", "HttpOnly", "SameSite=Lax"];
-  if (maxAge) parts.push(`Max-Age=${maxAge}`);
+  // `!= null`, not truthiness: maxAge 0 is how a cookie is deleted.
+  if (maxAge != null) parts.push(`Max-Age=${maxAge}`);
   if (process.env.NODE_ENV === "production") parts.push("Secure");
   return parts.join("; ");
 }

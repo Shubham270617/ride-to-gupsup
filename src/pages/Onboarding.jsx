@@ -65,7 +65,7 @@ function RadioGroup({ label, options, value, onChange }) {
 // age, gender, rider/runner, ride frequency, Strava, Instagram, emergency
 // contact, medical conditions, blood group, why join), plus a photo and,
 // for Google sign-ins only, a password so they can also log in by phone
-// afterward (phone login checks a password — see /api/auth/phone-login).
+// afterward (phone login checks a password — see api-lib/phoneLogin.js).
 export default function Onboarding() {
   const navigate = useNavigate();
   // Sent here by a "Join Community" button (lib/JoinCommunityContext.jsx).

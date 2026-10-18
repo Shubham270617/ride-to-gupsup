@@ -1,104 +1,63 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Lock, Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle } from "lucide-react";
-import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ShieldCheck, CheckCircle2, AlertTriangle, LockKeyhole, ArrowRight } from "lucide-react";
+import { isSupabaseConfigured } from "../lib/supabaseClient";
+import { checkResetCredential, completePasswordReset } from "../lib/passwordReset";
 import AuthScreen from "../components/AuthScreen";
+import NewPasswordForm from "../components/NewPasswordForm";
 
-const FIELD =
-  "w-full rounded-2xl bg-white border border-rtg-border pl-11 pr-12 py-3.5 text-sm text-rtg-white placeholder:text-rtg-mist/70 transition focus:outline-none focus:border-rtg-orange-400 focus:ring-4 focus:ring-rtg-orange-400/15";
-
-const MIN_LENGTH = 8;
-
-// Where the reset email lands. Supabase puts a recovery token in the URL;
-// supabase-js picks it up on load (detectSessionInUrl defaults to true) and
-// establishes a short-lived session, which is what makes updateUser() below
-// allowed to change the password without the old one.
-//
-// The whole point of the "checking" state is that this takes a moment and
-// can fail: an expired or already-used link establishes nothing, and
-// without an explicit branch for it the member just sees a form that
-// mysteriously refuses to work.
+// Where the link in the forgot-password email lands:
+// /reset-password?token=… (sent by api-lib/passwordReset.js). The token is
+// checked first, so an expired or used link says so up front instead of
+// showing a form that fails only after the member has typed a password.
+// Setting the password signs them straight in.
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const token = params.get("token") || "";
   const [status, setStatus] = useState("checking"); // checking | ready | invalid | done
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [show, setShow] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || !token) {
       setStatus("invalid");
       return;
     }
-    let settled = false;
-
-    // Either the session is already there, or it arrives moments later as
-    // PASSWORD_RECOVERY once the token in the URL has been exchanged.
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (settled) return;
-      if (event === "PASSWORD_RECOVERY" || session) {
-        settled = true;
-        setStatus("ready");
-      }
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (settled) return;
-      if (data?.session) {
-        settled = true;
-        setStatus("ready");
-      }
-    });
-
-    // Nothing turned up — the link was expired, already used, or opened
-    // without one.
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
+    let cancelled = false;
+    checkResetCredential({ token }).then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) {
         setStatus("invalid");
+        return;
       }
-    }, 4000);
-
+      setEmail(data.email || "");
+      setStatus("ready");
+    });
     return () => {
-      clearTimeout(timer);
-      sub.subscription.unsubscribe();
+      cancelled = true;
     };
-  }, []);
+  }, [token]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (password.length < MIN_LENGTH) {
-      setError(`Use at least ${MIN_LENGTH} characters.`);
-      return;
-    }
-    if (password !== confirm) {
-      setError("Those two passwords don't match.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
-      setStatus("done");
-      // The recovery session is a real session, so there's no reason to
-      // bounce them back to a login form — they're already signed in.
-      setTimeout(() => navigate("/dashboard", { replace: true }), 1600);
-    } catch (err) {
-      setError(err.message || "Couldn't update the password. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+  const handlePassword = async (password) => {
+    const { error } = await completePasswordReset({ token }, password);
+    if (error) return error.message;
+    setStatus("done");
+    setTimeout(() => navigate("/dashboard", { replace: true }), 1800);
   };
+
+  const backLink = (
+    <Link to="/" className="text-rtg-orange-600 font-semibold hover:underline">
+      Back to the site
+    </Link>
+  );
 
   if (status === "checking") {
     return (
-      <AuthScreen eyebrow="One moment" title="Checking your link">
-        <p className="inline-flex items-center gap-2 text-sm text-rtg-mist">
-          <Loader2 size={16} className="animate-spin" /> Verifying…
-        </p>
+      <AuthScreen step={1} icon={ShieldCheck} eyebrow="One moment" title="Checking your link" subtitle="Making sure this reset link is still valid…">
+        <div className="space-y-3" aria-hidden="true">
+          <div className="h-12 rounded-2xl bg-rtg-purple-950/[0.05] animate-pulse" />
+          <div className="h-12 rounded-2xl bg-rtg-purple-950/[0.05] animate-pulse [animation-delay:150ms]" />
+        </div>
       </AuthScreen>
     );
   }
@@ -106,25 +65,18 @@ export default function ResetPassword() {
   if (status === "invalid") {
     return (
       <AuthScreen
+        icon={AlertTriangle}
         eyebrow="Link expired"
         title="This link no longer works"
-        footer={
-          <Link to="/" className="text-rtg-orange-600 font-semibold hover:underline">
-            Back to the site
-          </Link>
-        }
+        subtitle="Reset links expire after 30 minutes and work only once — and only the newest email's link is valid. Ask for a fresh one and you'll be back in a minute."
+        footer={backLink}
       >
-        <div className="flex items-start gap-3 rounded-2xl bg-rtg-orange-500/10 p-4 mb-5">
-          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-rtg-orange-600" />
-          <p className="text-sm text-rtg-white/80 leading-relaxed">
-            Reset links expire after an hour and can only be used once. Request a fresh one and it'll work.
-          </p>
-        </div>
         <Link
           to="/forgot-password"
-          className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3.5 text-sm hover:bg-rtg-orange-400 transition-colors"
+          className="btn-shine group w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3.5 text-sm shadow-[0_14px_30px_-12px_rgba(247,107,28,0.8)] hover:bg-rtg-orange-400 transition-colors"
         >
-          Request a new link
+          Send me a new code
+          <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
         </Link>
       </AuthScreen>
     );
@@ -132,68 +84,38 @@ export default function ResetPassword() {
 
   if (status === "done") {
     return (
-      <AuthScreen eyebrow="All set" title="Password updated">
-        <p className="inline-flex items-start gap-3 text-sm text-rtg-white/80 leading-relaxed">
-          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-rtg-orange-600" />
-          You're signed in with your new password. Taking you to your dashboard…
-        </p>
+      <AuthScreen
+        step={3}
+        icon={CheckCircle2}
+        eyebrow="All set"
+        title="You're back in"
+        subtitle="Your password is updated and you're signed in. Taking you to your dashboard…"
+      >
+        <div className="h-1.5 overflow-hidden rounded-full bg-rtg-purple-950/[0.07]">
+          <div className="h-full w-full origin-left animate-[rtg-grow_1.8s_ease-out_forwards] rounded-full bg-[linear-gradient(90deg,#f45b18,#ff8a3d,#b981d8)]" />
+        </div>
       </AuthScreen>
     );
   }
 
   return (
-    <AuthScreen eyebrow="Almost there" title="Set a new password">
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="relative">
-          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-          <input
-            type={show ? "text" : "password"}
-            required
-            autoFocus
-            minLength={MIN_LENGTH}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="New password"
-            className={FIELD}
-          />
-          <button
-            type="button"
-            onClick={() => setShow((v) => !v)}
-            aria-label={show ? "Hide password" : "Show password"}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-rtg-mist hover:text-rtg-orange-500 transition-colors"
-          >
-            {show ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
-
-        <div className="relative">
-          <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
-          <input
-            type={show ? "text" : "password"}
-            required
-            minLength={MIN_LENGTH}
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Confirm new password"
-            className={FIELD}
-          />
-        </div>
-
-        <p className="text-xs text-rtg-mist px-1">At least {MIN_LENGTH} characters.</p>
-
-        {error && <p className="text-xs text-rtg-orange-500">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="btn-shine w-full inline-flex items-center justify-center gap-2 rounded-full bg-rtg-orange-500 text-white font-semibold py-3.5 text-sm hover:bg-rtg-orange-400 transition-colors disabled:opacity-60"
-        >
-          {submitting && <Loader2 size={16} className="animate-spin" />}
-          Update password
-        </button>
-      </form>
+    <AuthScreen
+      step={2}
+      icon={LockKeyhole}
+      eyebrow="Link verified"
+      title="Set a new password"
+      subtitle={
+        email ? (
+          <>
+            For <strong className="text-rtg-white">{email}</strong>. Pick something you haven't used here before.
+          </>
+        ) : (
+          "Pick something you haven't used here before."
+        )
+      }
+      footer={backLink}
+    >
+      <NewPasswordForm onSubmit={handlePassword} submitLabel="Update password & sign in" />
     </AuthScreen>
   );
 }

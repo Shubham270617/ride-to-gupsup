@@ -8,12 +8,12 @@ const ERROR_MESSAGES = {
 
 // Logging in by phone number isn't a native Supabase Auth identity here
 // (that would need SMS verification, which this project skips — see
-// AuthGate.jsx). /api/auth/phone-login looks up the matching account by
+// AuthGate.jsx). /api/auth/account?op=phone-login looks up the matching account by
 // phone server-side and hands back a real session, which we then adopt
 // client-side exactly like any other login.
 export async function signInWithPhone(phone, password) {
   try {
-    const res = await fetch("/api/auth/phone-login", {
+    const res = await fetch("/api/auth/account?op=phone-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, password }),

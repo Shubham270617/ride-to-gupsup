@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
-import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
+import { getSupabaseAdmin } from "./supabaseAdmin.js";
 
-// POST /api/auth/phone-login — lets someone log in with {phone, password}.
+// POST /api/auth/account?op=phone-login — lets someone log in with {phone, password}.
 // Supabase Auth itself only recognizes email or an SMS-verified phone as a
 // login identity, and this project deliberately skips SMS (every provider
 // charges for it — see AuthGate.jsx). So instead: look up which email that

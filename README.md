@@ -78,11 +78,37 @@ your project dashboard:
 
 ### 1b. Email sending (REQUIRED for password reset and login codes)
 
+**Forgot password** no longer uses Supabase's mailer at all. The site sends
+that email itself through Brevo's API (`api-lib/passwordReset.js`, served at `/api/auth/account?op=password-reset`): one
+email with a 6-digit code *and* a reset link. The member either types the
+code on `/forgot-password` or clicks the link to `/reset-password`, sets a
+new password, and is signed straight in. Code and link expire in 30 minutes
+and work once; only the newest email's code/link is valid. To turn it on:
+
+1. Run migration `021_password_reset_codes.sql`
+2. Brevo → verify your sending domain (SPF + DKIM records in DNS)
+3. Brevo → **SMTP & API** → **API Keys** → create a key
+4. In Vercel → Settings → Environment Variables set `BREVO_API_KEY`,
+   `MAIL_FROM_EMAIL` (an address on the verified domain), `MAIL_FROM_NAME`
+   and `OTP_SECRET` (any long random string — `openssl rand -hex 32`).
+   See `api/.env.example`. Redeploy.
+
+**Welcome email**: the first time a new member is signed in (email or
+Google signup), `api-lib/welcomeEmail.js` sends one branded welcome email
+through the same Brevo setup, and stamps `profiles.welcome_email_sent_at`
+so it never goes twice. Accounts with no real mailbox (Strava logins) and
+accounts more than a week old are skipped. Run migration
+`022_welcome_email.sql` to turn it on — it also marks existing members as
+already welcomed, so nobody old gets one. Both emails pull their logo and
+photo from `public/images/email/` on the live site.
+
+The rest of this section is about the **"Email Code" login tab**, which
+still goes through Supabase's mailer:
+
 Supabase's built-in email service is capped at **2 emails per hour for the
 whole project**. It is a test facility, not something to launch on — the
-third person to reset their password in an hour simply never gets the mail,
-with no error shown. Both the forgot-password flow and the "Email Code"
-login depend on this being fixed.
+third person to use it in an hour simply never gets the mail, with no error
+shown. The "Email Code" login depends on this being fixed.
 
 The fix is a free custom SMTP provider, configured in the Supabase dashboard
 under **Authentication → Settings → SMTP**. No code changes.

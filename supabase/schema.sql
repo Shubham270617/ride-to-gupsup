@@ -33,7 +33,7 @@ alter table profiles add column if not exists sport text;
 alter table profiles add column if not exists bio text;
 
 -- Collected at signup. Contact info only, not a Supabase Auth identity:
--- logging in by phone works through /api/auth/phone-login, which looks up
+-- logging in by phone works through /api/auth/account?op=phone-login, which looks up
 -- the matching email and checks the password against that instead.
 alter table profiles add column if not exists phone text;
 
@@ -1939,4 +1939,40 @@ $$;
 
 revoke all on function site_traffic(int) from public;
 grant execute on function site_traffic(int) to authenticated;
+-- ============================================================================
+
+-- ============================================================================
+-- PART — Password-reset codes (forgot password, migration 021)
+--
+-- api-lib/passwordReset.js makes the 6-digit code and the reset link,
+-- sends them through Brevo and tracks them here — Supabase's own mailer is
+-- not used. Only HMACs are stored. Server-only: RLS on, no policies.
+-- ============================================================================
+create table if not exists password_reset_codes (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  user_id uuid references auth.users (id) on delete cascade,
+  code_hash text,
+  link_hash text,
+  attempts int not null default 0,
+  expires_at timestamptz not null,
+  consumed_at timestamptz,
+  request_ip text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists password_reset_codes_email_idx on password_reset_codes (email, created_at desc);
+create index if not exists password_reset_codes_ip_idx on password_reset_codes (request_ip, created_at desc);
+create unique index if not exists password_reset_codes_link_idx on password_reset_codes (link_hash) where link_hash is not null;
+
+alter table password_reset_codes enable row level security;
+-- ============================================================================
+
+-- ============================================================================
+-- PART — Welcome email (migration 022)
+--
+-- api-lib/welcomeEmail.js sends one welcome email through Brevo the first
+-- time a new member signs in, and stamps it here so it never goes twice.
+-- ============================================================================
+alter table profiles add column if not exists welcome_email_sent_at timestamptz;
 -- ============================================================================

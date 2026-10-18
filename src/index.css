@@ -6162,3 +6162,10 @@ html {
 @media (max-width: 639px) {
   .dash-hero-inner { flex-direction: column; align-items: flex-start; gap: 1.1rem; }
 }
+
+/* "You're back in" progress bar on /forgot-password and /reset-password —
+   fills while the page waits to send the member to their dashboard. */
+@keyframes rtg-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}

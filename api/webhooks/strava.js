@@ -20,7 +20,10 @@ export default async function handler(req, res) {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
-    if (mode === "subscribe" && token === process.env.STRAVA_WEBHOOK_VERIFY_TOKEN) {
+    // The env check matters: unset, `undefined === undefined` would pass
+    // for any request that simply leaves hub.verify_token out.
+    const expected = process.env.STRAVA_WEBHOOK_VERIFY_TOKEN;
+    if (mode === "subscribe" && expected && token === expected) {
       res.status(200).json({ "hub.challenge": challenge });
     } else {
       res.status(403).json({ error: "verification_failed" });

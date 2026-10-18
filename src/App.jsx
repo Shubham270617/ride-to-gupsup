@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import { AuthGateProvider } from "./lib/AuthGateContext";
 import { CartProvider } from "./lib/CartContext";
 import { useAppearance } from "./lib/appearance";
+import useWelcomeEmail from "./lib/useWelcomeEmail";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
@@ -78,6 +79,9 @@ export default function App() {
 
   // Applies the sitewide text size / typeface / colour an admin chose.
   useAppearance();
+
+  // Sends a brand-new member their welcome email, once (api-lib/welcomeEmail.js).
+  useWelcomeEmail();
 
   const exempt = INTRO_EXEMPT_PREFIXES.some((p) => location.pathname.startsWith(p));
 
