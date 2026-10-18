@@ -224,7 +224,7 @@ Rules built into the server:
 | Code checks allowed per email (right or wrong) | 8 (about six typos, since verify plus complete use two) |
 | Stored | Only scrambled values (HMACs keyed by `OTP_SECRET`), never the code or link itself |
 
-A request for an address with no account gets the same answer as a real one, so the form cannot be used to find out who is registered. Accounts made through Strava have a placeholder email (`strava-<id>@members.rideteagupshup.com`) and cannot reset a password.
+An address with no account gets a clear "No RTG account uses this email" error and no email is sent, so a typo is caught straight away. The per-email and per-IP rate limits still apply to these lookups. Accounts made through Strava have a placeholder email (`strava-<id>@members.rideteagupshup.com`) and cannot reset a password.
 
 ### 3.7 Welcome email
 

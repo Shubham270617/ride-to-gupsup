@@ -132,6 +132,18 @@ describe("ForgotPassword page", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Reset your password" })).toBeInTheDocument();
   });
 
+  it("says so when no account uses the email, and never shows the code step", async () => {
+    const user = userEvent.setup();
+    requestPasswordReset.mockResolvedValue({
+      error: { code: "no_account", message: "No RTG account uses this email. Check it for typos, or sign up instead." },
+    });
+    renderPage();
+    await submitEmail(user);
+    expect(await screen.findByText(/No RTG account uses this email/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Reset your password" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Enter your code" })).not.toBeInTheDocument();
+  });
+
   it("counts down before allowing a resend, then resends", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {

@@ -4,6 +4,8 @@ const GENERIC = "Something went wrong. Please try again.";
 
 const ERROR_MESSAGES = {
   invalid_email: "Enter a valid email address.",
+  no_account: "No RTG account uses this email. Check it for typos, or sign up instead.",
+  provider_account: "That account signs in with Strava or Google, so it has no password to reset. Use that button on the login panel instead.",
   too_soon: "Please wait a moment before asking for another code.",
   too_many_requests: "Too many reset requests. Please try again in an hour.",
   send_failed: "We couldn't send the email. Please try again in a few minutes.",

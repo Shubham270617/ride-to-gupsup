@@ -82,9 +82,10 @@ async function requestReset(supabaseAdmin, req, res, body) {
     return;
   }
 
-  // Rate limits. Every request writes a row — even for addresses with no
-  // account — so these answer the same way whether or not the account
-  // exists, and the form can't be used to find out.
+  // Rate limits. Every request writes a row, even for addresses with no
+  // account, so they cap lookups as well as emails sent. An unregistered
+  // address is told so plainly (404 no_account) — a deliberate choice, so
+  // a typo shows up straight away instead of as an email that never comes.
   const ip = clientIp(req);
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
@@ -142,9 +143,12 @@ async function requestReset(supabaseAdmin, req, res, body) {
   const expiresAt = new Date(Date.now() + TTL_MINUTES * 60 * 1000).toISOString();
 
   if (!userId) {
+    // Still recorded, so the per-email and per-IP limits apply to lookups
+    // of unregistered addresses too — that's what keeps "No account uses
+    // this email" from being a fast way to test which addresses exist.
     const { error: insertErr } = await supabaseAdmin.from(TABLE).insert({ email, request_ip: ip, expires_at: expiresAt });
     if (insertErr) throw insertErr;
-    res.status(200).json({ ok: true });
+    res.status(404).json({ error: email.includes(SYNTHETIC_DOMAIN) ? "provider_account" : "no_account" });
     return;
   }
 

@@ -239,11 +239,11 @@ describe("action: request", () => {
     expect(res.body).toEqual({ ok: true });
   });
 
-  it("answers ok for an unknown address without sending, but still writes a row", async () => {
+  it("answers 404 no_account for an unknown address without sending, but still writes a row", async () => {
     setupRequest({ userId: null });
     const res = await call({ action: "request", email: "nobody@example.com" });
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ ok: true });
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ error: "no_account" });
     expect(fetchMock).not.toHaveBeenCalled();
     const [insert] = db.queriesFor(TABLE, "insert");
     expect(insert.payload).toMatchObject({ email: "nobody@example.com", request_ip: "10.0.0.1" });
@@ -255,21 +255,29 @@ describe("action: request", () => {
   it("never emails a synthetic @members. address and never looks it up", async () => {
     setupRequest({ userId: "should-not-be-used" });
     const res = await call({ action: "request", email: "strava_123@members.rideteagupshup.com" });
-    expect(res.body).toEqual({ ok: true });
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ error: "provider_account" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(db.queriesFor("profiles")).toHaveLength(0);
     expect(db.queriesFor(TABLE, "insert")).toHaveLength(1);
   });
 
-  it("responds identically for known and unknown addresses", async () => {
+  it("tells known and unknown addresses apart, so a typo is caught straight away", async () => {
     setupRequest({ userId: "user-1" });
     const known = await call({ action: "request", email: EMAIL });
     db = createFakeSupabase();
     getSupabaseAdmin.mockReturnValue(db);
     setupRequest({ userId: null });
     const unknown = await call({ action: "request", email: "ghost@example.com" });
-    expect(known.statusCode).toBe(unknown.statusCode);
-    expect(known.body).toEqual(unknown.body);
+    expect(known.body).toEqual({ ok: true });
+    expect(unknown.statusCode).toBe(404);
+    expect(unknown.body).toEqual({ error: "no_account" });
+  });
+
+  it("still applies the per-email cooldown to unregistered addresses", async () => {
+    setupRequest({ userId: null, recent: [{ created_at: new Date().toISOString() }] });
+    const res = await call({ action: "request", email: "ghost@example.com" });
+    expect(res.statusCode).toBe(429);
   });
 
   it("returns 502 and retires the row when Brevo fails", async () => {

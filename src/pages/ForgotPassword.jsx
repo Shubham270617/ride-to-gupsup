@@ -156,8 +156,8 @@ export default function ForgotPassword() {
         title="Enter your code"
         subtitle={
           <>
-            If <strong className="text-rtg-white">{address}</strong> has an RTG account, it now has a 6-digit code and
-            a reset link. Type the code, or just tap the link in the email.
+            We sent a 6-digit code and a reset link to <strong className="text-rtg-white">{address}</strong>. Type the
+            code, or just tap the link in the email.
           </>
         }
         footer={backLink}
