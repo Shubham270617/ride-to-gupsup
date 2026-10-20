@@ -23,3 +23,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Private Ridge migration exports; never commit rider records or images.
+scripts/ridge/import/
+tests/fixtures/ridge/history.json
+

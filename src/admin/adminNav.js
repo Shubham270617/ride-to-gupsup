@@ -77,6 +77,7 @@ export const groups = [
     title: "RTG Lab & Ridge",
     icon: Mountain,
     links: [
+      { to: "/admin/ridge", label: "Ridge — Session control", icon: Repeat },
       { to: "/admin/lab-labs", label: "Lab — Labs", icon: Medal },
       { to: "/admin/lab-periods", label: "Lab — Reward Periods", icon: CalendarClock },
       { to: "/admin/lab-hero-tiles", label: "Lab — Hero Tiles", icon: Sparkles },
@@ -85,10 +86,6 @@ export const groups = [
       { to: "/admin/lab-sports", label: "Lab — Sports", icon: Tags },
       { to: "/admin/lab-age-categories", label: "Lab — Age Categories", icon: Tags },
       { to: "/admin/lab-activities", label: "Lab — Manual Activities", icon: Flame },
-      { to: "/admin/ridge-sessions", label: "Ridge — Sessions", icon: CalendarDays },
-      { to: "/admin/ridge-results", label: "Ridge — Results", icon: Repeat },
-      { to: "/admin/ridge-awards", label: "Ridge — Awards", icon: Trophy },
-      { to: "/admin/ridge-spotlight", label: "Ridge — Spotlight", icon: Trophy },
     ],
   },
   {
@@ -166,4 +163,5 @@ export function activeLink(pathname) {
     .filter((l) => (l.end ? pathname === l.to : pathname === l.to || pathname.startsWith(`${l.to}/`)))
     .sort((a, b) => b.to.length - a.to.length)[0];
 }
+
 

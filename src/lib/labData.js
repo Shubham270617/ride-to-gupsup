@@ -374,47 +374,32 @@ export const riderKey = (name) => String(name || "").trim().toLocaleLowerCase();
 // Sessions, results, awards and Spotlight winners (Admin -> Ridge Repeats —
 // …), read together and re-read on demand. `checkedAt` is when they were
 // last read.
-export function useRidgeFeed() {
-  const [state, setState] = useState({ sessions: [], results: [], awards: [], spotlights: [], loading: true, error: "", checkedAt: null });
+export function useRidgeFeed(enabled = true) {
+  const empty = { sessions: [], results: [], awards: [], spotlights: [] };
+  const [state, setState] = useState({ ...empty, loading: false, error: "", checkedAt: null });
   const [tick, setTick] = useState(0);
-
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setState((s) => ({ ...s, loading: false }));
+    if (!enabled || !isSupabaseConfigured) {
+      setState({ ...empty, loading: false, error: "", checkedAt: null });
       return;
     }
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
-    const read = (table, order) => supabase.from(table).select("*").eq("published", true).order(order, { ascending: true });
-    Promise.all([
-      read("ridge_sessions", "session_date"),
-      read("ridge_results", "sort_order"),
-      read("ridge_awards", "sort_order"),
-      read("ridge_spotlights", "sort_order"),
-    ]).then(([sessions, results, awards, spotlights]) => {
+    const read = async () => {
+      const { data, error } = await supabase.from("ridge_publication").select("feed,updated_at").eq("singleton", true).maybeSingle();
       if (cancelled) return;
-      const error = [sessions, results, awards, spotlights].find((r) => r.error)?.error?.message || "";
-      setState({
-        sessions: sessions.data || [],
-        results: results.data || [],
-        awards: awards.data || [],
-        spotlights: spotlights.data || [],
-        loading: false,
-        error,
-        checkedAt: new Date(),
-      });
-    });
-    return () => {
-      cancelled = true;
+      setState({ ...(data?.feed || empty), loading: false, error: error || !data ? "Ridge results are not available yet. Please try again shortly." : "", checkedAt: data ? new Date(data.updated_at) : null });
     };
-  }, [tick]);
-
-  const reload = useCallback(() => setTick((n) => n + 1), []);
+    setState(s => ({ ...s, loading: true }));
+    read().catch(() => { if (!cancelled) setState(s => ({ ...s, loading: false, error: "Could not connect to Ridge results. Try refreshing." })); });
+    const interval = setInterval(() => read().catch(() => {}), 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [tick, enabled]);
+  const reload = useCallback(() => setTick(n => n + 1), []);
   return { ...state, reload };
 }
 
 // Turns the rows into the board's working shape. For each rider in each
-// session, from the loop times alone:
+// session, retaining published historical overrides when present:
 //   lapPoints[i]  = (previous loop − this loop) ÷ previous loop × 100   (i ≥ 1)
 //   progress      = the sum of those, when 2..maxLoops loops were ridden
 //   ridgePoints   = progress + 1 per completed loop + Spotlight bonus + correction
@@ -428,9 +413,10 @@ export function buildRidgeFeed({ sessions, results, awards, spotlights }, maxLoo
       .filter(Boolean);
     const secs = times.map(clockToSeconds);
     const laps = times.length;
-    const lapPoints = secs.map((s, i) => (i === 0 || s === null || secs[i - 1] === null ? null : round2(((secs[i - 1] - s) / secs[i - 1]) * 100)));
+    const computedPoints = secs.map((s, i) => (i === 0 || s === null || secs[i - 1] === null ? null : round2(((secs[i - 1] - s) / secs[i - 1]) * 100)));
+    const lapPoints = Array.isArray(r.lap_points) ? r.lap_points : computedPoints;
     const valid = laps >= 2 && laps <= maxLoops && secs.every((s) => s !== null);
-    const progress = valid ? round2(lapPoints.slice(1).reduce((sum, p) => sum + p, 0)) : null;
+    const progress = valid ? (Number.isFinite(r.progress_points) ? r.progress_points : round2(lapPoints.slice(1).reduce((sum, p) => sum + p, 0))) : null;
     const spotlight = Number(r.spotlight_points) || 0;
     const adjustment = Number(r.adjustment_points) || 0;
     const row = {
@@ -461,6 +447,7 @@ export function buildRidgeFeed({ sessions, results, awards, spotlights }, maxLoo
       slug: s.slug,
       name: s.name,
       date: s.session_date || null,
+      awardDefinitions: s.award_definitions || [],
       stamp: s.session_date ? Date.parse(`${s.session_date}T00:00:00Z`) : 0,
       riders: (bySession.get(s.slug) || []).map((row) => ({ ...row, date: s.session_date || null })),
     }))
@@ -553,9 +540,11 @@ export function trendPoints(feed, overall) {
 
 // The Spotlight awards of one session: every award, with its winners.
 export function sessionAwards(feed, sessionSlug) {
+  const definitions = feed.sessions.find(s => s.slug === sessionSlug)?.awardDefinitions || [];
   return feed.awards.map((award) => {
+    const definition = definitions.find(a => a.id === award.slug);
     const rows = feed.winners.filter((w) => w.session === sessionSlug && w.award === award.slug);
-    return { ...award, winners: rows.map((w) => w.name), metric: rows[0]?.metric || "" };
+    return { ...award, description: definition?.description || award.description, winners: rows.map((w) => w.name), metric: rows[0]?.metric || definition?.metric || "" };
   });
 }
 
@@ -669,3 +658,4 @@ export function useSplitPlans(plans) {
     [plans]
   );
 }
+

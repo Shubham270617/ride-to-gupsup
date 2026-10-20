@@ -50,6 +50,7 @@ import { resources } from "./admin/resourceConfig";
 const ProtectedRoute = lazy(() => import("./admin/ProtectedRoute"));
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const AdminLogin = lazy(() => import("./admin/pages/AdminLogin"));
+const RidgeAdmin = lazy(() => import("./admin/pages/RidgeAdmin"));
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const ResourceAdminPage = lazy(() => import("./admin/pages/ResourceAdminPage"));
 const OrdersAdmin = lazy(() => import("./admin/pages/OrdersAdmin"));
@@ -140,10 +141,11 @@ export default function App() {
           <Route path="lab-sports" element={<ResourceAdminPage resource={resources.labSports} />} />
           <Route path="lab-age-categories" element={<ResourceAdminPage resource={resources.labAgeGroups} />} />
           <Route path="lab-activities" element={<ResourceAdminPage resource={resources.labActivities} />} />
-          <Route path="ridge-sessions" element={<ResourceAdminPage resource={resources.ridgeSessions} />} />
-          <Route path="ridge-results" element={<ResourceAdminPage resource={resources.ridgeResults} />} />
-          <Route path="ridge-awards" element={<ResourceAdminPage resource={resources.ridgeAwards} />} />
-          <Route path="ridge-spotlight" element={<ResourceAdminPage resource={resources.ridgeSpotlights} />} />
+          <Route path="ridge" element={<RidgeAdmin />} />
+          <Route path="ridge-sessions" element={<RidgeAdmin />} />
+          <Route path="ridge-results" element={<RidgeAdmin />} />
+          <Route path="ridge-awards" element={<RidgeAdmin />} />
+          <Route path="ridge-spotlight" element={<RidgeAdmin />} />
           <Route path="membership-plans" element={<ResourceAdminPage resource={resources.membershipPlans} />} />
           <Route path="membership-perks" element={<ResourceAdminPage resource={resources.membershipPerks} />} />
           <Route path="membership-guides" element={<ResourceAdminPage resource={resources.membershipGuides} />} />
@@ -223,3 +225,4 @@ export default function App() {
     </CartProvider>
   );
 }
+
