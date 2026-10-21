@@ -338,8 +338,8 @@ export function applyRidgeCommand(
             !Number.isFinite(start) ||
             !Number.isFinite(end) ||
             end <= start ||
-            istDate(start) !== session.date ||
-            istDate(end) !== session.date
+            (session.mode !== "testing" && (istDate(start) !== session.date ||
+            istDate(end) !== session.date))
           )
             throw new Error(
               "Start and finish must be ordered and on the session date in IST.",
@@ -369,7 +369,7 @@ export function applyRidgeCommand(
         throw new Error(
           "The device clock differs from server time. Correct the device clock before timing.",
         );
-      if (istDate(at) !== session.date)
+      if (session.mode !== "testing" && istDate(at) !== session.date)
         throw new Error(`This session is dated ${session.date}; today in India is ${istDate(now)}. Select today's session or wait until the session date. Attendance is saved.`);
       if (type === "group_start") {
         if (!session.entries.length) throw new Error("Mark attendance first.");

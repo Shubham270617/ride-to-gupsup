@@ -25,7 +25,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const name = id => riders.find(r => r.id === id)?.name || 'Unknown rider';
   const selected = selection || attending.map(e => e.riderId);
   const blocked = !previewActions || busy || pending || !session || session.finished || session.mode === 'archived';
-  const wrongDate = connected && session && session.date !== istDate(now);
+  const wrongDate = connected && session && session.mode !== 'testing' && session.date !== istDate(now);
   const timingBlocked = blocked || wrongDate;
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   return <main className="vt-panel">
