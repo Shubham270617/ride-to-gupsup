@@ -14,12 +14,16 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
   const [serverRevision, setServerRevision] = useState(null);
   const [busy, setBusy] = useState(false);
   const [serverDirty, setServerDirty] = useState(true);
+  const [confirmLoad, setConfirmLoad] = useState(false);
+  const protectedWork = useRef(false);
+  const inFlight = useRef(null);
   const generation = useRef(0);
   const fileInput = useRef(null);
   useEffect(() => {
-    generation.current += 1; setServerRevision(null); setServerDirty(true); setBusy(false);
+    generation.current += 1; inFlight.current = null; protectedWork.current = false; setConfirmLoad(false); setServerRevision(null); setServerDirty(true); setBusy(false);
     try {
       const saved = loadLocalDraft(window.localStorage, pageKey);
+      protectedWork.current = Boolean(saved);
       const next = saved || validateLayout(initialDocument || createLayout(pageKey));
       setDocument(next); select(next.sections[0].id); setPast([]); setError('');
       setStatus(saved ? 'Loaded browser-local draft' : 'Unsaved local draft');
@@ -27,33 +31,42 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
     return () => { generation.current += 1; };
   }, [pageKey, initialDocument]);
   useEffect(() => {
-    const warn = event => { if (status === 'Unsaved local draft') { event.preventDefault(); event.returnValue = ''; } };
+    const warn = event => { if (protectedWork.current) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn);
-  }, [status]);
+  }, []);
   const selected = document.sections.find(s => s.id === selectedId) || document.sections[0];
   const style = effectiveStyle(selected, device);
   const change = next => {
-    try { const valid = validateLayout(next); setPast(items => [...items.slice(-24), cloneLayout(document)]); setDocument(valid); setServerDirty(true); setStatus('Unsaved local draft'); setError(''); }
+    try { const valid = validateLayout(next); protectedWork.current = true; setPast(items => [...items.slice(-24), cloneLayout(document)]); setDocument(valid); setServerDirty(true); setStatus('Unsaved local draft'); setError(''); }
     catch (err) { setError(err.message); }
   };
   const setStyle = (key, value) => { try { change(updateSectionStyle(document, selected.id, device, key, value)); } catch (err) { setError(err.message); } };
   const editContent = (key, value) => { const next = cloneLayout(document); next.sections.find(s => s.id === selected.id).content[key] = value; change(next); };
   const resetMobile = () => { const next = cloneLayout(document); next.sections.find(s => s.id === selected.id).mobile = {}; change(next); };
-  const save = () => { try { saveLocalDraft(window.localStorage, pageKey, document); setStatus('Saved in this browser only'); setError(''); } catch (err) { setError(`Draft was not saved: ${err.message}`); } };
-  const serverAction = async action => {
-    if (!store || busy) return;
-    if (action === 'load' && status === 'Unsaved local draft' && !window.confirm('Replace this unsaved draft with the shared draft?')) return;
+  const save = () => { try { saveLocalDraft(window.localStorage, pageKey, document); protectedWork.current = true; setStatus('Saved in this browser only'); setError(''); } catch (err) { setError(`Draft was not saved: ${err.message}`); } };
+  const serverAction = async (action, confirmed = false) => {
+    if (!store || inFlight.current) return;
+    if (action === 'load' && protectedWork.current && !confirmed) { setConfirmLoad(true); setError(''); return; }
+    setConfirmLoad(false);
+    const request = {};
+    inFlight.current = request;
     const current = generation.current;
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setStatus(action === 'load' ? 'Loading shared draft…' : action === 'save' ? 'Saving shared draft…' : 'Publishing saved revision…');
     try {
       const result = action === 'load' ? await store.loadDraft(pageKey) : action === 'save' ? await store.saveDraft(pageKey, document, serverRevision) : await store.publish(pageKey, serverRevision);
       if (current !== generation.current) return;
       if (action === 'load') {
-        if (result) { const next = validateLayout(result.document); setDocument(next); select(next.sections[0].id); setPast([]); }
-        setServerRevision(result?.revision || 0); setServerDirty(!result); setStatus(result ? 'Loaded shared draft (not published)' : 'No shared draft yet');
-      } else { setServerRevision(result.revision); setServerDirty(false); setStatus(action === 'save' ? 'Saved shared draft (not published)' : 'Published saved revision'); }
-    } catch (err) { if (current === generation.current) setError(err.message); }
-    finally { if (current === generation.current) setBusy(false); }
+        if (result) { const next = validateLayout(result.document); setDocument(next); select(next.sections[0].id); setPast([]); protectedWork.current = false; }
+        setServerRevision(result?.revision || 0); setServerDirty(!result); setStatus(result ? 'Loaded shared draft (not published)' : 'No shared draft yet. Use Save shared draft to create the first draft; this does not publish.');
+      } else { protectedWork.current = false; setServerRevision(result.revision); setServerDirty(false); setStatus(action === 'save' ? 'Saved shared draft (not published)' : 'Published saved revision'); }
+    } catch (err) {
+      if (current === generation.current) {
+        if (err.uncertain) { setServerRevision(null); setServerDirty(true); protectedWork.current = true; }
+        setStatus(action === 'load' ? 'Shared draft was not loaded; current draft kept.' : 'Shared operation could not be confirmed; current draft kept.');
+        setError(err.message);
+      }
+    }
+    finally { if (current === generation.current && inFlight.current === request) { inFlight.current = null; setBusy(false); } }
   };
   const exportJSON = () => {
     const url = URL.createObjectURL(new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' }));
@@ -69,14 +82,19 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
   return <div>
     <AdminPageHeader title="Layout Studio" description="Independent desktop and mobile page styling, based on your RTG prototype." />
     <p className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950">{store ? 'Shared editing connection configured. Load the shared draft first; Save shared draft does not publish. Publish releases only the saved revision.' : 'Local draft workspace only. Saving here does not update the website. Shared storage, admin permissions and publishing must be connected and verified before release.'}</p>
+    <p role="status" aria-live="polite" className="text-sm mb-4">{status} · {document.name}</p>{error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
+    {confirmLoad && <div role="group" aria-label="Replace current draft" className="rounded-xl border border-amber-400 p-4">
+      <p>Loading a shared draft may replace your current edits or browser-local work. Export or save locally first if you want to keep a copy.</p>
+      <button type="button" onClick={() => serverAction('load', true)}>Replace with shared draft</button>
+      <button type="button" onClick={() => { setConfirmLoad(false); setStatus('Shared draft load cancelled; current draft kept.'); }}>Keep current draft</button>
+    </div>}
     <fieldset disabled={busy}><div className="rtg-layout-toolbar">
       <button type="button" onClick={save}>Save local draft</button><button type="button" onClick={exportJSON}>Export JSON</button>
       <button type="button" onClick={() => fileInput.current?.click()}>Import JSON</button><input ref={fileInput} type="file" accept="application/json,.json" onChange={importJSON} hidden aria-label="Import layout file" />
-      <button type="button" disabled={!past.length} onClick={() => { const next = past[past.length - 1]; setPast(past.slice(0, -1)); setDocument(next); select(next.sections[0].id); setServerDirty(true); setStatus('Unsaved local draft'); }}>Undo</button>
+      <button type="button" disabled={!past.length} onClick={() => { const next = past[past.length - 1]; setPast(past.slice(0, -1)); setDocument(next); select(next.sections[0].id); protectedWork.current = true; setServerDirty(true); setStatus('Unsaved local draft'); }}>Undo</button>
       <button type="button" aria-pressed={device === 'desktop'} onClick={() => setDevice('desktop')}>Desktop</button><button type="button" aria-pressed={device === 'mobile'} onClick={() => setDevice('mobile')}>Mobile</button>
       {store && <><button type="button" onClick={() => serverAction('load')}>Load shared draft</button><button type="button" disabled={serverRevision === null} onClick={() => serverAction('save')}>Save shared draft</button><button type="button" disabled={serverRevision === null || serverRevision === 0 || serverDirty} onClick={() => serverAction('publish')}>Publish saved revision</button></>}
     </div>
-    <p role="status" className="text-sm mb-4">{status} · {document.name}</p>{error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
     <div className="rtg-layout-editor-grid">
       <div className="rtg-layout-controls glass rounded-xl p-4">
         <label>Page name<input maxLength={80} value={document.name} onChange={e => change({ ...document, name: e.target.value })} /></label>

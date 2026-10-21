@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LayoutStudioAdmin from '../../../src/admin/pages/LayoutStudioAdmin';
 import LayoutRenderer from '../../../src/components/layout/LayoutRenderer';
-import { createLayout, isSafeLayoutAction } from '../../../src/lib/layout/model';
+import { createLayout, isSafeLayoutAction, saveLocalDraft } from '../../../src/lib/layout/model';
 vi.mock('../../../src/admin/components/AdminPageHeader', () => ({ default: ({ title }) => <h1>{title}</h1> }));
 describe('layout editor', () => {
   it('labels browser-only saves and preserves independent mobile styles', () => {
@@ -32,7 +32,6 @@ describe('layout editor', () => {
     rerender(<LayoutRenderer document={doc} device="mobile" />); expect(container.querySelector('section')).toBeNull();
   });
   it('separates shared draft save from publish and refuses publish after further edits', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const doc = createLayout('Shared page');
     const store = { loadDraft: vi.fn().mockResolvedValue({ document: doc, revision: 3 }), saveDraft: vi.fn().mockResolvedValue({ revision: 4 }), publish: vi.fn().mockResolvedValue({ revision: 4 }) };
     render(<LayoutStudioAdmin store={store} />);
@@ -51,7 +50,6 @@ describe('layout editor', () => {
     expect(screen.getByRole('button', { name: 'Publish saved revision' })).toBeDisabled();
   });
   it('preserves the draft and reports failed server save honestly', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const store = { loadDraft: vi.fn().mockResolvedValue(null), saveDraft: vi.fn().mockRejectedValue(new Error('Store unavailable')) };
     render(<LayoutStudioAdmin store={store} />);
     fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
@@ -66,6 +64,90 @@ describe('layout editor', () => {
   it('rejects protocol-relative, backslash-normalized and control-character action URLs', () => {
     expect(isSafeLayoutAction('/community/delhi')).toBe(true);
     for (const href of ['//evil.example', '/\\evil.example', '/\nevil.example', 'javascript:alert(1)', 'https://evil.example']) expect(isSafeLayoutAction(href)).toBe(false);
+  });
+
+  it('loads a pristine starter immediately with visible progress and prevents duplicate requests', async () => {
+    const confirm = vi.spyOn(window, 'confirm');
+    let resolve;
+    const store = { loadDraft: vi.fn(() => new Promise(done => { resolve = done; })) };
+    render(<LayoutStudioAdmin store={store} />);
+    const load = screen.getByRole('button', { name: 'Load shared draft' });
+    act(() => { load.click(); load.click(); });
+    expect(store.loadDraft).toHaveBeenCalledTimes(1);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading shared draft');
+    expect(screen.getByRole('status').closest('fieldset')).toBeNull();
+    await act(async () => resolve(null));
+    expect(screen.getByRole('status')).toHaveTextContent('Use Save shared draft to create the first draft');
+    expect(screen.getByRole('button', { name: 'Save shared draft' })).toBeEnabled();
+  });
+
+  it('explicitly confirms replacement of edits and preserves them on cancellation', async () => {
+    const doc = createLayout(); doc.name = 'Shared replacement';
+    const store = { loadDraft: vi.fn().mockResolvedValue({ document: doc, revision: 1 }) };
+    render(<LayoutStudioAdmin store={store} />);
+    fireEvent.change(screen.getByLabelText('Page name'), { target: { value: 'My local edits' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    expect(store.loadDraft).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep current draft' }));
+    expect(screen.getByRole('status')).toHaveTextContent('cancelled');
+    expect(screen.getByLabelText('Page name')).toHaveValue('My local edits');
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Replace with shared draft' }));
+    await waitFor(() => expect(screen.getByLabelText('Page name')).toHaveValue('Shared replacement'));
+    expect(store.loadDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it('protects a restored browser-local draft even without new edits', () => {
+    const local = createLayout(); local.name = 'Restored work';
+    saveLocalDraft(window.localStorage, 'ridge', local);
+    const store = { loadDraft: vi.fn() };
+    render(<LayoutStudioAdmin store={store} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    expect(screen.getByRole('group', { name: 'Replace current draft' })).toBeInTheDocument();
+    expect(store.loadDraft).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Page name')).toHaveValue('Restored work');
+  });
+
+  it('ignores late page responses and keeps the new page request in flight', async () => {
+    const resolves = [];
+    const store = { loadDraft: vi.fn(() => new Promise(resolve => resolves.push(resolve))) };
+    const { rerender } = render(<LayoutStudioAdmin pageKey="ridge" store={store} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    rerender(<LayoutStudioAdmin pageKey="communities" store={store} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    const stale = createLayout(); stale.name = 'Old page';
+    await act(async () => resolves[0]({ document: stale, revision: 5 }));
+    expect(screen.getByLabelText('Page name')).not.toHaveValue('Old page');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading shared draft');
+    expect(screen.getByRole('button', { name: 'Load shared draft' })).toBeDisabled();
+    await act(async () => resolves[1](null));
+    expect(screen.getByRole('status')).toHaveTextContent('No shared draft yet');
+  });
+
+  it('reports load failures visibly and permits an explicit retry', async () => {
+    const store = { loadDraft: vi.fn().mockRejectedValueOnce(new Error('Request timed out')).mockResolvedValueOnce(null) };
+    render(<LayoutStudioAdmin store={store} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Request timed out'));
+    expect(screen.getByRole('status')).toHaveTextContent('current draft kept');
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('No shared draft yet'));
+    expect(store.loadDraft).toHaveBeenCalledTimes(2);
+  });
+
+  it('requires reload after an uncertain mutation while preserving edited content', async () => {
+    const error = Object.assign(new Error('Outcome unknown; reload before retry'), { uncertain: true });
+    const store = { loadDraft: vi.fn().mockResolvedValue(null), saveDraft: vi.fn().mockRejectedValue(error) };
+    render(<LayoutStudioAdmin store={store} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save shared draft' })).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('Page name'), { target: { value: 'Keep my content' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save shared draft' }));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Outcome unknown'));
+    expect(screen.getByLabelText('Page name')).toHaveValue('Keep my content');
+    expect(screen.getByRole('button', { name: 'Save shared draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Publish saved revision' })).toBeDisabled();
   });
 
 });
