@@ -48,7 +48,7 @@ export default function MasonryGallery({ items, onSelect }) {
                 bit more depth on top of it. */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent group-hover:from-black/70 transition-colors" />
             {label && (
-              <span className="absolute left-3 bottom-2.5 text-white text-[10px] font-bold uppercase tracking-wide drop-shadow">
+              <span className="absolute left-3 bottom-2.5 text-white text-[0.625rem] font-bold uppercase tracking-wide drop-shadow">
                 {label}
               </span>
             )}

@@ -79,7 +79,7 @@ export default function WeeklyRides() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-rtg-orange-400">{s.day}</span>
                   {s.difficulty && (
-                    <span className="text-[10px] uppercase tracking-wide bg-white/5 px-2 py-0.5 rounded-full text-rtg-mist">
+                    <span className="text-[0.625rem] uppercase tracking-wide bg-white/5 px-2 py-0.5 rounded-full text-rtg-mist">
                       {s.difficulty}
                     </span>
                   )}

@@ -227,7 +227,7 @@ function CartButton({ className = "" }) {
           rounded-full
           bg-rtg-orange-500
           text-white
-          text-[9px]
+          text-[0.5625rem]
           font-bold
           flex
           items-center
@@ -406,7 +406,7 @@ export default function Navbar() {
                   px-3
                   py-2
                   rounded-full
-                  text-[10.5px]
+                  text-[0.6563rem]
                   font-bold
                   uppercase
                   tracking-[0.2em]
@@ -464,7 +464,7 @@ export default function Navbar() {
                   border
                   border-rtg-purple-600/15
                   bg-white
-                  text-[10px]
+                  text-[0.625rem]
                   font-extrabold
                   uppercase
                   tracking-[0.1em]
@@ -489,7 +489,7 @@ export default function Navbar() {
                   !h-[34px]
                   !px-4
                   !py-0
-                  !text-[10px]
+                  !text-[0.625rem]
                   !font-extrabold
                   !tracking-[0.1em]
                 "

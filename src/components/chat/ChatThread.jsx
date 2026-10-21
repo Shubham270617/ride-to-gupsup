@@ -376,7 +376,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                     {m.startsDay && (
                       <div className="my-5 flex items-center gap-3 first:mt-0" aria-hidden="true">
                         <span className="h-px flex-1 bg-rtg-border" />
-                        <span className="rounded-full border border-rtg-border bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-rtg-mist shadow-sm">
+                        <span className="rounded-full border border-rtg-border bg-white px-3 py-1 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-rtg-mist shadow-sm">
                           {dayLabel(m.created_at)}
                         </span>
                         <span className="h-px flex-1 bg-rtg-border" />
@@ -398,7 +398,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                             <button type="button" onClick={() => onOpenPerson?.(author)} className="min-w-0 hover:underline" title={`Message ${person?.full_name || "this member"} privately`}>
                               <ChatName person={person} />
                             </button>
-                            {muted.has(author) && <span className="text-[10px] font-semibold text-rtg-mist">(muted)</span>}
+                            {muted.has(author) && <span className="text-[0.625rem] font-semibold text-rtg-mist">(muted)</span>}
                           </div>
                         )}
                         <motion.button
@@ -419,7 +419,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                           {removed ? "Message removed" : m.body}
                         </motion.button>
                         {m.endsGroup && (
-                          <span className={`mt-1 inline-flex items-center gap-1 px-1 text-[10px] text-rtg-mist ${mine ? "flex-row-reverse" : ""}`}>
+                          <span className={`mt-1 inline-flex items-center gap-1 px-1 text-[0.625rem] text-rtg-mist ${mine ? "flex-row-reverse" : ""}`}>
                             <span title={new Date(m.created_at).toLocaleString("en-IN")}>{timeOf(m.created_at)}</span>
                             {!isRoom && mine && (
                               <span
@@ -438,7 +438,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                               <button
                                 type="button"
                                 onClick={() => removeMessage(m)}
-                                className="inline-flex items-center gap-1 rounded-full border border-rtg-border bg-white px-2.5 py-1 text-[11px] font-semibold text-rtg-mist hover:text-red-600"
+                                className="inline-flex items-center gap-1 rounded-full border border-rtg-border bg-white px-2.5 py-1 text-[0.6875rem] font-semibold text-rtg-mist hover:text-red-600"
                               >
                                 <Trash2 size={12} /> Remove
                               </button>
@@ -447,7 +447,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                               <button
                                 type="button"
                                 onClick={() => toggleMute(author)}
-                                className="inline-flex items-center gap-1 rounded-full border border-rtg-border bg-white px-2.5 py-1 text-[11px] font-semibold text-rtg-mist hover:text-rtg-orange-600"
+                                className="inline-flex items-center gap-1 rounded-full border border-rtg-border bg-white px-2.5 py-1 text-[0.6875rem] font-semibold text-rtg-mist hover:text-rtg-orange-600"
                               >
                                 {muted.has(author) ? <Volume2 size={12} /> : <VolumeX size={12} />}
                                 {muted.has(author) ? "Unmute" : "Mute"}
@@ -478,7 +478,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                     <div className="inline-flex rounded-3xl rounded-bl-md border border-rtg-border bg-white px-4 py-3 shadow-[0_8px_20px_-16px_rgba(53,36,111,0.5)]">
                       <TypingDots />
                     </div>
-                    <p className="mt-1 px-1 text-[10px] text-rtg-mist">{typingLabel(typingNames)}</p>
+                    <p className="mt-1 px-1 text-[0.625rem] text-rtg-mist">{typingLabel(typingNames)}</p>
                   </div>
                 </motion.div>
               )}
@@ -559,7 +559,7 @@ export default function ChatThread({ mode, otherId, onBack, onOpenPerson }) {
                 {sending ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
               </button>
             </div>
-            <p className="mt-1.5 px-2 text-[10px] text-rtg-mist">
+            <p className="mt-1.5 px-2 text-[0.625rem] text-rtg-mist">
               Enter to send · Shift+Enter for a new line{draft.length > MAX_MESSAGE_LENGTH - 100 ? ` · ${MAX_MESSAGE_LENGTH - draft.length} left` : ""}
             </p>
           </>

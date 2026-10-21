@@ -75,7 +75,7 @@ function AlreadyJoined({ open, copy, onClose }) {
             <button type="button" onClick={onClose} aria-label={copy.closeLabel} className="absolute top-4 right-4 text-rtg-mist hover:text-rtg-orange-500 transition-colors">
               <X size={20} />
             </button>
-            <span className="inline-block mb-3 text-[10px] font-bold tracking-[0.2em] uppercase text-rtg-orange-500">{copy.joinedKicker}</span>
+            <span className="inline-block mb-3 text-[0.625rem] font-bold tracking-[0.2em] uppercase text-rtg-orange-500">{copy.joinedKicker}</span>
             <h2 id="rtg-joined-title" className="font-display text-3xl md:text-4xl leading-[0.95] text-rtg-purple-600">
               {copy.joinedTitle}
             </h2>
@@ -85,7 +85,7 @@ function AlreadyJoined({ open, copy, onClose }) {
                 <SmartLink
                   key={o.label}
                   to={o.to}
-                  className={`flex items-center justify-center min-h-12 px-5 rounded-full text-[11px] font-bold tracking-[0.12em] uppercase transition-all duration-300 hover:-translate-y-0.5 ${
+                  className={`flex items-center justify-center min-h-12 px-5 rounded-full text-[0.6875rem] font-bold tracking-[0.12em] uppercase transition-all duration-300 hover:-translate-y-0.5 ${
                     o.primary
                       ? "btn-shine text-white bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] shadow-[0_14px_28px_rgba(247,107,28,0.22)]"
                       : "border border-rtg-border text-rtg-purple-600 hover:border-rtg-orange-400"

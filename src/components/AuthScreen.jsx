@@ -76,7 +76,7 @@ function StepDots({ step }) {
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
-          <p className={`mt-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${step >= i ? "text-rtg-orange-600" : "text-rtg-mist/70"}`}>
+          <p className={`mt-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.12em] ${step >= i ? "text-rtg-orange-600" : "text-rtg-mist/70"}`}>
             {label}
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function AuthScreen({ eyebrow, title, subtitle, icon: HeaderIcon,
         </Link>
 
         <div>
-          <p className="mb-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">
+          <p className="mb-4 inline-flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">
             <ShieldCheck size={14} /> Account recovery
           </p>
           <h2 className="font-display text-6xl xl:text-7xl leading-[0.9]">
@@ -169,7 +169,7 @@ export default function AuthScreen({ eyebrow, title, subtitle, icon: HeaderIcon,
                 </span>
               )}
               {eyebrow && (
-                <p className="mb-2 inline-flex items-center rounded-full bg-rtg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-rtg-orange-600">
+                <p className="mb-2 inline-flex items-center rounded-full bg-rtg-orange-500/10 px-3 py-1 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-rtg-orange-600">
                   {eyebrow}
                 </p>
               )}

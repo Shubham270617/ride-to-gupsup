@@ -71,7 +71,7 @@ const SCROLL_SPEED = 70;
 function ReasonCard({ reason, number }) {
   return (
     <article className="rtg-why-card shrink-0">
-      <span className="absolute top-[18px] right-[22px] text-[9px] font-bold tracking-[0.16em] text-[#a79eb6]">{number}</span>
+      <span className="absolute top-[18px] right-[22px] text-[0.5625rem] font-bold tracking-[0.16em] text-[#a79eb6]">{number}</span>
       <div className="grid justify-items-center gap-2 text-center sm:grid-cols-[58px_minmax(0,1fr)] sm:justify-items-stretch sm:gap-[15px] sm:items-start sm:text-left">
         <div className="rtg-why-icon" aria-hidden="true">
           <svg viewBox="0 0 64 48" className="w-[34px] h-[34px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,12 +80,12 @@ function ReasonCard({ reason, number }) {
         </div>
         <div className="min-w-0">
           {reason.pill && (
-            <span className="mx-auto mb-[7px] flex w-fit items-center min-h-[22px] px-2.5 rounded-full text-[8.5px] sm:text-[10px] font-bold tracking-[0.12em] uppercase text-[#7f6c9d] bg-gradient-to-r from-[rgba(255,126,36,0.14)] to-[rgba(97,96,255,0.1)]">
+            <span className="mx-auto mb-[7px] flex w-fit items-center min-h-[22px] px-2.5 rounded-full text-[0.5313rem] sm:text-[0.625rem] font-bold tracking-[0.12em] uppercase text-[#7f6c9d] bg-gradient-to-r from-[rgba(255,126,36,0.14)] to-[rgba(97,96,255,0.1)]">
               {reason.pill}
             </span>
           )}
-          <h3 className="font-display text-[22px] sm:text-[32px] leading-[0.95] tracking-[0.015em] text-[#312b39] mb-[7px]">{reason.title}</h3>
-          <p className="text-[11.5px] sm:text-[13px] leading-[1.52] text-[#756e7b]">{reason.desc}</p>
+          <h3 className="font-display text-[1.375rem] sm:text-[2rem] leading-[0.95] tracking-[0.015em] text-[#312b39] mb-[7px]">{reason.title}</h3>
+          <p className="text-[0.7188rem] sm:text-[0.8125rem] leading-[1.52] text-[#756e7b]">{reason.desc}</p>
         </div>
       </div>
     </article>
@@ -155,7 +155,7 @@ export default function WhyRtg({ settings }) {
     <section id="about" className="relative overflow-hidden py-16 md:py-[78px]">
       <div className="max-w-[1220px] mx-auto px-2.5 sm:px-6 md:px-9 grid grid-cols-[minmax(0,0.82fr)_minmax(0,1fr)] sm:grid-cols-[minmax(0,1.04fr)_minmax(0,1fr)] gap-3 sm:gap-8 lg:gap-[42px] items-center">
         <Reveal direction="right" className="max-w-[520px]">
-          <div className="flex items-center gap-2 sm:gap-3.5 mb-3.5 text-[7px] sm:text-[10px] font-black tracking-[0.24em] uppercase text-[#ff7b2c]">
+          <div className="flex items-center gap-2 sm:gap-3.5 mb-3.5 text-[0.4375rem] sm:text-[0.625rem] font-black tracking-[0.24em] uppercase text-[#ff7b2c]">
             <span className="w-4 sm:w-[46px] h-px opacity-55 bg-gradient-to-r from-transparent to-[rgba(255,123,44,0.68)]" />
             {copy.eyebrow}
             <span className="w-4 sm:w-[46px] h-px opacity-55 bg-gradient-to-l from-transparent to-[rgba(255,123,44,0.68)]" />
@@ -164,7 +164,7 @@ export default function WhyRtg({ settings }) {
             <span className="block">{copy.titleLine1}</span>
             <span className="block text-gradient">{copy.titleLine2}</span>
           </h2>
-          <p className="mt-[18px] text-[13px] sm:text-base md:text-[17px] leading-[1.6] text-[#6c6672]">{copy.subtitle}</p>
+          <p className="mt-[18px] text-[0.8125rem] sm:text-base md:text-[1.0625rem] leading-[1.6] text-[#6c6672]">{copy.subtitle}</p>
         </Reveal>
 
         <Reveal direction="left" delay={0.1}>
@@ -175,7 +175,7 @@ export default function WhyRtg({ settings }) {
       <div className="relative mt-8 lg:mt-6 px-6 flex justify-center">
         <Link
           to={copy.ctaLink}
-          className="btn-shine inline-flex items-center gap-3.5 min-h-[50px] px-7 rounded-full text-[11px] font-bold tracking-[0.06em] uppercase text-white bg-gradient-to-r from-[#ff7d23] via-[#ff9435] to-[#ffb36a] shadow-[0_14px_28px_rgba(255,123,44,0.18)] transition-transform duration-300 hover:-translate-y-0.5"
+          className="btn-shine inline-flex items-center gap-3.5 min-h-[50px] px-7 rounded-full text-[0.6875rem] font-bold tracking-[0.06em] uppercase text-white bg-gradient-to-r from-[#ff7d23] via-[#ff9435] to-[#ffb36a] shadow-[0_14px_28px_rgba(255,123,44,0.18)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {copy.ctaLabel}
           <b className="font-black">→</b>

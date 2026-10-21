@@ -98,7 +98,7 @@ function HeroCinematicScene({ slide, index, total }) {
 
   return (
     <>
-      <span className="absolute top-0 right-[7%] text-[10px] font-bold tracking-[0.2em] text-white/60 tabular-nums">
+      <span className="absolute top-0 right-[7%] text-[0.625rem] font-bold tracking-[0.2em] text-white/60 tabular-nums">
         {pad2(index + 1)} / {pad2(total)}
       </span>
 
@@ -142,13 +142,13 @@ function HeroCinematicScene({ slide, index, total }) {
         animate={{ y: [0, -8, 0] }}
         transition={{ duration: 6.4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <span className="block text-[8px] font-bold tracking-[0.18em] uppercase text-rtg-orange-400 mb-1.5">{card.kicker}</span>
+        <span className="block text-[0.5rem] font-bold tracking-[0.18em] uppercase text-rtg-orange-400 mb-1.5">{card.kicker}</span>
         <strong className="block font-display font-normal text-2xl xl:text-3xl text-rtg-white leading-none">{card.heading}</strong>
         <div className="grid grid-flow-col auto-cols-fr gap-2 mt-3">
           {card.metrics.map((m) => (
             <span key={`${m.value}-${m.label}`} className="rounded-lg border border-white/15 bg-white/5 px-1.5 py-2 text-center leading-tight">
-              <b className="block text-[11px] font-extrabold uppercase text-rtg-white">{m.value}</b>
-              <span className="block text-[7px] font-semibold tracking-[0.08em] uppercase text-rtg-mist">{m.label}</span>
+              <b className="block text-[0.6875rem] font-extrabold uppercase text-rtg-white">{m.value}</b>
+              <span className="block text-[0.4375rem] font-semibold tracking-[0.08em] uppercase text-rtg-mist">{m.label}</span>
             </span>
           ))}
         </div>
@@ -181,7 +181,7 @@ function HeroCinematicScene({ slide, index, total }) {
 function PresenceMarquee({ states, label, expandingLabel }) {
   return (
     <div className="mt-6 md:mt-7 flex items-center gap-3 md:gap-4 max-w-full">
-      <span className="hidden sm:inline-block shrink-0 text-[10px] font-black tracking-[0.16em] uppercase text-rtg-white/90">
+      <span className="hidden sm:inline-block shrink-0 text-[0.625rem] font-black tracking-[0.16em] uppercase text-rtg-white/90">
         {label}
       </span>
       <div
@@ -193,7 +193,7 @@ function PresenceMarquee({ states, label, expandingLabel }) {
               {states.map((s) => (
                 <span
                   key={`${dup}-${s}`}
-                  className="shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/8 ring-1 ring-white/10 text-white/80 text-[9px] md:text-[10px] font-semibold whitespace-nowrap"
+                  className="shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/8 ring-1 ring-white/10 text-white/80 text-[0.5625rem] md:text-[0.625rem] font-semibold whitespace-nowrap"
                 >
                   <span className="w-1 h-1 rounded-full bg-rtg-orange-400 shrink-0" />
                   {s}
@@ -203,7 +203,7 @@ function PresenceMarquee({ states, label, expandingLabel }) {
           ))}
         </div>
       </div>
-      <span className="hidden sm:inline-block shrink-0 px-3.5 py-1.5 rounded-full text-[10px] font-bold text-rtg-orange-400 bg-rtg-orange-500/15 ring-1 ring-rtg-orange-400/30 whitespace-nowrap">
+      <span className="hidden sm:inline-block shrink-0 px-3.5 py-1.5 rounded-full text-[0.625rem] font-bold text-rtg-orange-400 bg-rtg-orange-500/15 ring-1 ring-rtg-orange-400/30 whitespace-nowrap">
         {expandingLabel}
       </span>
     </div>
@@ -319,7 +319,7 @@ function Hero({ images, settings, slides }) {
               <motion.div key={slide} variants={heroTextGroup} initial="hidden" animate="show" exit="exit">
                 <motion.span
                   variants={heroTextItem}
-                  className="block text-rtg-orange-400 font-bold tracking-[0.22em] uppercase text-[10px] md:text-[11px] mb-4 md:mb-5"
+                  className="block text-rtg-orange-400 font-bold tracking-[0.22em] uppercase text-[0.625rem] md:text-[0.6875rem] mb-4 md:mb-5"
                 >
                   {current.eyebrow}
                 </motion.span>
@@ -343,7 +343,7 @@ function Hero({ images, settings, slides }) {
               transition={{ duration: 0.7, delay: 0.7 }}
               className="mt-8 md:mt-10"
             >
-              <Button onClick={joinCommunity} size="lg" className="uppercase !text-[11px] !font-extrabold !tracking-[0.18em] md:!px-12 md:!py-[1.05rem]">
+              <Button onClick={joinCommunity} size="lg" className="uppercase !text-[0.6875rem] !font-extrabold !tracking-[0.18em] md:!px-12 md:!py-[1.05rem]">
                 {copy.ctaLabel}
               </Button>
             </motion.div>
@@ -365,7 +365,7 @@ function Hero({ images, settings, slides }) {
               <ArrowLeft size={18} />
             </button>
             <div className="relative flex items-center gap-2">
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 whitespace-nowrap text-[8px] font-bold tracking-[0.2em] uppercase text-white/60">
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 whitespace-nowrap text-[0.5rem] font-bold tracking-[0.2em] uppercase text-white/60">
                 {copy.scrollLabel}
               </span>
               {slides.map((s, i) => (
@@ -397,7 +397,7 @@ function Hero({ images, settings, slides }) {
                   suffix={s.suffix}
                   className="block font-display text-3xl md:text-4xl lg:text-[clamp(2.1rem,2.55vw,3rem)] leading-none text-rtg-orange-500"
                 />
-                <span className="block mt-2 text-[8px] md:text-[9px] font-bold tracking-[0.14em] uppercase text-white/85">
+                <span className="block mt-2 text-[0.5rem] md:text-[0.5625rem] font-bold tracking-[0.14em] uppercase text-white/85">
                   {s.label}
                 </span>
               </div>

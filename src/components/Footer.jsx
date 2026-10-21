@@ -40,11 +40,11 @@ const BASE = {
   logo: "w-[120px] h-auto mb-[15px]",
   description: "my-3 text-xs leading-[1.65] text-white/60",
   contactRow: "flex flex-wrap lg:flex-nowrap items-end justify-between gap-x-3 gap-y-4 mt-[22px]",
-  heading: "mb-3 font-display font-normal text-[17px] leading-tight tracking-[0.02em] text-rtg-orange-400",
-  contactItem: "flex items-center gap-2 mb-2 text-[10px] text-white/60 hover:text-white",
+  heading: "mb-3 font-display font-normal text-[1.0625rem] leading-tight tracking-[0.02em] text-rtg-orange-400",
+  contactItem: "flex items-center gap-2 mb-2 text-[0.625rem] text-white/60 hover:text-white",
   social: "w-[34px] h-[34px] border-white/10 bg-white/5",
-  link: "mb-2.5 text-[10.5px] leading-[1.35] text-white/60",
-  bottom: "mt-6 pt-3.5 border-white/8 text-[9px] text-white/45",
+  link: "mb-2.5 text-[0.6563rem] leading-[1.35] text-white/60",
+  bottom: "mt-6 pt-3.5 border-white/8 text-[0.5625rem] text-white/45",
 };
 
 const PADDING = "px-6 md:px-10 xl:px-[74px]";

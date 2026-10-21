@@ -294,7 +294,7 @@ export default function Dashboard() {
           </label>
 
           <div className="min-w-0 flex-1">
-            <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-rtg-orange-300">Member Dashboard</span>
+            <span className="text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-rtg-orange-300">Member Dashboard</span>
             <h1 className="font-display text-4xl leading-[0.95] text-white sm:text-5xl md:text-6xl">
               Welcome, <span className="text-rtg-orange-400">{name}</span>
             </h1>

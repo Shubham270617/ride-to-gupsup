@@ -7,7 +7,7 @@ import useIsMobile from "../../hooks/useIsMobile";
 import useLittleAthletes from "../../lib/useLittleAthletes";
 
 const CTA_BUTTON =
-  "inline-flex items-center justify-center min-h-[52px] px-[27px] rounded-full text-[10.5px] font-bold tracking-[0.08em] uppercase text-white transition-all duration-300 hover:-translate-y-0.5";
+  "inline-flex items-center justify-center min-h-[52px] px-[27px] rounded-full text-[0.6563rem] font-bold tracking-[0.08em] uppercase text-white transition-all duration-300 hover:-translate-y-0.5";
 const CTA_PRIMARY = `${CTA_BUTTON} btn-shine bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] shadow-[0_14px_28px_rgba(247,107,28,0.22)]`;
 
 // "Join the Movement" with the site footer underneath, as one continuous
@@ -47,7 +47,7 @@ export default function JoinCTA({ onPrimaryClick, community = false, play = fals
       <div className="relative flex items-center justify-center min-h-[485px] px-6 pt-[82px] pb-16">
         {play && athletes.field}
         <Reveal className="relative z-10 flex flex-col items-center max-w-[980px] text-center">
-          <span className="mb-[15px] text-[10px] font-semibold leading-none tracking-[0.25em] uppercase text-[#ff7b2c]">{join.eyebrow}</span>
+          <span className="mb-[15px] text-[0.625rem] font-semibold leading-none tracking-[0.25em] uppercase text-[#ff7b2c]">{join.eyebrow}</span>
           <h2 className="font-display text-[clamp(3.75rem,6.65vw,7.875rem)] leading-[0.88] text-white">
             {join.title} <span className="text-gradient">{join.titleAccent}</span>
           </h2>

@@ -59,7 +59,7 @@ export default function Sponsors() {
                   ) : (
                     <span className="font-display text-xl text-rtg-white/80">{s.name}</span>
                   )}
-                  {s.tier && <span className="text-[10px] uppercase tracking-wide text-rtg-orange-400">{s.tier}</span>}
+                  {s.tier && <span className="text-[0.625rem] uppercase tracking-wide text-rtg-orange-400">{s.tier}</span>}
                 </a>
               </StaggerItem>
             ))}

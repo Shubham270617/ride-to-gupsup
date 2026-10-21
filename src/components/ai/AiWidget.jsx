@@ -146,7 +146,7 @@ export default function AiWidget() {
               <div className="flex items-center gap-2 px-5 pt-6 pb-3 border-b border-rtg-border shrink-0">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-rtg-white">{name}</p>
-                  <p className="text-[11px] text-rtg-mist">RTG's AI companion</p>
+                  <p className="text-[0.6875rem] text-rtg-mist">RTG's AI companion</p>
                 </div>
                 <button
                   onClick={() => setOpen(false)}
