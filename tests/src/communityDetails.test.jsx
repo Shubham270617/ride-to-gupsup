@@ -92,7 +92,7 @@ it('keeps illustrative answers separate, uses no invented identities and offers 
  expect(screen.getByText(/not a verified account of this group's history/)).toBeInTheDocument();
  expect(screen.getByRole('heading',{name:'Public representative'})).toBeInTheDocument();
  expect(screen.getByRole('link',{name:'Explore community activities ↗'})).toHaveAttribute('href','/calendar');
- expect(screen.getByRole('link',{name:'Explore RTG calendar ↗'})).toHaveAttribute('href','/calendar');
+ expect(screen.getByRole('link',{name:'Explore Calendar ↗'})).toHaveAttribute('href','/calendar');
  expect(screen.getByRole('link',{name:'Browse all events ↗'})).toHaveAttribute('href','/events');
  expect(screen.getByText(/These links show all RTG communities/)).toBeInTheDocument();
  expect(screen.getByText(/not community photographs/)).toBeInTheDocument();
