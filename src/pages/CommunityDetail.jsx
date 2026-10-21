@@ -1,64 +1,40 @@
 import { Link, useParams } from "react-router-dom";
 import { useCommunityDetail, safeCommunityLink } from "../lib/communityDetails";
+import LabBackdrop from "../components/lab/LabBackdrop";
+import { communityProfileDemo } from "../data/communityProfileDemo";
 import "../styles/community-detail.css";
 
 function ActivityLink({ to, children }) {
-  const href = safeCommunityLink(to);
-  if (!href) return null;
-  return href.startsWith("/") ? <Link className="rtg-community-detail-link" to={href}>{children} →</Link>
-    : <a className="rtg-community-detail-link" href={href} target="_blank" rel="noopener noreferrer">{children} ↗</a>;
+ const href=safeCommunityLink(to);if(!href)return null;
+ return href.startsWith('/')?<Link className="profile-text-link" to={href}>{children} →</Link>:<a className="profile-text-link" href={href} target="_blank" rel="noopener noreferrer">{children} ↗</a>;
 }
-
-export default function CommunityDetail({ editor }) {
-  const { communityId } = useParams();
-  const { group, loading, error, activities = [], activitiesLoading, activitiesError, retry } = useCommunityDetail(editor?.communityId || communityId);
-  const section=(id,child)=>editor?editor.section('detail-'+id,child):child;
-  const back = <Link className="rtg-community-detail-back" to="/community#rtg-network">← All communities</Link>;
-  if (loading) return <div className="rtg-community-detail">{back}<p role="status">Loading community…</p></div>;
-  if (error) return <div className="rtg-community-detail">{back}<h1>Community unavailable</h1><p role="alert">{error}</p><button onClick={retry} type="button">Try again</button></div>;
-  if (!group) return <div className="rtg-community-detail">{back}<h1>Community not found</h1><p>This page is not currently published. Explore the community directory for available groups.</p></div>;
-  const contacts = [
-    ["Public contact", group.contact_person], ["How to reach the community", group.reach], ["How to join", group.join_text],
-  ].filter(([, value]) => value);
-  return (
-    <div className="rtg-community-detail">
-      {back}
-      {section('intro', <header className="rtg-community-detail-hero">
-        {group.monogram && <span className="rtg-community-detail-monogram" aria-hidden="true">{group.monogram}</span>}
-        <div>
-          <p className="rtg-community-detail-eyebrow">{group.tagline || [group.location, group.sport].filter(Boolean).join(" • ") || "RTG Community Network"}</p>
-          <h1 className="font-display">{group.name}</h1>
-          {group.relation_label && <span className="rtg-community-detail-badge">{group.relation_label}</span>}
-        </div>
-      </header>)}
-      <div className="rtg-community-detail-grid">
-        {section('about', <section className="rtg-community-detail-panel" aria-labelledby="community-about">
-          <h2 id="community-about">About the community</h2>
-          <p className="rtg-community-detail-text">{group.description || "More about this community will be added here."}</p>
-          {group.connection_label && <p className="rtg-community-detail-muted">{group.connection_label}</p>}
-        </section>)}
-        {section('join', <section className="rtg-community-detail-panel" aria-labelledby="community-join">
-          <h2 id="community-join">Get involved</h2>
-          {contacts.length ? <dl>{contacts.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-            : <p>Joining details have not been published yet.</p>}
-        </section>)}
-      </div>
-      {section('activities', <section className="rtg-community-detail-activities" aria-labelledby="community-activities">
-        <div className="rtg-community-detail-sectionhead"><div><p className="rtg-community-detail-eyebrow">Meet. Move. Connect.</p><h2 id="community-activities">Activities & challenges</h2></div><Link to="/calendar">View full RTG calendar →</Link></div>
-        {activitiesLoading ? <p role="status">Loading activities…</p> : activitiesError ? <div><p role="alert">{activitiesError}</p><button type="button" onClick={retry}>Try again</button></div> : activities.length ? (
-          <div className="rtg-community-detail-grid">{activities.map((activity) => <article key={activity.id} className="rtg-community-detail-panel">
-            {activity.status_label && <p className="rtg-community-detail-eyebrow">{activity.status_label}</p>}
-            <h3>{activity.title}</h3>
-            <p className="rtg-community-detail-muted">{[activity.schedule_type === "weekly" ? `Every ${activity.weekday || "week"}` : activity.activity_date || activity.when_text, activity.time_text].filter(Boolean).join(" · ")}</p>
-            {activity.location && <p>{activity.location}</p>}
-            {activity.format && <p>{activity.format}</p>}
-            {activity.summary && <p className="rtg-community-detail-text">{activity.summary}</p>}
-            {activity.note && <p className="rtg-community-detail-note">{activity.note}</p>}
-            <ActivityLink to={activity.link_url}>{activity.link_label || "View activity"}</ActivityLink>
-          </article>)}</div>
-        ) : <p>No activities are currently listed for this community. Check the RTG calendar for other sessions.</p>}
-      </section>)}
-    </div>
-  );
+function RouteArt({variant=0}){return <svg viewBox="0 0 420 250" fill="none" aria-hidden="true"><circle cx="325" cy="65" r="37" fill="currentColor" opacity=".12"/><path d={variant%2?'M-20 185C75 250 135 40 225 105S315 230 445 65':'M-10 150C80 30 140 230 225 130S320 30 435 155'} stroke="currentColor" strokeWidth="3" strokeDasharray="7 8"/><path d="M0 215 65 160l60 32 90-90 83 76 58-33 64 60" stroke="currentColor" strokeWidth="2" opacity=".3"/><circle cx="90" cy="120" r="29" stroke="currentColor" strokeWidth="2"/><circle cx="90" cy="120" r="8" fill="currentColor"/><path d="M281 164v-62m0 1c22-14 32 13 56 0v35c-20 13-36-12-56 0" stroke="currentColor" strokeWidth="3"/><path d="M267 166h28" stroke="currentColor" strokeWidth="3"/></svg>;}
+function DemoLabel(){return <span className="profile-demo-label">Illustrative demo</span>;}
+export function CommunityProfile({group,activities=[],activitiesLoading=false,activitiesError,retry,editor}){
+ const section=(id,child)=>editor?editor.section('detail-'+id,child):child;
+ const demo=communityProfileDemo(group.sport);
+ const monogram=group.monogram||group.name.split(/\s+/).map(x=>x[0]).slice(0,3).join('');
+ const theme=['violet','orange','teal','blue','pink'][[...group.id].reduce((sum,c)=>sum+c.charCodeAt(0),0)%5];
+ return <main className={`rtg-community-detail profile-tone-${theme}`}>
+ <LabBackdrop className="profile-background"/><div className="profile-shell">
+ <Link className="rtg-community-detail-back" to="/community#rtg-network">← All communities</Link>
+ {section('intro',<header className="profile-hero"><div><p className="profile-eyebrow">THE RTG COMMUNITY NETWORK</p><div className="profile-location">{[group.location,group.sport].filter(Boolean).join(' / ')}</div><h1>{group.name}</h1><p className="profile-tagline">{group.tagline||'Every community has a story. This is where yours begins.'}</p>{group.relation_label&&<span className="profile-relation">{group.relation_label}</span>}<div className="profile-actions"><Link className="profile-button" to="/calendar">Explore community activities ↗</Link><a className="profile-outline" href="#community-join">Get to know the community ↓</a></div><p className="profile-activity-scope">Explore opens the full RTG calendar. This community’s matched listings appear below.</p></div><div className="profile-pass"><div className="profile-pass-top">COMMUNITY PROFILE <span>RTG / NETWORK</span></div><div className="profile-monogram">{monogram}</div><RouteArt/><div className="profile-pass-bottom"><strong>{group.name}</strong><span>{group.location||'Location to be confirmed'}</span></div></div></header>)}
+ <nav className="profile-nav" aria-label="Community profile sections"><a href="#community-about">Our story</a><a href="#community-people">The people</a><a href="#community-moments">Community moments</a><a href="#community-activities">Activities</a><a href="#community-join">Get involved</a></nav>
+ {section('about',<div>
+ <section id="community-about" className="profile-section"><div className="profile-section-heading"><div><p className="profile-eyebrow">MORE THAN A NAME ON A MAP</p><h2>A shared interest.<br/><em>A story worth sharing.</em></h2></div><span className="profile-section-number" aria-hidden="true">01</span></div><div className="profile-story-grid"><article className="profile-story"><h3>About {group.name}</h3><p className="profile-preserve">{group.description||'The community introduction is awaiting confirmation.'}</p>{group.connection_label&&<p className="profile-connection">{group.connection_label}</p>}<div className="profile-demo-story"><DemoLabel/><h3>How a community story could unfold</h3><p>{demo.story}</p></div></article><aside className="profile-atglance"><p className="profile-eyebrow">AT A GLANCE</p><dl><div><dt>Home base</dt><dd>{group.location||'Awaiting community details'}</dd></div><div><dt>What brings people together</dt><dd>{group.sport||'Awaiting community details'}</dd></div><div><dt>Chapters & founding story</dt><dd>Details to be confirmed by the community.</dd></div></dl><span className="profile-atglance-symbol" aria-hidden="true">↗</span><p>Different routes.<br/>A shared sense of belonging.</p></aside></div></section>
+ <section id="community-people" className="profile-section"><div className="profile-section-heading"><div><p className="profile-eyebrow">THE PEOPLE BEHIND THE COMMUNITY</p><h2>Real connections.<br/><em>A warm first hello.</em></h2></div><span className="profile-section-number" aria-hidden="true">02</span></div><div className="profile-people-grid"><article className="profile-person"><div className="profile-person-avatar" aria-hidden="true">↗</div><p className="profile-eyebrow">PUBLISHED PUBLIC REPRESENTATIVE</p><h3>{group.contact_person||'Meet the community team'}</h3><p>{group.contact_person?'The community’s published point of contact. Individual portraits, roles and biographies will appear when provided for this profile.':'Representative names and introductions are awaiting community confirmation.'}</p><a className="profile-text-link" href="#community-join">Joining information →</a></article><article className="profile-welcome"><DemoLabel/><h3>Finding your place</h3><p className="profile-muted">Sample joining guidance; confirm the details before attending.</p>{demo.welcome.map(([title,body])=><details key={title}><summary>{title}<span aria-hidden="true">＋</span></summary><p>{body}</p></details>)}</article></div></section>
+ <section className="profile-section" aria-labelledby="profile-highlights"><div className="profile-section-heading"><div><p className="profile-eyebrow">WHAT MAKES A COMMUNITY ITS OWN</p><h2 id="profile-highlights">Small moments.<br/><em>Lasting connections.</em></h2></div><div><DemoLabel/><p className="profile-muted">Sample highlights, not verified achievements.</p></div></div><div className="profile-highlights">{demo.highlights.map(([title,body],i)=><article key={title}><span aria-hidden="true">0{i+1}</span><h3>{title}</h3><p>{body}</p></article>)}</div></section>
+ <section id="community-moments" className="profile-section"><div className="profile-section-heading"><div><p className="profile-eyebrow">COMMUNITY MOMENTS</p><h2>A little glimpse.<br/><em>A bigger feeling.</em></h2></div><p className="profile-muted">Illustrative gallery — original graphics, not community photographs. Approved photos, captions and credits can take their place.</p></div><div className="profile-gallery">{demo.gallery.map(([title,caption],i)=><figure key={title}><div><RouteArt variant={i}/><span>DEMO VISUAL / 0{i+1}</span></div><figcaption><h3>{title}</h3><p>{caption}</p></figcaption></figure>)}</div></section>
+ </div>)}
+ {section('activities',<section id="community-activities" className="profile-section"><div className="profile-section-heading"><div><p className="profile-eyebrow">FROM THE PROFILE TO THE START LINE</p><h2>Meet. Move.<br/><em>Make a plan.</em></h2></div><span className="profile-section-number" aria-hidden="true">03</span></div><div className="profile-activity-heading"><h3>Activities & challenges</h3><p>Published activities matched to {group.name}.</p></div>{activitiesLoading?<p role="status">Loading activities…</p>:activitiesError?<div className="profile-empty"><p role="alert">{activitiesError}</p><button type="button" onClick={retry}>Try again</button></div>:activities.length?<div className="profile-activity-grid">{activities.map(activity=><article key={activity.id} className="profile-activity-card"><p className="profile-eyebrow">{activity.status_label||'PUBLISHED ACTIVITY'}</p><h3>{activity.title}</h3><p className="profile-activity-when">{[activity.schedule_type==='weekly'?`Every ${activity.weekday||'week'}`:activity.activity_date||activity.when_text,activity.time_text].filter(Boolean).join(' · ')}</p>{activity.location&&<p>{activity.location}</p>}{activity.format&&<p>{activity.format}</p>}{activity.summary&&<p>{activity.summary}</p>}{activity.note&&<p>{activity.note}</p>}<ActivityLink to={activity.link_url}>{activity.link_label||'View activity'}</ActivityLink></article>)}</div>:<div className="profile-empty"><span aria-hidden="true">↗</span><div><h3>The next chapter is still to come.</h3><p>No activities are currently listed for this community. No demo sessions have been added to the calendar.</p></div></div>}<div className="profile-calendar-cta"><div><h3>Keep exploring the RTG network.</h3><p>These links show all RTG communities and events, not just {group.name}.</p></div><div className="profile-actions"><Link className="profile-button" to="/calendar">Explore RTG calendar ↗</Link><Link className="profile-outline" to="/events">Browse all events ↗</Link></div></div></section>)}
+ {section('join',<section id="community-join" className="profile-section profile-join"><div><p className="profile-eyebrow">YOUR FIRST CONNECTION</p><h2>Start with a hello.<br/><em>See where it takes you.</em></h2><p>Use the community’s published joining information. Confirm the activity format and joining requirements directly before attending.</p></div><div className="profile-join-info">{group.reach||group.join_text?<dl>{group.reach&&<div><dt>How to reach the community</dt><dd>{group.reach}</dd></div>}{group.join_text&&<div><dt>How to join</dt><dd>{group.join_text}</dd></div>}</dl>:<p>Joining details have not been published yet.</p>}<p className="profile-muted">Official profile links and public invitations will appear when supplied and approved. This preview does not collect applications or contact details.</p><Link className="profile-text-link" to="/community#rtg-network">Discover more communities →</Link></div></section>)}
+ </div></main>;
 }
-
+export default function CommunityDetail({editor}){
+ const {communityId}=useParams();const state=useCommunityDetail(editor?.communityId||communityId);
+ const back=<Link className="rtg-community-detail-back" to="/community#rtg-network">← All communities</Link>;
+ if(state.loading)return <main className="rtg-community-detail"><div className="profile-shell">{back}<p role="status">Loading community…</p></div></main>;
+ if(state.error)return <main className="rtg-community-detail"><div className="profile-shell">{back}<h1>Community unavailable</h1><p role="alert">{state.error}</p><button onClick={state.retry}>Try again</button></div></main>;
+ if(!state.group)return <main className="rtg-community-detail"><div className="profile-shell">{back}<h1>Community not found</h1><p>This page is not currently published. Explore the community directory for available groups.</p></div></main>;
+ return <CommunityProfile {...state} editor={editor}/>;
+}

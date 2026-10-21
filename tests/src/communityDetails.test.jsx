@@ -84,3 +84,23 @@ describe("community detail pages", () => {
     expect(safeCommunityLink("/calendar?category=cycling")).toBe("/calendar?category=cycling");
   });
 });
+
+
+it('keeps illustrative answers separate, uses no invented identities and offers truthful global activity links',async()=>{
+ page();await screen.findByRole('heading',{name:group.name});
+ expect(screen.getAllByText('Illustrative demo')).toHaveLength(3);
+ expect(screen.getByText(/not a verified account of this group's history/)).toBeInTheDocument();
+ expect(screen.getByRole('heading',{name:'Public representative'})).toBeInTheDocument();
+ expect(screen.getByRole('link',{name:'Explore community activities ↗'})).toHaveAttribute('href','/calendar');
+ expect(screen.getByRole('link',{name:'Explore RTG calendar ↗'})).toHaveAttribute('href','/calendar');
+ expect(screen.getByRole('link',{name:'Browse all events ↗'})).toHaveAttribute('href','/events');
+ expect(screen.getByText(/These links show all RTG communities/)).toBeInTheDocument();
+ expect(screen.getByText(/not community photographs/)).toBeInTheDocument();
+ expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+});
+it('renders the same profile template for distinct stable published identities',async()=>{
+ for(const current of [id,secondId,'33333333-3333-4333-8333-333333333333','44444444-4444-4444-8444-444444444444','55555555-5555-4555-8555-555555555555']){
+  groupQuery.maybeSingle.mockResolvedValue({data:{...group,id:current,name:`Community ${current.slice(0,1)}`},error:null});
+  const view=page(`/community/${current}`);expect(await screen.findByRole('heading',{name:`Community ${current.slice(0,1)}`})).toBeInTheDocument();view.unmount();
+ }
+});
