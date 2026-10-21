@@ -1,3 +1,4 @@
+import RidgeIntro from '../lab/RidgeIntro';
 import { effectiveStyle, LAYOUT_FONTS, validateLayout, isSafeLayoutAction } from '../../lib/layout/model';
 import './layout.css';
 import useIsMobile from '../../hooks/useIsMobile';
@@ -9,6 +10,7 @@ export default function LayoutRenderer({ document, device: requestedDevice, sect
   const layout = validateLayout(document);
   return <div className={`rtg-layout rtg-layout-${device}`}>
     {layout.sections.map(section => {
+      if (section.type === 'ridge-intro') return <div key={section.id} className="rtg-ridge ridge-layout-preview"><RidgeIntro content={section.content} styles={{ ...section.desktop, ...(device === 'mobile' ? section.mobile : {}) }} device={device} heroPhoto={sectionData[section.id]?.heroPhoto} selected={selectedId === section.id} onSelect={onSelect ? () => onSelect(section.id) : undefined} /></div>;
       const style = effectiveStyle(section, device);
       if (!style.visible) return null;
       const data = sectionData[section.id] || {};
@@ -28,3 +30,4 @@ export default function LayoutRenderer({ document, device: requestedDevice, sect
     })}
   </div>;
 }
+

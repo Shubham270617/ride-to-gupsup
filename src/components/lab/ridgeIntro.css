@@ -1,0 +1,24 @@
+/* Native layout remains the default; editor choices only override named values. */
+.rtg-ridge .rr-intro.ridge-editable-intro { gap:var(--ridge-gap,24px);color:var(--ridge-color,#fff);background-color:var(--ridge-background,#241b3a) }
+.rtg-ridge .rr-intro.ridge-editable-intro h1 { font-family:var(--ridge-font,'Bebas Neue',Impact,sans-serif);font-size:var(--ridge-title-size,clamp(32px,4.5vw,58px));color:inherit }
+.rtg-ridge .rr-intro.ridge-editable-intro h1 span { color:var(--ridge-accent,#ff9b58) }
+.rtg-ridge .rr-intro.ridge-editable-intro .rr-intro-line { font-size:var(--ridge-body-size,14px);color:var(--ridge-color,#f6ecff) }
+.rtg-ridge .rr-intro.ridge-editable-intro { padding:var(--ridge-padding,26px) var(--ridge-padding,32px) }
+.rtg-ridge.ridge-layout-preview { padding:0;background:transparent }
+.rtg-ridge .rr-intro.ridge-editable-intro.is-selected { outline:2px solid #fe7b39;outline-offset:-2px }
+.rtg-ridge .rr-intro.ridge-editable-intro .rtg-layout-select { position:absolute;bottom:0;right:0;padding:4px 8px;font-size:10px }
+.rtg-ridge .rr-intro.ridge-editable-intro.ridge-device-mobile { padding:var(--ridge-padding,23px) var(--ridge-padding,20px);border-radius:17px }
+.rtg-ridge .rr-intro.ridge-editable-intro.ridge-device-mobile h1 { font-size:var(--ridge-title-size,40px) }
+.rtg-ridge .rr-intro.ridge-editable-intro.ridge-device-mobile .rr-intro-line { font-size:var(--ridge-body-size,13px) }
+.rtg-ridge .ridge-device-mobile .rr-eyebrow { font-size:8px }
+.rtg-ridge .ridge-device-mobile .rr-format { font-size:10px;line-height:1.65 }
+.rtg-ridge .ridge-device-mobile .rr-format-art { display:none }
+@media (max-width:760px) {
+  .rtg-ridge .rr-intro.ridge-editable-intro:not(.ridge-device-desktop) { padding:var(--ridge-padding,23px) var(--ridge-padding,20px) }
+  .rtg-ridge .rr-intro.ridge-editable-intro:not(.ridge-device-desktop) h1 { font-size:var(--ridge-title-size,40px) }
+  .rtg-ridge .rr-intro.ridge-editable-intro:not(.ridge-device-desktop) .rr-intro-line { font-size:var(--ridge-body-size,13px) }
+}
+
+.rtg-ridge .rr-intro.ridge-editable-intro::after { background:var(--ridge-overlay,radial-gradient(ellipse at right bottom,rgba(254,123,57,.23),transparent 54%),linear-gradient(100deg,rgba(53,36,111,.97),rgba(42,61,130,.87) 53%,rgba(59,35,84,.57))) }
+
+.rtg-ridge.ridge-layout-preview { --rr-hero-photo:inherit }

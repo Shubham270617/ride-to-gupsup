@@ -16,11 +16,18 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
   const [serverDirty, setServerDirty] = useState(true);
   const [confirmLoad, setConfirmLoad] = useState(false);
   const protectedWork = useRef(false);
+  const seededPage = useRef(pageKey);
+  const seedLocked = useRef(false);
+  const latestSeed = useRef(initialDocument);
+  latestSeed.current = initialDocument;
   const inFlight = useRef(null);
   const generation = useRef(0);
   const fileInput = useRef(null);
   useEffect(() => {
-    generation.current += 1; inFlight.current = null; protectedWork.current = false; setConfirmLoad(false); setServerRevision(null); setServerDirty(true); setBusy(false);
+    const samePage = seededPage.current === pageKey;
+    if (samePage && (protectedWork.current || seedLocked.current || inFlight.current)) return;
+    seededPage.current = pageKey; seedLocked.current = false;
+    generation.current += 1; inFlight.current = null; protectedWork.current = false; setConfirmLoad(false); setServerRevision(revision => samePage ? revision : null); setServerDirty(true); setBusy(false);
     try {
       const saved = loadLocalDraft(window.localStorage, pageKey);
       protectedWork.current = Boolean(saved);
@@ -28,14 +35,15 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
       setDocument(next); select(next.sections[0].id); setPast([]); setError('');
       setStatus(saved ? 'Loaded browser-local draft' : 'Unsaved local draft');
     } catch (err) { setError(`Could not load local draft: ${err.message}`); }
-    return () => { generation.current += 1; };
   }, [pageKey, initialDocument]);
+  useEffect(() => () => { generation.current += 1; }, []);
   useEffect(() => {
     const warn = event => { if (protectedWork.current) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn);
   }, []);
   const selected = document.sections.find(s => s.id === selectedId) || document.sections[0];
-  const style = effectiveStyle(selected, device);
+  const ridgeIntro = selected.type === 'ridge-intro';
+  const style = ridgeIntro ? { size: device === 'mobile' ? 40 : 58, bodySize: device === 'mobile' ? 13 : 14, padding: device === 'mobile' ? 20 : 32, gap: 24, font: 'condensed', align: 'left', visible: true, color: '#ffffff', background: '#241b3a', accent: '#ff9b58', image: '', ...selected.desktop, ...(device === 'mobile' ? selected.mobile : {}) } : effectiveStyle(selected, device);
   const change = next => {
     try { const valid = validateLayout(next); protectedWork.current = true; setPast(items => [...items.slice(-24), cloneLayout(document)]); setDocument(valid); setServerDirty(true); setStatus('Unsaved local draft'); setError(''); }
     catch (err) { setError(err.message); }
@@ -55,8 +63,10 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
     try {
       const result = action === 'load' ? await store.loadDraft(pageKey) : action === 'save' ? await store.saveDraft(pageKey, document, serverRevision) : await store.publish(pageKey, serverRevision);
       if (current !== generation.current) return;
+      seedLocked.current = action !== 'load' || Boolean(result);
       if (action === 'load') {
         if (result) { const next = validateLayout(result.document); setDocument(next); select(next.sections[0].id); setPast([]); protectedWork.current = false; }
+        else if (!protectedWork.current && latestSeed.current) { const next = validateLayout(latestSeed.current); setDocument(next); select(next.sections[0].id); }
         setServerRevision(result?.revision || 0); setServerDirty(!result); setStatus(result ? 'Loaded shared draft (not published)' : 'No shared draft yet. Use Save shared draft to create the first draft; this does not publish.');
       } else { protectedWork.current = false; setServerRevision(result.revision); setServerDirty(false); setStatus(action === 'save' ? 'Saved shared draft (not published)' : 'Published saved revision'); }
     } catch (err) {
@@ -103,12 +113,13 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
           <button type="button" disabled={document.sections.length >= 20} onClick={() => { const copy = cloneLayout(selected); copy.id = crypto.randomUUID(); copy.label += ' copy'; change({ ...document, sections: [...document.sections, copy] }); select(copy.id); }}>Duplicate</button>
           <button type="button" disabled={document.sections.length <= 1} onClick={() => { const sections = document.sections.filter(s => s.id !== selected.id); change({ ...document, sections }); select(sections[0].id); }}>Remove section</button></div>
         <label>Add section<select aria-label="Add section" value="" disabled={document.sections.length >= 20} onChange={e => { if (!e.target.value) return; const added = createSection(e.target.value); change({ ...document, sections: [...document.sections, added] }); select(added.id); }}><option value="">Choose type</option>{Object.keys(LAYOUT_TYPES).map(type => <option key={type}>{type}</option>)}</select></label>
-        {['eyebrow', 'title', 'body'].map(key => <label key={key}>{key === 'title' ? 'Heading' : key === 'body' ? 'Description' : 'Eyebrow'} (shared)<textarea maxLength={key === 'body' ? 1000 : 160} value={selected.content[key]} onChange={e => editContent(key, e.target.value)} /></label>)}
+        {(ridgeIntro ? ['eyebrow', 'title', 'body', 'formatLine', 'artCaption'] : ['eyebrow', 'title', 'body']).map(key => <label key={key}>{key === 'title' ? 'Heading' : key === 'body' ? 'Description' : key === 'formatLine' ? 'Format line' : key === 'artCaption' ? 'Loop artwork caption' : 'Eyebrow'} (shared)<textarea maxLength={key === 'body' ? 1000 : 160} value={selected.content[key]} onChange={e => editContent(key, e.target.value)} /></label>)}
+        {ridgeIntro && <p className="text-xs">Editing the Ridge intro only. The leaderboard and timer keep their existing design and data. Untouched styles keep the native responsive design.</p>}
         <h2 className="font-semibold mt-6">{device === 'mobile' ? 'Mobile overrides' : 'Desktop foundation'}</h2>
         {device === 'mobile' && <><p className="text-xs">Unchanged properties inherit desktop values.</p><button type="button" onClick={resetMobile}>Reset all mobile overrides</button></>}
         <label>Visible<select value={String(style.visible)} onChange={e => setStyle('visible', e.target.value === 'true')}><option value="true">Visible</option><option value="false">Hidden</option></select></label>
-        {[['layout', LAYOUT_TYPES[selected.type]], ['font', Object.keys(LAYOUT_FONTS)], ['align', ['left', 'center', 'right']], ['position', ['top', 'middle', 'bottom']]].map(([key, options]) => <label key={key}>{key}<select value={style[key]} onChange={e => setStyle(key, e.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {key}</button>}</label>)}
-        {Object.entries(NUMBER_BOUNDS).map(([key, [min, max]]) => <label key={key}>{labels[key]}<input type="number" min={min} max={max} value={style[key]} onChange={e => setStyle(key, Number(e.target.value))} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {labels[key]}</button>}</label>)}
+        {[['layout', LAYOUT_TYPES[selected.type]], ['font', Object.keys(LAYOUT_FONTS)], ['align', ['left', 'center', 'right']], ['position', ['top', 'middle', 'bottom']]].filter(([key]) => !ridgeIntro || ['font', 'align'].includes(key)).map(([key, options]) => <label key={key}>{key}<select value={style[key]} onChange={e => setStyle(key, e.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {key}</button>}</label>)}
+        {Object.entries(NUMBER_BOUNDS).filter(([key]) => !ridgeIntro || ['size', 'bodySize', 'padding', 'gap'].includes(key)).map(([key, [min, max]]) => <label key={key}>{labels[key]}<input type="number" min={min} max={max} value={style[key]} onChange={e => setStyle(key, Number(e.target.value))} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {labels[key]}</button>}</label>)}
         {['color', 'background', 'accent'].map(key => <label key={key}>{key}<input type="color" value={style[key]} onChange={e => setStyle(key, e.target.value)} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {key}</button>}</label>)}
         <label>Image URL (HTTPS)<input aria-label="Image URL (HTTPS)" key={`${selected.id}:${device}:${style.image}`} defaultValue={style.image.startsWith('data:') ? '' : style.image} placeholder="https://…" onBlur={e => { if (e.target.value !== e.target.defaultValue) setStyle('image', e.target.value); }} /></label>
         <p className="text-xs">Prototype JSON image uploads are preserved. New asset uploads need the website storage connection.</p>
@@ -118,3 +129,4 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
     </div></fieldset>
   </div>;
 }
+

@@ -1,11 +1,12 @@
 // Schema 1 is compatible with the supplied RTG Layout Studio JSON exports.
-export const LAYOUT_TYPES = { hero: ['overlay', 'split', 'centered'], stats: ['grid', 'list'], spotlight: ['grid', 'carousel', 'list'], cta: ['banner', 'centered'] };
+export const LAYOUT_TYPES = { 'ridge-intro': ['native'], hero: ['overlay', 'split', 'centered'], stats: ['grid', 'list'], spotlight: ['grid', 'carousel', 'list'], cta: ['banner', 'centered'] };
 export const LAYOUT_FONTS = { grotesk: '"Space Grotesk", Arial, sans-serif', modern: '"Montserrat", Arial, sans-serif', classic: 'Georgia, serif', condensed: '"Bebas Neue", Impact, sans-serif' };
 export const STYLE_DEFAULTS = { size: 52, bodySize: 16, font: 'grotesk', align: 'left', position: 'middle', padding: 48, gap: 20, columns: 3, height: 410, shade: 58, color: '#ffffff', background: '#35246f', accent: '#fe7b39', image: '', focalX: 50, focalY: 42, visible: true, layout: 'overlay' };
 export const NUMBER_BOUNDS = { size: [16, 100], bodySize: [12, 24], padding: [12, 90], gap: [4, 48], columns: [1, 4], height: [0, 700], shade: [0, 90], focalX: [0, 100], focalY: [0, 100] };
 export const cloneLayout = value => JSON.parse(JSON.stringify(value));
 export function createSection(type, id = globalThis.crypto.randomUUID()) {
   if (!Object.hasOwn(LAYOUT_TYPES, type)) throw new Error('Unknown section type.');
+  if (type === 'ridge-intro') return { id, type, label: 'Ridge intro', content: { eyebrow: '', title: '', body: '', formatLine: '', artCaption: '', loops: '1' }, desktop: {}, mobile: {} };
   return { id, type, label: { hero: 'Hero', stats: 'Session numbers', spotlight: 'Rider spotlight', cta: 'Call to action' }[type], content: { eyebrow: '', title: 'Your heading', body: '' }, desktop: { ...STYLE_DEFAULTS, layout: LAYOUT_TYPES[type][0], height: type === 'hero' ? 410 : 0 }, mobile: {} };
 }
 export function createLayout(name = 'Untitled page') { return { schema: 1, name, sections: [createSection('hero')] }; }
@@ -25,7 +26,8 @@ export function validateLayout(raw) {
     ids.add(item.id);
     const section = createSection(item.type, item.id);
     section.label = String(item.label || section.label).slice(0, 80);
-    for (const key of ['eyebrow', 'title', 'body']) section.content[key] = String(item.content?.[key] ?? '').slice(0, key === 'body' ? 1000 : 160);
+    for (const key of (item.type === 'ridge-intro' ? ['eyebrow', 'title', 'body', 'formatLine', 'artCaption', 'loops'] : ['eyebrow', 'title', 'body'])) section.content[key] = String(item.content?.[key] ?? '').slice(0, key === 'body' ? 1000 : 160);
+    if (item.type === 'ridge-intro' && (!/^\d+$/.test(section.content.loops) || Number(section.content.loops) < 1 || Number(section.content.loops) > 20)) throw new Error('Invalid Ridge loop artwork count.');
     for (const device of ['desktop', 'mobile']) {
       const styles = item[device] || {};
       if (typeof styles !== 'object' || Array.isArray(styles)) throw new Error('Invalid device styles.');
@@ -70,3 +72,4 @@ export function loadLocalDraft(storage, pageKey) { const value = storage.getItem
 export function isSafeLayoutAction(href) {
   return typeof href === 'string' && href.startsWith('/') && !href.startsWith('//') && !href.includes('\\') && ![...href].some(char => char.charCodeAt(0) <= 32 || char.charCodeAt(0) === 127);
 }
+

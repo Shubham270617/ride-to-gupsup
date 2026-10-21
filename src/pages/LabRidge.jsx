@@ -1,3 +1,4 @@
+import RidgeIntro from '../components/lab/RidgeIntro';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
@@ -670,23 +671,7 @@ export default function LabRidge() {
         </button>
       </header>
 
-      {publishedLayout.document ? <LayoutRenderer document={publishedLayout.document} sectionData={ridgeLayoutSectionData(publishedLayout.document, { feed, sessionSlug: spotlightSession?.slug, officialAwards: awards, dataReady: !locked && !raw.loading && !raw.error && Boolean(raw.checkedAt) })} /> : <section className="rr-intro" aria-labelledby="rr-page-title">
-        <div className="rr-intro-copy">
-          <p className="rr-eyebrow">{copy.eyebrow}</p>
-          <h1 id="rr-page-title">
-            {copy.title}
-            <span>.</span>
-          </h1>
-          <p className="rr-intro-line">{copy.introLine}</p>
-          <p className="rr-format">{fill(copy.formatLine, { km: loopKm, loops: maxLoops, total: fixed(loopKm * maxLoops) })}</p>
-        </div>
-        <div className="rr-format-art" aria-hidden="true" style={{ "--rr-loops": maxLoops }}>
-          {Array.from({ length: maxLoops }, (_, i) => (
-            <span key={i}>{String(i + 1).padStart(2, "0")}</span>
-          ))}
-          <b>{copy.artCaption}</b>
-        </div>
-      </section>}
+      {publishedLayout.document ? <LayoutRenderer document={publishedLayout.document} sectionData={ridgeLayoutSectionData(publishedLayout.document, { feed, sessionSlug: spotlightSession?.slug, officialAwards: awards, dataReady: !locked && !raw.loading && !raw.error && Boolean(raw.checkedAt) })} /> : <RidgeIntro titleId="rr-page-title" content={{ eyebrow: copy.eyebrow, title: copy.title, body: copy.introLine, formatLine: fill(copy.formatLine, { km: loopKm, loops: maxLoops, total: fixed(loopKm * maxLoops) }), artCaption: copy.artCaption, loops: String(maxLoops) }} />}
 
       <section className="rr-results" aria-labelledby="rr-board-title">
         {raw.results.length > 0 && <p className="rr-muted" data-testid="ridge-score-source">{sourceNotice}</p>}
@@ -1150,4 +1135,5 @@ function RulesExample({ copy }) {
     </div>
   );
 }
+
 
