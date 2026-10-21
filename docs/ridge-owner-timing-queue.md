@@ -1,0 +1,7 @@
+# Owner timing queue
+
+The standalone owner timer captures each tap timestamp immediately and persists command/request IDs in tab sessionStorage under the verified user/login identity. It projects pending timing on the existing roster and serializes background writes with current workspace CAS. Different riders need not wait for network refresh. Same-rider start/pass/end order is validated by the native engine. Pending markers remain until the write and refreshed state are confirmed.
+
+A failed/uncertain write pauses new taps and retains all queued events. Explicit Reconcile queued taps reuses the original request ID/body; confirmed saved writes with a failed refresh retry only the read. Reload restores the queue paused. Login changes, a 30-minute expiry, invalid ordering, or storage failure prevent further dispatch. No tokens/codes are stored. A queue exceeding 100 events is refused visibly. Server clock limits still apply; prolonged offline queues require owner reconciliation rather than silently changing timestamps.
+
+The current queue is connected to the owner account path only. Assigned-volunteer and inactive code transports are not claimed to have this queue. The pending volunteer TEST-date SQL correction is separate. Do not close a tab with pending taps; refresh only after All taps saved, or use the restored reconciliation action. No automatic real-session test writes are performed.

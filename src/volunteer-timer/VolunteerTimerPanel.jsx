@@ -13,7 +13,7 @@ const clock = value => {
 
 // Presentation only. Deliberately no Supabase, admin transport, credentials,
 // storage or write callbacks until a session-scoped server boundary is reviewed.
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now() }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false }) {
   const controls=demoActions || ownerActions;
   const [editing,setEditing]=useState(null);
   const [newDate,setNewDate]=useState(''),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState('');
@@ -26,7 +26,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const selected = selection || attending.map(e => e.riderId);
   const blocked = !previewActions || busy || pending || !session || session.finished || session.mode === 'archived';
   const wrongDate = connected && session && session.mode !== 'testing' && session.date !== istDate(now);
-  const timingBlocked = blocked || wrongDate;
+  const timingBlocked = blocked || wrongDate || timingPaused;
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   return <main className="vt-panel">
     <h1>RTG RIDGE REPEATS</h1>
@@ -41,11 +41,11 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
     </select></label>}
     {session && tab !== 'Rider Photos' && <p>SESSION MODE: {session.mode === 'live' ? demoActions ? 'LIVE · DEMO ONLY — nothing is published' : 'LIVE · PUBLIC — saved timing updates the leaderboard' : session.mode === 'testing' ? 'TESTING · PRIVATE' : 'ARCHIVED'}{session.finished ? ' · FINISHED' : ''}</p>}
     {tab === 'Riders' && <section aria-label="Attendance">
-      <div className="vt-create-row" title="Session creation is owner-only"><input aria-label="New session date" type="date" disabled={!controls || busy || pending} value={newDate} onChange={e=>setNewDate(e.target.value)}/><select aria-label="New session mode" disabled={!controls || busy || pending} value={newMode} onChange={e=>setNewMode(e.target.value)}><option value="testing">Testing · private</option>{demoActions && <option value="live">Live · public (demo only)</option>}</select><button disabled={!controls || busy || pending || !newDate} onClick={async()=>{const id=await controls.createSession(newDate,newMode);if(id){setSessionId(id);setSelection(null);}}}>Create session</button></div>
+      <div className="vt-create-row" title="Session creation is owner-only"><input aria-label="New session date" type="date" disabled={!controls || busy || pending || managementPending} value={newDate} onChange={e=>setNewDate(e.target.value)}/><select aria-label="New session mode" disabled={!controls || busy || pending} value={newMode} onChange={e=>setNewMode(e.target.value)}><option value="testing">Testing · private</option>{demoActions && <option value="live">Live · public (demo only)</option>}</select><button disabled={!controls || busy || pending || !newDate} onClick={async()=>{const id=await controls.createSession(newDate,newMode);if(id){setSessionId(id);setSelection(null);}}}>Create session</button></div>
       <div className="vt-add-row" title="Rider management is owner-only"><input aria-label="New rider name" placeholder="New rider name" disabled={!controls || busy || pending} value={newName} onChange={e=>setNewName(e.target.value)}/><button disabled={!controls || busy || pending || !newName.trim()} onClick={async()=>{if(await controls.addRider(newName))setNewName('');}}>Add rider</button></div>
       {!session && <p className="vt-empty">No roster is loaded. Ask the owner to assign an open session to your account, then refresh. No timing can be recorded until a session is assigned.</p>}
       <div className="vt-roster-grid">{riders.map(rider => <label className="vt-roster" key={rider.id}><input type="checkbox" disabled={blocked || attending.some(e => e.riderId === rider.id && (e.officialScore || e.laps.some(lap => lap.start != null || lapDuration(lap))))} checked={selected.includes(rider.id)} onChange={e => setSelection(e.target.checked ? [...selected, rider.id] : selected.filter(id => id !== rider.id))}/><span className="vt-avatar" aria-hidden="true">{rider.name.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('')}</span><strong>{rider.name}</strong></label>)}</div>
-      <button disabled={blocked} onClick={() => send({type:'attendance',riderIds:selected})}>Save attendance</button><button onClick={() => setTab('Timer')}>Go to timer</button>
+      <button disabled={blocked || managementPending} onClick={() => send({type:'attendance',riderIds:selected})}>Save attendance</button><button onClick={() => setTab('Timer')}>Go to timer</button>
     </section>}
     {tab === 'Timer' && <section aria-label="Lap timing">
       {wrongDate && <p role="alert">Timing is unavailable: this session is dated {session.date}, but today in India is {istDate(now)}. Select today's session to time now, or use this session on its date. Attendance remains saved.</p>}
@@ -57,7 +57,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         const index = entry.laps.findIndex(lap => !lapDuration(lap));
         const next = index < 0 ? entry.laps.length : index;
         const running = entry.laps[next]?.start != null && !lapDuration(entry.laps[next]);
-        return <article key={entry.riderId}>{demoActions?.photos[entry.riderId] && <img className="vt-timer-photo" src={demoActions.photos[entry.riderId]} alt=""/>}<h2>{name(entry.riderId)}</h2>
+        return <article key={entry.riderId}>{demoActions?.photos[entry.riderId] && <img className="vt-timer-photo" src={demoActions.photos[entry.riderId]} alt=""/>}<h2>{name(entry.riderId)}</h2>{queuedCommands.some(c=>c.type==='group_start'||c.riderId===entry.riderId)&&<p role="status">Pending save</p>}
           <p>{locked ? 'Locked timing record' : next >= 5 ? '5 loops complete' : `${running ? 'Running' : 'Ready'} L${next + 1}`}</p>
           {running && !locked && <p>{formatDuration(now - entry.laps[next].start) || '0:00.000'}</p>}
           {!locked && next < 5 && <><button disabled={timingBlocked} onClick={() => send({type:running ? 'end' : 'start',riderId:entry.riderId,lap:next+1,at:Date.now()})}>{running ? 'FINISH' : 'START'} · L{next + 1}</button>{running && next < 4 && <button disabled={timingBlocked} onClick={() => send({type:'pass',riderId:entry.riderId,lap:next+1,at:Date.now()})}>Pass → L{next + 2}</button>}</>}

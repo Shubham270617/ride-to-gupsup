@@ -54,6 +54,8 @@ export function createRidgeRequest({ getSession, fetcher = fetch, timeoutMs = 20
       throw error;
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
   }
+  request.identity=async()=>{const {data,error}=await getSession();if(error||!data?.session)throw new Error('Sign in before recording timing.');return recoveryIdentity(data.session);};
+  request.restorePending=async body=>{const owner=await request.identity();if(owner!==lastReadOwner)throw new Error('Login changed. Refresh before recovery.');const existing=recovery.read(owner);if(!existing)recovery.begin(owner,body);else if(JSON.stringify(existing.body)!==JSON.stringify(body))throw new Error('Another unresolved action requires reconciliation.');};
   request.clearRecovery=()=>{if(!lastReadOwner)throw new Error('Refresh Ridge records first.');recovery.clear(lastReadOwner);};
   return request;
 }

@@ -1,0 +1,17 @@
+import{it,expect,vi}from'vitest';
+import{createTimingQueue}from'../../src/lib/ridge/timingQueue';
+import{applyRidgeCommand}from'../../src/lib/ridge/engine';
+const initial=()=>({version:16,state:{schemaVersion:1,riders:['a','b'].map(id=>({id,name:id})),sessions:[{id:'s',date:'2026-10-22',mode:'testing',finished:false,awardOverrides:[],entries:['a','b'].map(riderId=>({riderId,adjustment:0,laps:[{start:100,end:200},{start:300,end:400}]}))}]}});
+const memory=()=>{const m=new Map();return{getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)}};
+const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};
+it('captures two riders 100ms apart while first save is delayed, preserves same-rider order and serial CAS',async()=>{
+ let data=initial(),release,snapshot;const calls=[],storage=memory();const write=async body=>{calls.push(structuredClone(body));if(calls.length===1)await new Promise(r=>release=r);data={version:data.version+1,state:applyRidgeCommand(data.state,body.command,{now:body.command.at}).state};};
+ const q=createTimingQueue({identity:'login',initial:data,read:async()=>data,write,checkIdentity:async()=>'login',storage,notify:s=>snapshot=s});
+ q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});await flush();q.enqueue({type:'start',sessionId:'s',riderId:'b',lap:3,at:1100});q.enqueue({type:'end',sessionId:'s',riderId:'a',lap:3,at:1200});expect(calls).toHaveLength(1);expect(snapshot.pending).toBe(3);expect(snapshot.state.sessions[0].entries[1].laps[2].start).toBe(1100);release();await flush();expect(calls.map(c=>c.version)).toEqual([16,17,18]);expect(calls.map(c=>c.command.at)).toEqual([1000,1100,1200]);expect(q.pending).toBe(0);expect(data.state.sessions[0].entries[0].laps).toHaveLength(3);
+});
+it('lost response then reload reconciles exact request without duplicate timing and preserves queued next rider',async()=>{
+ let data=initial(),lost=true;const receipts=new Set(),calls=[],storage=memory();const write=async body=>{calls.push(body);if(!receipts.has(body.requestId)){data={version:data.version+1,state:applyRidgeCommand(data.state,body.command,{now:body.command.at}).state};receipts.add(body.requestId);}if(lost)throw Error('Response lost');};const opts={identity:'login',read:async()=>data,write,checkIdentity:async()=>'login',storage};const q=createTimingQueue({...opts,initial:data});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});q.enqueue({type:'start',sessionId:'s',riderId:'b',lap:3,at:1100});await flush();expect(q.paused).toBe(true);q.stop();lost=false;const restored=createTimingQueue({...opts,initial:data,restore:vi.fn()});expect(restored.pending).toBe(2);expect(restored.paused).toBe(true);restored.resume();await flush();expect(calls[1]).toEqual(calls[0]);expect(data.version).toBe(18);expect(restored.pending).toBe(0);
+});
+it('offline and changed-login queues pause without losing taps or replaying for another login',async()=>{
+ const storage=memory(),write=vi.fn().mockRejectedValue(Error('offline'));let identity='A';const q=createTimingQueue({identity:'A',initial:initial(),read:async()=>initial(),write,checkIdentity:async()=>identity,storage});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});await flush();expect(q.paused).toBe(true);const saved=storage.getItem('rtg-timing-queue:A');identity='B';q.resume();await flush();expect(write).toHaveBeenCalledTimes(1);expect(storage.getItem('rtg-timing-queue:A')).toBe(saved);expect(()=>q.enqueue({})).toThrow('Reconcile');
+});
