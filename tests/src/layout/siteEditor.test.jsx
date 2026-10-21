@@ -1,13 +1,26 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import SiteEditor from '../../../src/admin/site-editor/SiteEditor';
 import { EMPTY_DRAFT, validateDraft, resolvedStyle, HOME_SECTIONS } from '../../../src/admin/site-editor/catalog';
-afterEach(()=>{cleanup();localStorage.clear();});
+afterEach(()=>{cleanup();localStorage.clear();vi.useRealTimers();});
 function select(id, source) {
   const iframe=screen.getByTitle('Actual page canvas');
   act(()=>window.dispatchEvent(new MessageEvent('message',{origin:window.location.origin,source:source||iframe.contentWindow,data:{channel:'rtg-local-canvas',type:'select',id}})));
 }
 describe('Home visual editor foundation',()=>{
+  it('shows a bounded loading explanation until its own canvas is ready without resetting edits',()=>{
+    vi.useFakeTimers();render(<SiteEditor />);select('why');
+    fireEvent.change(screen.getByRole('textbox',{name:'Headline — line 1'}),{target:{value:'Keep my draft'}});
+    expect(screen.getByText(/Loading the protected page canvas/)).toBeInTheDocument();
+    act(()=>vi.advanceTimersByTime(20000));
+    expect(screen.getByText(/page canvas is taking longer/)).toBeInTheDocument();
+    const message=source=>new MessageEvent('message',{origin:window.location.origin,source,data:{channel:'rtg-local-canvas',type:'ready'}});
+    act(()=>window.dispatchEvent(message(window)));
+    expect(screen.getByText(/page canvas is taking longer/)).toBeInTheDocument();
+    act(()=>window.dispatchEvent(message(screen.getByTitle('Actual page canvas').contentWindow)));
+    expect(screen.queryByText(/page canvas is taking longer/)).toBeNull();
+    expect(screen.getByRole('textbox',{name:'Headline — line 1'})).toHaveValue('Keep my draft');
+  });
   it('opens a contextual inspector only for section selection from its own canvas',()=>{
     render(<SiteEditor />);select('why',window);
     expect(screen.queryByRole('heading',{name:'Why RTG'})).toBeNull();

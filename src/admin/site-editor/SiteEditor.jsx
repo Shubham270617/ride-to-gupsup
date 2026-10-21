@@ -8,6 +8,8 @@ export default function SiteEditor({ canvasUrl = '/site-canvas-local.html', page
   const [draft,setDraft]=useState(()=>emptyDraft(pagePath));
   const [past,setPast]=useState([]); const [selected,setSelected]=useState(null); const [page,setPage]=useState(pagePath);
   const [device,setDevice]=useState('desktop'); const [slide,setSlide]=useState(0); const [ready,setReady]=useState(0);
+  const [canvasDelayed,setCanvasDelayed]=useState(false);
+  useEffect(()=>{if(ready)return;const timer=setTimeout(()=>setCanvasDelayed(true),20000);return()=>clearTimeout(timer);},[ready]);
   const [sources,setSources]=useState({settings:{},images:{}}); const [sourceStatus,setSourceStatus]=useState({}); const [status,setStatus]=useState('No draft changes.'); const [error,setError]=useState('');
   const [dirty,setDirty]=useState(false); const [confirmLoad,setConfirmLoad]=useState(false); const frame=useRef(null);
   useEffect(()=>{
@@ -41,6 +43,7 @@ export default function SiteEditor({ canvasUrl = '/site-canvas-local.html', page
     <SharedDraftControls store={sharedStore} page={pagePath} draft={draft} onReplace={next=>change(next)} />
     <div className="cms-workspace" hidden={page!==pagePath}>
       <div className="cms-canvas-scroll" role="region" aria-label="Page canvas" tabIndex={0}>
+        {!ready&&<p role="status">{canvasDelayed?'The page canvas is taking longer than expected. Your edits are preserved. Check the canvas sign-in screen or open the admin sign-in in another tab.':'Loading the protected page canvas… Your edits are preserved.'}</p>}
         <iframe ref={frame} title="Actual page canvas" src={pagePath==='/'?canvasUrl:canvasUrl+'?page='+encodeURIComponent(pagePath)} style={{width:device==='mobile'?390:'100%'}} />
       </div>
       <aside aria-label="Section inspector" className="cms-inspector" tabIndex={0}>
