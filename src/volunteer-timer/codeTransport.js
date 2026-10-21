@@ -10,7 +10,7 @@ export function createCodeTransport({fetcher=fetch,storage=sessionStorage,now=Da
    // Recheck the active cookie identity before dispatch; never replay for a different code.
    const active=await api({action:'read'});if(active.credentialId!==credential)throw new Error('Code session changed. Reload before continuing.');
    storage.setItem(key(credential),JSON.stringify({createdAt:existing?.createdAt||now(),body:request}));
-   try{const result=await api({action:'write',...request});storage.removeItem(key(credential));return result;}catch(e){if(e.definitive)storage.removeItem(key(credential));throw e;}
+   try{const result=await api({action:'write',...request,credentialId:credential});storage.removeItem(key(credential));return result;}catch(e){if(e.definitive)storage.removeItem(key(credential));throw e;}
   },
  };
 }

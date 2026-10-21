@@ -1,6 +1,6 @@
 -- INACTIVE REVIEW CANDIDATE. Do not apply without explicit activation approval.
 begin;
-create table public.ridge_timing_codes(id uuid primary key default gen_random_uuid(),code_hash text unique not null check(length(code_hash)=64),issuer_id uuid not null references public.admin_profiles(id),scope text not null check(scope in ('timing','advanced')),user_id uuid,session_id text,assignment_revision bigint,expires_at timestamptz not null,revoked_at timestamptz,created_at timestamptz not null default now(),check(scope='advanced' or (user_id is not null and session_id is not null)));
+create table public.ridge_timing_codes(id uuid primary key default gen_random_uuid(),code_hash text unique not null check(length(code_hash)=64),issuer_id uuid not null,scope text not null check(scope in ('timing','advanced')),user_id uuid,session_id text,assignment_revision bigint,expires_at timestamptz not null,revoked_at timestamptz,created_at timestamptz not null default now(),check(scope='advanced' or (user_id is not null and session_id is not null)));
 create table public.ridge_timing_code_sessions(session_hash text primary key check(length(session_hash)=64),code_id uuid not null references public.ridge_timing_codes(id),expires_at timestamptz not null,created_at timestamptz not null default now());
 create table public.ridge_timing_code_rates(key text primary key,started_at timestamptz not null,attempts integer not null);
 create table public.ridge_timing_code_audit(id bigint generated always as identity primary key,code_id uuid,actor_id uuid,action text not null,created_at timestamptz not null default now());
@@ -10,6 +10,7 @@ alter table public.ridge_timing_code_rates enable row level security;
 alter table public.ridge_timing_code_audit enable row level security;
 revoke all on public.ridge_timing_codes,public.ridge_timing_code_sessions,public.ridge_timing_code_rates,public.ridge_timing_code_audit from public,anon,authenticated;
 grant select,insert,update,delete on public.ridge_timing_codes,public.ridge_timing_code_sessions,public.ridge_timing_code_rates to service_role;
+revoke all on public.ridge_timing_code_audit from service_role;
 grant select,insert on public.ridge_timing_code_audit to service_role;
 grant usage,select on sequence public.ridge_timing_code_audit_id_seq to service_role;
 create function public.ridge_code_access(p_action text,p_data jsonb) returns jsonb language plpgsql security invoker set search_path='' as $$
@@ -65,16 +66,20 @@ begin
  result:=jsonb_build_object('credentialId',c.id,'scope',c.scope,'issuerId',c.issuer_id,'userId',c.user_id,'sessionId',c.session_id,'rosterIds',to_jsonb(a.roster_rider_ids),'expiresAt',extract(epoch from expiry)*1000);
  return result;
 end $$;
-create function public.ridge_code_commit(p_session_hash text,p_expected bigint,p_request uuid,p_command jsonb,p_state jsonb,p_feed jsonb,p_audit jsonb) returns bigint language plpgsql security invoker set search_path='' as $$
-declare access jsonb; v bigint;
+create function public.ridge_code_commit(p_session_hash text,p_credential uuid,p_expected bigint,p_request uuid,p_command jsonb,p_state jsonb,p_feed jsonb,p_audit jsonb) returns bigint language plpgsql security invoker set search_path='' as $$
+declare access jsonb; v bigint; prior public.ridge_audit%rowtype;
 begin
  -- Same transaction keeps credential/assignment share locks until native commit.
  perform 1 from public.ridge_workspace where singleton for update;
  access:=public.ridge_code_access('read',jsonb_build_object('sessionHash',p_session_hash));
  if access is null then raise exception 'Code expired or revoked' using errcode='42501';end if;
+ if (access->>'credentialId')::uuid is distinct from p_credential then raise exception 'Code changed' using errcode='42501';end if;
+ select * into prior from public.ridge_audit where request_id=p_request;
+ if found and prior.details->>'credentialId' is distinct from p_credential::text then raise exception 'Receipt belongs to another credential' using errcode='42501';end if;
  if access->>'scope'='timing' then
   if p_command->>'sessionId' is distinct from access->>'sessionId' then raise exception 'Session refused' using errcode='42501';end if;
   v:=public.ridge_timing_commit(p_expected,p_request,(access->>'userId')::uuid,p_command,p_state,p_feed);
+  if prior.request_id is null then update public.ridge_audit set details=details||jsonb_build_object('credentialId',p_credential) where request_id=p_request;end if;
  else
   if p_command->>'type' not in ('create_session','create_rider','edit_rider','correct_lap','correct_points','finish_session','reopen_session') then raise exception 'Advanced action refused' using errcode='42501';end if;
   if p_audit->'command' is distinct from p_command then raise exception 'Audit mismatch' using errcode='42501';end if;
@@ -82,6 +87,6 @@ begin
  end if;
  return v;
 end $$;
-revoke all on function public.ridge_code_access(text,jsonb),public.ridge_code_commit(text,bigint,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
-grant execute on function public.ridge_code_access(text,jsonb),public.ridge_code_commit(text,bigint,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
+revoke all on function public.ridge_code_access(text,jsonb),public.ridge_code_commit(text,uuid,bigint,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
+grant execute on function public.ridge_code_access(text,jsonb),public.ridge_code_commit(text,uuid,bigint,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
 commit;

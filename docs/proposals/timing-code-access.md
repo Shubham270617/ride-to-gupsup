@@ -18,7 +18,7 @@ File: `supabase/proposals/timing-code-access.sql` (review candidate, not applied
 
 Creates four new RLS-protected tables: `ridge_timing_codes`, `ridge_timing_code_sessions`, `ridge_timing_code_rates`, `ridge_timing_code_audit`. No anon/authenticated table privileges or RLS policies. Only service_role gets necessary access; audit is append-only for service_role.
 
-Creates two new SECURITY INVOKER functions with empty search_path: `ridge_code_access(text,jsonb)` and `ridge_code_commit(text,bigint,uuid,jsonb,jsonb,jsonb,jsonb)`. Execute is service_role only. Existing tables, functions, grants, RLS, owner guards, Ridge history and publication remain unchanged. Installation inserts no codes or records.
+Creates two new SECURITY INVOKER functions with empty search_path: `ridge_code_access(text,jsonb)` and `ridge_code_commit(text,uuid,bigint,uuid,jsonb,jsonb,jsonb,jsonb)`. Execute is service_role only. Existing tables, functions, grants, RLS, owner guards, Ridge history and publication remain unchanged. Installation inserts no codes or records.
 
 ## Approval and activation steps
 
@@ -34,3 +34,9 @@ Rollback: disable `RTG_TIMING_CODES_ENABLED` and redeploy; code endpoints deny b
 ## Validation
 
 Local PGlite tests execute the candidate SQL with synthetic identities and state: browser-role denial, issuance constraints, hash-free list projection, cookie bounds, atomic idempotent timing, revocation, assignment revision invalidation, rate limits, and advanced command denial. API and transport tests cover disabled feature, owner/Origin/cookie guards, removed owner, reload recovery, code switch and expiry. No real code is generated during tests. Full suite retains two known Python-environment failures; see final execution receipt for exact totals.
+
+## Pre-activation review corrections
+
+Writes carry the expected credential ID and the database checks it under the credential lock before mutation or receipt replay. Receipts bind the original credential. Authorization denial after a lost response preserves pending reconciliation data; it is not proof the earlier mutation failed. Code issuer IDs are immutable audit identifiers without a foreign key to admin_profiles; current admin-seat existence is still checked on use, so deleting a seat revokes use without deleting audit history.
+
+Separate existing issue: ridge_timing_assignments.assigned_by references admin_profiles without ON DELETE handling and can block deleting an assigning admin. This pre-existing assignment schema is unchanged; a separate reviewed lifecycle migration is required before claiming that all admin revocation paths are unblocked. No access-policy expansion has been applied.
