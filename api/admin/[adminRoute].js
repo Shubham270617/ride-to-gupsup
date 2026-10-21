@@ -1,3 +1,4 @@
+import timingCodes from "../../api-lib/timingCodes.js";
 import ridge from "../../api-lib/admin/ridge.js";
 import stravaResync from "../../api-lib/admin/strava-resync.js";
 import pageLayouts from "../../api-lib/pageLayouts.js";
@@ -12,6 +13,7 @@ import timingOwner from "../../api-lib/timingOwner.js";
 // the independent ?action=published|draft query field.
 const ROUTES = Object.freeze({
   "/api/admin/ridge": ridge,
+  "/api/admin/ridge-timing-codes": timingCodes,
   "/api/admin/strava-resync": stravaResync,
   "/api/admin/page-layouts": pageLayouts,
   "/api/admin/volunteer-ridge": volunteerRidge,

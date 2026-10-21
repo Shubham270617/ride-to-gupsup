@@ -1,13 +1,36 @@
-# Inactive timing-code authentication candidate
+# Inactive code-only timer implementation — activation review
 
-Requested replacement: individual volunteer/session code and a distinct owner Advanced Settings code. Main website admin login remains the only code-management entry. Existing deployed account/assignment protections remain active. No real codes generated; no proposed schema, credentials, cookies or grants activated.
+Implemented routes: `/volunteer/ridge/code` (volunteer code or distinct owner Advanced Settings code), `/admin/ridge-codes` (issuance/revocation under existing website owner login), and the existing dispatcher endpoint `/api/admin/ridge-timing-codes`. All new server operations are disabled unless `RTG_TIMING_CODES_ENABLED=true`. No new environment values, real codes, assignments, migrations or grants have been activated.
 
-`api-lib/proposals/timingCodeAuth.js` is deliberately disconnected from all API routes. It provides 192-bit random codes, domain-separated HMAC storage, 256-bit opaque session tokens, 20-minute HttpOnly/Secure/SameSite=Strict cookies, same-origin POST checks, bounded expiry and command/roster scope checks. Tests use deterministic synthetic bytes only.
+## Implemented security boundaries
 
-## Required activation review
+- 192-bit random codes; only domain-separated HMAC hashes stored. 256-bit opaque cookie tokens; HttpOnly, Secure, SameSite=Strict, __Host prefix. Codes are displayed once after explicit owner review and never persisted in browser storage or logged.
+- Main-admin issuance requires current `requireAdmin` plus existing `RTG_LAYOUT_EDITOR_ADMIN_IDS`; database repeats admin-seat and active-assignment checks. Timing codes bind a named existing account/session assignment and its revision. No account or assignment is automatically created.
+- Maximum code lifetime 24 hours, capped further by assignment expiry. Cookie lifetime 20 minutes, capped by code expiry. Every request rechecks code, cookie, owner seat and assignment; assignment revision changes and revocation invalidate cookies.
+- Atomic per-code (5/minute) and global (100/minute) exchange limits. No caller-supplied IP header is trusted. Counters include malformed attempts and expire after one day.
+- All POST operations require exact configured Origin. The durable transaction keeps credential and assignment locks through native timing commit. Timing uses the existing strict scoped writer. Advanced allows session/rider setup, corrections and closing/reopening only; cannot grant access, import history, publish or change a session to Live.
+- Original request IDs, CAS and native audit remain mandatory. Token-free pending commands survive reload in sessionStorage, bound to the server-verified credential ID, with explicit retry and 30-minute expiry. A different code cannot replay them. Issuance uncertainty instructs owner to inspect/revoke the new entry instead of blindly generating another.
+- Photo uploads are not added to code sessions. Existing operational photo/admin controls remain unchanged.
 
-Before this can work, implement/review a service-only durable store with protected `ridge_timing_codes`, `ridge_timing_code_sessions`, and atomic shared rate-limit counters. Store only hashes, issuer/assignment references, explicit scope, expiry/revocation and non-secret audit IDs. Issuance must recheck the existing server owner guard and the named existing assignment transactionally. Expiry cap: 24 hours; session cap: 20 minutes. Every read/write must recheck current credential, session and underlying owner/assignment validity; timing writer must repeat that check under its existing workspace lock. Advanced scope must never grant access, publish/import history, or silently expand roles.
+## Exact proposed database change
 
-The candidate's store methods are contracts, not implemented database transactions. They must enforce global and per-network attempt limits atomically and bind network keys only to trusted platform metadata. No caller-supplied forwarded-IP trust. Server adapters must redact cookies/code bodies from all diagnostics. Mutation request IDs, CAS, audit and uncertain-write recovery stay mandatory. Cookie path is `/` for the required __Host prefix. Revocation invalidates all sessions immediately through per-request database checks.
+File: `supabase/proposals/timing-code-access.sql` (review candidate, not applied migration).
 
-Exact approval needed before activation: install reviewed protected storage/functions, add a dedicated server secret, enable code exchange/session cookies, and name the existing volunteer assignments permitted for issuance. Issuance of actual codes remains a separate explicit owner action. No password or secret is needed in chat. Until that approval and end-to-end security tests, this is an inactive proposal, not a working replacement login.
+Creates four new RLS-protected tables: `ridge_timing_codes`, `ridge_timing_code_sessions`, `ridge_timing_code_rates`, `ridge_timing_code_audit`. No anon/authenticated table privileges or RLS policies. Only service_role gets necessary access; audit is append-only for service_role.
+
+Creates two new SECURITY INVOKER functions with empty search_path: `ridge_code_access(text,jsonb)` and `ridge_code_commit(text,bigint,uuid,jsonb,jsonb,jsonb,jsonb)`. Execute is service_role only. Existing tables, functions, grants, RLS, owner guards, Ridge history and publication remain unchanged. Installation inserts no codes or records.
+
+## Approval and activation steps
+
+1. Approve installing the exact reviewed SQL on TEST `cxwfjrntfqlyaqppxggh` only; register an actual migration filename/history receipt with the supported migration tool.
+2. Provision a new server-only `RTG_TIMING_CODE_PEPPER` (at least 32 random bytes) without displaying it in chat/logs; set `RTG_TIMING_CODE_ORIGIN=https://rtg-website-three.vercel.app` and enable `RTG_TIMING_CODES_ENABLED=true` only on the existing TEST project. Never use VITE/public prefixes.
+3. Deploy the exact reviewed commit; verify new tables/functions/permissions and anonymous refusal before real issuance. A named existing volunteer assignment is required before issuing a timing code; distinct owner code requires explicit owner issuance. No bulk or automatic codes.
+4. Authenticated acceptance: owner issues a reviewed code, confirms limited assigned roster and expiry, revokes it and verifies denial. Use explicitly authorized synthetic TEST records for write acceptance; never historical rider timing. Until then do not claim authenticated operational acceptance.
+
+Risk: possession of a valid code permits its scoped actions until expiry/revocation; the owner must share it privately. This replaces account login for the external code route only, not main administration. Exact original Apps Script advanced behavior remains unverified.
+
+Rollback: disable `RTG_TIMING_CODES_ENABLED` and redeploy; code endpoints deny before database access. Revoke code rows through owner controls before re-enabling. Keep audit for reconciliation; do not delete storage or alter native history to roll back. Existing account timer continues working.
+
+## Validation
+
+Local PGlite tests execute the candidate SQL with synthetic identities and state: browser-role denial, issuance constraints, hash-free list projection, cookie bounds, atomic idempotent timing, revocation, assignment revision invalidation, rate limits, and advanced command denial. API and transport tests cover disabled feature, owner/Origin/cookie guards, removed owner, reload recovery, code switch and expiry. No real code is generated during tests. Full suite retains two known Python-environment failures; see final execution receipt for exact totals.

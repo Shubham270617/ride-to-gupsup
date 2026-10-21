@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatDuration, lapDuration } from '../lib/ridge/engine';
+import { formatDuration, lapDuration, istDate } from '../lib/ridge/engine';
 import './volunteer-timer.css';
 import DemoLapEditor from './DemoLapEditor';
 import DemoRiderPhotos from './DemoRiderPhotos';
@@ -25,6 +25,8 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const name = id => riders.find(r => r.id === id)?.name || 'Unknown rider';
   const selected = selection || attending.map(e => e.riderId);
   const blocked = !previewActions || busy || pending || !session || session.finished || session.mode === 'archived';
+  const wrongDate = connected && session && session.date !== istDate(now);
+  const timingBlocked = blocked || wrongDate;
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   return <main className="vt-panel">
     <h1>RTG RIDGE REPEATS</h1>
@@ -46,7 +48,9 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
       <button disabled={blocked} onClick={() => send({type:'attendance',riderIds:selected})}>Save attendance</button><button onClick={() => setTab('Timer')}>Go to timer</button>
     </section>}
     {tab === 'Timer' && <section aria-label="Lap timing">
-      <button disabled={blocked || !attending.length || attending.some(e => e.laps.length || e.officialScore)} onClick={() => send({type:'group_start',at:Date.now()})}>Start all · Lap 1</button>
+      {wrongDate && <p role="alert">Timing is unavailable: this session is dated {session.date}, but today in India is {istDate(now)}. Select today's session to time now, or use this session on its date. Attendance remains saved.</p>}
+      {message && <p role="status">{message}</p>}
+      <button disabled={timingBlocked || !attending.length || attending.some(e => e.laps.length || e.officialScore)} onClick={() => send({type:'group_start',at:Date.now()})}>Start all · Lap 1</button>
       <div className="vt-cards">{attending.map(entry => {
         // Historical official results are never offered as resumable timers.
         const locked = session.finished || session.mode === 'archived' || !!entry.officialScore;
@@ -56,7 +60,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         return <article key={entry.riderId}>{demoActions?.photos[entry.riderId] && <img className="vt-timer-photo" src={demoActions.photos[entry.riderId]} alt=""/>}<h2>{name(entry.riderId)}</h2>
           <p>{locked ? 'Locked timing record' : next >= 5 ? '5 loops complete' : `${running ? 'Running' : 'Ready'} L${next + 1}`}</p>
           {running && !locked && <p>{formatDuration(now - entry.laps[next].start) || '0:00.000'}</p>}
-          {!locked && next < 5 && <><button disabled={blocked} onClick={() => send({type:running ? 'end' : 'start',riderId:entry.riderId,lap:next+1,at:Date.now()})}>{running ? 'FINISH' : 'START'} · L{next + 1}</button>{running && next < 4 && <button disabled={blocked} onClick={() => send({type:'pass',riderId:entry.riderId,lap:next+1,at:Date.now()})}>Pass → L{next + 2}</button>}</>}
+          {!locked && next < 5 && <><button disabled={timingBlocked} onClick={() => send({type:running ? 'end' : 'start',riderId:entry.riderId,lap:next+1,at:Date.now()})}>{running ? 'FINISH' : 'START'} · L{next + 1}</button>{running && next < 4 && <button disabled={timingBlocked} onClick={() => send({type:'pass',riderId:entry.riderId,lap:next+1,at:Date.now()})}>Pass → L{next + 2}</button>}</>}
         </article>;
       })}</div>
       {!attending.length && <p>No riders recorded for this session.</p>}

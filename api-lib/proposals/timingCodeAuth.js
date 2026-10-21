@@ -17,7 +17,7 @@ export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=ra
    if(scope==='timing'&&!assignmentId)throw new Error('An existing explicit assignment is required.');
    const code=random(24).toString('base64url');
    const result=await store.insertCredential({issuerId:issuer.id,scope,assignmentId,expiresAt,codeHash:digest('code',code)});
-   return {id:result.id,code,expiresAt}; // one-time display only, never log
+   return {id:result.id,code,expiresAt:result.expiresAt ? Date.parse(result.expiresAt) : expiresAt}; // one-time display only, never log
   },
   async exchange({code,networkKey,...req}){
    checkOrigin(req);

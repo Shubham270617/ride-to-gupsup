@@ -364,12 +364,13 @@ export function applyRidgeCommand(
       const at = Number(command.at);
       if (
         !Number.isFinite(at) ||
-        Math.abs(now - at) > 600000 ||
-        istDate(at) !== session.date
+        Math.abs(now - at) > 600000
       )
         throw new Error(
-          "Check the device clock and session date before timing.",
+          "The device clock differs from server time. Correct the device clock before timing.",
         );
+      if (istDate(at) !== session.date)
+        throw new Error(`This session is dated ${session.date}; today in India is ${istDate(now)}. Select today's session or wait until the session date. Attendance is saved.`);
       if (type === "group_start") {
         if (!session.entries.length) throw new Error("Mark attendance first.");
         if (session.entries.some((e) => e.laps.length))
