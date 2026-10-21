@@ -19,7 +19,7 @@ async function request(body, signal) {
     headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},
     ...(body?{body:JSON.stringify({version:body.version,requestId:body.requestId,command:body.command})}:{})});
   const result=await response.json();
-  if(!response.ok)throw Object.assign(new Error(result.error||'Timing unavailable.'),{definitive:result.definitive===true});
+  if(!response.ok)throw Object.assign(new Error(result.error||'Timing unavailable.'),{definitive:result.definitive===true,canManage:result.canManage===true,code:result.code});
   return result;
 }
 function AssignedPanel({initial,userId,binding,currentUser}) {
@@ -48,12 +48,12 @@ export default function VolunteerTimerRoute() {
   useEffect(()=>{
     setLoaded(null);setError('');if(!session?.user.id)return;
     let active=true;const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
-    request(undefined,controller.signal).then(data=>{if(active)setLoaded({userId:session.user.id,data});}).catch(e=>{if(active)setError(e.name==='AbortError'?'Loading took too long. Try again.':e.message);}).finally(()=>clearTimeout(timer));
+    request(undefined,controller.signal).then(data=>{if(active)setLoaded({userId:session.user.id,data});}).catch(e=>{if(active)setError({message:e.name==='AbortError'?'Loading took too long. Try again.':e.message,canManage:e.canManage===true,code:e.code});}).finally(()=>clearTimeout(timer));
     return()=>{active=false;clearTimeout(timer);controller.abort();};
   },[session?.user.id,attempt]);
   if(loading)return <main className="vt-panel">Checking login…</main>;
   if(!session)return <main className="vt-panel"><h1>Ridge volunteer timing</h1><p>Use your own assigned account.</p><button onClick={()=>requestLogin('login')}>Sign in</button><AuthGate/></main>;
-  if(error)return <main className="vt-panel"><h1>Ridge volunteer timing</h1><p role="alert">{error}</p><button onClick={()=>setAttempt(n=>n+1)}>Try again</button></main>;
+  if(error)return <VolunteerTimerPanel connected message={error.message} canManage={error.canManage} onRefresh={()=>setAttempt(n=>n+1)}/>;
   if(!loaded || loaded.userId!==session.user.id)return <main className="vt-panel">Loading assigned sessions…</main>;
   return <AssignedPanel key={session.user.id+':'+session.user.last_sign_in_at} initial={loaded.data} userId={session.user.id} binding={session.user.last_sign_in_at} currentUser={currentUser}/>;
 }

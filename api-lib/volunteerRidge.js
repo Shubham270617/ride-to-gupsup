@@ -29,7 +29,14 @@ export function createVolunteerHandler(getDb=getSupabaseAdmin) {
     const grant=await db.from('ridge_timing_assignments').select('session_id,roster_rider_ids,expires_at,revoked_at').eq('user_id',actor);
     if(grant.error)return res.status(503).json({error:'Volunteer timing has not been activated.'});
     const assignments=(grant.data||[]).filter(a=>!a.revoked_at&&Date.parse(a.expires_at)>Date.now());
-    if(!assignments.length)return res.status(403).json({error:'No active timing sessions are assigned to this account.'});
+    if(!assignments.length){
+      let canManage=false;
+      if(req.method==='GET'&&(process.env.RTG_LAYOUT_EDITOR_ADMIN_IDS||'').split(',').map(s=>s.trim()).includes(actor)){
+        const owner=await db.from('admin_profiles').select('id').eq('id',actor).maybeSingle();
+        canManage=!owner.error&&owner.data?.id===actor;
+      }
+      return res.status(403).json({code:'no_assignment',canManage,error:'No active timing sessions are assigned to this account.'});
+    }
     const body=req.body;
     if(req.method==='POST'){
       if(!body||Object.keys(body).some(k=>!['version','requestId','command'].includes(k))||!Number.isSafeInteger(body.version)||body.version<0||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.requestId||'')||JSON.stringify(body).length>20000)return res.status(400).json({error:'Invalid timing request.'});

@@ -9,7 +9,8 @@ const clock = value => value == null ? '—' : new Intl.DateTimeFormat('en-GB', 
 
 // Presentation only. Deliberately no Supabase, admin transport, credentials,
 // storage or write callbacks until a session-scoped server boundary is reviewed.
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', now = Date.now() }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, now = Date.now() }) {
+  const [newDate,setNewDate]=useState(''),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState('');
   const [tab, setTab] = useState('Riders');
   const [sessionId, setSessionId] = useState('');
   const [selection, setSelection] = useState(null);
@@ -21,17 +22,20 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   return <main className="vt-panel">
     <h1>RTG RIDGE REPEATS</h1>
-    <p role="status">{connected ? 'Assigned-session attendance and timing only.' : previewActions ? 'Synthetic local preview · no server writes.' : 'Interface review only · volunteer access and saving are not enabled.'} {message}</p>
+    <p className="vt-notice" role="status">{connected ? 'Assigned-session attendance and timing only.' : previewActions ? 'DEMO · synthetic data only · changes reset on reload · no server writes.' : 'Interface review only · volunteer access and saving are not enabled.'} {message}</p>
     {pending && previewActions && <button disabled={busy} onClick={previewActions.retry}>Retry same action</button>}
     <nav aria-label="Timer steps">{tabs.map((item, i) => <button key={item}
       aria-pressed={tab === item} onClick={() => setTab(item)}>{i + 1} · {item}</button>)}</nav>
-    <label>Session<select disabled={busy || pending} value={session?.id || ''} onChange={e => {setSessionId(e.target.value);setSelection(null);}}>
+    {tab === 'Riders' && <p className="vt-instructions">Choose who is present this session, then save. Riders with recorded laps stay selected.</p>}
+    <label className="vt-session"><span className="vt-sr-only">Session</span><select disabled={busy || pending || !sessions.length} value={session?.id || ''} onChange={e => {setSessionId(e.target.value);setSelection(null);}}>
       {!sessions.length && <option value="">No assigned sessions</option>}
       {sessions.map(s => <option key={s.id} value={s.id}>RR {s.date}</option>)}
     </select></label>
-    {session && <p>SESSION MODE: {session.mode === 'live' ? 'LIVE · PUBLIC — saved timing updates the leaderboard' : session.mode === 'testing' ? 'TESTING · PRIVATE' : 'ARCHIVED'}{session.finished ? ' · FINISHED' : ''}</p>}
+    {session && <p>SESSION MODE: {session.mode === 'live' ? demoActions ? 'LIVE · DEMO ONLY — nothing is published' : 'LIVE · PUBLIC — saved timing updates the leaderboard' : session.mode === 'testing' ? 'TESTING · PRIVATE' : 'ARCHIVED'}{session.finished ? ' · FINISHED' : ''}</p>}
     {tab === 'Riders' && <section aria-label="Attendance">
-      <p>Choose who is present this session, then save. Riders with recorded laps stay selected.</p>
+      <div className="vt-create-row" title="Session creation is owner-only"><input aria-label="New session date" type="date" disabled={!demoActions} value={newDate} onChange={e=>setNewDate(e.target.value)}/><select aria-label="New session mode" disabled={!demoActions} value={newMode} onChange={e=>setNewMode(e.target.value)}><option value="testing">Testing · private</option><option value="live">Live · public (demo only)</option></select><button disabled={!demoActions || !newDate} onClick={()=>{const id=demoActions.createSession(newDate,newMode);if(id){setSessionId(id);setSelection(null);}}}>Create session</button></div>
+      <div className="vt-add-row" title="Rider management is owner-only"><input aria-label="New rider name" placeholder="New rider name" disabled={!demoActions} value={newName} onChange={e=>setNewName(e.target.value)}/><button disabled={!demoActions || !newName.trim()} onClick={()=>{if(demoActions.addRider(newName))setNewName('');}}>Add rider</button></div>
+      {!session && <p className="vt-empty">No roster is loaded. Ask the owner to assign an open session to your account, then refresh. No timing can be recorded until a session is assigned.</p>}
       {riders.map(rider => <label className="vt-roster" key={rider.id}><input type="checkbox" disabled={blocked || attending.some(e => e.riderId === rider.id && (e.officialScore || e.laps.some(lap => lap.start != null || lapDuration(lap))))} checked={selected.includes(rider.id)} onChange={e => setSelection(e.target.checked ? [...selected, rider.id] : selected.filter(id => id !== rider.id))}/>{rider.name}</label>)}
       <button disabled={blocked} onClick={() => send({type:'attendance',riderIds:selected})}>Save attendance</button><button onClick={() => setTab('Timer')}>Go to timer</button>
     </section>}
@@ -50,12 +54,12 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         </article>;
       })}</div>
       {!attending.length && <p>No riders recorded for this session.</p>}
-      <button className="vt-finish" disabled>■ FINISH SESSION</button>
-      <p>Session closing requires separately approved permission.</p>
+      <button className="vt-finish" disabled={!demoActions || !session || session.finished} onClick={()=>demoActions.finishSession(session.id)}>■ FINISH SESSION</button>
+      <p>{demoActions ? 'Demo closing affects this page only.' : 'Session closing is owner-only. Volunteers can record attendance and laps.'}</p>
     </section>}
     {tab === 'Rider Photos' && <section><h2>Rider Photos</h2>
       <p>Profile photo management requires separate permission. Spotlight and Achievement photos remain separate.</p>
-      <p>No photo upload is connected in this review.</p></section>}
+      <p>Photo uploads are owner-only; volunteer timing does not change rider photos.</p></section>}
     {tab === 'Data' && <section><h2>Lap timing records · Admin</h2>
       <p>Start and finish are clock times in IST. Missing historical timestamps remain —.</p>
       <div className="vt-table"><table><caption>Session timing records</caption><thead><tr>{['Rider','Lap','Start · IST','Finish · IST','Recorded duration','Accepted duration'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
@@ -63,6 +67,11 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
           <th scope="row">{name(entry.riderId)}</th><td>{i + 1}</td><td>{clock(lap.start)}</td><td>{clock(lap.end)}</td>
           <td>{lap.start != null && lap.end != null ? formatDuration(lap.end - lap.start) : '—'}</td><td>{formatDuration(lapDuration(lap)) || '—'}</td>
         </tr>))}</tbody></table></div></section>}
-    <details><summary>Advanced session settings</summary><p>Owner-only session creation, publication, reopening and archiving are not connected here.</p></details>
+    <aside className="vt-session-status"><strong>{session ? 'Session selected' : 'Select an assigned session to see its status.'}</strong>
+      {onRefresh && <button onClick={onRefresh}>Refresh assigned sessions</button>}
+      <details><summary>Advanced session settings</summary><p>Session creation, rider management, corrections, photos and closing are owner-only.</p>
+      {canManage && <p><a href="/admin/ridge">Owner session controls</a> · <a href="/admin/ridge-volunteers">Volunteer assignments</a></p>}</details>
+    </aside>
+    <footer>Admin access and timing/correction actions are logged for accountability.</footer>
   </main>;
 }

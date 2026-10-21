@@ -80,6 +80,7 @@ function AdminFallback() {
 // Routes that manage their own full-screen UI and should never be covered by
 // the video intro / login prompt (an in-progress OAuth callback, and later
 // the /admin dashboard).
+const VolunteerTimerDemo = lazy(() => import('./volunteer-timer/VolunteerTimerDemo'));
 const VolunteerTimerRoute = lazy(() => import('./volunteer-timer/VolunteerTimerRoute'));
 const TimingOwnerPanel = lazy(() => import('./volunteer-timer/TimingOwnerPanel'));
 const INTRO_EXEMPT_PREFIXES = ["/volunteer/ridge", "/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
@@ -103,6 +104,7 @@ export default function App() {
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
+        <Route path="/volunteer/ridge/demo" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerDemo/></Suspense>}/>
         <Route path="/volunteer/ridge" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerRoute/></Suspense>}/>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
