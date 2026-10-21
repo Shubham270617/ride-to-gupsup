@@ -446,8 +446,9 @@ Admin → Appearance changes text across the whole public site using fixed prese
 | Size | Compact (0.94), Default (1), Comfortable (1.06), Large (1.12); scales the root font so spacing grows with text |
 | Typeface | Montserrat (default), Space Grotesk, System default; only fonts already loaded |
 | Colour | Default ink, High contrast, Softer; all contrast-checked against the light background |
+| Size per page | Any public page (Home, Events, Lab, Store, Chat …) can have its own size from the same four presets, or follow the site size ("Site default"). A page's size also covers the pages under it (an event's page follows Events); the admin area always uses the site size |
 
-Changes preview live and apply on save. They are stored as `text.theme.*` in `site_settings` and cached in the browser so the page does not flicker.
+Changes preview live and apply on save. They are stored as `text.theme.*` in `site_settings` (per-page sizes as one JSON value, `text.theme.pages`) and cached in the browser so the page does not flicker.
 
 ### 4.17 Contact form
 
@@ -580,7 +581,7 @@ The sidebar lists these screens (in this order). "Generic" screens share one lis
 |---|---|
 | Site Photos (bespoke) | Every single image slot from `src/data/images.js` (Replace / Delete back to default), plus the sponsor deck file |
 | Site Content (bespoke) | Headings, paragraphs, button labels and settings for Home, About, Events, Calendar, Store (including UPI ID and payee name), Community, Lab, Ridge Repeats, Membership, Onboarding, the Join band, Footer, and section headings on Blog, Challenges, Race Results, Safety, Sponsors and Weekly Rides |
-| Appearance (bespoke) | Text size, typeface, colour (4.16) |
+| Appearance (bespoke) | Text size (sitewide and per page), typeface, colour (4.16) |
 | Home — Why RTG Cards | `home_why_reasons` |
 | Home — Ways to Move Cards | `home_ways` |
 | Home — Training Formats | `home_training_formats` |

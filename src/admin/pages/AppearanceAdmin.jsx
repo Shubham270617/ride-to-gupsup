@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Check, Loader2, Type, Palette, CaseSensitive } from "lucide-react";
+import { Check, Loader2, Type, Palette, CaseSensitive, FileText, ExternalLink, RotateCcw } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import {
   APPEARANCE_KEYS,
   BODY_FONTS,
+  PAGE_TEXT_TARGETS,
+  parsePageScales,
   TEXT_COLORS,
   TEXT_SCALES,
   applyAppearance,
@@ -41,6 +43,44 @@ function OptionCard({ option, selected, onSelect, children }) {
       <span className="block text-xs text-rtg-mist mt-0.5">{option.hint}</span>
       {children}
     </button>
+  );
+}
+
+// One page's row in "Text size per page": its name and a segmented choice
+// of "Site default" or one of the size presets.
+function PageSizeRow({ target, value, sitewide, onChange }) {
+  const options = [{ value: "", label: "Site default" }, ...TEXT_SCALES.map((t) => ({ value: t.value, label: t.label }))];
+  const effective = value || sitewide;
+  return (
+    <li className="flex flex-col gap-3 rounded-2xl border border-rtg-border bg-white p-3.5 sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2 text-sm font-semibold text-rtg-white">
+          {target.label}
+          {value && <span className="rounded-full bg-rtg-orange-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rtg-orange-600">Custom</span>}
+        </p>
+        <a href={target.path} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs text-rtg-mist hover:text-rtg-orange-600">
+          {target.path} <ExternalLink size={11} />
+        </a>
+      </div>
+      <span className="hidden w-14 shrink-0 text-center font-semibold text-rtg-white sm:block" style={{ fontSize: `${Number(effective) * 18}px` }} aria-hidden="true">
+        Aa
+      </span>
+      <div className="flex flex-wrap gap-1 rounded-full bg-rtg-purple-950/[0.05] p-1" role="group" aria-label={`Text size for ${target.label}`}>
+        {options.map((o) => (
+          <button
+            key={o.value || "default"}
+            type="button"
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              value === o.value ? "bg-white text-rtg-white shadow-sm ring-1 ring-rtg-border" : "text-rtg-mist hover:text-rtg-white"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </li>
   );
 }
 
@@ -94,6 +134,16 @@ export default function AppearanceAdmin() {
     setValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const pageScales = parsePageScales(values[APPEARANCE_KEYS.pages]);
+  const setPageScale = (path, value) => {
+    const next = { ...pageScales };
+    if (value) next[path] = value;
+    else delete next[path];
+    set(APPEARANCE_KEYS.pages, JSON.stringify(next));
+  };
+  const customCount = Object.keys(pageScales).length;
+  const pageGroups = [...new Set(PAGE_TEXT_TARGETS.map((t) => t.group))];
+
   const save = async () => {
     setSaving(true);
     setError("");
@@ -102,6 +152,7 @@ export default function AppearanceAdmin() {
         { key: APPEARANCE_KEYS.scale, value: values[APPEARANCE_KEYS.scale] ?? "1", label: "Appearance — text size" },
         { key: APPEARANCE_KEYS.font, value: values[APPEARANCE_KEYS.font] ?? "default", label: "Appearance — typeface" },
         { key: APPEARANCE_KEYS.color, value: values[APPEARANCE_KEYS.color] ?? "default", label: "Appearance — text colour" },
+        { key: APPEARANCE_KEYS.pages, value: JSON.stringify(pageScales), label: "Appearance — text size per page" },
       ];
       const { error: err } = await supabase.from("site_settings").upsert(rows);
       if (err) throw err;
@@ -119,6 +170,7 @@ export default function AppearanceAdmin() {
       [APPEARANCE_KEYS.scale]: "1",
       [APPEARANCE_KEYS.font]: "default",
       [APPEARANCE_KEYS.color]: "default",
+      [APPEARANCE_KEYS.pages]: "{}",
     });
 
   const current = resolveAppearance(values);
@@ -135,7 +187,7 @@ export default function AppearanceAdmin() {
       <Group
         icon={CaseSensitive}
         title="Text size"
-        description="Scales all text and spacing together, so the layout keeps its proportions rather than text overflowing its boxes."
+        description="The size for the whole site. Scales all text and spacing together, so the layout keeps its proportions rather than text overflowing its boxes. Pages can override it below."
       >
         {TEXT_SCALES.map((option) => (
           <OptionCard
@@ -150,6 +202,38 @@ export default function AppearanceAdmin() {
           </OptionCard>
         ))}
       </Group>
+
+      <section className="glass rounded-2xl p-5 mb-6">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-xl flex items-center gap-2">
+            <FileText size={17} className="text-rtg-orange-400" /> Text size per page
+          </h2>
+          <span className="flex items-center gap-3 text-xs text-rtg-mist">
+            {customCount === 0 ? "Every page follows the site size" : `${customCount} page${customCount === 1 ? "" : "s"} customised`}
+            {customCount > 0 && (
+              <button type="button" onClick={() => set(APPEARANCE_KEYS.pages, "{}")} className="inline-flex items-center gap-1 font-semibold text-rtg-orange-600 hover:underline">
+                <RotateCcw size={12} /> Reset all pages
+              </button>
+            )}
+          </span>
+        </div>
+        <p className="text-rtg-mist text-xs mb-5 max-w-2xl">
+          Give any page its own text size. "Site default" follows the size chosen above ({current.scale.label}). A page's own
+          size also covers the pages under it — an event's page follows Events. Save, then open the page to see it.
+        </p>
+        <div className="space-y-6">
+          {pageGroups.map((group) => (
+            <div key={group}>
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-rtg-mist">{group}</p>
+              <ul className="space-y-2">
+                {PAGE_TEXT_TARGETS.filter((t) => t.group === group).map((t) => (
+                  <PageSizeRow key={t.path} target={t} value={pageScales[t.path] || ""} sitewide={current.scale.value} onChange={(v) => setPageScale(t.path, v)} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <Group
         icon={Type}

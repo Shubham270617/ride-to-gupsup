@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { jsonResponse } from "../../helpers/http.js";
 
 const state = vi.hoisted(() => ({ session: null, settings: {} }));
@@ -100,7 +101,7 @@ describe("appearance", () => {
   });
 
   it("useAppearance waits for settings, then applies and caches them", () => {
-    const { rerender } = renderHook(() => useAppearance());
+    const { rerender } = renderHook(() => useAppearance(), { wrapper: ({ children }) => <MemoryRouter initialEntries={["/events"]}>{children}</MemoryRouter> });
     expect(localStorage.getItem("rtg_appearance")).toBeNull();
     state.settings = { [APPEARANCE_KEYS.font]: "system" };
     rerender();
@@ -109,6 +110,17 @@ describe("appearance", () => {
       [APPEARANCE_KEYS.scale]: "1",
       [APPEARANCE_KEYS.font]: "system",
       [APPEARANCE_KEYS.color]: "default",
+      [APPEARANCE_KEYS.pages]: "{}",
     });
+  });
+
+  it("useAppearance applies a page's own text size and follows navigation", () => {
+    state.settings = { [APPEARANCE_KEYS.scale]: "1", [APPEARANCE_KEYS.pages]: JSON.stringify({ "/events": "1.12" }) };
+    const wrapper = (path) => ({ children }) => <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>;
+    const onEvents = renderHook(() => useAppearance(), { wrapper: wrapper("/events/night-ride") });
+    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1.12");
+    onEvents.unmount();
+    renderHook(() => useAppearance(), { wrapper: wrapper("/about") });
+    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1");
   });
 });
