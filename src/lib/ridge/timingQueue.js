@@ -11,9 +11,17 @@ export function createTimingQueue({identity,initial,read,write,checkIdentity,res
    if(now()-item.created>1800000)throw Error('Queued taps expired. Owner reconciliation is required; they have been preserved.');
    validate(item.command);
    if(await checkIdentity()!==identity)throw Error('Login changed. These taps remain bound to the original login.');
+   if(item.confirmedNonCommit){
+    // Only an explicit server CAS rejection authorizes this path, and drain
+    // resumes only after the operator chooses reconciliation. Unknown writes
+    // always keep their original body and go through idempotent receipt retry.
+    const fresh=await read();if(await checkIdentity()!==identity)throw Error('Login changed during reconciliation.');
+    validate(item.command);applyRidgeCommand(fresh.state,item.command,{now:item.command.at});
+    base=fresh;item.body={version:fresh.version,requestId:item.requestId,command:item.command};item.attempted=false;delete item.confirmedNonCommit;persist();
+   }
    if(!item.saved){if(!item.body)item.body={version:base.version,requestId:item.requestId,command:item.command};const retry=!!item.attempted;if(retry)await restore?.(item.body);item.attempted=true;persist();await write(item.body,{retry});item.saved=true;persist();}
    const fresh=await read();if(await checkIdentity()!==identity)throw Error('Login changed during refresh. Pending taps are preserved.');base=fresh;items.shift();persist();message=items.length?'Saving queued taps…':'All taps saved.';emit();
-  }catch(e){paused=true;message=e.message+' Pending taps are preserved; no new taps will be accepted until reconciliation.';emit();}}
+  }catch(e){if(e.definitive===true&&e.rebaseAllowed===true&&!item.saved){item.confirmedNonCommit=true;persist();}paused=true;message=e.message+' Pending taps are preserved; no new taps will be accepted until reconciliation.';emit();}}
  }finally{active=false;}}
  return {replace(next){if(!items.length&&!active){base=next;emit();}},snapshot(){emit();},enqueue(command){if(paused||stopped)throw Error('Reconcile the pending queue before recording more taps.');if(items.length>=100)throw Error('Queue is full. Wait for saves before recording more taps.');validate(command);applyRidgeCommand(project(),command,{now:command.at});const item={requestId:id(),command:structuredClone(command),created:now()};items.push(item);try{persist();}catch(e){items.pop();throw Error('Unable to preserve this tap locally. It was not accepted.');}message='Saving queued taps…';emit();void drain();},resume(){if(active)return;paused=false;emit();void drain();},stop(){stopped=true;},get pending(){return items.length;},get paused(){return paused;}};
 }

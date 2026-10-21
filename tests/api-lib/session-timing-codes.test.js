@@ -27,6 +27,7 @@ it('issues/redeems through real API+SQL with no registered account or assignment
  expect((await db.query('select count(*) n from ridge_timing_assignments')).rows[0].n).toBe(0);const row=(await db.query('select user_id,roster_rider_ids from ridge_timing_codes where id=$1',[credential])).rows[0];expect(row.user_id).toBeNull();expect(row.roster_rider_ids).toEqual(['r1','r2']);
 });
 it('enforces attendance, subsecond original taps, pass/finish and idempotent receipts',async()=>{
+ const stale=await api({action:'write',credentialId:credential,version:99,requestId:'00000000-0000-4000-8000-000000000777',command:{type:'attendance',sessionId:'s',riderIds:['r1','r2']}});expect(stale.statusCode).toBe(409);expect(stale.body).toMatchObject({definitive:true,rebaseAllowed:true});
  const at=Date.now()-4000,commands=[{type:'attendance',sessionId:'s',riderIds:['r1','r2']},{type:'start',sessionId:'s',riderId:'r1',lap:1,at},{type:'start',sessionId:'s',riderId:'r2',lap:1,at:at+100},{type:'pass',sessionId:'s',riderId:'r1',lap:1,at:at+1000},{type:'end',sessionId:'s',riderId:'r1',lap:2,at:at+2000}];
  for(let i=0;i<commands.length;i++){const body={action:'write',credentialId:credential,version:i,requestId:`00000000-0000-4000-8000-00000000001${i}`,command:commands[i]};expect((await api(body)).statusCode).toBe(200);expect((await api(body)).statusCode).toBe(200);}
  const w=(await db.query('select state,version from ridge_workspace')).rows[0];expect(w.version).toBe(5);expect(w.state.sessions[0].entries[1].laps[0].start-w.state.sessions[0].entries[0].laps[0].start).toBe(100);

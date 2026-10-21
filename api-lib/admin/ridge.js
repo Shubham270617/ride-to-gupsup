@@ -71,6 +71,7 @@ export default async function handler(req, res) {
       .json({
         error:
           "Another change was saved. Refresh the records before trying again.",
+        definitive: true, rebaseAllowed: true,
       });
   let result;
   try {
@@ -92,6 +93,7 @@ export default async function handler(req, res) {
         .status(409)
         .json({
           error: "Another change was saved. Refresh before trying again.",
+          definitive: true, rebaseAllowed: commitError.code === "40001",
         });
     console.error("[ridge] commit failed", commitError.code);
     return res
@@ -103,4 +105,5 @@ export default async function handler(req, res) {
   }
   return res.status(200).json({ ok: true, version: data });
 }
+
 

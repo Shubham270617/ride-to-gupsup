@@ -59,14 +59,14 @@ export function createVolunteerHandler(getDb=getSupabaseAdmin) {
     if(prior.error)return res.status(503).json({error:'Unable to reconcile the previous action.'});
     let result;
     if(!prior.data){
-      if(body.version!==workspace.version)return res.status(409).json({error:'Records changed. Refresh before starting another action.',definitive:true});
+      if(body.version!==workspace.version)return res.status(409).json({error:'Records changed. Refresh before starting another action.',definitive:true,rebaseAllowed:true});
       const s=workspace.state.sessions.find(s=>s.id===body.command.sessionId);
       const assignment=assignments.find(a=>a.session_id===body.command.sessionId);
       if(!s||s.entries.some(e=>!assignment.roster_rider_ids.includes(e.riderId)))return res.status(403).json({error:'The owner must update the assigned roster.'});
       try{result=applyRidgeCommand(workspace.state,body.command);}catch(error){return res.status(400).json({error:error.message,definitive:true});}
     }
     const commit=await db.rpc('ridge_timing_commit',{p_expected:body.version,p_request:body.requestId,p_actor:actor,p_command:body.command,p_state:result?.state||workspace.state,p_feed:result?.feed||{}});
-    if(commit.error){const status=commit.error.code==='42501'?403:['40001','23505'].includes(commit.error.code)?409:503;return res.status(status).json({error:status===403?'Assignment is no longer valid.':status===409?'Records changed or request ID conflicts.':'Save outcome is unconfirmed. Retry the same action.',definitive:status===409});}
+    if(commit.error){const status=commit.error.code==='42501'?403:['40001','23505'].includes(commit.error.code)?409:503;return res.status(status).json({error:status===403?'Assignment is no longer valid.':status===409?'Records changed or request ID conflicts.':'Save outcome is unconfirmed. Retry the same action.',definitive:status===409,rebaseAllowed:commit.error.code==='40001'});}
     // Separate read is deliberate: returns current state even on an old receipt.
     const fresh=await db.from('ridge_workspace').select('state,version').eq('singleton',true).single();
     if(fresh.error)return res.status(503).json({error:'Saved, but refreshed records are unavailable. Retry the same action.'});

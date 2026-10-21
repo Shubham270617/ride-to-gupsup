@@ -16,7 +16,7 @@ async function request(body, signal) {
     headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},
     ...(body?{body:JSON.stringify({version:body.version,requestId:body.requestId,command:body.command})}:{})});
   const result=await response.json();
-  if(!response.ok)throw Object.assign(new Error(result.error||'Timing unavailable.'),{definitive:result.definitive===true,canManage:result.canManage===true,code:result.code});
+  if(!response.ok)throw Object.assign(new Error(result.error||'Timing unavailable.'),{definitive:result.definitive===true,rebaseAllowed:result.rebaseAllowed===true&&result.definitive===true,canManage:result.canManage===true,code:result.code});
   return result;
 }
 function AssignedPanel({initial,userId,binding}) {

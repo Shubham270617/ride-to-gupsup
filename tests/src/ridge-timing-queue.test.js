@@ -21,3 +21,6 @@ it('CAS conflict retains all events and never automatically rebases or duplicate
 it('does not adopt another identity data after successful write and racing refresh',async()=>{
  let identity='A';const q=createTimingQueue({identity:'A',initial:initial(),read:async()=>{identity='B';return initial();},write:async()=>{},checkIdentity:async()=>identity,storage:memory()});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});await flush();expect(q.paused).toBe(true);expect(q.pending).toBe(1);
 });
+it('confirmed conflict with incompatible newer rider state stays preserved for owner resolution',async()=>{
+ const storage=memory(),data=initial(),command={type:'start',sessionId:'s',riderId:'a',lap:3,at:1000},fresh={version:17,state:applyRidgeCommand(data.state,command,{now:1000}).state};const write=vi.fn().mockRejectedValue(Object.assign(Error('CAS'),{definitive:true,rebaseAllowed:true}));const q=createTimingQueue({identity:'collision',initial:data,read:async()=>fresh,write,checkIdentity:async()=>'collision',storage});q.enqueue(command);await flush();q.resume();await flush();expect(write).toHaveBeenCalledOnce();expect(q.paused).toBe(true);expect(q.pending).toBe(1);expect(JSON.parse(storage.getItem('rtg-timing-queue:collision')).items[0].command).toEqual(command);
+});

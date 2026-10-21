@@ -3,7 +3,7 @@
 export function createCodeTransport({fetcher=fetch,storage=sessionStorage,now=Date.now}={}){
  let credential=null;
  const key=id=>'rtg-code-pending:'+id;
- const api=async body=>{const c=new AbortController(),timer=setTimeout(()=>c.abort(),20000);try{const r=await fetcher('/api/admin/ridge-timing-codes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal});const data=await r.json();if(!r.ok)throw Object.assign(new Error(data.error||'Request failed.'),{definitive:data.definitive===true});return data;}finally{clearTimeout(timer);}};
+ const api=async body=>{const c=new AbortController(),timer=setTimeout(()=>c.abort(),20000);try{const r=await fetcher('/api/admin/ridge-timing-codes',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:c.signal});const data=await r.json();if(!r.ok)throw Object.assign(new Error(data.error||'Request failed.'),{definitive:data.definitive===true,rebaseAllowed:data.rebaseAllowed===true&&data.definitive===true});return data;}finally{clearTimeout(timer);}};
  return {api,
   identity:async()=> (await api({action:'read'})).credentialId,
   async restorePending(body,expectedCredential){const active=await api({action:'read'});if(active.credentialId!==expectedCredential)throw Error('Code session changed.');const existing=JSON.parse(storage.getItem(key(expectedCredential))||'null');if(existing&&JSON.stringify(existing.body)!==JSON.stringify(body))throw Error('Another request needs reconciliation.');if(!existing)storage.setItem(key(expectedCredential),JSON.stringify({createdAt:now(),body}));},

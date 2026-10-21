@@ -38,7 +38,7 @@ export function createRidgeRequest({ getSession, fetcher = fetch, timeoutMs = 20
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
       const result = await response.json();
-      if (!response.ok) { const failure = new Error(result.error || 'Could not load Ridge.'); failure.status = response.status || 500; throw failure; }
+      if (!response.ok) { const failure = new Error(result.error || 'Could not load Ridge.'); failure.status = response.status || 500; failure.definitive=result.definitive===true; failure.rebaseAllowed=result.rebaseAllowed===true&&result.definitive===true; throw failure; }
       return result;
     };
     try {
