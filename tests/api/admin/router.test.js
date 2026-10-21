@@ -18,6 +18,10 @@ async function call(url, options = {}) {
   return { req, res };
 }
 describe("path-preserving consolidated admin dispatcher", () => {
+  it('dispatches the volunteer endpoint to its own default-deny identity guard',async()=>{
+    const {res}=await call('/api/admin/volunteer-ridge',{method:'GET'});
+    expect(res.statusCode).toBe(401);expect(requireAdmin).not.toHaveBeenCalled();
+  });
   it.each(["GET", "POST"])("keeps page layouts disabled by default for %s", async (method) => {
     const { res } = await call("/api/admin/page-layouts?action=published&pageKey=home", { method, query: { adminRoute: "page-layouts", action: "published", pageKey: "home" } });
     expect(res.statusCode).toBe(503);
@@ -103,3 +107,4 @@ describe("deployment shape", () => {
     expect(config.rewrites).toEqual([{ source: "/((?!api/).*)", destination: "/index.html" }]);
   });
 });
+

@@ -1,6 +1,8 @@
 import ridge from "../../api-lib/admin/ridge.js";
 import stravaResync from "../../api-lib/admin/strava-resync.js";
 import pageLayouts from "../../api-lib/pageLayouts.js";
+import volunteerRidge from "../../api-lib/volunteerRidge.js";
+import timingOwner from "../../api-lib/timingOwner.js";
 
 // A single deployable function, preserving existing public request paths.
 // Dispatch from the literal origin-form pathname, NEVER req.query.action:
@@ -12,6 +14,8 @@ const ROUTES = Object.freeze({
   "/api/admin/ridge": ridge,
   "/api/admin/strava-resync": stravaResync,
   "/api/admin/page-layouts": pageLayouts,
+  "/api/admin/volunteer-ridge": volunteerRidge,
+  "/api/admin/ridge-timing-owner": timingOwner,
 });
 
 export default async function handler(req, res) {
@@ -25,3 +29,4 @@ export default async function handler(req, res) {
   // idempotency/version checks and all operation-specific policy. No bypass.
   return route(req, res);
 }
+

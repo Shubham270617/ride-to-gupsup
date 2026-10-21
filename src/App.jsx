@@ -80,7 +80,9 @@ function AdminFallback() {
 // Routes that manage their own full-screen UI and should never be covered by
 // the video intro / login prompt (an in-progress OAuth callback, and later
 // the /admin dashboard).
-const INTRO_EXEMPT_PREFIXES = ["/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
+const VolunteerTimerRoute = lazy(() => import('./volunteer-timer/VolunteerTimerRoute'));
+const TimingOwnerPanel = lazy(() => import('./volunteer-timer/TimingOwnerPanel'));
+const INTRO_EXEMPT_PREFIXES = ["/volunteer/ridge", "/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
 
 export default function App() {
   const location = useLocation();
@@ -101,6 +103,7 @@ export default function App() {
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
+        <Route path="/volunteer/ridge" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerRoute/></Suspense>}/>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<Onboarding />} />
         {/* Password recovery — outside <Layout>, like the other auth
@@ -148,6 +151,7 @@ export default function App() {
           <Route path="lab-age-categories" element={<ResourceAdminPage resource={resources.labAgeGroups} />} />
           <Route path="lab-activities" element={<ResourceAdminPage resource={resources.labActivities} />} />
           <Route path="ridge" element={<RidgeAdmin />} />
+          <Route path="ridge-volunteers" element={<Suspense fallback={<AdminFallback/>}><TimingOwnerPanel/></Suspense>} />
           <Route path="ridge-sessions" element={<RidgeAdmin />} />
           <Route path="ridge-import" element={<RidgeImportPreview />} />
           <Route path="ridge-results" element={<RidgeAdmin />} />
