@@ -11,7 +11,7 @@ for(const row of expected){
  const session=state.sessions.find(s=>s.date===row.date);
  const actual=feed.results.find(r=>r.session_slug===session.id&&r.athlete_id===row.riderId);
  assert.ok(actual,'Missing result');assert.equal(actual.completed_laps,row.loops);assert.equal(actual.progress_points,row.progress);assert.equal(actual.spotlight_points,row.bonus);assert.equal(actual.total_score,row.total);
- assert.equal(actual.score_source,'official-published');assert.deepEqual(actual.lap_points,row.lapPoints);assert.ok(actual.provenance?.snapshotId,'Missing snapshot identity');
+ assert.equal(actual.score_source,'official-published');assert.deepEqual(actual.lap_points,row.lapPoints);assert.ok(session.entries.find(e=>e.riderId===row.riderId)?.officialScore?.provenance?.snapshotId,'Missing private snapshot identity');assert.equal(actual.provenance,undefined,'Private provenance leaked');
  if(row.progress!==null)assert.ok(Math.abs(actual.total_score-round2(actual.progress_points+actual.completed_laps+actual.spotlight_points))<=0.011,'Total reconciliation failed');
 }
 for(const session of state.sessions){
@@ -19,4 +19,5 @@ for(const session of state.sessions){
  assert.deepEqual(sessionSpotlight(state,session).map(project),awards[session.date].map(project));
 }
 console.log(`Verified ${expected.length} published results and all Spotlight decisions across ${state.sessions.length} sessions. No network calls or database changes.`);
+
 

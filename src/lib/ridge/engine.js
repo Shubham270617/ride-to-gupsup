@@ -137,7 +137,7 @@ export function buildPublicFeed(state) {
       slug: session.id,
       name: "Ridge Repeats · " + session.date,
       session_date: session.date,
-      award_definitions: awards,
+      award_definitions: awards.map(({id,title,criterion,description,winners,metric}) => ({id,title,criterion,description,winners:[...winners],metric})),
       published: true,
     });
     if (!feed.awards.length)
@@ -169,7 +169,8 @@ export function buildPublicFeed(state) {
         highlight_score: bonus,
         score_source: score.scoreSource,
         total_score: score.totalScore ?? round2(score.progress + score.completed + bonus + score.adjustment),
-        provenance: score.provenance || null,
+        // Provenance belongs to private workspace/audit only. Every native
+        // mutation regenerates this allowlisted display projection.
         loop_times: score.times.map(formatDuration).join(","),
         lap_points: score.points,
         completed_laps: score.completed,
@@ -590,4 +591,5 @@ function selectSpotlight(date, rows, times, state) {
     return award;
   });
 }
+
 
