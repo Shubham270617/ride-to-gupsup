@@ -1,5 +1,5 @@
 import About from '../../pages/About';
-import Volunteer from '../../pages/Volunteer';
+import Volunteer from '../../pages/ConnectedVolunteer';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import CommunityDetail from '../../pages/CommunityDetail';
 import Community from '../../pages/Community';

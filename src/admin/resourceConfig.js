@@ -795,7 +795,7 @@ export const resources = {
       { name: "location", label: "Location", type: "text", placeholder: "e.g. Nehru Park" },
       { name: "format", label: "Format", type: "text", placeholder: "e.g. Ride + Run + Mobility" },
       { name: "summary", label: "Summary", type: "textarea", placeholder: "One or two sentences about the activity.", hint: "The paragraph in its detail window." },
-      { name: "organiser", label: "Hosted By", type: "text", placeholder: "e.g. RTG Delhi", hint: "Optional — the group or community running it." },
+      { name: "organiser", label: "Hosted By", type: "relation", table: "community_network_groups", valueColumn: "name", labelColumn: "name", orderBy: "name", allowCustom: true, placeholder: "Choose a community or enter another organiser", hint: "Choose the exact community name to show this published activity on its dedicated page. Other organisers remain valid calendar entries. Renaming a community requires updating its activity host names." },
       { name: "status_label", label: "Status", type: "text", placeholder: "e.g. Recurring Community Session, Registration Open" },
       { name: "note", label: "Note", type: "textarea", placeholder: "e.g. Helmet mandatory. Reporting 15 minutes before the start.", hint: "Optional. Shown in a highlighted box at the bottom of the detail window." },
       { name: "link_url", label: "Button Link", type: "text", placeholder: "e.g. /events/rtg-mtb-challenge-2026", hint: "Optional. Adds a button to the detail window — a page on this site (starts with /) or a full web address (https://…)." },
@@ -993,3 +993,4 @@ export const resources = {
     ],
   },
 };
+

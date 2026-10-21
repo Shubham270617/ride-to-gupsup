@@ -62,7 +62,7 @@ function MapField({ field, value, onChange }) {
 // A dropdown whose choices are the rows of another table (field.table),
 // storing field.valueColumn and showing field.labelColumn — e.g. a calendar
 // activity's type, picked from the activity types an admin has created.
-function RelationField({ field, value, onChange }) {
+export function RelationField({ field, value, onChange }) {
   const [options, setOptions] = useState([]);
   useEffect(() => {
     if (!supabase) return undefined;
@@ -73,12 +73,13 @@ function RelationField({ field, value, onChange }) {
       .order(field.orderBy || "sort_order")
       .then(({ data }) => {
         if (!cancelled) setOptions(data || []);
-      });
+      }).catch(() => { if (!cancelled) setOptions([]); });
     return () => {
       cancelled = true;
     };
   }, [field.table, field.valueColumn, field.labelColumn, field.orderBy]);
 
+  if(field.allowCustom) return <><input aria-label={field.label} list={`${field.name}-choices`} value={value} onChange={e=>onChange(e.target.value)} className={inputClass} placeholder={field.placeholder}/><datalist id={`${field.name}-choices`}>{options.map(o=><option key={o[field.valueColumn]} value={o[field.valueColumn]}>{o[field.labelColumn]}</option>)}</datalist></>;
   return (
     <select required={field.required} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
       <option value="" className="bg-rtg-ink">
@@ -390,3 +391,4 @@ export default function ResourceForm({ fields, initialValues = {}, onSubmit, onC
     </form>
   );
 }
+

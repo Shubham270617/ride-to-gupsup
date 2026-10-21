@@ -16,7 +16,7 @@ import useWelcomeEmail from "./lib/useWelcomeEmail";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
-import Volunteer from "./pages/Volunteer";
+import Volunteer from "./pages/ConnectedVolunteer";
 import CommunityDetail from "./pages/CommunityDetail";
 import WeeklyRides from "./pages/WeeklyRides";
 import WeeklySessionDetail from "./pages/WeeklySessionDetail";
@@ -236,4 +236,5 @@ export default function App() {
     </CartProvider>
   );
 }
+
 
