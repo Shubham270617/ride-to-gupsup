@@ -173,7 +173,9 @@ describe("admin menu (src/admin/adminNav.js)", () => {
     expect(routes.length).toBeGreaterThan(40);
     const ridgeAliases = ["ridge-sessions", "ridge-results", "ridge-awards", "ridge-spotlight"];
     for (const alias of ridgeAliases) expect(block).toContain(`<Route path="${alias}" element={<RidgeAdmin />} />`);
-    for (const r of routes.filter(route => !ridgeAliases.some(alias => route === `/admin/${alias}`))) expect(links, `missing sidebar link for ${r}`).toContain(r);
+    expect(block).toContain('<Route path="ridge-volunteers" element={<Navigate to="/admin/ridge-codes" replace/>}');
+    expect(links).not.toContain("/admin/ridge-volunteers");
+    for (const r of routes.filter(route => route !== "/admin/ridge-volunteers" && !ridgeAliases.some(alias => route === `/admin/${alias}`))) expect(links, `missing sidebar link for ${r}`).toContain(r);
     for (const l of links) if (l !== "/admin") expect(routes, `sidebar links to missing route ${l}`).toContain(l);
   });
 });

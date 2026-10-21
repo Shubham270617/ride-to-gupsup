@@ -18,15 +18,16 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
  const rpc=async(action,data)=>{const result=await db.rpc('ridge_code_access',{p_action:action,p_data:data});if(result.error)throw new Error('Code operation unavailable.');return result.data;};
  const store={
   consumeRateLimits:async limits=>rpc('rate',{keys:limits.map(x=>x.key),global:limits[1].key}),
-  insertCredential:async data=>{const split=data.assignmentId?.indexOf(':');return rpc('issue',{actor:data.issuerId,scope:data.scope,codeHash:data.codeHash,expiresAt:new Date(data.expiresAt).toISOString(),userId:split>0?data.assignmentId.slice(0,split):null,sessionId:split>0?data.assignmentId.slice(split+1):null});},
-  exchangeCredential:data=>rpc('exchange',data),
-  readActiveSession:async sessionHash=>{const access=await rpc('read',{sessionHash});return access&&owners().has(access.issuerId)?access:null;},
+  insertCredential:async data=>{const split=data.assignmentId?.indexOf(':');return rpc('issue',{actor:data.issuerId,scope:data.scope,codeHash:data.codeHash,expiresAt:new Date(data.expiresAt).toISOString(),userId:split>0?data.assignmentId.slice(0,split):null,sessionId:data.scope==='session_timing'?data.sessionId:split>0?data.assignmentId.slice(split+1):null});},
+  exchangeCredential:async data=>{const access=await rpc('exchange',data);return access?.codeKind==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true'?null:access;},
+  readActiveSession:async sessionHash=>{const access=await rpc('read',{sessionHash});return access&&owners().has(access.issuerId)&&(access.codeKind!=='session_timing'||process.env.RTG_SESSION_TIMING_CODES_ENABLED==='true')?access:null;},
  };
  try{
   const auth=createTimingCodeAuth({store,pepper,origin});
-  if(['issue','revoke','list'].includes(b.action)){
+  if(['issue','revoke','list','capabilities'].includes(b.action)){
    const owner=await authorize(req);if(!owner.ok||!owners().has(owner.user?.id))return res.status(403).json({error:'Owner login required.'});
-   if(b.action==='issue'){const result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,expiresAt:Date.parse(b.expiresAt)});return res.status(200).json(result);}
+   if(b.action==='capabilities')return res.status(200).json({sessionCodesEnabled:process.env.RTG_SESSION_TIMING_CODES_ENABLED==='true'});
+   if(b.action==='issue'){if(b.scope==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Session code activation is pending.'});const result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,sessionId:b.sessionId,expiresAt:Date.parse(b.expiresAt)});return res.status(200).json(result);}
    return res.status(200).json(await rpc(b.action,{actor:owner.user.id,id:b.id}));
   }
   if(b.action==='exchange'){
@@ -35,11 +36,11 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
    res.setHeader('Set-Cookie',result.cookie);return res.status(200).json({scope:result.scope,expiresAt:result.expiresAt});
   }
   const cookies=String(req.headers.cookie||'').split(';').map(x=>x.trim()).filter(x=>x.startsWith('__Host-rtg-timing='));
-  if(cookies.length!==1)return res.status(401).json({error:'Enter your assigned code.'});
+  if(cookies.length!==1)return res.status(401).json({error:'Enter your timer code.'});
   const token=cookies[0].slice('__Host-rtg-timing='.length);if(!/^[A-Za-z0-9_-]{43}$/.test(token))return res.status(401).json({error:'Enter your assigned code.'});
   const sessionHash=hash('session',token);
   if(b.action==='logout'){await rpc('logout',{sessionHash});res.setHeader('Set-Cookie','__Host-rtg-timing=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0');return res.status(200).json({ok:true});}
-  const access=await store.readActiveSession(sessionHash);if(!access)return res.status(401).json({error:'Code expired or revoked. Ask the owner for access.'});
+  const access=await store.readActiveSession(sessionHash);if(!access||(access.codeKind==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true'))return res.status(401).json({error:'Code expired or revoked. Ask the owner for access.'});
   const loaded=await db.from('ridge_workspace').select('state,version').eq('singleton',true).single();if(loaded.error)throw new Error('Ridge unavailable.');
   const workspace=loaded.data;
   if(b.action==='read'){

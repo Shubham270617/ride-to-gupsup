@@ -80,7 +80,6 @@ export const groups = [
       { to: "/admin/ridge-import", label: "Ridge Import (dry run)", icon: Repeat },
       { to: "/admin/ridge", label: "Ridge — Session control", icon: Repeat },
       { to: "/admin/ridge-codes", label: "Ridge — Access codes (owner)", icon: Repeat },
-      { to: "/admin/ridge-volunteers", label: "Ridge — Volunteer access (owner)", icon: Repeat },
       { to: "/admin/lab-labs", label: "Lab — Labs", icon: Medal },
       { to: "/admin/lab-periods", label: "Lab — Reward Periods", icon: CalendarClock },
       { to: "/admin/lab-hero-tiles", label: "Lab — Hero Tiles", icon: Sparkles },
