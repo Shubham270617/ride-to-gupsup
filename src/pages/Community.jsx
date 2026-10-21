@@ -188,7 +188,7 @@ function Controller({ carousel, items, prevLabel, nextLabel, dark }) {
 // ----------------------------------------------------------------------------
 function Hero({ copy, image }) {
   return (
-    <section className="rtg-com-hero" style={backdrop(image)}>
+    <section data-text-section="hero" className="rtg-com-hero" style={backdrop(image)}>
       <div className="rtg-com-hero-motion" aria-hidden="true">
         <span className="rtg-com-hero-orbit rtg-com-hero-orbit-1" />
         <span className="rtg-com-hero-orbit rtg-com-hero-orbit-2" />
@@ -258,7 +258,7 @@ function FindYourPlace({ copy, paths }) {
   if (paths.length === 0) return null;
 
   return (
-    <section className="rtg-com-light rtg-com-place" id="find-your-place">
+    <section data-text-section="place" className="rtg-com-light rtg-com-place" id="find-your-place">
       <div className="rtg-com-art" aria-hidden="true">
         <svg className="rtg-com-art-bike" viewBox="0 0 170 105">
           <circle cx="38" cy="72" r="27" />
@@ -395,7 +395,7 @@ function RtgWay({ copy, principles, image }) {
   if (principles.length === 0) return null;
 
   return (
-    <section className="rtg-com-way" id="rtg-way" style={backdrop(image)}>
+    <section data-text-section="way" className="rtg-com-way" id="rtg-way" style={backdrop(image)}>
       <div className="rtg-com-way-motion" aria-hidden="true">
         <div className="rtg-com-way-orbit rtg-com-way-orbit-1" />
         <div className="rtg-com-way-orbit rtg-com-way-orbit-2" />
@@ -488,7 +488,7 @@ function InMotion({ copy, milestones }) {
   if (count === 0) return null;
 
   return (
-    <section className="rtg-com-motion" id="rtg-motion">
+    <section data-text-section="motion" className="rtg-com-motion" id="rtg-motion">
       <div className="rtg-com-motion-art" aria-hidden="true">
         <svg className="rtg-com-motion-bike" viewBox="0 0 240 150">
           <circle cx="52" cy="104" r="32" />
@@ -648,7 +648,7 @@ function Network({ copy, groups, pins, mapImage }) {
     : [];
 
   return (
-    <section className="rtg-com-net" id="rtg-network" {...carousel.hold}>
+    <section data-text-section="network" className="rtg-com-net" id="rtg-network" {...carousel.hold}>
       <div className="rtg-com-net-ambient" aria-hidden="true">
         <span className="rtg-com-net-orbit rtg-com-net-orbit-a" />
         <span className="rtg-com-net-orbit rtg-com-net-orbit-b" />
@@ -892,7 +892,7 @@ function Cities({ copy, cities, moments }) {
   };
 
   return (
-    <section className="rtg-com-light rtg-com-cities" id="cities">
+    <section data-text-section="cities" className="rtg-com-light rtg-com-cities" id="cities">
       <div className="rtg-com-art" aria-hidden="true">
         <svg className="rtg-com-art-run rtg-com-art-run-left" viewBox="0 0 150 150">
           <circle cx="91" cy="22" r="9" />

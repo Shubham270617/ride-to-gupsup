@@ -54,7 +54,7 @@ export default function Membership() {
     <div className="rtg-mem">
       <LabBackdrop />
 
-      <section className="hero wrap">
+      <section data-text-section="hero" className="hero wrap">
         <div>
           <div className="eyebrow">
             <i /> {copy.heroEyebrow}
@@ -133,7 +133,7 @@ export default function Membership() {
       )}
 
       {user && mine.length > 0 && (
-        <section className="wrap mine">
+        <section data-text-section="mine" className="wrap mine">
           <div className="eyebrow">{copy.mineEyebrow}</div>
           <h2>{copy.mineTitle}</h2>
           <div className="mine-list">
@@ -151,7 +151,7 @@ export default function Membership() {
         </section>
       )}
 
-      <section id="plans" className="wrap plans">
+      <section data-text-section="plans" id="plans" className="wrap plans">
         <div className="section-top">
           <div>
             <div className="eyebrow">{copy.plansEyebrow}</div>
@@ -169,7 +169,7 @@ export default function Membership() {
       </section>
 
       {guides.length > 0 && (
-        <section className="wrap comparison" id="compare">
+        <section data-text-section="comparison" className="wrap comparison" id="compare">
           <div className="section-top">
             <div>
               <div className="eyebrow">{copy.compareEyebrow}</div>
@@ -198,7 +198,7 @@ export default function Membership() {
         </section>
       )}
 
-      <section className="wrap rhythm">
+      <section data-text-section="rhythm" className="wrap rhythm">
         <div>
           <div className="eyebrow">{copy.rhythmEyebrow}</div>
           <h2>
@@ -225,7 +225,7 @@ export default function Membership() {
       </section>
 
       {faqs.length > 0 && (
-        <section className="wrap faq">
+        <section data-text-section="faq" className="wrap faq">
           <div>
             <div className="eyebrow">{copy.faqEyebrow}</div>
             <h2>
@@ -248,7 +248,7 @@ export default function Membership() {
         </section>
       )}
 
-      <section className="wrap closing">
+      <section data-text-section="closing" className="wrap closing">
         <div>
           <div className="eyebrow">{copy.closingEyebrow}</div>
           <h2>

@@ -87,7 +87,7 @@ function EventsHero({ copy, items }) {
   const signals = copy.signals.split(",").map((s) => s.trim()).filter(Boolean);
 
   return (
-    <section className="rtg-ev-hero">
+    <section data-text-section="hero" className="rtg-ev-hero">
       <div className={`rtg-ev-hero-wrap ${count ? "" : "is-solo"}`}>
         {/* LEFT — small labels / three-line title / copy / signal tags */}
         <Reveal direction="right">
@@ -239,7 +239,7 @@ export default function Events() {
     <div className="rtg-ev">
       <EventsHero copy={copy} items={items.slice(0, HERO_EVENT_COUNT)} />
 
-      <section className="rtg-ev-section">
+      <section data-text-section="board" className="rtg-ev-section">
         <div className="rtg-ev-inner">
           {/* Editorial head */}
           <Reveal className="rtg-ev-head">

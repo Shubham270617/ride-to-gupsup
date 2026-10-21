@@ -49,7 +49,7 @@ export default function WaysToMove({ settings, images }) {
   };
 
   return (
-    <section id="ways" className="relative overflow-hidden py-16 md:pt-[72px] md:pb-20">
+    <section data-text-section="ways" id="ways" className="relative overflow-hidden py-16 md:pt-[72px] md:pb-20">
       <div className="max-w-[1220px] mx-auto px-6 md:px-9 grid lg:grid-cols-[minmax(0,1.06fr)_minmax(0,1fr)] gap-10 lg:gap-14 items-start">
         <Reveal direction="right" className="flex flex-col items-center order-2 lg:order-1">
           <div
@@ -80,14 +80,14 @@ export default function WaysToMove({ settings, images }) {
                   <div className="rtg-way-info relative shrink-0 min-h-[140px] sm:min-h-[160px] flex items-end gap-5 px-[22px] pt-5 pb-[19px] backdrop-blur-lg">
                     <div className="min-w-0 max-w-[220px]">
                       {current.kicker && (
-                        <span className="block mb-2 text-[0.5625rem] font-bold tracking-[0.16em] uppercase text-rtg-orange-500">
+                        <span className="block mb-2 text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-bold tracking-[0.16em] uppercase text-rtg-orange-500">
                           {current.kicker}
                         </span>
                       )}
-                      <h3 className="font-display text-[2.1875rem] leading-[0.95] tracking-[0.01em] text-[#342d3d] mb-2.5">{current.title}</h3>
-                      <p className="text-[0.7813rem] font-semibold leading-[1.4] uppercase text-[#716a78]">{current.desc}</p>
+                      <h3 className="font-display text-[length:calc(2.1875rem*var(--rtg-sec,1))] leading-[0.95] tracking-[0.01em] text-[#342d3d] mb-2.5">{current.title}</h3>
+                      <p className="text-[length:calc(0.7813rem*var(--rtg-sec,1))] font-semibold leading-[1.4] uppercase text-[#716a78]">{current.desc}</p>
                     </div>
-                    <span className="rtg-way-arrow shrink-0 mb-0.5 w-12 h-12 rounded-full grid place-items-center text-[1.3125rem] leading-none text-rtg-orange-500" aria-hidden="true">
+                    <span className="rtg-way-arrow shrink-0 mb-0.5 w-12 h-12 rounded-full grid place-items-center text-[length:calc(1.3125rem*var(--rtg-sec,1))] leading-none text-rtg-orange-500" aria-hidden="true">
                       ➜
                     </span>
                   </div>
@@ -111,7 +111,7 @@ export default function WaysToMove({ settings, images }) {
         </Reveal>
 
         <Reveal direction="left" delay={0.1} className="max-w-[520px] lg:pt-5 order-1 lg:order-2">
-          <span className="flex items-center gap-3 mb-[15px] text-[0.625rem] font-semibold tracking-[0.24em] uppercase text-[#ff7b2c]">
+          <span className="flex items-center gap-3 mb-[15px] text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.24em] uppercase text-[#ff7b2c]">
             <span className="w-11 h-px bg-gradient-to-r from-transparent to-[rgba(255,123,44,0.72)]" />
             {copy.eyebrow}
           </span>

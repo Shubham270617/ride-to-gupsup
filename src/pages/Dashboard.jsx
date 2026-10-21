@@ -294,7 +294,7 @@ export default function Dashboard() {
           </label>
 
           <div className="min-w-0 flex-1">
-            <span className="text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-rtg-orange-300">Member Dashboard</span>
+            <span className="text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold uppercase tracking-[0.24em] text-rtg-orange-300">Member Dashboard</span>
             <h1 className="font-display text-4xl leading-[0.95] text-white sm:text-5xl md:text-6xl">
               Welcome, <span className="text-rtg-orange-400">{name}</span>
             </h1>
@@ -357,7 +357,7 @@ export default function Dashboard() {
         {/* Strava is linked from here, not used to log in: a member who hasn't
             connected it yet is asked to, once signed in. */}
         {!stravaLinked && authProviders.strava && (
-          <section className="dash-strava">
+          <section data-text-section="strava-connect" className="dash-strava">
             <div className="min-w-0 flex-1">
               <h2 className="mb-1.5 font-display text-2xl leading-none md:text-3xl">Connect Your Strava</h2>
               <p className="text-sm text-rtg-mist">Link your Strava account so your rides and runs show up on your RTG profile automatically.</p>
@@ -370,7 +370,7 @@ export default function Dashboard() {
         )}
 
         {myMemberships.length > 0 && (
-          <section>
+          <section data-text-section="memberships">
             <h2 className="dash-title">My Memberships</h2>
             <div className="dash-list">
               {myMemberships.map((m) => {
@@ -396,7 +396,7 @@ export default function Dashboard() {
         )}
 
         {myOrders.length > 0 && (
-          <section>
+          <section data-text-section="orders">
             <h2 className="dash-title">My Orders</h2>
             <div className="dash-list">
               {myOrders.map((order) => {
@@ -421,7 +421,7 @@ export default function Dashboard() {
         )}
 
         {stravaLinked && (
-          <section>
+          <section data-text-section="strava-activity">
             <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
               <h2 className="dash-title !mb-0">My Strava Activity</h2>
               <StravaLogo alt={STRAVA_LOGO_ALT} className="block h-4 w-auto" />
@@ -456,7 +456,7 @@ export default function Dashboard() {
         )}
 
         {/* ---- Profile ---- */}
-        <section>
+        <section data-text-section="profile">
           <h2 className="dash-title">Athlete Profile</h2>
           <div className="dash-card">
             <form onSubmit={handleSave} className="space-y-4">
@@ -586,7 +586,7 @@ export default function Dashboard() {
         </section>
 
         {/* ---- Danger zone ---- */}
-        <section className="dash-danger">
+        <section data-text-section="danger" className="dash-danger">
           <div className="min-w-0 flex-1">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-red-700">
               <AlertTriangle size={15} /> Delete My Account

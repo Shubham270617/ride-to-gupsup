@@ -44,7 +44,7 @@ export default function Gallery() {
         subtitle="Sunrise starts, medal ceremonies, finish line joy, and everything in between — from drone footage to phone snaps at the chai stop."
       />
 
-      <Section>
+      <Section textSection={"grid"}>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-12">
           {categories.map((c) => (
             <button

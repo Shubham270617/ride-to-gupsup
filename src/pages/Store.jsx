@@ -112,7 +112,7 @@ function StoreHero({ copy, featured, bagCount, onOpenBag }) {
   const tags = splitList(copy.heroTags);
 
   return (
-    <section className="rtg-st-hero">
+    <section data-text-section="hero" className="rtg-st-hero">
       <div className="rtg-st-hero-inner">
         <Reveal direction="right">
           <div className="rtg-st-hero-meta">
@@ -222,7 +222,7 @@ function TheDrop({ copy, products, categories, onQuickView, onAdd }) {
   const needsSize = active ? active.sizes.length > 0 : false;
 
   return (
-    <section className="rtg-st-drop" id="the-drop">
+    <section data-text-section="drop" className="rtg-st-drop" id="the-drop">
       <div className="rtg-st-shell">
         <Reveal className="rtg-st-editorial">
           <div className="rtg-st-editorial-index">
@@ -332,7 +332,7 @@ function KitBuilder({ copy, pieces, onAddKit }) {
   const toggle = (id) => setPicked(pickedIds.includes(id) ? pickedIds.filter((x) => x !== id) : [...pickedIds, id]);
 
   return (
-    <section className="rtg-st-kit">
+    <section data-text-section="kit" className="rtg-st-kit">
       <div className="rtg-st-shell">
         <div className="rtg-st-kit-grid">
           <Reveal className="rtg-st-kit-copy">
@@ -413,7 +413,7 @@ function KitBuilder({ copy, pieces, onAddKit }) {
 // ----------------------------------------------------------------------------
 function LimitedDrop({ copy, product, onQuickView }) {
   return (
-    <section className="rtg-st-limited">
+    <section data-text-section="limited" className="rtg-st-limited">
       <div className="rtg-st-shell">
         <Reveal as={motion.article} className="rtg-st-limited-card">
           <div className="rtg-st-limited-number">{copy.limitedNumber}</div>

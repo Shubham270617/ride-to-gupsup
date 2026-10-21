@@ -22,7 +22,7 @@ function Accented({ text, className = "text-rtg-orange-500" }) {
   );
 }
 
-const SMALL_LABEL = "block text-[0.5313rem] max-lg:text-[0.625rem] font-semibold tracking-[0.14em] uppercase";
+const SMALL_LABEL = "block text-[length:calc(0.5313rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.14em] uppercase";
 
 // "~45 KM Total" -> ["~45 KM", "Total"]: the last word is the caption under
 // the number in the phone layout's stat boxes.
@@ -42,8 +42,8 @@ function RouteCardCompact({ format }) {
           <img src={format.cardImage} alt={format.cardTitle || format.tabLabel} />
         </div>
         <div className="min-w-0 flex-1">
-          {format.cardLabel && <span className="block mb-1.5 text-[0.625rem] font-semibold tracking-[0.18em] uppercase text-white/65">{format.cardLabel}</span>}
-          {format.cardTitle && <strong className="block font-display font-normal text-[1.375rem] leading-[1.05] tracking-[0.02em]">{format.cardTitle}</strong>}
+          {format.cardLabel && <span className="block mb-1.5 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.18em] uppercase text-white/65">{format.cardLabel}</span>}
+          {format.cardTitle && <strong className="block font-display font-normal text-[length:calc(1.375rem*var(--rtg-sec,1))] leading-[1.05] tracking-[0.02em]">{format.cardTitle}</strong>}
         </div>
         <span className="shrink-0 w-11 h-11 rounded-full grid place-items-center bg-white/12 text-lg" aria-hidden="true">
           ↗
@@ -56,8 +56,8 @@ function RouteCardCompact({ format }) {
             const [value, caption] = splitStat(stat);
             return (
               <div key={stat} className="rtg-train-tile is-bordered flex flex-col justify-center min-h-[84px] px-3.5 py-3">
-                <strong className="block font-display font-normal text-[1.625rem] leading-none tracking-[0.02em]">{value}</strong>
-                {caption && <small className="block mt-1.5 text-[0.5938rem] font-semibold tracking-[0.14em] uppercase text-white/60">{caption}</small>}
+                <strong className="block font-display font-normal text-[length:calc(1.625rem*var(--rtg-sec,1))] leading-none tracking-[0.02em]">{value}</strong>
+                {caption && <small className="block mt-1.5 text-[length:calc(0.5938rem*var(--rtg-sec,1))] font-semibold tracking-[0.14em] uppercase text-white/60">{caption}</small>}
               </div>
             );
           })}
@@ -74,8 +74,8 @@ function FormatCard({ format }) {
   return (
     <div className={`rtg-train-card flex-col p-[18px] ${format.cardImage ? "hidden lg:flex" : "flex"}`}>
       <div>
-        {format.cardLabel && <span className="block mb-[7px] text-[0.625rem] max-lg:text-[0.6875rem] font-semibold tracking-[0.18em] uppercase">{format.cardLabel}</span>}
-        {format.cardTitle && <strong className="block font-display font-normal text-xl max-lg:text-[1.625rem] leading-[1.05] tracking-[0.02em]">{format.cardTitle}</strong>}
+        {format.cardLabel && <span className="block mb-[7px] text-[length:calc(0.625rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-semibold tracking-[0.18em] uppercase">{format.cardLabel}</span>}
+        {format.cardTitle && <strong className="block font-display font-normal text-xl max-lg:text-[length:calc(1.625rem*var(--rtg-sec,1))] leading-[1.05] tracking-[0.02em]">{format.cardTitle}</strong>}
       </div>
 
       {format.cardImage ? (
@@ -86,7 +86,7 @@ function FormatCard({ format }) {
           {format.cardStats.length > 0 && (
             <div className="grid grid-flow-col auto-cols-fr gap-[7px] mb-2.5">
               {format.cardStats.map((stat) => (
-                <span key={stat} className="rtg-train-pill bg-white/8 px-[7px] py-[9px] text-center text-[0.625rem] font-semibold tracking-[0.08em] uppercase">
+                <span key={stat} className="rtg-train-pill bg-white/8 px-[7px] py-[9px] text-center text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.08em] uppercase">
                   {stat}
                 </span>
               ))}
@@ -99,12 +99,12 @@ function FormatCard({ format }) {
             <Fragment key={step.label}>
               {i > 0 && <span className="block w-0.5 h-[11px] max-lg:h-3.5 ml-[29px] max-lg:ml-[37px] opacity-75 bg-gradient-to-b from-rtg-orange-500 to-white/20" />}
               <div className="rtg-train-tile is-bordered max-lg:!rounded-[24px] flex items-center gap-[13px] max-lg:gap-5 min-h-14 max-lg:min-h-[72px] px-3 max-lg:px-4 py-[9px]">
-                <span className="shrink-0 w-[34px] h-[34px] max-lg:w-11 max-lg:h-11 rounded-full grid place-items-center text-[0.625rem] max-lg:text-[0.8125rem] font-black tracking-[0.05em] bg-gradient-to-br from-[#35246f] to-[#f76b1c] shadow-[0_6px_16px_rgba(247,107,28,0.14)]">
+                <span className="shrink-0 w-[34px] h-[34px] max-lg:w-11 max-lg:h-11 rounded-full grid place-items-center text-[length:calc(0.625rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.8125rem*var(--rtg-sec,1))] font-black tracking-[0.05em] bg-gradient-to-br from-[#35246f] to-[#f76b1c] shadow-[0_6px_16px_rgba(247,107,28,0.14)]">
                   {pad2(i + 1)}
                 </span>
                 <div>
                   <small className={`${SMALL_LABEL} mb-[3px] max-lg:text-white/70`}>{step.label}</small>
-                  <strong className="block text-[0.625rem] max-lg:text-[0.875rem] font-bold leading-[1.1] tracking-[0.04em] uppercase">{step.value}</strong>
+                  <strong className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.875rem*var(--rtg-sec,1))] font-bold leading-[1.1] tracking-[0.04em] uppercase">{step.value}</strong>
                 </div>
               </div>
             </Fragment>
@@ -117,7 +117,7 @@ function FormatCard({ format }) {
           {format.cardMeta.map((m) => (
             <div key={m.label} className="rtg-train-tile !rounded-[18px] max-lg:border max-lg:border-white/18 px-2.5 max-lg:px-3.5 pt-[9px] max-lg:pt-3 pb-2.5 max-lg:pb-3">
               <small className={`${SMALL_LABEL} mb-[5px] max-lg:text-[#ff8a3d]`}>{m.label}</small>
-              <strong className="block text-[0.625rem] max-lg:text-[0.75rem] font-bold leading-[1.35] tracking-[0.03em]">{m.value}</strong>
+              <strong className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.75rem*var(--rtg-sec,1))] font-bold leading-[1.35] tracking-[0.03em]">{m.value}</strong>
             </div>
           ))}
         </div>
@@ -131,7 +131,7 @@ function FormatCopy({ format }) {
   return (
     <div className="order-1 lg:order-none pt-1">
       {format.kicker && (
-        <span className="block mb-[9px] text-[0.5938rem] max-lg:text-[0.6875rem] font-semibold leading-normal max-lg:leading-[1.7] tracking-[0.18em] uppercase text-white">
+        <span className="block mb-[9px] text-[length:calc(0.5938rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-semibold leading-normal max-lg:leading-[1.7] tracking-[0.18em] uppercase text-white">
           <Accented text={format.kicker} />
         </span>
       )}
@@ -140,7 +140,7 @@ function FormatCopy({ format }) {
         {format.titleLine2 && <span className="rtg-train-fill block">{format.titleLine2}</span>}
       </h2>
       {format.tagline.length > 0 && (
-        <div className="my-[9px] max-lg:my-3 font-display text-[2.5rem] max-lg:text-[2.75rem] leading-none text-white">
+        <div className="my-[9px] max-lg:my-3 font-display text-[length:calc(2.5rem*var(--rtg-sec,1))] max-lg:text-[length:calc(2.75rem*var(--rtg-sec,1))] leading-none text-white">
           {format.tagline.map((part, i) => (
             <span key={i} className={i % 2 === 1 ? "mx-1 text-[0.75em] italic max-lg:text-rtg-orange-500" : ""}>
               {part}{" "}
@@ -148,13 +148,13 @@ function FormatCopy({ format }) {
           ))}
         </div>
       )}
-      {format.description && <p className="mb-[11px] max-lg:mb-4 text-[0.8125rem] max-lg:text-[0.9375rem] leading-[1.52] text-white">{format.description}</p>}
+      {format.description && <p className="mb-[11px] max-lg:mb-4 text-[length:calc(0.8125rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.9375rem*var(--rtg-sec,1))] leading-[1.52] text-white">{format.description}</p>}
       {format.pills.length > 0 && (
         <div className="flex flex-wrap max-lg:grid max-lg:grid-cols-2 gap-2.5 mb-2.5">
           {format.pills.map((pill) => (
             <span
               key={pill}
-              className="rtg-train-pill px-3.5 max-lg:px-4 py-2.5 max-lg:py-3.5 border border-white/15 bg-[rgba(35,24,53,0.5)] backdrop-blur-md text-[0.5313rem] max-lg:text-[0.6563rem] font-bold tracking-[0.06em] max-lg:tracking-[0.1em] uppercase text-white"
+              className="rtg-train-pill px-3.5 max-lg:px-4 py-2.5 max-lg:py-3.5 border border-white/15 bg-[rgba(35,24,53,0.5)] backdrop-blur-md text-[length:calc(0.5313rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.6563rem*var(--rtg-sec,1))] font-bold tracking-[0.06em] max-lg:tracking-[0.1em] uppercase text-white"
             >
               {pill}
             </span>
@@ -162,7 +162,7 @@ function FormatCopy({ format }) {
         </div>
       )}
       {format.note && (
-        <div className="rtg-train-pill flex items-center px-3.5 max-lg:px-4 py-2 max-lg:py-3 bg-[rgba(49,33,68,0.58)] backdrop-blur-md text-[0.6875rem] max-lg:text-[0.6563rem] font-bold tracking-[0.08em] uppercase text-[#ffd0ae]">
+        <div className="rtg-train-pill flex items-center px-3.5 max-lg:px-4 py-2 max-lg:py-3 bg-[rgba(49,33,68,0.58)] backdrop-blur-md text-[length:calc(0.6875rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.6563rem*var(--rtg-sec,1))] font-bold tracking-[0.08em] uppercase text-[#ffd0ae]">
           {format.note}
         </div>
       )}
@@ -189,7 +189,7 @@ function FormatControls({ format, formats, activeIndex, onSelect }) {
                 role="tab"
                 aria-selected={i === activeIndex}
                 onClick={() => onSelect(i)}
-                className={`h-[34px] max-lg:h-12 px-2 rounded-full text-[0.5625rem] max-lg:text-[0.6563rem] font-bold tracking-[0.1em] uppercase truncate transition-all duration-300 ${
+                className={`h-[34px] max-lg:h-12 px-2 rounded-full text-[length:calc(0.5625rem*var(--rtg-sec,1))] max-lg:text-[length:calc(0.6563rem*var(--rtg-sec,1))] font-bold tracking-[0.1em] uppercase truncate transition-all duration-300 ${
                   i === activeIndex
                     ? "bg-[rgba(53,36,111,0.07)] max-lg:bg-white/90 text-[#35246f] shadow-[inset_0_0_0_1px_rgba(53,36,111,0.07)]"
                     : "text-[#756e7e] max-lg:text-white/60 hover:text-[#35246f] max-lg:hover:text-white"
@@ -209,7 +209,7 @@ function FormatControls({ format, formats, activeIndex, onSelect }) {
       {format.buttonLabel && (
         <Link
           to={format.link || "/weekly-rides"}
-          className="btn-shine flex items-center justify-center gap-3 h-12 max-lg:h-14 px-5 rounded-full bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] text-xs max-lg:text-[0.8125rem] font-bold tracking-[0.18em] uppercase text-white shadow-[0_14px_34px_rgba(247,107,28,0.28),inset_0_1px_0_rgba(255,255,255,0.38)] transition-transform duration-300 hover:-translate-y-0.5"
+          className="btn-shine flex items-center justify-center gap-3 h-12 max-lg:h-14 px-5 rounded-full bg-gradient-to-r from-[#f45b18] to-[#ff7a1a] text-xs max-lg:text-[length:calc(0.8125rem*var(--rtg-sec,1))] font-bold tracking-[0.18em] uppercase text-white shadow-[0_14px_34px_rgba(247,107,28,0.28),inset_0_1px_0_rgba(255,255,255,0.38)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {format.buttonLabel}
           <span className="lg:hidden text-lg leading-none" aria-hidden="true">
@@ -228,7 +228,7 @@ function FormatPanel({ format }) {
       {format.panelRows.map((row) => (
         <div key={row.label} className="rtg-train-tile is-bordered flex flex-col justify-center px-4 py-[15px] min-h-[84px]">
           <small className={`${SMALL_LABEL} mb-[7px]`}>{row.label}</small>
-          <strong className="block text-[0.625rem] font-bold leading-[1.3] tracking-[0.04em] uppercase">
+          <strong className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold leading-[1.3] tracking-[0.04em] uppercase">
             <Accented text={row.value} className="text-[#ffb37a]" />
           </strong>
         </div>
@@ -270,7 +270,7 @@ export default function TrainingFormats({ images }) {
   const active = index % count;
 
   return (
-    <section
+    <section data-text-section="training"
       id="training-formats"
       className="relative isolate overflow-hidden bg-rtg-purple-950"
       onMouseEnter={() => (paused.current = true)}

@@ -446,9 +446,10 @@ Admin → Appearance (sidebar group **Home & site**) works like a word processor
 | Font | A list like WordPad's, each shown in its own typeface: Montserrat (RTG default), Space Grotesk, Arial, Verdana, Tahoma, Trebuchet MS, Segoe UI, System default, Times New Roman, Georgia, Courier New, and Google fonts Roboto, Open Sans, Lato, Poppins, Inter, Nunito, Raleway, Merriweather, Playfair Display (loaded only when used) |
 | Size | A number in pixels: 8, 9, 10, 11, 12, 13, 14, 15, 16 (normal), 17, 18, 20, 22, 24, with A− / A+ buttons. Sizes under 12 and over 20 show a warning |
 | Page by page | Every public page can have its own font and/or size, or follow the whole-site choice ("Site default"). A page's choice also covers the pages under it (an event's page follows Events) |
+| Section by section | Open **Sections** on a page row to give one section (e.g. Community → The RTG Network) its own font and size, or follow the page ("Page font" / "Page size"). All normal text in that section changes; big display headings keep their designed size so layouts don't break. Sections are tagged in the code with `data-text-section` and listed in `SECTION_TEXT_TARGETS` (`src/lib/appearance.js`) |
 | Colour | Default ink, High contrast, Softer; all contrast-checked against the light background (whole site) |
 
-Size and font apply to body text; headings keep the RTG display font. The size scales the root font, so spacing grows with the text and layouts keep their shape. The admin panel itself is never restyled; the screen has a live preview instead. Nothing changes on the site until **Save changes**. Stored in `site_settings` as `text.theme.size`, `text.theme.font`, `text.theme.color` and `text.theme.pages` (JSON), and cached in the browser so pages don't flicker.
+Size and font apply to body text; headings keep the RTG display font. The size scales the root font, so spacing grows with the text and layouts keep their shape. The admin panel itself is never restyled; the screen has a live preview instead. Nothing changes on the site until **Save changes**. Stored in `site_settings` as `text.theme.size`, `text.theme.font`, `text.theme.color` and `text.theme.pages` and `text.theme.sections` (JSON), and cached in the browser so pages don't flicker.
 
 ### 4.17 Contact form
 

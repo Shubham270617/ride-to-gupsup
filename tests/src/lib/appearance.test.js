@@ -11,6 +11,9 @@ import {
   sitewideSize,
   sizeNote,
   toSize,
+  SECTION_TEXT_TARGETS,
+  parseSectionSettings,
+  sectionCss,
 } from "../../../src/lib/appearance.js";
 
 vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -151,5 +154,51 @@ describe("applyAppearance()", () => {
     expect(el.style.getPropertyValue("--font-sans")).toContain("Courier New");
     applyAppearance(settings, el, "/faq");
     expect(el.style.getPropertyValue("--rtg-text-scale")).toBe("1");
+  });
+});
+
+
+describe("per-section font and size", () => {
+  const settings = {
+    [APPEARANCE_KEYS.size]: "16",
+    [APPEARANCE_KEYS.pages]: JSON.stringify({ "/community": { size: 18 } }),
+    [APPEARANCE_KEYS.sections]: JSON.stringify({
+      "/community": { network: { size: 20, font: "arial" }, place: { font: "georgia" }, nope: { size: 20 } },
+      "/chat": { sidebar: { size: 14 } },
+      "/unknown": { hero: { size: 20 } },
+    }),
+  };
+
+  it("keeps only known pages, known sections, offered sizes and fonts", () => {
+    expect(parseSectionSettings(settings[APPEARANCE_KEYS.sections])).toEqual({
+      "/community": { network: { size: 20, font: "arial" }, place: { font: "georgia" } },
+      "/chat": { sidebar: { size: 14 } },
+    });
+    expect(parseSectionSettings("garbage")).toEqual({});
+  });
+
+  it("builds CSS for this page's sections only, sized relative to the page size", () => {
+    const css = sectionCss(settings, "/community");
+    expect(css).toContain('[data-text-section="network"] { --rtg-sec: 1.1111;'); // 20 / 18
+    expect(css).toContain("font-family: Arial");
+    expect(css).toContain('[data-text-section="place"] { --font-sans: Georgia');
+    expect(css).not.toContain("sidebar");
+    expect(sectionCss(settings, "/chat")).toContain('[data-text-section="sidebar"] { --rtg-sec: 0.875; }');
+  });
+
+  it("does nothing for pages without sections set, or in the admin area", () => {
+    expect(sectionCss(settings, "/about")).toBe("");
+    expect(sectionCss(settings, "/admin/appearance")).toBe("");
+  });
+
+  it("writes and removes the page's section style as you move between pages", () => {
+    applyAppearance(settings, document.documentElement, "/community");
+    expect(document.getElementById("rtg-section-text").textContent).toContain("network");
+    applyAppearance(settings, document.documentElement, "/about");
+    expect(document.getElementById("rtg-section-text")).toBeNull();
+  });
+
+  it("lists sections for pages the admin can style", () => {
+    expect(SECTION_TEXT_TARGETS["/community"].map((s) => s.id)).toContain("network");
   });
 });

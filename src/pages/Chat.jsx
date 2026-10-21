@@ -60,14 +60,14 @@ export default function Chat() {
 
   if (!enabled || !userId) {
     return (
-      <section className="px-4 pb-16 pt-28 md:pt-36">
+      <section data-text-section="intro" className="px-4 pb-16 pt-28 md:pt-36">
         <div className="relative mx-auto max-w-lg overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#1b1130_0%,#35246f_60%,#5e43a1_100%)] p-8 text-center text-white shadow-[0_30px_80px_-30px_rgba(27,17,48,0.8)] md:p-10">
           <span aria-hidden="true" className="absolute -right-16 -top-20 h-56 w-56 rounded-full border border-white/10 shadow-[0_0_0_44px_rgba(255,255,255,0.03)]" />
           <span aria-hidden="true" className="absolute -bottom-16 left-1/4 h-40 w-40 rounded-full bg-rtg-orange-500/30 blur-3xl" />
           <span className="relative mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] shadow-[0_16px_36px_-14px_rgba(247,107,28,0.9)]">
             <MessagesSquare size={28} />
           </span>
-          <p className="relative text-[0.6875rem] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">RTG Live</p>
+          <p className="relative text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">RTG Live</p>
           <h1 className="relative mt-1 font-display text-5xl leading-none">Chat with the crew</h1>
           <p className="relative mx-auto mt-4 max-w-sm text-sm text-white/70">
             The community room, private messages, read receipts and who's online right now. Log in to join.
@@ -94,12 +94,12 @@ export default function Chat() {
     <section className="px-3 pb-10 pt-24 sm:px-4 md:pt-28">
       <div className="mx-auto max-w-6xl">
         {/* Banner */}
-        <div className="relative mb-4 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(135deg,#1b1130_0%,#35246f_62%,#5e43a1_100%)] px-5 py-5 text-white shadow-[0_24px_60px_-34px_rgba(27,17,48,0.8)] md:px-7">
+        <div data-text-section="banner" className="relative mb-4 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(135deg,#1b1130_0%,#35246f_62%,#5e43a1_100%)] px-5 py-5 text-white shadow-[0_24px_60px_-34px_rgba(27,17,48,0.8)] md:px-7">
           <span aria-hidden="true" className="absolute -right-14 -top-20 h-52 w-52 rounded-full border border-white/10 shadow-[0_0_0_40px_rgba(255,255,255,0.03)]" />
           <span aria-hidden="true" className="absolute -bottom-16 left-1/3 h-36 w-36 rounded-full bg-rtg-orange-500/25 blur-3xl" />
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-[0.6875rem] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">RTG Live</p>
+              <p className="text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold uppercase tracking-[0.22em] text-rtg-orange-300">RTG Live</p>
               <h1 className="font-display text-4xl leading-none md:text-5xl">Chat</h1>
             </div>
             <div className="flex items-center gap-3 rounded-full bg-white/10 py-1.5 pl-1.5 pr-4 backdrop-blur">
@@ -123,7 +123,7 @@ export default function Chat() {
 
         <div className="grid h-[calc(100svh-14rem)] min-h-[540px] overflow-hidden rounded-[2rem] border border-rtg-border bg-white shadow-[0_30px_80px_-30px_rgba(53,36,111,0.35)] lg:grid-cols-[330px_1fr]">
           {/* Sidebar */}
-          <aside
+          <aside data-text-section="sidebar"
             className={`theme-night min-h-0 flex-col bg-[linear-gradient(180deg,#1b1130_0%,#221540_100%)] text-white lg:flex ${showThreadOnMobile ? "hidden" : "flex"}`}
           >
             <div className="p-3 pb-2">
@@ -159,11 +159,11 @@ export default function Chat() {
                 <ChevronRight size={16} className="shrink-0 text-white/50 lg:hidden" />
               </button>
 
-              <p className="mb-1.5 mt-5 flex items-center justify-between px-2 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-white/45">
+              <p className="mb-1.5 mt-5 flex items-center justify-between px-2 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold uppercase tracking-[0.16em] text-white/45">
                 <span className="inline-flex items-center gap-1.5">
                   <Lock size={11} /> Private messages
                 </span>
-                {unreadTotal > 0 && <span className="rounded-full bg-rtg-orange-500 px-2 py-0.5 text-[0.625rem] text-white">{unreadTotal} new</span>}
+                {unreadTotal > 0 && <span className="rounded-full bg-rtg-orange-500 px-2 py-0.5 text-[length:calc(0.625rem*var(--rtg-sec,1))] text-white">{unreadTotal} new</span>}
               </p>
               {shownConversations.length === 0 ? (
                 <p className="px-2 py-2 text-xs text-white/50">
@@ -188,7 +188,7 @@ export default function Chat() {
                                 <span className="truncate text-sm font-semibold">{person?.full_name || "RTG Member"}</span>
                                 {person?.is_admin && <AdminBadge />}
                               </span>
-                              <span className="shrink-0 text-[0.625rem] text-white/45">{formatChatTime(c.last_at)}</span>
+                              <span className="shrink-0 text-[length:calc(0.625rem*var(--rtg-sec,1))] text-white/45">{formatChatTime(c.last_at)}</span>
                             </span>
                             <span className={`block truncate text-xs ${c.unread ? "font-semibold text-white" : "text-white/55"}`}>
                               {c.last_from_me ? "You: " : ""}
@@ -196,7 +196,7 @@ export default function Chat() {
                             </span>
                           </span>
                           {c.unread > 0 && (
-                            <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-rtg-orange-500 px-1.5 text-[0.625rem] font-bold">{c.unread}</span>
+                            <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-rtg-orange-500 px-1.5 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold">{c.unread}</span>
                           )}
                         </button>
                       </li>
@@ -205,7 +205,7 @@ export default function Chat() {
                 </ul>
               )}
 
-              <p className="mb-1.5 mt-5 flex items-center gap-1.5 px-2 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-white/45">
+              <p className="mb-1.5 mt-5 flex items-center gap-1.5 px-2 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold uppercase tracking-[0.16em] text-white/45">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" /> Online now · {othersOnline.length}
               </p>
               {shownOnline.length === 0 ? (
@@ -226,9 +226,9 @@ export default function Chat() {
                             <span className="truncate text-sm font-semibold">{person?.full_name || "RTG Member"}</span>
                             {person?.is_admin && <AdminBadge />}
                           </span>
-                          {person?.city && <span className="block truncate text-[0.6875rem] text-white/50">{person.city}</span>}
+                          {person?.city && <span className="block truncate text-[length:calc(0.6875rem*var(--rtg-sec,1))] text-white/50">{person.city}</span>}
                         </span>
-                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[0.625rem] font-semibold opacity-0 transition-opacity group-hover:opacity-100">Message</span>
+                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold opacity-0 transition-opacity group-hover:opacity-100">Message</span>
                       </button>
                     </li>
                   ))}
@@ -236,7 +236,7 @@ export default function Chat() {
               )}
             </div>
 
-            <div className="border-t border-white/10 px-4 py-3 text-[0.6875rem] text-white/45">
+            <div className="border-t border-white/10 px-4 py-3 text-[length:calc(0.6875rem*var(--rtg-sec,1))] text-white/45">
               <span className="inline-flex items-center gap-1.5">
                 <Sparkles size={12} className="text-rtg-orange-300" /> Be kind — admins can remove messages and mute members.
               </span>
@@ -244,7 +244,7 @@ export default function Chat() {
           </aside>
 
           {/* Conversation */}
-          <div className={`min-h-0 ${showThreadOnMobile ? "block" : "hidden"} lg:block`}>
+          <div data-text-section="conversation" className={`min-h-0 ${showThreadOnMobile ? "block" : "hidden"} lg:block`}>
             {isDm ? (
               <ChatThread key={target} mode="dm" otherId={target} onBack={() => open(null)} onOpenPerson={open} />
             ) : (

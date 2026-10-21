@@ -507,7 +507,7 @@ export default function AuthGate() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rtg-orange-400 opacity-75" />
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rtg-orange-400" />
                       </span>
-                      <span className="text-[0.625rem] uppercase tracking-wide text-rtg-orange-400 font-semibold">Live Today</span>
+                      <span className="text-[length:calc(0.625rem*var(--rtg-sec,1))] uppercase tracking-wide text-rtg-orange-400 font-semibold">Live Today</span>
                     </div>
                     <div className="space-y-2">
                       {todaysSession && (
@@ -516,7 +516,7 @@ export default function AuthGate() {
                             <Zap size={14} className="text-rtg-orange-400" />
                           </span>
                           <span className="flex-1 min-w-0 text-left">
-                            <span className="block text-[0.625rem] uppercase tracking-wide text-rtg-mist">Today's Ride</span>
+                            <span className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] uppercase tracking-wide text-rtg-mist">Today's Ride</span>
                             <span className="block text-sm text-rtg-white truncate">
                               {todaysSession.name}{todaysSession.time ? ` — ${todaysSession.time}` : ""}
                             </span>
@@ -529,7 +529,7 @@ export default function AuthGate() {
                             <Calendar size={14} className="text-rtg-orange-400" />
                           </span>
                           <span className="flex-1 min-w-0 text-left">
-                            <span className="block text-[0.625rem] uppercase tracking-wide text-rtg-mist">Ongoing Event</span>
+                            <span className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] uppercase tracking-wide text-rtg-mist">Ongoing Event</span>
                             <span className="block text-sm text-rtg-white truncate">{todaysCalendarEvent.title}</span>
                           </span>
                         </div>
@@ -540,7 +540,7 @@ export default function AuthGate() {
 
                 {hasUpcoming && (
                   <div>
-                    <span className="block text-[0.625rem] uppercase tracking-wide text-rtg-mist font-semibold mb-2">
+                    <span className="block text-[length:calc(0.625rem*var(--rtg-sec,1))] uppercase tracking-wide text-rtg-mist font-semibold mb-2">
                       Upcoming Events
                     </span>
                     <div className="space-y-2 mb-2">

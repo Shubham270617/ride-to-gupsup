@@ -16,7 +16,7 @@ export default function FAQ() {
         height="h-[45vh] md:h-[50vh]"
       />
 
-      <Section>
+      <Section textSection={"questions"}>
         <div className="max-w-3xl mx-auto">
           <FAQAccordion items={faqs} />
         </div>

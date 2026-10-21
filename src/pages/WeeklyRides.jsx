@@ -38,7 +38,7 @@ export default function WeeklyRides() {
         subtitle="Our flagship weekly session — brick training that builds real endurance, every Friday before sunrise."
       />
 
-      <Section center={false}>
+      <Section textSection={"friday"} center={false}>
         <StaggerGroup className="grid sm:grid-cols-3 gap-6 mb-16">
           {infoCards.map((c) => (
             <StaggerItem key={c.label}>
@@ -79,7 +79,7 @@ export default function WeeklyRides() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-rtg-orange-400">{s.day}</span>
                   {s.difficulty && (
-                    <span className="text-[0.625rem] uppercase tracking-wide bg-white/5 px-2 py-0.5 rounded-full text-rtg-mist">
+                    <span className="text-[length:calc(0.625rem*var(--rtg-sec,1))] uppercase tracking-wide bg-white/5 px-2 py-0.5 rounded-full text-rtg-mist">
                       {s.difficulty}
                     </span>
                   )}

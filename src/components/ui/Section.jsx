@@ -27,6 +27,9 @@ export default function Section({
   // overrides from "text.about.mission.{eyebrow,title,subtitle}", falling
   // back to whatever's passed in as props above when nothing's been set.
   contentKey,
+  // Name Admin -> Appearance uses to give this section its own font/size.
+  // Defaults to contentKey.
+  textSection,
 }) {
   const settings = useSiteSettings();
   const isMobile = useIsMobile();
@@ -37,6 +40,7 @@ export default function Section({
   return (
     <section
       id={id}
+      data-text-section={textSection || contentKey || undefined}
       className={`relative isolate overflow-hidden py-20 md:py-28 px-6 md:px-10 ${
         dark ? "theme-night bg-rtg-purple-950" : light ? "bg-rtg-canvas" : "bg-rtg-ink"
       } ${className}`}

@@ -7,9 +7,9 @@ import { splitTitle } from "../../lib/format";
 const AUTO_ADVANCE_MS = 6500;
 
 const SLIDE_PILL =
-  "px-3.5 py-2.5 rounded-full border border-white/15 bg-[rgba(28,20,45,0.54)] backdrop-blur-md text-[0.5625rem] font-bold tracking-[0.06em] uppercase text-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.12),0_8px_18px_rgba(8,5,15,0.16)]";
+  "px-3.5 py-2.5 rounded-full border border-white/15 bg-[rgba(28,20,45,0.54)] backdrop-blur-md text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-bold tracking-[0.06em] uppercase text-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.12),0_8px_18px_rgba(8,5,15,0.16)]";
 const SLIDE_BUTTON =
-  "inline-flex items-center justify-center min-h-[52px] px-[26px] rounded-full text-[0.8125rem] font-bold tracking-[0.11em] uppercase text-white transition-all duration-300 hover:-translate-y-0.5";
+  "inline-flex items-center justify-center min-h-[52px] px-[26px] rounded-full text-[length:calc(0.8125rem*var(--rtg-sec,1))] font-bold tracking-[0.11em] uppercase text-white transition-all duration-300 hover:-translate-y-0.5";
 
 function EventSlide({ event, copy, images, state }) {
   const [titleMain, titleAccent] = splitTitle(event.title, event.home.titleAccent);
@@ -29,7 +29,7 @@ function EventSlide({ event, copy, images, state }) {
       <div className="relative grid gap-[26px] items-end min-h-[420px] p-6 md:p-[38px] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.47fr)]">
         <div>
           {event.type && (
-            <span className="inline-flex mb-4 px-3.5 py-[9px] rounded-full border border-white/20 bg-white/13 backdrop-blur-md text-[0.5625rem] font-bold tracking-[0.15em] uppercase text-[#ff8a42] shadow-[inset_1px_1px_0_rgba(255,255,255,0.2),0_8px_20px_rgba(7,4,14,0.15)]">
+            <span className="inline-flex mb-4 px-3.5 py-[9px] rounded-full border border-white/20 bg-white/13 backdrop-blur-md text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-bold tracking-[0.15em] uppercase text-[#ff8a42] shadow-[inset_1px_1px_0_rgba(255,255,255,0.2),0_8px_20px_rgba(7,4,14,0.15)]">
               {event.type}
             </span>
           )}
@@ -41,7 +41,7 @@ function EventSlide({ event, copy, images, state }) {
               </span>
             )}
           </h3>
-          {event.desc && <p className="max-w-[640px] mb-5 text-[0.7813rem] leading-normal text-white/85">{event.desc}</p>}
+          {event.desc && <p className="max-w-[640px] mb-5 text-[length:calc(0.7813rem*var(--rtg-sec,1))] leading-normal text-white/85">{event.desc}</p>}
           {pills.length > 0 && (
             <div className="flex flex-wrap gap-2.5 mb-[22px]">
               {pills.map((pill) => (
@@ -70,10 +70,10 @@ function EventSlide({ event, copy, images, state }) {
         {hasSideCard && (
           <div className="relative px-6 py-[22px] rounded-[28px] border border-white/15 bg-[rgba(25,18,42,0.67)] backdrop-blur-lg shadow-[inset_1px_1px_0_rgba(255,255,255,0.14),0_18px_38px_rgba(8,5,15,0.22)]">
             {event.home.highlightLabel && (
-              <small className="block mb-2.5 text-[0.625rem] font-bold tracking-[0.16em] uppercase text-[#ff8a42]">{event.home.highlightLabel}</small>
+              <small className="block mb-2.5 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold tracking-[0.16em] uppercase text-[#ff8a42]">{event.home.highlightLabel}</small>
             )}
-            {event.home.highlightTitle && <strong className="block mb-3 text-[1.375rem] font-bold leading-[1.15] text-white">{event.home.highlightTitle}</strong>}
-            {event.home.highlightText && <p className="text-[0.9375rem] leading-[1.55] text-white/80">{event.home.highlightText}</p>}
+            {event.home.highlightTitle && <strong className="block mb-3 text-[length:calc(1.375rem*var(--rtg-sec,1))] font-bold leading-[1.15] text-white">{event.home.highlightTitle}</strong>}
+            {event.home.highlightText && <p className="text-[length:calc(0.9375rem*var(--rtg-sec,1))] leading-[1.55] text-white/80">{event.home.highlightText}</p>}
           </div>
         )}
       </div>
@@ -117,9 +117,9 @@ export default function UpcomingEvents({ settings, images }) {
   };
 
   return (
-    <section id="upcoming-events" className="relative overflow-hidden px-6 md:px-10 pt-16 pb-14 md:pt-[78px] md:pb-[70px]">
+    <section data-text-section="events" id="upcoming-events" className="relative overflow-hidden px-6 md:px-10 pt-16 pb-14 md:pt-[78px] md:pb-[70px]">
       <Reveal className="flex flex-col items-center text-center max-w-[1180px] mx-auto mb-[30px]">
-        <span className="mb-3 text-[0.625rem] font-semibold tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
+        <span className="mb-3 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
         <h2 className="font-display text-[clamp(3.25rem,5.4vw,6.375rem)] leading-[0.88] text-[#3d316e]">
           {copy.title} <span className="text-gradient">{copy.titleAccent}</span>
         </h2>
@@ -143,7 +143,7 @@ export default function UpcomingEvents({ settings, images }) {
       <div className="relative flex justify-center mt-6">
         <Link
           to={copy.allLink}
-          className="btn-shine inline-flex items-center justify-center gap-3.5 min-h-[50px] px-7 rounded-full bg-gradient-to-r from-[#f45b18] via-[#ff7a1a] to-[#ff9a45] text-[0.6875rem] font-bold tracking-[0.08em] uppercase text-white shadow-[0_12px_26px_rgba(247,107,28,0.18),inset_1px_1px_0_rgba(255,255,255,0.25)] transition-transform duration-300 hover:-translate-y-0.5"
+          className="btn-shine inline-flex items-center justify-center gap-3.5 min-h-[50px] px-7 rounded-full bg-gradient-to-r from-[#f45b18] via-[#ff7a1a] to-[#ff9a45] text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold tracking-[0.08em] uppercase text-white shadow-[0_12px_26px_rgba(247,107,28,0.18),inset_1px_1px_0_rgba(255,255,255,0.25)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {copy.allLabel}
           <b className="font-black">→</b>

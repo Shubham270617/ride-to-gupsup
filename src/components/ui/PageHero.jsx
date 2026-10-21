@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { heroSrcSet, heroFallbackSrc } from "../../lib/responsiveImage";
 
-export default function PageHero({ image, eyebrow, title, subtitle, height = "h-[60vh] md:h-[70vh]" }) {
+export default function PageHero({ image, eyebrow, title, subtitle, height = "h-[60vh] md:h-[70vh]", textSection = "hero" }) {
   return (
-    <section className={`theme-night relative ${height} min-h-[420px] flex items-end overflow-hidden bg-rtg-purple-950`}>
+    <section data-text-section={textSection} className={`theme-night relative ${height} min-h-[420px] flex items-end overflow-hidden bg-rtg-purple-950`}>
       <motion.div
         className="absolute inset-0"
         initial={{ scale: 1.15 }}

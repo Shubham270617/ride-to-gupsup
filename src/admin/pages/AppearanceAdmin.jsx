@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Loader2, Palette, FileText, ExternalLink, RotateCcw, ChevronDown, AArrowDown, AArrowUp, AlertTriangle, Type } from "lucide-react";
+import { Check, Loader2, Palette, FileText, ExternalLink, RotateCcw, ChevronDown, AArrowDown, AArrowUp, AlertTriangle, Type, LayoutList } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import {
   APPEARANCE_KEYS,
@@ -7,6 +7,8 @@ import {
   DEFAULT_SIZE,
   FONT_SIZES,
   PAGE_TEXT_TARGETS,
+  SECTION_TEXT_TARGETS,
+  parseSectionSettings,
   TEXT_COLORS,
   ensureFontLoaded,
   fontByValue,
@@ -181,21 +183,73 @@ function Preview({ size, font }) {
   );
 }
 
-function PageRow({ target, entry, siteSize, siteFont, onChange }) {
+// One section inside a page: same font and size boxes, defaulting to the
+// page's own choice.
+function SectionRow({ section, entry, pageSize, pageFont, onChange }) {
   const size = entry.size ? String(entry.size) : "";
   const font = entry.font || "";
-  const effectiveFont = fontByValue(font || siteFont);
-  const effectiveSize = entry.size || siteSize;
+  const effectiveFont = fontByValue(font || pageFont);
+  const effectiveSize = entry.size || pageSize;
   const custom = Boolean(size || font);
   useEffect(() => {
     if (font) ensureFontLoaded(effectiveFont);
   }, [font, effectiveFont]);
   return (
-    <li className="flex flex-col gap-3 rounded-2xl border border-rtg-border bg-white p-3.5 lg:flex-row lg:items-center">
+    <li className="flex flex-col gap-3 rounded-xl border border-rtg-border bg-rtg-purple-950/[0.02] p-3 lg:flex-row lg:items-center">
+      <p className="flex min-w-0 flex-1 items-center gap-2 text-sm text-rtg-white">
+        <span className="truncate">{section.label}</span>
+        {custom && <span className="rounded-full bg-rtg-orange-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rtg-orange-600">Custom</span>}
+      </p>
+      <span
+        className="hidden w-20 shrink-0 truncate text-center text-rtg-white xl:block"
+        style={{ fontFamily: effectiveFont.stack, fontSize: `${Math.min(effectiveSize, 22)}px` }}
+        title={`${effectiveFont.label}, ${effectiveSize}px`}
+        aria-hidden="true"
+      >
+        Aa Bb
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <FontPicker compact value={font} inheritLabel="Page font" onChange={(v) => onChange({ ...entry, font: v || undefined })} />
+        <SizePicker value={size} inheritLabel="Page size" onChange={(v) => onChange({ ...entry, size: v ? Number(v) : undefined })} />
+        {custom && (
+          <button
+            type="button"
+            onClick={() => onChange({})}
+            title="Back to the page default"
+            aria-label={`Reset ${section.label}`}
+            className="grid h-10 w-10 place-items-center rounded-xl text-rtg-mist hover:bg-rtg-purple-950/[0.05] hover:text-rtg-orange-600"
+          >
+            <RotateCcw size={15} />
+          </button>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function PageRow({ target, entry, siteSize, siteFont, onChange, sections = [], sectionEntries = {}, onSectionChange }) {
+  const [open, setOpen] = useState(false);
+  const size = entry.size ? String(entry.size) : "";
+  const font = entry.font || "";
+  const effectiveFont = fontByValue(font || siteFont);
+  const effectiveSize = entry.size || siteSize;
+  const custom = Boolean(size || font);
+  const customSections = Object.keys(sectionEntries).length;
+  useEffect(() => {
+    if (font) ensureFontLoaded(effectiveFont);
+  }, [font, effectiveFont]);
+  return (
+    <li className="rounded-2xl border border-rtg-border bg-white p-3.5">
+     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-2 text-sm font-semibold text-rtg-white">
+        <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-rtg-white">
           {target.label}
           {custom && <span className="rounded-full bg-rtg-orange-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rtg-orange-600">Custom</span>}
+          {customSections > 0 && (
+            <span className="rounded-full bg-rtg-purple-600/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rtg-purple-600">
+              {customSections} section{customSections === 1 ? "" : "s"} custom
+            </span>
+          )}
         </p>
         <a href={target.path} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-flex items-center gap-1 text-xs text-rtg-mist hover:text-rtg-orange-600">
           {target.path} <ExternalLink size={11} />
@@ -224,6 +278,34 @@ function PageRow({ target, entry, siteSize, siteFont, onChange }) {
           </button>
         )}
       </div>
+     </div>
+      {sections.length > 0 && (
+        <div className="mt-3 border-t border-rtg-border pt-3">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1.5 rounded-full bg-rtg-purple-950/[0.04] px-3.5 py-1.5 text-xs font-semibold text-rtg-white hover:bg-rtg-purple-950/[0.07]"
+          >
+            <LayoutList size={13} /> {open ? "Hide sections" : `Sections (${sections.length})`}
+            <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+          {open && (
+            <ul className="mt-3 space-y-2">
+              {sections.map((sec) => (
+                <SectionRow
+                  key={sec.id}
+                  section={sec}
+                  entry={sectionEntries[sec.id] || {}}
+                  pageSize={effectiveSize}
+                  pageFont={font || siteFont}
+                  onChange={(e) => onSectionChange(sec.id, e)}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </li>
   );
 }
@@ -263,6 +345,8 @@ export default function AppearanceAdmin() {
   const siteFont = values[APPEARANCE_KEYS.font] || "default";
   const color = resolveAppearance(values, "/").color;
   const pages = parsePageSettings(values[APPEARANCE_KEYS.pages]);
+  const sectionSettings = parseSectionSettings(values[APPEARANCE_KEYS.sections]);
+  const sectionCount = Object.values(sectionSettings).reduce((n, secs) => n + Object.keys(secs).length, 0);
   const customCount = Object.keys(pages).length;
   const pageGroups = [...new Set(PAGE_TEXT_TARGETS.map((t) => t.group))];
   const note = sizeNote(siteSize);
@@ -275,6 +359,16 @@ export default function AppearanceAdmin() {
     set(APPEARANCE_KEYS.pages, JSON.stringify(next));
   };
 
+  const setSection = (path, id, entry) => {
+    const next = JSON.parse(JSON.stringify(sectionSettings));
+    const clean = { ...(entry.size ? { size: entry.size } : {}), ...(entry.font ? { font: entry.font } : {}) };
+    next[path] = next[path] || {};
+    if (Object.keys(clean).length) next[path][id] = clean;
+    else delete next[path][id];
+    if (!Object.keys(next[path]).length) delete next[path];
+    set(APPEARANCE_KEYS.sections, JSON.stringify(next));
+  };
+
   const save = async () => {
     setSaving(true);
     setError("");
@@ -284,6 +378,7 @@ export default function AppearanceAdmin() {
         { key: APPEARANCE_KEYS.font, value: siteFont, label: "Appearance — font" },
         { key: APPEARANCE_KEYS.color, value: values[APPEARANCE_KEYS.color] ?? "default", label: "Appearance — text colour" },
         { key: APPEARANCE_KEYS.pages, value: JSON.stringify(pages), label: "Appearance — font and size per page" },
+        { key: APPEARANCE_KEYS.sections, value: JSON.stringify(sectionSettings), label: "Appearance — font and size per section" },
       ];
       const { error: err } = await supabase.from("site_settings").upsert(rows);
       if (err) throw err;
@@ -303,6 +398,7 @@ export default function AppearanceAdmin() {
       [APPEARANCE_KEYS.font]: "default",
       [APPEARANCE_KEYS.color]: "default",
       [APPEARANCE_KEYS.pages]: "{}",
+      [APPEARANCE_KEYS.sections]: "{}",
     }));
 
   if (loading) return <p className="text-rtg-mist text-sm">Loading…</p>;
@@ -350,9 +446,18 @@ export default function AppearanceAdmin() {
             <FileText size={18} className="text-rtg-orange-400" /> Page by page
           </h2>
           <span className="flex items-center gap-3 text-xs text-rtg-mist">
-            {customCount === 0 ? "Every page follows the whole-site choice" : `${customCount} page${customCount === 1 ? "" : "s"} customised`}
-            {customCount > 0 && (
-              <button type="button" onClick={() => set(APPEARANCE_KEYS.pages, "{}")} className="inline-flex items-center gap-1 font-semibold text-rtg-orange-600 hover:underline">
+            {customCount + sectionCount === 0
+              ? "Every page follows the whole-site choice"
+              : `${customCount} page${customCount === 1 ? "" : "s"} · ${sectionCount} section${sectionCount === 1 ? "" : "s"} customised`}
+            {customCount + sectionCount > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  set(APPEARANCE_KEYS.pages, "{}");
+                  set(APPEARANCE_KEYS.sections, "{}");
+                }}
+                className="inline-flex items-center gap-1 font-semibold text-rtg-orange-600 hover:underline"
+              >
                 <RotateCcw size={12} /> Reset all pages
               </button>
             )}
@@ -360,7 +465,7 @@ export default function AppearanceAdmin() {
         </div>
         <p className="mb-5 max-w-2xl text-xs text-rtg-mist">
           Give any page its own font and size. "Site default" follows the whole-site choice above ({fontByValue(siteFont).label}, {siteSize}px). A page's
-          choice also covers the pages under it — every event's page follows Events. Save, then open the page to see it.
+          choice also covers the pages under it — every event's page follows Events. Open <b>Sections</b> on a page to give one part of it (say, the community cards) its own font and size — all its normal text changes, while big display headings keep their designed size so the layout holds. Save, then open the page to see it.
         </p>
         <div className="space-y-6">
           {pageGroups.map((group) => (
@@ -368,7 +473,17 @@ export default function AppearanceAdmin() {
               <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-rtg-mist">{group}</p>
               <ul className="space-y-2">
                 {PAGE_TEXT_TARGETS.filter((t) => t.group === group).map((t) => (
-                  <PageRow key={t.path} target={t} entry={pages[t.path] || {}} siteSize={siteSize} siteFont={siteFont} onChange={(e) => setPage(t.path, e)} />
+                  <PageRow
+                    key={t.path}
+                    target={t}
+                    entry={pages[t.path] || {}}
+                    siteSize={siteSize}
+                    siteFont={siteFont}
+                    onChange={(e) => setPage(t.path, e)}
+                    sections={SECTION_TEXT_TARGETS[t.path] || []}
+                    sectionEntries={sectionSettings[t.path] || {}}
+                    onSectionChange={(id, e) => setSection(t.path, id, e)}
+                  />
                 ))}
               </ul>
             </div>

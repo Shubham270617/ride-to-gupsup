@@ -70,7 +70,7 @@ export default function Contact() {
         height="h-[45vh] md:h-[50vh]"
       />
 
-      <Section>
+      <Section textSection={"form"}>
         <div className="grid lg:grid-cols-5 gap-10">
           <Reveal direction="right" className="lg:col-span-3">
             <GlassCard>

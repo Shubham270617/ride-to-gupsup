@@ -4,7 +4,7 @@ import Reveal from "../../components/ui/Reveal";
 export default function LegalPage({ title, updated, sections }) {
   return (
     <div className="pt-32 pb-20">
-      <Section title={title} subtitle={updated} center={false}>
+      <Section textSection={"content"} title={title} subtitle={updated} center={false}>
         <div className="max-w-3xl space-y-10">
           {sections.map((s) => (
             <Reveal key={s.heading}>

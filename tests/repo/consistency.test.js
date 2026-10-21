@@ -175,3 +175,32 @@ describe("online now (migration 026)", () => {
     }
   });
 });
+
+describe("per-section text (Admin -> Appearance)", () => {
+  it("every section listed in the admin is tagged somewhere in the site", async () => {
+    const { SECTION_TEXT_TARGETS } = await import("../../src/lib/appearance.js");
+    const walk = (dir) =>
+      readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((d) =>
+        d.isDirectory() ? walk(path.join(dir, d.name)) : /\.jsx$/.test(d.name) ? [path.join(dir, d.name)] : []
+      );
+    const code = walk("src").map((f) => read(f)).join("\n");
+    for (const [page, sections] of Object.entries(SECTION_TEXT_TARGETS)) {
+      for (const { id } of sections) {
+        const tagged =
+          code.includes(`data-text-section="${id}"`) ||
+          code.includes(`textSection={"${id}"}`) ||
+          code.includes(`contentKey="${id}"`) ||
+          (id === "hero" && code.includes('textSection = "hero"'));
+        expect(tagged, `${page} → ${id} has no data-text-section tag`).toBe(true);
+      }
+    }
+  });
+
+  it("every public font size follows the section factor", () => {
+    for (const file of ["src/index.css", "src/styles/lab.css"]) {
+      const sizes = [...read(file).matchAll(/font-size\s*:\s*([^;}]*)/g)].map((m) => m[1].trim());
+      const fixed = sizes.filter((v) => /(rem|px|vw)\b/.test(v) && !v.includes("--rtg-sec") && !v.includes("--rtg-text-scale"));
+      expect(fixed, file).toEqual([]);
+    }
+  });
+});

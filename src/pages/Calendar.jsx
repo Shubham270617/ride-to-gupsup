@@ -195,7 +195,7 @@ function CalendarHero({ copy, today, activities, categories, tint }) {
   ];
 
   return (
-    <section className="rtg-cal-hero">
+    <section data-text-section="hero" className="rtg-cal-hero">
       <div className="rtg-cal-hero-grid">
         <Reveal direction="right">
           <span className="rtg-cal-kicker">{copy.heroKicker}</span>
@@ -689,7 +689,7 @@ export default function Calendar() {
 
       <CalendarHero copy={copy} today={today} activities={activities} categories={categories} tint={tint} />
 
-      <section className="rtg-cal-section" id="calendar">
+      <section data-text-section="calendar" className="rtg-cal-section" id="calendar">
         <div className="rtg-cal-inner">
           <div className="rtg-cal-intro">
             <RhythmPanel copy={copy} today={today} activities={activities} categories={categories} tint={tint} onOpen={openDetail} />

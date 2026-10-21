@@ -320,7 +320,7 @@ function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard 
         </div>
       </div>
 
-      <section className="rr-personal-trend">
+      <section data-text-section="personal" className="rr-personal-trend">
         <div className="rr-chart-head">
           <b>{copy.recordTrendTitle}</b>
           <span>{overall.value === null ? copy.recordTrendWaiting : `#${overall.place} · ${signed(overall.value)} ${copy.unitGain}`}</span>
@@ -644,7 +644,7 @@ export default function LabRidge() {
         </button>
       </header>
 
-      <section className="rr-intro" aria-labelledby="rr-page-title">
+      <section data-text-section="intro" className="rr-intro" aria-labelledby="rr-page-title">
         <div className="rr-intro-copy">
           <p className="rr-eyebrow">{copy.eyebrow}</p>
           <h1 id="rr-page-title">
@@ -662,7 +662,7 @@ export default function LabRidge() {
         </div>
       </section>
 
-      <section className="rr-results" aria-labelledby="rr-board-title">
+      <section data-text-section="results" className="rr-results" aria-labelledby="rr-board-title">
         <div className="rr-toolbar">
           <div className="rr-mode-buttons" role="group" aria-label={boardTitle}>
             {MODES.map((m) => (
@@ -744,7 +744,7 @@ export default function LabRidge() {
         </div>
 
         {mode === "overall" && (
-          <section className="rr-overall-graphics" aria-labelledby="rr-trend-title">
+          <section data-text-section="trends" className="rr-overall-graphics" aria-labelledby="rr-trend-title">
             <div className="rr-chart-heading">
               <div>
                 <h3 id="rr-trend-title">{copy.journeysTitle}</h3>
@@ -910,7 +910,7 @@ export default function LabRidge() {
         <p className="rr-board-note">{boardNote}</p>
 
         {feed.awards.length > 0 && (
-          <section className="rr-recognition" aria-labelledby="rr-spotlight-title">
+          <section data-text-section="spotlight" className="rr-recognition" aria-labelledby="rr-spotlight-title">
             <div className="rr-spotlight-head">
               <div>
                 <p className="rr-eyebrow">{copy.spotlightEyebrow}</p>

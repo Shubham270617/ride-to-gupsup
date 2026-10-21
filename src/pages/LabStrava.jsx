@@ -311,7 +311,7 @@ export default function LabStrava() {
     <div className="rtg-lab">
       <LabBackdrop />
 
-      <section className="shell dashboard" aria-labelledby="lab-dash-title">
+      <section data-text-section="board" className="shell dashboard" aria-labelledby="lab-dash-title">
         <div className="dash-top">
           <Link className="text-button" to="/lab">
             {copy.dashBackLabel}

@@ -124,7 +124,7 @@ export default function Lab() {
     <div className="rtg-lab">
       <LabBackdrop />
 
-      <section className="hero shell" aria-labelledby="lab-hero-title">
+      <section data-text-section="hero" className="hero shell" aria-labelledby="lab-hero-title">
         <div className="hero-copy">
           <div className="eyebrow">
             <i /> {copy.heroEyebrow}
@@ -206,7 +206,7 @@ export default function Lab() {
         </div>
       )}
 
-      <section className="shell labs-section" id="labs">
+      <section data-text-section="labs" className="shell labs-section" id="labs">
         <div className="section-heading">
           <div>
             <div className="eyebrow">{copy.labsEyebrow}</div>
@@ -235,7 +235,7 @@ export default function Lab() {
         </div>
       </section>
 
-      <section className="shell principles">
+      <section data-text-section="principles" className="shell principles">
         <div>
           <div className="eyebrow">{copy.principlesEyebrow}</div>
           <h2>

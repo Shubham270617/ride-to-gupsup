@@ -111,6 +111,7 @@ describe("appearance", () => {
       [APPEARANCE_KEYS.font]: "system",
       [APPEARANCE_KEYS.color]: "default",
       [APPEARANCE_KEYS.pages]: "{}",
+      [APPEARANCE_KEYS.sections]: "{}",
     });
   });
 

@@ -2,7 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import { initials } from "../../lib/chatFormat";
 
 const SIZES = {
-  sm: "h-8 w-8 text-[0.6875rem]",
+  sm: "h-8 w-8 text-[length:calc(0.6875rem*var(--rtg-sec,1))]",
   md: "h-10 w-10 text-xs",
   lg: "h-12 w-12 text-sm",
   xl: "h-20 w-20 text-xl",
@@ -34,7 +34,7 @@ export function ChatAvatar({ person, online = false, size = "md" }) {
 export function AdminBadge({ className = "" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] px-2 py-0.5 text-[0.5625rem] font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_6px_14px_-8px_rgba(247,107,28,0.9)] ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] px-2 py-0.5 text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-extrabold uppercase tracking-[0.12em] text-white shadow-[0_6px_14px_-8px_rgba(247,107,28,0.9)] ${className}`}
     >
       <ShieldCheck size={10} strokeWidth={3} /> Admin
     </span>
@@ -62,7 +62,7 @@ export function AvatarStack({ people, extra = 0 }) {
         </span>
       ))}
       {extra > 0 && (
-        <span className="-ml-2.5 grid h-8 w-8 place-items-center rounded-full bg-rtg-purple-950 text-[0.625rem] font-bold text-white ring-2 ring-white">
+        <span className="-ml-2.5 grid h-8 w-8 place-items-center rounded-full bg-rtg-purple-950 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-bold text-white ring-2 ring-white">
           +{extra}
         </span>
       )}

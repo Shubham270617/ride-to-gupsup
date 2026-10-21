@@ -23,6 +23,12 @@ import { useSiteSettings } from "./publicData";
 // covers the pages under it (an event's page follows /events). Anything a
 // page doesn't set follows the sitewide choice.
 //
+// Per section: inside a page, any section tagged data-text-section="<name>"
+// can have its own font and size too: { "/community": { "network": { size:
+// 20 } } } in one JSON setting. Every font size on the public site is
+// multiplied by var(--rtg-sec, 1), and a generated <style> sets --rtg-sec
+// (section size ÷ page size) and the font on that section only.
+//
 // The admin area is never restyled — always 16px Montserrat — so a tiny or
 // huge choice can't make the dashboard itself unusable. Admin -> Appearance
 // has its own live preview instead.
@@ -34,6 +40,7 @@ export const APPEARANCE_KEYS = {
   font: "text.theme.font",
   color: "text.theme.color",
   pages: "text.theme.pages",
+  sections: "text.theme.sections",
 };
 
 export const DEFAULT_SIZE = 16;
@@ -94,7 +101,6 @@ export const PAGE_TEXT_TARGETS = [
   { group: "Rides & events", path: "/calendar", label: "Calendar" },
   { group: "Rides & events", path: "/weekly-rides", label: "Weekly Rides (and each session)" },
   { group: "Rides & events", path: "/challenges", label: "Challenges" },
-  { group: "Rides & events", path: "/race-calendar", label: "Race Calendar" },
   { group: "Rides & events", path: "/race-results", label: "Race Results" },
   { group: "RTG Lab", path: "/lab", label: "Lab", exact: true },
   { group: "RTG Lab", path: "/lab/strava", label: "Lab — Strava Challenge" },
@@ -111,6 +117,141 @@ export const PAGE_TEXT_TARGETS = [
   { group: "Info & legal", path: "/terms", label: "Terms" },
   { group: "Info & legal", path: "/community-guidelines", label: "Community Guidelines" },
 ];
+
+// The sections of each page, in the order they appear. `id` matches the
+// data-text-section tag on that section (unique within its page only).
+// Sections built with <Section contentKey=…> use the contentKey; page heroes
+// built with <PageHero> are "hero".
+export const SECTION_TEXT_TARGETS = {
+  "/": [
+    { id: "hero", label: "Top banner (slides)" },
+    { id: "why", label: "Why RTG" },
+    { id: "ways", label: "Ways to move" },
+    { id: "training", label: "Training formats" },
+    { id: "events", label: "Upcoming events" },
+    { id: "merch", label: "Merchandise highlights" },
+    { id: "gallery", label: "Gallery" },
+    { id: "voices", label: "Community voices" },
+    { id: "join", label: "Join the movement (bottom band)" },
+  ],
+  "/about": [
+    { id: "hero", label: "Top banner" },
+    { id: "about.howItStarted", label: "How it started" },
+    { id: "about.whyExists", label: "Why RTG exists" },
+    { id: "about.journey", label: "The RTG journey" },
+    { id: "about.missionVision", label: "Mission & vision" },
+    { id: "about.howWeBring", label: "How we bring the community together" },
+    { id: "about.coreValues", label: "Core values" },
+    { id: "about.motion", label: "Where we stand today" },
+    { id: "about.roadAhead", label: "The road ahead" },
+  ],
+  "/community": [
+    { id: "hero", label: "Top banner" },
+    { id: "place", label: "Find your place" },
+    { id: "way", label: "The RTG Way" },
+    { id: "motion", label: "RTG in Motion" },
+    { id: "network", label: "The RTG Network (community cards)" },
+    { id: "cities", label: "One community, different cities" },
+    { id: "join", label: "Join the movement (bottom band)" },
+  ],
+  "/chat": [
+    { id: "intro", label: "Log-in card (logged-out visitors)" },
+    { id: "banner", label: "Top banner" },
+    { id: "sidebar", label: "Sidebar (room, messages, online)" },
+    { id: "conversation", label: "Conversation (messages and typing box)" },
+  ],
+  "/gallery": [
+    { id: "hero", label: "Top banner" },
+    { id: "grid", label: "Photos" },
+  ],
+  "/blog": [
+    { id: "hero", label: "Top banner" },
+    { id: "blog.hero", label: "Posts" },
+  ],
+  "/events": [
+    { id: "hero", label: "Top banner" },
+    { id: "board", label: "Events board" },
+  ],
+  "/calendar": [
+    { id: "hero", label: "Top banner" },
+    { id: "calendar", label: "Calendar" },
+  ],
+  "/weekly-rides": [
+    { id: "hero", label: "Top banner" },
+    { id: "friday", label: "Friday session" },
+    { id: "weeklyRides.schedule", label: "Weekly schedule" },
+    { id: "weeklyRides.safety", label: "Safety guidelines" },
+    { id: "weeklyRides.packList", label: "What to bring" },
+    { id: "weeklyRides.faq", label: "Questions" },
+  ],
+  "/challenges": [
+    { id: "hero", label: "Top banner" },
+    { id: "challenges.hero", label: "Current challenges" },
+  ],
+  "/race-results": [
+    { id: "hero", label: "Top banner" },
+    { id: "raceResults.hero", label: "Results" },
+  ],
+  "/lab": [
+    { id: "hero", label: "Top banner" },
+    { id: "labs", label: "Labs" },
+    { id: "principles", label: "More than a rank" },
+  ],
+  "/lab/strava": [{ id: "board", label: "Challenge board" }],
+  "/lab/ridge": [
+    { id: "intro", label: "Intro" },
+    { id: "results", label: "Results board" },
+    { id: "trends", label: "Trend graphics" },
+    { id: "spotlight", label: "Session spotlight" },
+    { id: "personal", label: "Personal trend" },
+  ],
+  "/merchandise": [
+    { id: "hero", label: "Top banner" },
+    { id: "drop", label: "The drop (products)" },
+    { id: "kit", label: "Build your kit" },
+    { id: "limited", label: "Limited edition" },
+  ],
+  "/membership": [
+    { id: "hero", label: "Top banner" },
+    { id: "mine", label: "Your memberships" },
+    { id: "plans", label: "Plans" },
+    { id: "comparison", label: "Comparison" },
+    { id: "rhythm", label: "Your next chapter" },
+    { id: "faq", label: "Questions" },
+    { id: "closing", label: "Closing band" },
+  ],
+  "/dashboard": [
+    { id: "strava-connect", label: "Connect Strava" },
+    { id: "memberships", label: "My memberships" },
+    { id: "orders", label: "My orders" },
+    { id: "strava-activity", label: "My Strava activity" },
+    { id: "profile", label: "Athlete profile" },
+    { id: "danger", label: "Delete my account" },
+  ],
+  "/sponsors": [
+    { id: "hero", label: "Top banner" },
+    { id: "sponsors.why", label: "Why sponsor RTG" },
+    { id: "sponsors.current", label: "Current partners" },
+    { id: "sponsors.opportunities", label: "Ways to partner" },
+    { id: "sponsors.packages", label: "Sponsorship packages" },
+  ],
+  "/contact": [
+    { id: "hero", label: "Top banner" },
+    { id: "form", label: "Contact form and details" },
+  ],
+  "/faq": [
+    { id: "hero", label: "Top banner" },
+    { id: "questions", label: "Questions" },
+  ],
+  "/safety": [
+    { id: "hero", label: "Top banner" },
+    { id: "safety.guidelines", label: "General safety guidelines" },
+    { id: "safety.checklist", label: "Weekly session checklist" },
+  ],
+  "/privacy": [{ id: "content", label: "Policy text" }],
+  "/terms": [{ id: "content", label: "Terms text" }],
+  "/community-guidelines": [{ id: "content", label: "Guidelines text" }],
+};
 
 const VALID_SIZES = new Set(FONT_SIZES);
 const VALID_FONTS = new Set(BODY_FONTS.map((f) => f.value));
@@ -154,6 +295,34 @@ export function parsePageSettings(raw) {
   return out;
 }
 
+// The saved per-section choices: { "/community": { "network": { size, font } } },
+// keeping only known pages, known sections, offered sizes and fonts.
+export function parseSectionSettings(raw) {
+  let obj = raw;
+  if (typeof raw === "string") {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return {};
+  const out = {};
+  for (const [path, sections] of Object.entries(obj)) {
+    const known = SECTION_TEXT_TARGETS[path];
+    if (!known || !sections || typeof sections !== "object") continue;
+    for (const [id, entry] of Object.entries(sections)) {
+      if (!known.some((t) => t.id === id) || !entry || typeof entry !== "object") continue;
+      const size = toSize(entry.size);
+      const font = toFont(entry.font);
+      if (!size && !font) continue;
+      out[path] = out[path] || {};
+      out[path][id] = { ...(size ? { size } : {}), ...(font ? { font } : {}) };
+    }
+  }
+  return out;
+}
+
 // Which page entry applies to a URL: the most specific match wins, so
 // /lab/strava beats /lab, and /lab (exact) doesn't swallow /lab/ridge.
 export function pageTargetFor(pathname = "/") {
@@ -187,6 +356,47 @@ export function resolveAppearance(settings = {}, pathname = "") {
   return { size, font, color };
 }
 
+const cssString = (value) => `"${String(value).replace(/["\\]/g, "")}"`;
+
+// The CSS that gives this page's sections their own font and size, or "".
+// A section's size is relative to the page size it sits in, so it's applied
+// as --rtg-sec = section px ÷ page px (every font size multiplies by it).
+export function sectionCss(settings = {}, pathname = "") {
+  if (!pathname || pathname.startsWith("/admin")) return "";
+  const target = pageTargetFor(pathname);
+  if (!target) return "";
+  const sections = parseSectionSettings(settings[APPEARANCE_KEYS.sections])[target.path];
+  if (!sections) return "";
+  const pageSize = resolveAppearance(settings, pathname).size;
+  return Object.entries(sections)
+    .map(([id, entry]) => {
+      const rules = [];
+      if (entry.size) rules.push(`--rtg-sec: ${parseFloat((entry.size / pageSize).toFixed(4))};`);
+      if (entry.font) {
+        const font = fontByValue(entry.font);
+        ensureFontLoaded(font);
+        rules.push(`--font-sans: ${font.stack};`, `font-family: ${font.stack};`);
+      }
+      return `[data-text-section=${cssString(id)}] { ${rules.join(" ")} }`;
+    })
+    .join("\n");
+}
+
+function writeSectionCss(css) {
+  if (typeof document === "undefined") return;
+  let tag = document.getElementById("rtg-section-text");
+  if (!css) {
+    tag?.remove();
+    return;
+  }
+  if (!tag) {
+    tag = document.createElement("style");
+    tag.id = "rtg-section-text";
+    document.head.appendChild(tag);
+  }
+  if (tag.textContent !== css) tag.textContent = css;
+}
+
 // Google-hosted fonts are fetched only when actually used.
 export function ensureFontLoaded(font) {
   if (!font?.google || typeof document === "undefined") return;
@@ -211,6 +421,7 @@ export function applyAppearance(settings, element = document.documentElement, pa
   element.style.setProperty("--font-sans", result.font.stack);
   element.style.setProperty("--color-rtg-white", result.color.ink);
   element.style.setProperty("--color-rtg-mist", result.color.muted);
+  if (element === document.documentElement) writeSectionCss(sectionCss(settings, pathname));
   return result;
 }
 
@@ -232,6 +443,7 @@ function cacheAppearance(settings) {
         [APPEARANCE_KEYS.font]: settings[APPEARANCE_KEYS.font] ?? "default",
         [APPEARANCE_KEYS.color]: settings[APPEARANCE_KEYS.color] ?? "default",
         [APPEARANCE_KEYS.pages]: settings[APPEARANCE_KEYS.pages] ?? "{}",
+        [APPEARANCE_KEYS.sections]: settings[APPEARANCE_KEYS.sections] ?? "{}",
       })
     );
   } catch {
@@ -249,11 +461,12 @@ export function useAppearance() {
   const font = settings[APPEARANCE_KEYS.font];
   const color = settings[APPEARANCE_KEYS.color];
   const pages = settings[APPEARANCE_KEYS.pages];
+  const sections = settings[APPEARANCE_KEYS.sections];
 
   useEffect(() => {
     // Nothing loaded yet — apply the cached values for this page rather than
     // flashing back to the defaults.
-    if ([size, scale, font, color, pages].every((v) => v === undefined)) {
+    if ([size, scale, font, color, pages, sections].every((v) => v === undefined)) {
       applyCachedAppearance(pathname);
       return;
     }
@@ -263,8 +476,9 @@ export function useAppearance() {
       [APPEARANCE_KEYS.font]: font,
       [APPEARANCE_KEYS.color]: color,
       [APPEARANCE_KEYS.pages]: pages,
+      [APPEARANCE_KEYS.sections]: sections,
     };
     applyAppearance(next, document.documentElement, pathname);
     cacheAppearance(next);
-  }, [size, scale, font, color, pages, pathname]);
+  }, [size, scale, font, color, pages, sections, pathname]);
 }

@@ -50,9 +50,9 @@ export default function CommunityVoices({ settings }) {
   const voice = voices[active];
 
   return (
-    <section id="community-voices" className="relative overflow-hidden px-6 py-16 md:py-[82px]">
+    <section data-text-section="voices" id="community-voices" className="relative overflow-hidden px-6 py-16 md:py-[82px]">
       <Reveal className="max-w-[1180px] mx-auto mb-7 text-center">
-        <span className="inline-block mb-3 text-[0.625rem] font-semibold leading-none tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
+        <span className="inline-block mb-3 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold leading-none tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
         <h2 className="font-display text-[clamp(3.25rem,5.4vw,6.375rem)] leading-[0.88] text-[#3d316e]">
           {copy.title} <span className="text-gradient">{copy.titleAccent}</span>
         </h2>
@@ -74,10 +74,10 @@ export default function CommunityVoices({ settings }) {
             transition={slideTransition}
             className="[grid-area:1/1] flex flex-col items-center justify-center gap-[18px] min-h-[300px] px-6 md:px-[58px] pt-10 pb-[34px] rounded-[33px] border border-[rgba(83,67,128,0.12)] bg-[rgba(83,67,128,0.12)] text-center"
           >
-            <div aria-hidden="true" className="-mb-0.5 font-display text-[4.5rem] leading-[0.58] rotate-180 text-rtg-orange-500 opacity-80">
+            <div aria-hidden="true" className="-mb-0.5 font-display text-[length:calc(4.5rem*var(--rtg-sec,1))] leading-[0.58] rotate-180 text-rtg-orange-500 opacity-80">
               ”
             </div>
-            <blockquote className="max-w-[730px] text-xl md:text-[1.625rem] font-semibold leading-[1.45] tracking-[-0.01em] text-[#3d316e]">
+            <blockquote className="max-w-[730px] text-xl md:text-[length:calc(1.625rem*var(--rtg-sec,1))] font-semibold leading-[1.45] tracking-[-0.01em] text-[#3d316e]">
               “{voice.quote}”
             </blockquote>
             <div className="flex flex-col items-center gap-2 mt-1.5">
@@ -90,7 +90,7 @@ export default function CommunityVoices({ settings }) {
               )}
               <div>
                 <strong className="block font-display font-normal text-2xl leading-none tracking-[0.015em] text-[#3d316e]">{voice.name}</strong>
-                {voice.role && <span className="block mt-1.5 text-[0.625rem] font-medium leading-[1.35] text-[#756e7b]">{voice.role}</span>}
+                {voice.role && <span className="block mt-1.5 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-medium leading-[1.35] text-[#756e7b]">{voice.role}</span>}
               </div>
             </div>
           </motion.article>

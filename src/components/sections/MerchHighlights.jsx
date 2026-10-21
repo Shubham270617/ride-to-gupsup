@@ -47,26 +47,26 @@ function MerchCard({ product, index, copy, images, inert }) {
         <span className="absolute left-1/2 top-1/2 w-[120px] h-[120px] sm:w-[220px] sm:h-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px] bg-[radial-gradient(circle,rgba(255,255,255,0.28),rgba(255,255,255,0.03)_50%,transparent_72%)]" />
         {image && <img src={image} alt={product.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />}
         {product.tag && (
-          <span className="absolute left-3 top-3 sm:left-9 sm:top-9 px-2 py-[5px] sm:px-2.5 sm:py-[7px] rounded-full border border-white/15 bg-white/12 backdrop-blur-sm text-[0.5rem] sm:text-xs font-bold leading-none tracking-[0.14em] uppercase text-white/90">
+          <span className="absolute left-3 top-3 sm:left-9 sm:top-9 px-2 py-[5px] sm:px-2.5 sm:py-[7px] rounded-full border border-white/15 bg-white/12 backdrop-blur-sm text-[length:calc(0.5rem*var(--rtg-sec,1))] sm:text-xs font-bold leading-none tracking-[0.14em] uppercase text-white/90">
             {product.tag}
           </span>
         )}
       </Link>
 
       <div className="flex flex-1 flex-col min-h-[150px] sm:min-h-[218px] px-3 pt-3 pb-3.5 sm:px-5 sm:pt-5 sm:pb-[22px]">
-        {product.eyebrow && <span className="text-[0.4375rem] sm:text-[0.5625rem] font-bold tracking-[0.16em] uppercase text-rtg-orange-500">{product.eyebrow}</span>}
+        {product.eyebrow && <span className="text-[length:calc(0.4375rem*var(--rtg-sec,1))] sm:text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-bold tracking-[0.16em] uppercase text-rtg-orange-500">{product.eyebrow}</span>}
         <h3 className="my-1.5 sm:my-2 font-display text-lg sm:text-3xl leading-[0.98] tracking-[0.01em] text-[#3d316e]">
           <Link to={productPath} tabIndex={tabIndex} className="hover:text-rtg-orange-500 transition-colors">
             {product.name}
           </Link>
         </h3>
-        {product.description && <p className="mb-3 sm:mb-[18px] text-[0.625rem] sm:text-[0.7813rem] leading-normal text-[#6f6976] line-clamp-3 sm:line-clamp-2">{product.description}</p>}
+        {product.description && <p className="mb-3 sm:mb-[18px] text-[length:calc(0.625rem*var(--rtg-sec,1))] sm:text-[length:calc(0.7813rem*var(--rtg-sec,1))] leading-normal text-[#6f6976] line-clamp-3 sm:line-clamp-2">{product.description}</p>}
         <button
           type="button"
           tabIndex={tabIndex}
           disabled={!inStock}
           onClick={onAction}
-          className="rtg-merch-btn mt-auto flex items-center justify-center min-h-[34px] sm:min-h-[46px] px-2.5 sm:px-[18px] rounded-full text-[0.5313rem] sm:text-[0.6875rem] font-bold tracking-[0.11em] uppercase text-[#35246f] transition-colors hover:bg-rtg-orange-500 hover:text-white disabled:opacity-50 disabled:pointer-events-none"
+          className="rtg-merch-btn mt-auto flex items-center justify-center min-h-[34px] sm:min-h-[46px] px-2.5 sm:px-[18px] rounded-full text-[length:calc(0.5313rem*var(--rtg-sec,1))] sm:text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold tracking-[0.11em] uppercase text-[#35246f] transition-colors hover:bg-rtg-orange-500 hover:text-white disabled:opacity-50 disabled:pointer-events-none"
         >
           {label}
         </button>
@@ -116,7 +116,7 @@ export default function MerchHighlights({ settings, images }) {
   if (cards.length === 0) return null;
 
   return (
-    <section id="merchandise" className="relative isolate overflow-hidden bg-[#f7f5fb] pt-16 pb-14 md:pt-[82px] md:pb-[78px]">
+    <section data-text-section="merch" id="merchandise" className="relative isolate overflow-hidden bg-[#f7f5fb] pt-16 pb-14 md:pt-[82px] md:pb-[78px]">
       <div
         aria-hidden="true"
         className="absolute inset-0 -z-20"
@@ -130,7 +130,7 @@ export default function MerchHighlights({ settings, images }) {
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-white/72 to-white/76" />
 
       <Reveal className="flex flex-col items-center text-center max-w-[1120px] mx-auto px-6">
-        <span className="mb-3 text-[0.625rem] font-semibold tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
+        <span className="mb-3 text-[length:calc(0.625rem*var(--rtg-sec,1))] font-semibold tracking-[0.24em] uppercase text-rtg-orange-500">{copy.eyebrow}</span>
         <h2 className="font-display text-[clamp(2.4rem,5.4vw,6.375rem)] leading-[0.88] text-[#3d316e]">
           {copy.title} <span className="text-gradient">{copy.titleAccent}</span>
         </h2>
@@ -154,7 +154,7 @@ export default function MerchHighlights({ settings, images }) {
       <div className="relative flex justify-center mt-1 px-5">
         <Link
           to={copy.storeLink}
-          className="btn-shine inline-flex items-center justify-center min-h-[50px] px-[29px] rounded-full bg-gradient-to-r from-[#f45b18] via-[#ff7a1a] to-[#ff9a45] text-[0.6875rem] font-bold tracking-[0.08em] uppercase text-white shadow-[0_12px_26px_rgba(247,107,28,0.18),inset_1px_1px_0_rgba(255,255,255,0.24)] transition-transform duration-300 hover:-translate-y-0.5"
+          className="btn-shine inline-flex items-center justify-center min-h-[50px] px-[29px] rounded-full bg-gradient-to-r from-[#f45b18] via-[#ff7a1a] to-[#ff9a45] text-[length:calc(0.6875rem*var(--rtg-sec,1))] font-bold tracking-[0.08em] uppercase text-white shadow-[0_12px_26px_rgba(247,107,28,0.18),inset_1px_1px_0_rgba(255,255,255,0.24)] transition-transform duration-300 hover:-translate-y-0.5"
         >
           {copy.storeLabel}
         </Link>
