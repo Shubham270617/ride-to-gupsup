@@ -41,15 +41,22 @@ export const APPEARANCE_KEYS = {
   color: "text.theme.color",
   pages: "text.theme.pages",
   sections: "text.theme.sections",
+  sizeOptions: "text.theme.sizeOptions",
 };
 
 export const DEFAULT_SIZE = 16;
-export const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24];
+// Any size from MIN_SIZE to MAX_SIZE px is accepted. FONT_SIZES is the
+// default list the admin's size boxes offer; admins can add or remove sizes
+// in Admin -> Appearance -> Size list, saved as text.theme.sizeOptions.
+export const MIN_SIZE = 6;
+export const MAX_SIZE = 120;
+export const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24, 26, 28, 32, 36, 40, 48, 56, 64, 72];
 
 // A word of warning shown next to sizes that are allowed but risky.
 export function sizeNote(px) {
   if (px < 12) return "Very small — hard to read, especially on phones";
   if (px < 14) return "Small — fine on desktop, tight on phones";
+  if (px > 48) return "Huge — best for a short section; long text may overflow its boxes";
   if (px > 20) return "Very large — pages get long and some layouts get tight";
   if (px === DEFAULT_SIZE) return "Normal web size";
   return "";
@@ -253,21 +260,35 @@ export const SECTION_TEXT_TARGETS = {
   "/community-guidelines": [{ id: "content", label: "Guidelines text" }],
 };
 
-const VALID_SIZES = new Set(FONT_SIZES);
 const VALID_FONTS = new Set(BODY_FONTS.map((f) => f.value));
 const KNOWN_PATHS = new Set(PAGE_TEXT_TARGETS.map((t) => t.path));
 
 // A saved size, or null if it isn't one of the offered sizes. Also accepts
 // the older scale presets (0.94 / 1 / 1.06 / 1.12), turned into pixels.
+// A size in pixels (6–120, to the nearest half pixel), or null. Values
+// between 0.5 and 2 are the older scale presets, turned into pixels.
 export function toSize(value) {
+  if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
-  if (VALID_SIZES.has(n)) return n;
-  if (n > 0.5 && n < 2) {
-    const px = Math.round(n * DEFAULT_SIZE);
-    return VALID_SIZES.has(px) ? px : null;
+  const px = n > 0.5 && n < 2 ? Math.round(n * DEFAULT_SIZE) : Math.round(n * 2) / 2;
+  return px >= MIN_SIZE && px <= MAX_SIZE ? px : null;
+}
+
+// The sizes the admin's size boxes offer: the saved list if there is one,
+// else FONT_SIZES. Sorted, de-duplicated, and always including 16.
+export function parseSizeOptions(raw) {
+  let list = raw;
+  if (typeof raw === "string") {
+    try {
+      list = JSON.parse(raw);
+    } catch {
+      list = null;
+    }
   }
-  return null;
+  const sizes = Array.isArray(list) ? list.map(toSize).filter(Boolean) : [];
+  const base = sizes.length ? sizes : FONT_SIZES;
+  return [...new Set([...base, DEFAULT_SIZE])].sort((a, b) => a - b);
 }
 
 const toFont = (value) => (VALID_FONTS.has(value) ? value : null);

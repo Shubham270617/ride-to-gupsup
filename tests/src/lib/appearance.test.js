@@ -11,6 +11,8 @@ import {
   sitewideSize,
   sizeNote,
   toSize,
+  parseSizeOptions,
+  FONT_SIZES,
   SECTION_TEXT_TARGETS,
   parseSectionSettings,
   sectionCss,
@@ -40,16 +42,26 @@ describe("pageTargetFor()", () => {
 });
 
 describe("sizes in pixels (like WordPad)", () => {
-  it("accepts the offered sizes, from 8 to 24", () => {
+  it("accepts any size from 6 to 120 px, to the nearest half pixel", () => {
     expect(toSize("8")).toBe(8);
-    expect(toSize(12)).toBe(12);
-    expect(toSize("24")).toBe(24);
+    expect(toSize(19)).toBe(19);
+    expect(toSize("72")).toBe(72);
+    expect(toSize("120")).toBe(120);
+    expect(toSize("13.3")).toBe(13.5);
   });
 
-  it("rejects sizes that aren't offered", () => {
-    expect(toSize("19")).toBeNull();
-    expect(toSize("99")).toBeNull();
+  it("refuses sizes outside 6–120 and non-numbers", () => {
+    expect(toSize("200")).toBeNull();
+    expect(toSize("3")).toBeNull();
     expect(toSize("abc")).toBeNull();
+    expect(toSize("")).toBeNull();
+  });
+
+  it("size list: the saved list if valid, else the default — sorted, unique, always with 16", () => {
+    expect(parseSizeOptions(undefined)).toEqual(FONT_SIZES);
+    expect(parseSizeOptions('[30, 10, 30, 90, 500, "x"]')).toEqual([10, 16, 30, 90]);
+    expect(parseSizeOptions("not json")).toEqual(FONT_SIZES);
+    expect(FONT_SIZES.at(-1)).toBe(72);
   });
 
   it("still understands the older presets (0.94 / 1 / 1.06 / 1.12)", () => {
@@ -94,17 +106,17 @@ describe("fonts", () => {
 });
 
 describe("parsePageSettings()", () => {
-  it("keeps only known pages, offered sizes and offered fonts", () => {
+  it("keeps only known pages, sizes from 6 to 120 and offered fonts", () => {
     expect(
       parsePageSettings(
         JSON.stringify({
           "/events": { size: 18, font: "georgia" },
           "/chat": { size: 19, font: "arial" },
           "/nope": { size: 18 },
-          "/faq": { font: "comic-sans" },
+          "/faq": { font: "comic-sans", size: 500 },
         })
       )
-    ).toEqual({ "/events": { size: 18, font: "georgia" }, "/chat": { font: "arial" } });
+    ).toEqual({ "/events": { size: 18, font: "georgia" }, "/chat": { size: 19, font: "arial" } });
   });
 
   it("reads the older per-page format (a scale per page)", () => {

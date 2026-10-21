@@ -79,7 +79,7 @@ describe("useWelcomeEmail()", () => {
 
 describe("appearance", () => {
   it("resolveAppearance falls back to defaults for unknown values", () => {
-    const r = resolveAppearance({ [APPEARANCE_KEYS.size]: "99", [APPEARANCE_KEYS.font]: "comic-sans" }, "/");
+    const r = resolveAppearance({ [APPEARANCE_KEYS.size]: "999", [APPEARANCE_KEYS.font]: "comic-sans" }, "/");
     expect(r.size).toBe(16);
     expect(r.font.value).toBe("default");
     expect(resolveAppearance().size).toBe(16);

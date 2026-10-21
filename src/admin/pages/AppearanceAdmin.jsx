@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, Loader2, Palette, FileText, ExternalLink, RotateCcw, ChevronDown, AArrowDown, AArrowUp, AlertTriangle, Type, LayoutList } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Check, Loader2, Palette, FileText, ExternalLink, RotateCcw, ChevronDown, AArrowDown, AArrowUp, AlertTriangle, Type, LayoutList, ListOrdered, Plus, X } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import {
   APPEARANCE_KEYS,
   BODY_FONTS,
   DEFAULT_SIZE,
   FONT_SIZES,
+  MAX_SIZE,
+  MIN_SIZE,
+  parseSizeOptions,
+  toSize,
   PAGE_TEXT_TARGETS,
   SECTION_TEXT_TARGETS,
   parseSectionSettings,
@@ -28,6 +32,10 @@ import AdminPageHeader from "../components/AdminPageHeader";
 // what visitors will see.
 
 const loadAllFonts = () => BODY_FONTS.forEach(ensureFontLoaded);
+
+// The sizes every size box on this screen offers — the admin's own list from
+// the database (Size list section), shared through context.
+const SizeOptions = createContext(FONT_SIZES);
 
 // A dropdown of fonts, each option drawn in its own typeface — like the
 // font box in WordPad. `inheritLabel` adds a "Site default" choice on top.
@@ -108,10 +116,14 @@ function FontPicker({ value, onChange, inheritLabel, compact = false }) {
 // A number size box with A− / A+ buttons — like WordPad's size box and its
 // grow/shrink buttons. `inheritLabel` adds a "Site default" choice.
 function SizePicker({ value, onChange, inheritLabel }) {
-  const index = value ? FONT_SIZES.indexOf(Number(value)) : -1;
+  const saved = useContext(SizeOptions);
+  // A size that was set earlier but has since been removed from the list
+  // still shows, so the box never silently changes what's saved.
+  const options = value && !saved.includes(Number(value)) ? [...saved, Number(value)].sort((a, b) => a - b) : saved;
+  const index = value ? options.indexOf(Number(value)) : -1;
   const step = (dir) => {
-    const from = index === -1 ? FONT_SIZES.indexOf(DEFAULT_SIZE) : index;
-    const next = FONT_SIZES[Math.min(FONT_SIZES.length - 1, Math.max(0, from + dir))];
+    const from = index === -1 ? options.indexOf(DEFAULT_SIZE) : index;
+    const next = options[Math.min(options.length - 1, Math.max(0, from + dir))];
     onChange(String(next));
   };
   return (
@@ -132,7 +144,7 @@ function SizePicker({ value, onChange, inheritLabel }) {
         className="h-10 rounded-xl border border-rtg-border bg-white px-3 text-sm font-semibold tabular-nums text-rtg-white shadow-sm focus:border-rtg-orange-400 focus:outline-none focus:ring-4 focus:ring-rtg-orange-400/15"
       >
         {inheritLabel && <option value="">{inheritLabel}</option>}
-        {FONT_SIZES.map((n) => (
+        {options.map((n) => (
           <option key={n} value={String(n)}>
             {n}
             {n === DEFAULT_SIZE ? " (normal)" : ""}
@@ -179,6 +191,92 @@ function Preview({ size, font }) {
           Join the ride
         </span>
       </div>
+    </div>
+  );
+}
+
+// Admin -> Appearance -> Size list: which sizes the size boxes offer. Add
+// any size from MIN_SIZE to MAX_SIZE, remove ones you don't want, or go
+// back to the default list. Saved with everything else.
+function SizeListEditor({ sizes, onChange }) {
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
+  const add = (e) => {
+    e.preventDefault();
+    const px = toSize(draft);
+    if (!px || Number(draft) < MIN_SIZE) {
+      setError(`Enter a size from ${MIN_SIZE} to ${MAX_SIZE}.`);
+      return;
+    }
+    if (sizes.includes(px)) {
+      setError(`${px} is already in the list.`);
+      return;
+    }
+    setError("");
+    setDraft("");
+    onChange([...sizes, px].sort((a, b) => a - b));
+  };
+  const isDefault = sizes.length === FONT_SIZES.length && sizes.every((n, i) => n === FONT_SIZES[i]);
+  return (
+    <div>
+      <ul className="flex flex-wrap gap-2">
+        {sizes.map((n) => (
+          <li
+            key={n}
+            className={`inline-flex items-center gap-1 rounded-full border py-1 pl-3 pr-1 text-sm font-semibold tabular-nums ${
+              n === DEFAULT_SIZE ? "border-rtg-orange-400/50 bg-rtg-orange-500/10 text-rtg-orange-700" : "border-rtg-border bg-white text-rtg-white"
+            }`}
+          >
+            {n}
+            {n === DEFAULT_SIZE ? (
+              <span className="px-1.5 text-[10px] font-bold uppercase tracking-wide">normal</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onChange(sizes.filter((x) => x !== n))}
+                aria-label={`Remove ${n}`}
+                title={`Remove ${n}`}
+                className="grid h-6 w-6 place-items-center rounded-full text-rtg-mist hover:bg-red-500/10 hover:text-red-600"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={add} className="mt-4 flex flex-wrap items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={MIN_SIZE}
+          max={MAX_SIZE}
+          step="0.5"
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setError("");
+          }}
+          placeholder={`Add a size (${MIN_SIZE}–${MAX_SIZE})`}
+          aria-label="New size in pixels"
+          className="h-10 w-52 rounded-xl border border-rtg-border bg-white px-3 text-sm tabular-nums text-rtg-white shadow-sm focus:border-rtg-orange-400 focus:outline-none focus:ring-4 focus:ring-rtg-orange-400/15"
+        />
+        <button
+          type="submit"
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[linear-gradient(135deg,#f45b18,#ff8a3d)] px-4 text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(247,107,28,0.9)]"
+        >
+          <Plus size={15} /> Add size
+        </button>
+        {!isDefault && (
+          <button
+            type="button"
+            onClick={() => onChange([...FONT_SIZES])}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-rtg-mist hover:bg-rtg-purple-950/[0.05] hover:text-rtg-orange-600"
+          >
+            <RotateCcw size={13} /> Restore default list
+          </button>
+        )}
+      </form>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }
@@ -344,6 +442,7 @@ export default function AppearanceAdmin() {
   const siteSize = sitewideSize(values);
   const siteFont = values[APPEARANCE_KEYS.font] || "default";
   const color = resolveAppearance(values, "/").color;
+  const sizeOptions = parseSizeOptions(values[APPEARANCE_KEYS.sizeOptions]);
   const pages = parsePageSettings(values[APPEARANCE_KEYS.pages]);
   const sectionSettings = parseSectionSettings(values[APPEARANCE_KEYS.sections]);
   const sectionCount = Object.values(sectionSettings).reduce((n, secs) => n + Object.keys(secs).length, 0);
@@ -379,6 +478,7 @@ export default function AppearanceAdmin() {
         { key: APPEARANCE_KEYS.color, value: values[APPEARANCE_KEYS.color] ?? "default", label: "Appearance — text colour" },
         { key: APPEARANCE_KEYS.pages, value: JSON.stringify(pages), label: "Appearance — font and size per page" },
         { key: APPEARANCE_KEYS.sections, value: JSON.stringify(sectionSettings), label: "Appearance — font and size per section" },
+        { key: APPEARANCE_KEYS.sizeOptions, value: JSON.stringify(sizeOptions), label: "Appearance — sizes offered in the size boxes" },
       ];
       const { error: err } = await supabase.from("site_settings").upsert(rows);
       if (err) throw err;
@@ -404,6 +504,7 @@ export default function AppearanceAdmin() {
   if (loading) return <p className="text-rtg-mist text-sm">Loading…</p>;
 
   return (
+    <SizeOptions.Provider value={sizeOptions}>
     <div className="pb-24">
       <AdminPageHeader
         title="Appearance"
@@ -437,6 +538,17 @@ export default function AppearanceAdmin() {
           </div>
           <Preview size={siteSize} font={fontByValue(siteFont)} />
         </div>
+      </section>
+
+      {/* Size list */}
+      <section className="glass mb-6 rounded-3xl p-5 md:p-6">
+        <h2 className="mb-1 flex items-center gap-2 font-display text-2xl">
+          <ListOrdered size={18} className="text-rtg-orange-400" /> Size list
+        </h2>
+        <p className="mb-4 max-w-2xl text-xs text-rtg-mist">
+          The sizes every size box on this screen offers. Add any size from {MIN_SIZE} to {MAX_SIZE} px, or remove ones you don't use. Saved with Save changes.
+        </p>
+        <SizeListEditor sizes={sizeOptions} onChange={(list) => set(APPEARANCE_KEYS.sizeOptions, JSON.stringify(list))} />
       </section>
 
       {/* Per page */}
@@ -544,5 +656,6 @@ export default function AppearanceAdmin() {
         {error ? <span className="text-xs text-red-600">{error}</span> : <span className="text-xs text-rtg-mist">Nothing changes on the site until you save.</span>}
       </div>
     </div>
+    </SizeOptions.Provider>
   );
 }
