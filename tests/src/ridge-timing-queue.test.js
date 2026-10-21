@@ -15,3 +15,9 @@ it('lost response then reload reconciles exact request without duplicate timing 
 it('offline and changed-login queues pause without losing taps or replaying for another login',async()=>{
  const storage=memory(),write=vi.fn().mockRejectedValue(Error('offline'));let identity='A';const q=createTimingQueue({identity:'A',initial:initial(),read:async()=>initial(),write,checkIdentity:async()=>identity,storage});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});await flush();expect(q.paused).toBe(true);const saved=storage.getItem('rtg-timing-queue:A');identity='B';q.resume();await flush();expect(write).toHaveBeenCalledTimes(1);expect(storage.getItem('rtg-timing-queue:A')).toBe(saved);expect(()=>q.enqueue({})).toThrow('Reconcile');
 });
+it('CAS conflict retains all events and never automatically rebases or duplicates them',async()=>{
+ const storage=memory(),write=vi.fn().mockRejectedValue(Object.assign(Error('Version conflict'),{status:409}));const q=createTimingQueue({identity:'cas',initial:initial(),read:async()=>initial(),write,checkIdentity:async()=>'cas',storage});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});q.enqueue({type:'start',sessionId:'s',riderId:'b',lap:3,at:1100});await flush();expect(q.paused).toBe(true);expect(q.pending).toBe(2);expect(write).toHaveBeenCalledOnce();expect(JSON.parse(storage.getItem('rtg-timing-queue:cas')).items).toHaveLength(2);
+});
+it('does not adopt another identity data after successful write and racing refresh',async()=>{
+ let identity='A';const q=createTimingQueue({identity:'A',initial:initial(),read:async()=>{identity='B';return initial();},write:async()=>{},checkIdentity:async()=>identity,storage:memory()});q.enqueue({type:'start',sessionId:'s',riderId:'a',lap:3,at:1000});await flush();expect(q.paused).toBe(true);expect(q.pending).toBe(1);
+});

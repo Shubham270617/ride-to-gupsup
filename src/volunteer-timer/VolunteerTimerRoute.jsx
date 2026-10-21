@@ -1,15 +1,11 @@
-import {useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import useSession from '../lib/useSession';
 import {supabase} from '../lib/supabaseClient';
 import AuthGate from '../components/AuthGate';
 import {useAuthGate} from '../lib/AuthGateContext';
-import {createTimingController} from './timingController';
+import QueuedVolunteerPanel from './QueuedVolunteerPanel';
 import OwnerTimerPanel from './OwnerTimerPanel';
 import VolunteerTimerPanel from './VolunteerTimerPanel';
-
-// Token-free, tab-memory recovery across SPA route changes. Full reload cannot
-// preserve this memory; beforeunload warns while the outcome is uncertain.
-const recovery = new Map();
 
 async function request(body, signal) {
   const {data}=await supabase.auth.getSession();
@@ -23,24 +19,11 @@ async function request(body, signal) {
   if(!response.ok)throw Object.assign(new Error(result.error||'Timing unavailable.'),{definitive:result.definitive===true,canManage:result.canManage===true,code:result.code});
   return result;
 }
-function AssignedPanel({initial,userId,binding,currentUser}) {
-  const [controller]=useState(()=>{
-    const key=userId+':'+(binding||'');
-    const prior=recovery.get(key);
-    if(prior?.controller.getSnapshot().pending){prior.context.current=currentUser;return prior.controller;}
-    // Keep at most eight token-free operator contexts, never persist credentials.
-    for(const [id,item] of recovery)if(!item.controller.getSnapshot().pending)recovery.delete(id);
-    if(recovery.size>=8)throw new Error('Too many unresolved timing operators in this tab. Reconcile existing requests first.');
-    const context={current:currentUser};
-    const created=createTimingController({initial,transport:body=>request(body),
-      getAuthorization:sessionId=>({userId:context.current.current?.userId,binding:context.current.current?.binding,assignment:{userId,...initial.assignments.find(a=>a.sessionId===sessionId)}})});
-    recovery.set(key,{controller:created,context});return created;
-  });
-  const snapshot=useSyncExternalStore(controller.subscribe,controller.getSnapshot);
-  const [now,setNow]=useState(Date.now());
-  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),250);return()=>clearInterval(timer);},[]);
-  useEffect(()=>{const warn=e=>{if(controller.getSnapshot().pending){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[controller]);
-  return <VolunteerTimerPanel connected sessions={snapshot.data.state.sessions} riders={snapshot.data.state.riders} previewActions={controller} busy={snapshot.busy} pending={!!snapshot.pending} message={snapshot.message} now={now}/>;
+function AssignedPanel({initial,userId,binding}) {
+ const identity=JSON.stringify([userId,binding]);
+ const checkIdentity=async()=>{const {data}=await supabase.auth.getSession();return JSON.stringify([data.session?.user.id,data.session?.user.last_sign_in_at]);};
+ const bounded=async body=>{const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);try{return await request(body,controller.signal);}finally{clearTimeout(timer);}};
+ return <QueuedVolunteerPanel key={identity} initial={initial} identity={identity} checkIdentity={checkIdentity} read={()=>bounded()} write={body=>bounded({...body,userId,binding})}/>;
 }
 export default function VolunteerTimerRoute() {
   const {session,loading}=useSession();const {requestLogin}=useAuthGate();
