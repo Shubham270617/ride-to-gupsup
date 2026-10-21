@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
+import { createRidgeRequest } from "../../lib/ridge/request";
 import {
   buildPublicFeed,
   formatDuration,
@@ -62,10 +63,12 @@ function csv(rows) {
     .join("\r\n");
 }
 
-export default function RidgeAdmin() {
+export default function RidgeAdmin({ requestTransport } = {}) {
+  const mounted = useRef(false), readSequence = useRef(0), readController = useRef(null), writeController = useRef(null);
   const inFlight = useRef(false);
   const pendingRequest = useRef(null);
   const [unconfirmed, setUnconfirmed] = useState(false);
+  const [recoveryState,setRecoveryState]=useState(null);
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
@@ -77,27 +80,17 @@ export default function RidgeAdmin() {
     [legacy, setLegacy] = useState(""),
     [editor, setEditor] = useState(null),
     [now, setNow] = useState(Date.now());
-  const request = useCallback(async (body) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) throw new Error("Please sign in to the website admin panel.");
-    const r = await fetch("/api/admin/ridge", {
-      method: body ? "POST" : "GET",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        ...(body ? { "Content-Type": "application/json" } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-    const result = await r.json();
-    if (!r.ok) { const error = new Error(result.error || "Could not load Ridge."); error.status = r.status || 500; throw error; }
-    return result;
-  }, []);
+  const request = useMemo(() => requestTransport || createRidgeRequest({ getSession: () => supabase.auth.getSession() }), [requestTransport]);
   const refresh = useCallback(async () => {
+    const sequence = ++readSequence.current;
+    readController.current?.abort();
+    const controller = new AbortController(); readController.current = controller;
     try {
-      const next = await request();
+      const next = await request(undefined, controller.signal);
+      if (!mounted.current || sequence !== readSequence.current) return null;
       setData(next);
+      pendingRequest.current=next.recovery?.body || null;
+      setRecoveryState(next.recovery || null);setUnconfirmed(Boolean(next.recovery));
       setError("");
       setSessionId(
         (id) =>
@@ -109,15 +102,21 @@ export default function RidgeAdmin() {
       );
       return next;
     } catch (e) {
-      setError(e.message);
+      if (mounted.current && sequence === readSequence.current && e.code !== 'ridge_cancelled') setError(e.message);
       return null;
     }
   }, [request]);
   useEffect(() => {
+    mounted.current = true;
     refresh();
     const timer = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(timer);
+    return () => { mounted.current = false; ++readSequence.current; readController.current?.abort(); writeController.current?.abort(); clearInterval(timer); };
   }, [refresh]);
+  useEffect(() => {
+    const warn = event => { if (pendingRequest.current) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
   const state = data?.state,
     session = state?.sessions.find((s) => s.id === sessionId);
   useEffect(() => {
@@ -126,7 +125,7 @@ export default function RidgeAdmin() {
   }, [sessionId, data?.version]);
   const send = async (command, retry = false) => {
     if (inFlight.current || !data) return false;
-    if (pendingRequest.current && !retry) {
+    if ((pendingRequest.current || recoveryState) && !retry) {
       setError("An earlier action is unconfirmed. Retry that same action before making another change."); return false;
     }
     const body = retry ? pendingRequest.current : {
@@ -134,20 +133,25 @@ export default function RidgeAdmin() {
     };
     if (!body) return false;
     pendingRequest.current = body;
+    ++readSequence.current; readController.current?.abort();
+    const controller = new AbortController(); writeController.current = controller;
     inFlight.current = true; setBusy(true); setError(""); setMessage("");
     try {
-      await request(body);
-      pendingRequest.current = null; setUnconfirmed(false);
+      await request(body, controller.signal, {retry});
+      if (!mounted.current) return false;
+      pendingRequest.current = null; setUnconfirmed(false);setRecoveryState(null);
       const refreshed = await refresh();
+      if (!mounted.current) return false;
       setMessage(refreshed ? "Saved. Website results and the audit log are up to date." : "Saved on the server. Refresh to see the updated records.");
       setEditor(null); return true;
     } catch (e) {
+      if (!mounted.current) return false;
       // Reuse the exact request ID, version and command after uncertain network
       // failure; never turn a retry into a second timing event or correction.
-      if (e.status >= 400 && e.status < 500) { pendingRequest.current = null; setUnconfirmed(false); }
-      else setUnconfirmed(true);
+      if (!e.uncertain) { pendingRequest.current = null; setUnconfirmed(false);setRecoveryState(null); }
+      else {setUnconfirmed(true);setRecoveryState({reviewed:false});}
       setError(e.message); return false;
-    } finally { inFlight.current = false; setBusy(false); }
+    } finally { inFlight.current = false; if (mounted.current) setBusy(false); }
   };
   const riders = useMemo(
     () =>
@@ -232,7 +236,7 @@ export default function RidgeAdmin() {
           View leaderboard ↗
         </Link>
       </header>
-      {unconfirmed && <p role="status">The last action is not confirmed. <button type="button" disabled={busy} onClick={() => send(null, true)}>Retry unconfirmed action</button></p>}
+      {unconfirmed && <div role="status"><p>{recoveryState?.expired?'Recovery expired after 30 minutes; command details were cleared. Review current records and audit before entering a new action.':'The last action is not confirmed. This login can recover it after navigating away and back within this tab, for up to 30 minutes.'}</p>{!recoveryState?.expired&&<button type="button" disabled={busy} onClick={() => send(null, true)}>Retry unconfirmed action</button>}<button type="button" disabled={busy||!recoveryState?.reviewed} onClick={()=>{try{request.clearRecovery?.();pendingRequest.current=null;setRecoveryState(null);setUnconfirmed(false);setMessage('Recovery reminder cleared after your review. No action was sent.');}catch(e){setError(e.message);}}}>I reviewed current records and audit; clear reminder</button></div>}
         {error && (
         <div className="ra-error" role="alert">
           {error}
@@ -252,6 +256,7 @@ export default function RidgeAdmin() {
               Session
               <select
                 value={sessionId}
+                disabled={busy || unconfirmed}
                 onChange={(e) => setSessionId(e.target.value)}
               >
                 <option value="">Choose a session</option>
@@ -1031,4 +1036,5 @@ export default function RidgeAdmin() {
     </div>
   );
 }
+
 
