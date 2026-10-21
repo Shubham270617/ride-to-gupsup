@@ -26,6 +26,11 @@ export function createVolunteerHandler(getDb=getSupabaseAdmin) {
     const identity=await db.auth.getUser(token);
     if(identity.error||!identity.data?.user||identity.data.user.is_anonymous)return res.status(401).json({error:'A valid individual login is required.'});
     const actor=identity.data.user.id;
+    // Navigation hint only; owner data/writes still use the existing admin API.
+    if(req.method==='GET'&&(process.env.RTG_LAYOUT_EDITOR_ADMIN_IDS||'').split(',').map(s=>s.trim()).includes(actor)){
+      const owner=await db.from('admin_profiles').select('id').eq('id',actor).maybeSingle();
+      if(!owner.error&&owner.data?.id===actor)return res.status(200).json({role:'owner'});
+    }
     const grant=await db.from('ridge_timing_assignments').select('session_id,roster_rider_ids,expires_at,revoked_at').eq('user_id',actor);
     if(grant.error)return res.status(503).json({error:'Volunteer timing has not been activated.'});
     const assignments=(grant.data||[]).filter(a=>!a.revoked_at&&Date.parse(a.expires_at)>Date.now());

@@ -4,6 +4,7 @@ import {supabase} from '../lib/supabaseClient';
 import AuthGate from '../components/AuthGate';
 import {useAuthGate} from '../lib/AuthGateContext';
 import {createTimingController} from './timingController';
+import OwnerTimerPanel from './OwnerTimerPanel';
 import VolunteerTimerPanel from './VolunteerTimerPanel';
 
 // Token-free, tab-memory recovery across SPA route changes. Full reload cannot
@@ -52,8 +53,9 @@ export default function VolunteerTimerRoute() {
     return()=>{active=false;clearTimeout(timer);controller.abort();};
   },[session?.user.id,attempt]);
   if(loading)return <main className="vt-panel">Checking login…</main>;
-  if(!session)return <main className="vt-panel"><h1>Ridge volunteer timing</h1><p>Use your own assigned account.</p><button onClick={()=>requestLogin('login')}>Sign in</button><AuthGate/></main>;
+  if(!session)return <main className="vt-panel"><h1>Ridge volunteer timing</h1><p>Sign in with your existing owner or assigned volunteer account.</p><button onClick={()=>requestLogin('login')}>Sign in</button><AuthGate/></main>;
   if(error)return <VolunteerTimerPanel connected message={error.message} canManage={error.canManage} onRefresh={()=>setAttempt(n=>n+1)}/>;
   if(!loaded || loaded.userId!==session.user.id)return <main className="vt-panel">Loading assigned sessions…</main>;
+  if(loaded.data.role==='owner')return <OwnerTimerPanel key={session.user.id+':'+session.user.last_sign_in_at}/>;
   return <AssignedPanel key={session.user.id+':'+session.user.last_sign_in_at} initial={loaded.data} userId={session.user.id} binding={session.user.last_sign_in_at} currentUser={currentUser}/>;
 }

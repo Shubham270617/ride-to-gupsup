@@ -30,7 +30,7 @@ it('offers owner navigation only for both allowlisted and verified admin identit
  vi.stubEnv('RTG_LAYOUT_EDITOR_ADMIN_IDS','operator');
  try {
  db=createFakeSupabase();db.auth={getUser:vi.fn().mockResolvedValue({data:{user:{id:'operator'}}})};db.rpc=vi.fn();handler=createVolunteerHandler(()=>db);db.on('ridge_timing_assignments',{data:[]});db.on('admin_profiles',{data:{id:'operator'}},{times:1});
- expect((await call({method:'GET'})).body.canManage).toBe(true);
+ expect((await call({method:'GET'})).body).toEqual({role:'owner'});
  db.on('admin_profiles',{data:null});expect((await call({method:'GET'})).body.canManage).toBe(false);
  expect((await call()).body.canManage).toBe(false);expect(db.rpc).not.toHaveBeenCalled();
  }finally{vi.unstubAllEnvs();}
