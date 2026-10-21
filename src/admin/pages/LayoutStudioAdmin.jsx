@@ -49,6 +49,17 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
     catch (err) { setError(err.message); }
   };
   const setStyle = (key, value) => { try { change(updateSectionStyle(document, selected.id, device, key, value)); } catch (err) { setError(err.message); } };
+  const commitNumber = (key, input) => {
+    const [min, max] = NUMBER_BOUNDS[key];
+    const value = input.value.trim() === '' ? NaN : Number(input.value);
+    if (!Number.isFinite(value) || value < min || value > max || (key === 'columns' && !Number.isInteger(value))) {
+      input.value = String(style[key]);
+      setError(`${labels[key]} must be ${key === 'columns' ? 'a whole number' : 'a number'} between ${min} and ${max}. Previous value kept.`);
+      return;
+    }
+    setError('');
+    if (value !== style[key]) setStyle(key, value);
+  };
   const editContent = (key, value) => { const next = cloneLayout(document); next.sections.find(s => s.id === selected.id).content[key] = value; change(next); };
   const resetMobile = () => { const next = cloneLayout(document); next.sections.find(s => s.id === selected.id).mobile = {}; change(next); };
   const save = () => { try { saveLocalDraft(window.localStorage, pageKey, document); protectedWork.current = true; setStatus('Saved in this browser only'); setError(''); } catch (err) { setError(`Draft was not saved: ${err.message}`); } };
@@ -119,7 +130,7 @@ export default function LayoutStudioAdmin({ pageKey = 'ridge', initialDocument, 
         {device === 'mobile' && <><p className="text-xs">Unchanged properties inherit desktop values.</p><button type="button" onClick={resetMobile}>Reset all mobile overrides</button></>}
         <label>Visible<select value={String(style.visible)} onChange={e => setStyle('visible', e.target.value === 'true')}><option value="true">Visible</option><option value="false">Hidden</option></select></label>
         {[['layout', LAYOUT_TYPES[selected.type]], ['font', Object.keys(LAYOUT_FONTS)], ['align', ['left', 'center', 'right']], ['position', ['top', 'middle', 'bottom']]].filter(([key]) => !ridgeIntro || ['font', 'align'].includes(key)).map(([key, options]) => <label key={key}>{key}<select value={style[key]} onChange={e => setStyle(key, e.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {key}</button>}</label>)}
-        {Object.entries(NUMBER_BOUNDS).filter(([key]) => !ridgeIntro || ['size', 'bodySize', 'padding', 'gap'].includes(key)).map(([key, [min, max]]) => <label key={key}>{labels[key]}<input type="number" min={min} max={max} value={style[key]} onChange={e => setStyle(key, Number(e.target.value))} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {labels[key]}</button>}</label>)}
+        {Object.entries(NUMBER_BOUNDS).filter(([key]) => !ridgeIntro || ['size', 'bodySize', 'padding', 'gap'].includes(key)).map(([key, [min, max]]) => <label key={key}>{labels[key]}<input key={`${pageKey}:${selected.id}:${device}:${style[key]}`} type="number" min={min} max={max} step={key === 'columns' ? 1 : 'any'} defaultValue={style[key]} onBlur={e => commitNumber(key, e.currentTarget)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {labels[key]}</button>}</label>)}
         {['color', 'background', 'accent'].map(key => <label key={key}>{key}<input type="color" value={style[key]} onChange={e => setStyle(key, e.target.value)} />{device === 'mobile' && Object.hasOwn(selected.mobile, key) && <button type="button" onClick={() => setStyle(key, undefined)}>Inherit {key}</button>}</label>)}
         <label>Image URL (HTTPS)<input aria-label="Image URL (HTTPS)" key={`${selected.id}:${device}:${style.image}`} defaultValue={style.image.startsWith('data:') ? '' : style.image} placeholder="https://…" onBlur={e => { if (e.target.value !== e.target.defaultValue) setStyle('image', e.target.value); }} /></label>
         <p className="text-xs">Prototype JSON image uploads are preserved. New asset uploads need the website storage connection.</p>

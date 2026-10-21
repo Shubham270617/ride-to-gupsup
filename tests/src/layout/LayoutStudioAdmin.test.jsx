@@ -10,6 +10,7 @@ describe('layout editor', () => {
     render(<MemoryRouter><LayoutStudioAdmin /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: 'Mobile', exact: true }));
     fireEvent.change(screen.getByLabelText('Heading size'), { target: { value: '28' } });
+    fireEvent.blur(screen.getByLabelText('Heading size'));
     fireEvent.click(screen.getByRole('button', { name: 'Save local draft' }));
     expect(screen.getByRole('status')).toHaveTextContent('Saved in this browser only');
     fireEvent.click(screen.getByRole('button', { name: 'Desktop', exact: true }));
@@ -39,6 +40,7 @@ describe('layout editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Loaded shared draft'));
     fireEvent.change(screen.getByLabelText('Heading size'), { target: { value: '44' } });
+    fireEvent.blur(screen.getByLabelText('Heading size'));
     expect(screen.getByRole('button', { name: 'Publish saved revision' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Save shared draft' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Saved shared draft (not published)'));
@@ -47,6 +49,7 @@ describe('layout editor', () => {
     await waitFor(() => expect(store.publish).toHaveBeenCalledWith('ridge', 4));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Published saved revision'));
     fireEvent.change(screen.getByLabelText('Heading size'), { target: { value: '45' } });
+    fireEvent.blur(screen.getByLabelText('Heading size'));
     expect(screen.getByRole('button', { name: 'Publish saved revision' })).toBeDisabled();
   });
   it('preserves the draft and reports failed server save honestly', async () => {
@@ -55,6 +58,7 @@ describe('layout editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Load shared draft' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('No shared draft yet'));
     fireEvent.change(screen.getByLabelText('Heading size'), { target: { value: '44' } });
+    fireEvent.blur(screen.getByLabelText('Heading size'));
     fireEvent.click(screen.getByRole('button', { name: 'Save shared draft' }));
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Store unavailable'));
     expect(screen.getByLabelText('Heading size')).toHaveValue(44);
@@ -151,3 +155,4 @@ describe('layout editor', () => {
   });
 
 });
+
