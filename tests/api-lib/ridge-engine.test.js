@@ -70,14 +70,15 @@ describe("native Ridge timing and scoring", () => {
     const s = run(setup(), { type: "start", lap: 1, at }).state;
     expect(() => run(s, { type: "end", lap: 1, at: at - 1 })).toThrow();
   });
-  it("prevents attendance removal after timing starts and session finish during a lap", () => {
+  it("prevents attendance removal but allows finish to lock a running lap", () => {
     const s = run(setup(), { type: "start", lap: 1, at }).state;
     expect(() => run(s, { type: "attendance", riderIds: ["b"] })).toThrow(
       /recorded/,
     );
-    expect(() => run(s, { type: "finish_session", reason: "Done" })).toThrow(
-      /running/,
-    );
+    const locked = run(s, { type: "finish_session", reason: "Done" }).state;
+    expect(locked.sessions[0].finished).toBe(true);
+    expect(locked.sessions[0].entries[0].laps[0].start).toBe(at);
+    expect(() => run(locked, { type: "end", lap: 1, at: at + 1000 })).toThrow(/locked/);
   });
   it("locks finished sessions but allows reasoned corrections and reopening", () => {
     const s = setup();
@@ -143,11 +144,9 @@ describe("native Ridge timing and scoring", () => {
     const s = setup();
     s.sessions[0].entries[0].laps = [{ durationMs: 1200000 }];
     expect(buildPublicFeed(s).results).toEqual([]);
-    const live = run(s, {
-      type: "session_mode",
-      mode: "live",
-      reason: "Publish",
-    }).state;
+    expect(() => run(s, { type: "session_mode", mode: "live", reason: "Publish" })).toThrow(/test recordings/);
+    const live = structuredClone(s);
+    live.sessions[0].mode = "live";
     const renamed = run(live, {
       type: "edit_rider",
       name: "Asha Singh",
@@ -167,3 +166,4 @@ describe("native Ridge timing and scoring", () => {
     expect(() => run(emptyRidgeState(), { type: "nope" })).toThrow();
   });
 });
+

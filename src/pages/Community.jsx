@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { communityPagePath } from "../lib/communityDetails";
 import Reveal from "../components/ui/Reveal";
 import {
   useCommunityPaths,
@@ -758,6 +759,7 @@ function Network({ copy, groups, pins, mapImage }) {
                   {group.tagline && <span className="rtg-com-net-tagline">{group.tagline}</span>}
                   <h3 className="font-display">{group.name}</h3>
                   {group.desc && <p>{group.desc}</p>}
+                  <Link to={communityPagePath(group.id)} className="rtg-com-btn rtg-com-btn-orange" aria-label={`Explore ${group.name}`}>Explore community →</Link>
 
                   {contacts.length > 0 && (
                     <div className="rtg-com-net-contacts">
@@ -981,3 +983,4 @@ export default function Community() {
     </div>
   );
 }
+

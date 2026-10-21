@@ -63,24 +63,37 @@ function finite(value) {
     throw new Error("Enter a valid points value.");
   return round2(n);
 }
+// A historical snapshot is separate from native pointsOverride: null there
+// intentionally resets to calculated points, while official null means unknown.
+function officialScoreOf(entry) {
+  const score = entry.officialScore;
+  if (!score) return null;
+  if (score.version !== 1 || !Array.isArray(score.lapPoints) || score.lapPoints.length !== 5 || score.lapPoints[0] !== null ||
+      !score.lapPoints.every(p => p === null || Number.isFinite(p)) ||
+      !(score.improvement === null || Number.isFinite(score.improvement)) ||
+      !Number.isInteger(score.completedLaps) || score.completedLaps < 0 || score.completedLaps > 5 ||
+      !Number.isFinite(score.highlightScore) || !Number.isFinite(score.totalScore) || !score.provenance?.snapshotId)
+    throw new Error("Invalid authoritative historical score snapshot.");
+  if (score.improvement !== null && Math.abs(score.totalScore - score.improvement - score.completedLaps - score.highlightScore) > 0.011 + Number.EPSILON * 100)
+    throw new Error("Authoritative historical total does not reconcile.");
+  return score;
+}
 export function scoreEntry(entry) {
-  const times = (entry.laps || []).map(lapDuration);
-  const completed = times.filter((n) => Number.isFinite(n) && n > 0).length;
-  const points = times.map((ms, i) =>
-    i === 0 || !ms || !times[i - 1]
-      ? null
-      : (entry.laps[i].pointsOverride ??
-        round2(((times[i - 1] - ms) / times[i - 1]) * 100)),
-  );
-  const progress = round2(points.reduce((sum, p) => sum + (p || 0), 0));
-  return {
-    times,
-    points,
-    completed,
-    progress,
-    trial: round2(progress + completed),
-    adjustment: entry.adjustment || 0,
+  const official = officialScoreOf(entry);
+  const times = official ? Array.from({length: 5}, (_, i) => lapDuration(entry.laps?.[i])) : (entry.laps || []).map(lapDuration);
+  if (official) return {
+    times, points: [...official.lapPoints], completed: official.completedLaps,
+    progress: official.improvement, trial: official.improvement === null ? null : round2(official.improvement + official.completedLaps),
+    adjustment: 0, highlightScore: official.highlightScore, totalScore: official.totalScore,
+    scoreSource: "official-published", provenance: official.provenance,
   };
+  const completed = times.filter(n => Number.isFinite(n) && n > 0).length;
+  const points = times.map((ms, i) => i === 0 ? null :
+    Number.isFinite(entry.laps[i]?.pointsOverride) ? entry.laps[i].pointsOverride :
+    !ms || !times[i - 1] ? null : round2(((times[i - 1] - ms) / times[i - 1]) * 100));
+  const progress = round2(points.reduce((sum, p) => sum + (p || 0), 0));
+  return { times, points, completed, progress, trial: round2(progress + completed), adjustment: entry.adjustment || 0,
+    scoreSource: "native-calculated" };
 }
 export function sessionSpotlight(state, session) {
   const rows = [],
@@ -140,16 +153,23 @@ export function buildPublicFeed(state) {
     for (const entry of session.entries) {
       const rider = state.riders.find((r) => r.id === entry.riderId),
         score = scoreEntry(entry);
-      if (!rider || !score.completed) continue;
-      const bonus = awards.some((a) =>
+      if (!rider || (!score.completed && score.scoreSource !== "official-published")) continue;
+      const bonus = score.highlightScore ?? (awards.some((a) =>
         a.winners.some((n) => keyOf(n) === keyOf(rider.name)),
       )
         ? 1
-        : 0;
+        : 0);
       feed.results.push({
         id: session.id + ":" + rider.id,
         session_slug: session.id,
         athlete_name: rider.name,
+        athlete_id: rider.id,
+        session_date: session.date,
+        improvement: score.progress,
+        highlight_score: bonus,
+        score_source: score.scoreSource,
+        total_score: score.totalScore ?? round2(score.progress + score.completed + bonus + score.adjustment),
+        provenance: score.provenance || null,
         loop_times: score.times.map(formatDuration).join(","),
         lap_points: score.points,
         completed_laps: score.completed,
@@ -234,7 +254,7 @@ export function applyRidgeCommand(
         session.entries.some(
           (e) =>
             !selected.has(e.riderId) &&
-            e.laps.some((l) => l.start != null || lapDuration(l)),
+            (e.officialScore || e.laps.some((l) => l.start != null || lapDuration(l))),
         )
       )
         throw new Error("A rider with recorded timing cannot be removed.");
@@ -249,19 +269,16 @@ export function applyRidgeCommand(
     } else if (type === "session_mode") {
       if (!["live", "testing", "archived"].includes(command.mode))
         throw new Error("Invalid session mode.");
+      if (command.mode === "live" && session.mode !== "live" &&
+          session.entries.some(e => e.laps.some(l => l.start != null || l.end != null || l.durationMs != null) || e.officialScore))
+        throw new Error("This session has test recordings. Archive it and create a clean live session.");
       detail = { before: session.mode, reason: reasonOf(command.reason) };
       session.mode = command.mode;
     } else if (type === "finish_session" || type === "reopen_session") {
-      if (
-        type === "finish_session" &&
-        session.entries.some((e) =>
-          e.laps.some((l) => l.start != null && l.end == null && !l.durationMs),
-        )
-      )
-        throw new Error("Finish all running laps before locking the session.");
       detail.reason = reasonOf(command.reason);
       session.finished = type === "finish_session";
     } else if (type === "award_override") {
+      if (session.entries.some(e => e.officialScore)) throw new Error("Historical awards require an explicitly accepted source revision before correction.");
       detail.reason = reasonOf(command.reason);
       if (
         ![
@@ -296,6 +313,7 @@ export function applyRidgeCommand(
         });
     } else if (type === "correct_lap" || type === "correct_points") {
       if (!entry) throw new Error("Rider not present.");
+      if (entry.officialScore) throw new Error("Historical published scores require an explicitly accepted source revision before correction.");
       detail.reason = reasonOf(command.reason);
       const i = Number(command.lap) - 1;
       if (!Number.isInteger(i) || i < 0 || i >= 5)
@@ -328,14 +346,18 @@ export function applyRidgeCommand(
           if (entry.laps[i - 1]?.end > start || entry.laps[i + 1]?.start < end)
             throw new Error("The correction overlaps an adjacent lap.");
           Object.assign(lap, { start, end, durationMs: null });
-        } else if (command.mode === "duration")
+        } else if (command.mode === "duration") {
+          if (!lapDuration(lap) && lap.start == null && lap.end == null)
+            throw new Error("For a missing lap use start/finish timestamps to recover the timer.");
           lap.durationMs = parseDuration(command.duration);
-        else throw new Error("Choose duration or timestamps.");
+        } else throw new Error("Choose duration or timestamps.");
         lap.pointsOverride = null;
         if (entry.laps[i + 1]) entry.laps[i + 1].pointsOverride = null;
       }
       entry.laps[i] = lap;
     } else if (["start", "end", "pass", "group_start"].includes(type)) {
+      if (entry?.officialScore || (type === "group_start" && session.entries.some(e => e.officialScore)))
+        throw new Error("Historical published records require an explicitly accepted source revision before timing changes.");
       if (session.finished || session.mode === "archived")
         throw new Error("This session is locked. Reopen it before timing.");
       const at = Number(command.at);
@@ -568,3 +590,4 @@ function selectSpotlight(date, rows, times, state) {
     return award;
   });
 }
+

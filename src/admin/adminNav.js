@@ -77,6 +77,7 @@ export const groups = [
     title: "RTG Lab & Ridge",
     icon: Mountain,
     links: [
+      { to: "/admin/ridge-import", label: "Ridge Import (dry run)", icon: Repeat },
       { to: "/admin/ridge", label: "Ridge — Session control", icon: Repeat },
       { to: "/admin/lab-labs", label: "Lab — Labs", icon: Medal },
       { to: "/admin/lab-periods", label: "Lab — Reward Periods", icon: CalendarClock },
@@ -111,6 +112,7 @@ export const groups = [
     title: "Community",
     icon: Users,
     links: [
+      { to: "/admin/volunteer", label: "Volunteer roles", icon: Users },
       { to: "/admin/community-paths", label: "Find Your Place", icon: Images },
       { to: "/admin/community-way", label: "The RTG Way", icon: Sparkles },
       { to: "/admin/community-motion", label: "RTG in Motion", icon: CalendarClock },
@@ -133,6 +135,7 @@ export const groups = [
       { to: "/admin/site-images", label: "Site Photos", icon: ImageIcon },
       { to: "/admin/site-content", label: "Site Content", icon: FileText },
       { to: "/admin/appearance", label: "Appearance", icon: Palette },
+      { to: "/admin/layout-studio", label: "Layout Studio (draft)", icon: Palette },
       { to: "/admin/footer-links", label: "Footer Links", icon: FileText },
       { to: "/admin/faqs", label: "FAQ", icon: HelpCircle },
       { to: "/admin/general-safety", label: "General Safety", icon: ShieldAlert },
@@ -163,5 +166,6 @@ export function activeLink(pathname) {
     .filter((l) => (l.end ? pathname === l.to : pathname === l.to || pathname.startsWith(`${l.to}/`)))
     .sort((a, b) => b.to.length - a.to.length)[0];
 }
+
 
 

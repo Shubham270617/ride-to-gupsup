@@ -30,6 +30,10 @@ const links = [
     label: "Community",
   },
   {
+    to: "/volunteer",
+    label: "Volunteer",
+  },
+  {
     to: "/chat",
     label: "Chat",
   },

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { STRAVA_ENABLED, launchLabCopy, launchLabPrinciples, visibleLabProgrammes } from "../lib/launchFeatures";
 import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
@@ -106,19 +107,53 @@ function LabCard({ lab, onAbout, stravaAlt }) {
   );
 }
 
+// These components only mount when the integration is available, so hidden
+// Strava totals and reward periods do not trigger background reads.
+function StravaHighlights() {
+  const highlights = useLabHighlights();
+  const tileSpots = ["metric-distance", "metric-speed", "metric-elevation"];
+  return <>{highlights.slice(0, tileSpots.length).map((tile, i) => (
+            <div key={tile.id} className={`metric-float ${tileSpots[i]}`}>
+              <span className="icon">{tile.icon}</span>
+              <div>
+                <small>{tile.label}</small>
+                <strong>{tile.text}</strong>
+              </div>
+            </div>
+          ))}</>;
+}
+
+function StravaRewardPeriods({ copy }) {
+  const periods = useLabPeriods();
+  return <>{periods.length > 0 && (
+        <div className="reward-strip">
+          <div className="shell reward-inner" style={{ "--periods": periods.length }}>
+            <span>
+              {copy.stripLine1}
+              <br />
+              <b>{copy.stripLine2}</b>
+            </span>
+            {periods.map((period, i) => (
+              <div key={period.id}>
+                <strong>{pad2(i + 1)}</strong>
+                {period.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}</>;
+}
+
 export default function Lab() {
   const settings = useSiteSettings();
-  const copy = useMemo(() => buildLabCopy(settings), [settings]);
-  const { items: labs } = useLabProgrammes();
-  const periods = useLabPeriods();
-  const highlights = useLabHighlights();
-  const principles = useLabPrinciples();
+  const copy = useMemo(() => launchLabCopy(buildLabCopy(settings)), [settings]);
+  const { items: allLabs } = useLabProgrammes();
+  const labs = visibleLabProgrammes(allLabs);
+  const principles = launchLabPrinciples(useLabPrinciples());
   // The information window: null (closed), or { title, body }.
   const [info, setInfo] = useState(null);
 
   const notes = splitList(copy.heroNotes);
-  // The floating tiles sit at three fixed spots around the ring card.
-  const tileSpots = ["metric-distance", "metric-speed", "metric-elevation"];
 
   return (
     <div className="rtg-lab">
@@ -158,15 +193,7 @@ export default function Lab() {
         <div className="hero-visual" aria-hidden="true">
           <div className="orbit orbit-a" />
           <div className="orbit orbit-b" />
-          {highlights.slice(0, tileSpots.length).map((tile, i) => (
-            <div key={tile.id} className={`metric-float ${tileSpots[i]}`}>
-              <span className="icon">{tile.icon}</span>
-              <div>
-                <small>{tile.label}</small>
-                <strong>{tile.text}</strong>
-              </div>
-            </div>
-          ))}
+          {STRAVA_ENABLED && <StravaHighlights />}
           <div className="core">
             <div className="core-label">{copy.coreLabel}</div>
             <svg className="core-ring" viewBox="0 0 260 260">
@@ -188,23 +215,7 @@ export default function Lab() {
         </div>
       </section>
 
-      {periods.length > 0 && (
-        <div className="reward-strip">
-          <div className="shell reward-inner" style={{ "--periods": periods.length }}>
-            <span>
-              {copy.stripLine1}
-              <br />
-              <b>{copy.stripLine2}</b>
-            </span>
-            {periods.map((period, i) => (
-              <div key={period.id}>
-                <strong>{pad2(i + 1)}</strong>
-                {period.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {STRAVA_ENABLED && <StravaRewardPeriods copy={copy} />}
 
       <section className="shell labs-section" id="labs">
         <div className="section-heading">
@@ -273,3 +284,4 @@ export default function Lab() {
     </div>
   );
 }
+

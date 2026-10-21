@@ -1,5 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
-import { requireAdmin } from "../../api-lib/requireAdmin.js";
+import { requireAdmin } from "../requireAdmin.js";
 import { applyRidgeCommand } from "../../src/lib/ridge/engine.js";
 
 export default async function handler(req, res) {
@@ -103,3 +103,4 @@ export default async function handler(req, res) {
   }
   return res.status(200).json({ ok: true, version: data });
 }
+

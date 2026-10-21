@@ -125,3 +125,32 @@ it("an audit constraint failure rolls back both data updates", async () => {
   ).toBe(1);
   await db.exec("reset role");
 });
+
+
+it("a missing publication singleton rejects the commit and rolls back workspace and audit", async () => {
+  const beforeWorkspace = (await db.query("select * from ridge_workspace")).rows[0];
+  const beforePublication = (await db.query("select * from ridge_publication")).rows[0];
+  const beforeAudit = (await db.query("select * from ridge_audit order by version")).rows;
+  await db.exec("delete from ridge_publication where singleton;set role service_role");
+  try {
+    await expect(
+      commit(
+        beforeWorkspace.version,
+        "00000000-0000-4000-8000-000000000005",
+        actor,
+        { ...state, riders: [{ id: "synthetic", name: "Synthetic rollback fixture" }] },
+        feed,
+        { type: "synthetic_update", command: { type: "synthetic_update" } },
+      ),
+    ).rejects.toMatchObject({ code: "P0002" });
+    expect((await db.query("select * from ridge_workspace")).rows[0]).toEqual(beforeWorkspace);
+    expect((await db.query("select * from ridge_audit order by version")).rows).toEqual(beforeAudit);
+    expect((await db.query("select * from ridge_publication")).rows).toHaveLength(0);
+  } finally {
+    await db.exec("reset role");
+    await db.query(
+      "insert into ridge_publication(singleton,version,feed,updated_at) values (true,$1,$2,$3)",
+      [beforePublication.version, beforePublication.feed, beforePublication.updated_at],
+    );
+  }
+});

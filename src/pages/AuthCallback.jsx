@@ -76,18 +76,12 @@ export default function AuthCallback() {
       // so the callback (shared with the member popup) knows to check for
       // admin access instead of just dropping them on the homepage.
       if (params.get("admin") === "1") {
-        // ?admin=1 is just a hint about where the sign-in started — it is
-        // part of a URL anyone can type, so it grants nothing. The server
-        // re-decides from the email allowlist on every attempt
-        // (api/auth/claim-bootstrap-admin.js), which is why there is no
-        // client-side admin_profiles lookup here anymore: checking in the
-        // browser only ever produced a nicer message, never a boundary.
+        // ?admin=1 only selects this UI flow. The server confirms existing
+        // admin membership; neither this flag nor authentication grants it.
         const { granted, reason, message } = await claimBootstrapAdmin();
         if (!granted) {
           await supabase.auth.signOut();
-          // Keep the server's actual reason: "not on the allowlist", "all
-          // seats taken" and "the grant itself failed" need different fixes,
-          // and one generic message made them impossible to tell apart.
+          // Preserve the server's refusal or verification failure message.
           setAdminRefusal({ reason, message, email: user.email || "" });
           setStatus(reason === "request_failed" ? "server_unreachable" : "not_admin");
           return;
@@ -160,7 +154,7 @@ export default function AuthCallback() {
           <>
             <AlertCircle className="mx-auto mb-4 text-rtg-orange-400" size={32} />
             <p className="font-display text-2xl mb-2">
-              {adminRefusal.reason === "seats_full" ? "All admin seats are taken" : "Couldn't grant admin access"}
+              Admin access not confirmed
             </p>
             {adminRefusal.email && (
               <p className="mx-auto mb-3 inline-block max-w-full break-all rounded-full bg-rtg-purple-950/5 px-3.5 py-1.5 text-xs font-semibold text-rtg-white">
@@ -168,9 +162,7 @@ export default function AuthCallback() {
               </p>
             )}
             <p className="text-rtg-mist text-sm mb-6">
-              {adminRefusal.reason === "seats_full"
-                ? "RTG has 3 admins and all 3 seats are in use. An existing admin must remove someone in Admin → Members first."
-                : `Something went wrong while saving admin access: ${adminRefusal.message || "unknown error"}. Please try again.`}
+              {adminRefusal.message || "This account does not have admin access. Ask an existing administrator to arrange access; signing in does not grant it."}
             </p>
             <button
               onClick={() => navigate("/admin/login", { replace: true })}
@@ -221,3 +213,4 @@ export default function AuthCallback() {
     </div>
   );
 }
+

@@ -10,7 +10,7 @@ vi.mock("../../../api-lib/stravaSync.js", () => ({
 
 import { requireAdmin } from "../../../api-lib/requireAdmin.js";
 import { advanceStravaBackfill, resetStravaBackfill } from "../../../api-lib/stravaSync.js";
-import handler from "../../../api/admin/strava-resync.js";
+import handler from "../../../api-lib/admin/strava-resync.js";
 
 let db;
 
@@ -98,3 +98,4 @@ describe("POST /api/admin/strava-resync", () => {
     expect(res.body.rateLimited).toBe(true);
   });
 });
+

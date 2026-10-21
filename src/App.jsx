@@ -16,6 +16,8 @@ import useWelcomeEmail from "./lib/useWelcomeEmail";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
+import Volunteer from "./pages/Volunteer";
+import CommunityDetail from "./pages/CommunityDetail";
 import WeeklyRides from "./pages/WeeklyRides";
 import WeeklySessionDetail from "./pages/WeeklySessionDetail";
 import Events from "./pages/Events";
@@ -29,6 +31,7 @@ import Calendar from "./pages/Calendar";
 import RaceResults from "./pages/RaceResults";
 import Lab from "./pages/Lab";
 import LabStrava from "./pages/LabStrava";
+import StravaLaunchGate from "./components/StravaLaunchGate";
 import LabRidge from "./pages/LabRidge";
 import Membership from "./pages/Membership";
 import MembershipCheckout from "./pages/MembershipCheckout";
@@ -50,13 +53,16 @@ import { resources } from "./admin/resourceConfig";
 const ProtectedRoute = lazy(() => import("./admin/ProtectedRoute"));
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const AdminLogin = lazy(() => import("./admin/pages/AdminLogin"));
-const RidgeAdmin = lazy(() => import("./admin/pages/RidgeAdmin"));
 const AdminDashboard = lazy(() => import("./admin/pages/AdminDashboard"));
 const ResourceAdminPage = lazy(() => import("./admin/pages/ResourceAdminPage"));
 const OrdersAdmin = lazy(() => import("./admin/pages/OrdersAdmin"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
+const RidgeImportPreview = lazy(() => import("./admin/pages/RidgeImportPreview"));
+const RidgeAdmin = lazy(() => import("./admin/pages/RidgeAdmin"));
+const VolunteerAdmin = lazy(() => import("./admin/pages/VolunteerAdmin"));
+const LayoutStudioAdmin = lazy(() => import("./admin/pages/ConnectedLayoutStudioAdmin"));
 const AppearanceAdmin = lazy(() => import("./admin/pages/AppearanceAdmin"));
 const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
 const AdminsAdmin = lazy(() => import("./admin/pages/AdminsAdmin"));
@@ -143,6 +149,7 @@ export default function App() {
           <Route path="lab-activities" element={<ResourceAdminPage resource={resources.labActivities} />} />
           <Route path="ridge" element={<RidgeAdmin />} />
           <Route path="ridge-sessions" element={<RidgeAdmin />} />
+          <Route path="ridge-import" element={<RidgeImportPreview />} />
           <Route path="ridge-results" element={<RidgeAdmin />} />
           <Route path="ridge-awards" element={<RidgeAdmin />} />
           <Route path="ridge-spotlight" element={<RidgeAdmin />} />
@@ -175,6 +182,8 @@ export default function App() {
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
           <Route path="appearance" element={<AppearanceAdmin />} />
+          <Route path="layout-studio" element={<LayoutStudioAdmin />} />
+          <Route path="volunteer" element={<VolunteerAdmin persistenceEnabled />} />
           <Route path="messages" element={<MessagesAdmin />} />
           <Route path="orders" element={<OrdersAdmin />} />
           <Route path="ai" element={<AiAdmin />} />
@@ -186,6 +195,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/volunteer" element={<Volunteer />} />
+          <Route path="/community/:communityId" element={<CommunityDetail />} />
           <Route path="/weekly-rides" element={<WeeklyRides />} />
           <Route path="/weekly-rides/:slug" element={<WeeklySessionDetail />} />
           <Route path="/events" element={<Events />} />
@@ -200,7 +211,7 @@ export default function App() {
           <Route path="/race-calendar" element={<Navigate to="/calendar" replace />} />
           <Route path="/race-results" element={<RaceResults />} />
           <Route path="/lab" element={<Lab />} />
-          <Route path="/lab/strava" element={<LabStrava />} />
+          <Route path="/lab/strava" element={<StravaLaunchGate><LabStrava /></StravaLaunchGate>} />
           <Route path="/lab/ridge" element={<LabRidge />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/membership/checkout" element={<MembershipCheckout />} />

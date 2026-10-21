@@ -86,8 +86,15 @@ describe("database migrations match the code", () => {
   });
 });
 
-describe("admin access: the first 3 people to sign in at /admin/login", () => {
+describe("admin membership: confirmation-only login with existing database seat cap", () => {
   const schema = () => read("supabase/schema.sql");
+
+  it("admin login source never promises automatic vacant-seat grants", () => {
+    for (const file of ["src/admin/pages/AdminLogin.jsx", "src/admin/pages/AdminsAdmin.jsx", "src/pages/AuthCallback.jsx", "src/lib/adminBootstrap.js"]) {
+      expect(read(file)).not.toMatch(/first 3 people|take a free admin seat|next person to sign in|take a seat if one is free|saving admin access/);
+    }
+    expect(read("api/auth/claim-bootstrap-admin.js")).not.toMatch(/\.(insert|upsert|update|delete)\(/);
+  });
 
   it("schema.sql's is_admin() only checks for an admin_profiles seat", () => {
     const fn = schema().match(/create or replace function is_admin\(\)[\s\S]*?\$\$;/)[0];
@@ -161,7 +168,9 @@ describe("admin menu (src/admin/adminNav.js)", () => {
     const nav = read("src/admin/adminNav.js");
     const links = [...nav.matchAll(/to: "(\/admin[^"]*)"/g)].map((m) => m[1]);
     expect(routes.length).toBeGreaterThan(40);
-    for (const r of routes) expect(links, `missing sidebar link for ${r}`).toContain(r);
+    const ridgeAliases = ["ridge-sessions", "ridge-results", "ridge-awards", "ridge-spotlight"];
+    for (const alias of ridgeAliases) expect(block).toContain(`<Route path="${alias}" element={<RidgeAdmin />} />`);
+    for (const r of routes.filter(route => !ridgeAliases.some(alias => route === `/admin/${alias}`))) expect(links, `missing sidebar link for ${r}`).toContain(r);
     for (const l of links) if (l !== "/admin") expect(routes, `sidebar links to missing route ${l}`).toContain(l);
   });
 });
@@ -175,3 +184,4 @@ describe("online now (migration 026)", () => {
     }
   });
 });
+

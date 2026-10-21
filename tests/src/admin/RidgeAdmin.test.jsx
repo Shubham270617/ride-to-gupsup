@@ -86,7 +86,8 @@ it("shows save failures without displaying a false success or losing the entered
   fireEvent.click(screen.getByRole("button", { name: "Add rider" }));
   await screen.findByRole("alert");
   expect(input).toHaveValue("Bala");
-  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.getByRole("status")).toHaveTextContent("last action is not confirmed");
+  expect(screen.queryByText(/^Saved\./)).toBeNull();
   expect(data.state.riders).toHaveLength(1);
 });
 it("publishes through the session controls and records an explicit reason", async () => {
@@ -103,4 +104,34 @@ it("publishes through the session controls and records an explicit reason", asyn
     mode: "live",
     reason: "Results checked",
   });
+});
+
+
+it("retries an uncertain response with the same request ID and exact command", async () => {
+  await mount();
+  const original = fetch.getMockImplementation();
+  let committedBody = null;
+  fetch.mockImplementation(async (url, opts) => {
+    if (opts.method === "POST") {
+      if (committedBody) {
+        expect(opts.body).toBe(committedBody);
+        return { ok: true, json: async () => ({ ok: true, alreadySaved: true }) };
+      }
+      committedBody = opts.body;
+      await original(url, opts);
+      throw new Error("Connection lost after commit");
+    }
+    return original(url, opts);
+  });
+  const input = screen.getByRole("textbox", { name: "New rider name" });
+  fireEvent.change(input, { target: { value: "Bala" } });
+  const add = screen.getByRole("button", { name: "Add rider" });
+  fireEvent.click(add); fireEvent.click(add);
+  await screen.findByRole("button", { name: "Retry unconfirmed action" });
+  expect(fetch.mock.calls.filter(([,opts]) => opts.method === "POST")).toHaveLength(1);
+  expect(data.state.riders).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "Retry unconfirmed action" }));
+  await screen.findByText("Saved. Website results and the audit log are up to date.");
+  expect(data.state.riders).toHaveLength(2);
+  expect(fetch.mock.calls.filter(([,opts]) => opts.method === "POST")).toHaveLength(2);
 });

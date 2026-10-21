@@ -71,6 +71,11 @@ begin
   current_version := current_version + 1;
   update public.ridge_workspace set version = current_version, state = p_state, updated_at = now() where singleton;
   update public.ridge_publication set version = current_version, feed = p_feed, updated_at = now() where singleton;
+  -- Missing publication is a broken installation, not a successful save.
+  -- Raising here rolls back the workspace update as well as this transaction.
+  if not found then
+    raise exception 'Ridge publication singleton missing; repair installation before saving' using errcode = 'P0002';
+  end if;
   insert into public.ridge_audit(request_id, version, actor_id, action, details)
     values (p_request, current_version, p_actor, p_audit->>'type', p_audit);
   return current_version;
@@ -79,3 +84,4 @@ $$;
 revoke all on function public.ridge_commit(bigint,uuid,uuid,jsonb,jsonb,jsonb) from public, anon, authenticated;
 grant execute on function public.ridge_commit(bigint,uuid,uuid,jsonb,jsonb,jsonb) to service_role;
 commit;
+

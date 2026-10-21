@@ -1,7 +1,7 @@
 import { beforeEach, it, expect, vi } from "vitest";
 import { createFakeSupabase } from "../helpers/fakeSupabase.js";
 import { mockReq, mockRes } from "../helpers/http.js";
-import handler from "../../api/admin/ridge.js";
+import handler from "../../api-lib/admin/ridge.js";
 import { requireAdmin } from "../../api-lib/requireAdmin.js";
 vi.mock("../../api-lib/requireAdmin.js", () => ({ requireAdmin: vi.fn() }));
 let db;
@@ -68,3 +68,4 @@ it("returns an explicit conflict if a concurrent save wins the database lock", a
   expect(res.statusCode).toBe(409);
   expect(res.body.ok).toBeUndefined();
 });
+

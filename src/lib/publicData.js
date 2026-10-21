@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { STRAVA_ENABLED } from "./launchFeatures";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import {
   products as staticProducts,
@@ -424,7 +425,7 @@ export function useSponsorOpportunities() {
 export function useMyStravaActivities(userId) {
   const [activities, setActivities] = useState([]);
   useEffect(() => {
-    if (!isSupabaseConfigured || !userId) {
+    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
       setActivities([]);
       return;
     }
@@ -450,7 +451,10 @@ export function useMyStravaActivities(userId) {
 export function useMyLeaderboardStats(userId) {
   const [stats, setStats] = useState(null);
   useEffect(() => {
-    if (!isSupabaseConfigured || !userId) return;
+    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
+      setStats(null);
+      return;
+    }
     let cancelled = false;
     supabase
       .from("leaderboard_stats")
@@ -1298,3 +1302,4 @@ export function useLiveActivity() {
 
   return { todaysSession, todaysCalendarEvent, upcomingEvent, nextCalendarEvent };
 }
+

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import {
@@ -63,6 +63,9 @@ function csv(rows) {
 }
 
 export default function RidgeAdmin() {
+  const inFlight = useRef(false);
+  const pendingRequest = useRef(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
@@ -88,7 +91,7 @@ export default function RidgeAdmin() {
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const result = await r.json();
-    if (!r.ok) throw new Error(result.error || "Could not load Ridge.");
+    if (!r.ok) { const error = new Error(result.error || "Could not load Ridge."); error.status = r.status || 500; throw error; }
     return result;
   }, []);
   const refresh = useCallback(async () => {
@@ -121,27 +124,30 @@ export default function RidgeAdmin() {
     setSelected(session?.entries.map((e) => e.riderId) || []);
     setEditor(null);
   }, [sessionId, data?.version]);
-  const send = async (command) => {
-    if (busy) return false;
-    setBusy(true);
-    setError("");
-    setMessage("");
+  const send = async (command, retry = false) => {
+    if (inFlight.current || !data) return false;
+    if (pendingRequest.current && !retry) {
+      setError("An earlier action is unconfirmed. Retry that same action before making another change."); return false;
+    }
+    const body = retry ? pendingRequest.current : {
+      version: data.version, requestId: crypto.randomUUID(), command: { sessionId, ...command },
+    };
+    if (!body) return false;
+    pendingRequest.current = body;
+    inFlight.current = true; setBusy(true); setError(""); setMessage("");
     try {
-      await request({
-        version: data.version,
-        requestId: crypto.randomUUID(),
-        command: { sessionId, ...command },
-      });
+      await request(body);
+      pendingRequest.current = null; setUnconfirmed(false);
       const refreshed = await refresh();
       setMessage(refreshed ? "Saved. Website results and the audit log are up to date." : "Saved on the server. Refresh to see the updated records.");
-      setEditor(null);
-      return true;
+      setEditor(null); return true;
     } catch (e) {
-      setError(e.message);
-      return false;
-    } finally {
-      setBusy(false);
-    }
+      // Reuse the exact request ID, version and command after uncertain network
+      // failure; never turn a retry into a second timing event or correction.
+      if (e.status >= 400 && e.status < 500) { pendingRequest.current = null; setUnconfirmed(false); }
+      else setUnconfirmed(true);
+      setError(e.message); return false;
+    } finally { inFlight.current = false; setBusy(false); }
   };
   const riders = useMemo(
     () =>
@@ -226,7 +232,8 @@ export default function RidgeAdmin() {
           View leaderboard ↗
         </Link>
       </header>
-      {error && (
+      {unconfirmed && <p role="status">The last action is not confirmed. <button type="button" disabled={busy} onClick={() => send(null, true)}>Retry unconfirmed action</button></p>}
+        {error && (
         <div className="ra-error" role="alert">
           {error}
         </div>
@@ -1024,3 +1031,4 @@ export default function RidgeAdmin() {
     </div>
   );
 }
+

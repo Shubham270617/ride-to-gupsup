@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
 import RichText, { Inline } from "../components/lab/RichText";
+import LayoutRenderer from "../components/layout/LayoutRenderer";
+import usePublishedRidgeLayout from "../lib/layout/usePublishedRidgeLayout";
+import { PUBLISHED_LAYOUTS_ENABLED, ridgeLayoutSectionData } from "../lib/layout/connection";
 import RidgeSessionStory from "../components/lab/RidgeSessionStory";
 import RidgeCardMaker from "../components/lab/RidgeCardMaker";
 import MembershipPlans from "../components/lab/MembershipPlans";
@@ -20,6 +23,7 @@ import {
   overallRecord,
   ridgeStandings,
   riderKey,
+  ridgeAthleteKey,
   secondsToClock,
   sessionAwards,
   sessionProgressRank,
@@ -36,9 +40,17 @@ import {
 // Spotlight awards, a rider's own record, and a photo card to share. The
 // session packs sit at the bottom.
 //
-// The native admin publishes an atomic snapshot to ridge_publication.
-// Historical points and organiser corrections are retained in that snapshot.
-// Membership plans and page wording continue to use existing admin settings.
+// Nothing here is written in code:
+//   ridge_sessions    (Admin -> Ridge Repeats — Sessions)    the dates
+//   ridge_results     (Admin -> Ridge Repeats — Results)     loop times
+//   ridge_awards      (Admin -> Ridge Repeats — Awards)      the six awards
+//   ridge_spotlights  (Admin -> Ridge Repeats — Spotlight)   who won them
+//   membership_plans  (Admin -> Membership — Plans)          the packs
+//   "text.ridge.<field>" (Admin -> Site Content -> Ridge Repeats) wording,
+//   and the loop length / most loops that every distance is worked out from
+// Manual/sample scores are worked out from loop times; explicit official snapshots
+// preserve their published points — see buildRidgeFeed() in
+// lib/labData.js. Layout is in styles/lab.css under .rtg-ridge.
 // ============================================================================
 
 const MODES = ["overall", "progress", "points", "alltime"];
@@ -193,7 +205,7 @@ function TrendChart({ series, dates, selected, copy, single = false }) {
             joined = true;
           });
           return (
-            <g key={s.name} className={`rr-trend-series rr-series-${s.tone}`}>
+            <g key={s.key || s.name} className={`rr-trend-series rr-series-${s.tone}`}>
               <path d={d} />
               {s.points
                 .filter((p) => p.value !== null)
@@ -229,7 +241,7 @@ function TrendChart({ series, dates, selected, copy, single = false }) {
 // One session's loop times as a line — lower is faster.
 function PaceChart({ row, maxLoops, copy }) {
   const [ref, width] = useWidth();
-  const values = Array.from({ length: maxLoops }, (_, i) => (i < row.laps ? row.lapSeconds[i] ?? null : null));
+  const values = Array.from({ length: maxLoops }, (_, i) => (row.scoreSource === "official-published" || i < row.laps ? row.lapSeconds[i] ?? null : null));
   const known = values.filter((v) => v !== null);
 
   let chart = null;
@@ -292,15 +304,17 @@ function PaceChart({ row, maxLoops, copy }) {
 // ----------------------------------------------------------------------------
 // RIDER RECORD — one rider: their overall journey, then any one session.
 // ----------------------------------------------------------------------------
-function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard }) {
-  const profile = feed.riders.find((p) => riderKey(p.name) === riderKey(name));
+function RiderRecord({ feed, name, athleteId, sessionSlug, onSession, copy, loopKm, onCard }) {
+  const matches = feed.riders.filter((p) => athleteId ? p.athleteId === athleteId : riderKey(p.name) === riderKey(name));
+  const profile = matches.length === 1 ? matches[0] : null;
   const overallRows = useMemo(() => ridgeStandings(feed, "overall"), [feed]);
   if (!profile) return null;
-  const overall = overallRows.find((row) => riderKey(row.name) === riderKey(name)) || overallRecord(profile);
+  const overall = overallRows.find((row) => ridgeAthleteKey(row) === ridgeAthleteKey(profile)) || overallRecord(profile);
   const row = profile.records.find((r) => r.session === sessionSlug) || profile.records[0];
   const maxLoops = feed.maxLoops;
   const loops = Math.min(row.laps, maxLoops);
-  const place = sessionProgressRank(feed, name, row.session);
+  const place = sessionProgressRank(feed, name, row.session, athleteId);
+  const shareSafe = feed.riders.filter(p => riderKey(p.name) === riderKey(name)).length === 1;
   const dates = feed.sessions.slice().reverse();
   const series = overall.qualifying.length ? [{ name, tone: 1, shape: 0, hidden: false, points: trendPoints(feed, overall) }] : [];
 
@@ -331,7 +345,7 @@ function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard 
               })}${overall.qualifying.length === 2 ? ` ${copy.recordProvisional}` : ""}`}
         </p>
         {overall.value !== null && (
-          <button type="button" className="rr-text-button rr-personal-share" onClick={() => onCard({ name, session: overall.latest.session, kind: "overall" })}>
+          <button type="button" className="rr-text-button rr-personal-share" disabled={!shareSafe} title={!shareSafe ? "Sharing needs identity-aware card support for riders with the same name." : undefined} onClick={() => onCard({ name, session: overall.latest.session, kind: "overall" })}>
             {copy.recordShareOverall}
           </button>
         )}
@@ -388,23 +402,24 @@ function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard 
         </thead>
         <tbody>
           {Array.from({ length: maxLoops }, (_, i) => {
-            const done = i < row.laps;
+            const official = row.scoreSource === "official-published";
+            const done = official || i < row.laps;
             const points = row.lapPoints[i];
             return (
               <tr key={i} className={done ? undefined : "not-completed"}>
                 <th scope="row">L{i + 1}</th>
-                <td>{done ? row.lapTimes[i] : copy.lapNotRidden}</td>
+                <td>{official ? row.lapTimes[i] || "Not supplied" : done ? row.lapTimes[i] : copy.lapNotRidden}</td>
                 <td className={done && i > 0 ? polarity(points) : undefined}>{!done ? "—" : i === 0 ? copy.lapBaseline : signed(points)}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
-      <p className="rr-detail-note">{copy.recordNote}</p>
+      <p className="rr-detail-note">{row.scoreSource === "official-published" ? "Official published values are shown as recorded. Missing historical times or points remain unavailable, not zero." : copy.recordNote}</p>
       <p className="rr-detail-note">
         <Inline
           text={fill(copy.recordBreakdown, {
-            progress: signed(row.progress ?? 0),
+            progress: signed(row.scoreSource === "official-published" ? row.progress : row.progress ?? 0),
             loops,
             spotlight: fixed(row.spotlight),
             adjustment: signed(row.adjustment),
@@ -424,7 +439,7 @@ function RiderRecord({ feed, name, sessionSlug, onSession, copy, loopKm, onCard 
         ))}
       </details>
 
-      <button type="button" className="rr-save-card" onClick={() => onCard({ name, session: row.session, kind: "session" })}>
+      <button type="button" className="rr-save-card" disabled={!shareSafe} title={!shareSafe ? "Sharing needs identity-aware card support for riders with the same name." : undefined} onClick={() => onCard({ name, session: row.session, kind: "session" })}>
         {copy.cardButton}
       </button>
     </div>
@@ -500,7 +515,7 @@ export default function LabRidge() {
   const accessSteps = useLabAccessSteps();
   const registration = useLabRegistration(user?.id, PROGRAMME);
   const checkingAccess = sessionLoading || registration.loading;
-  const locked = !user || !registration.registered || checkingAccess;
+  const locked = checkingAccess || !user || !registration.registered;
   const [registering, setRegistering] = useState(false);
   const [accessError, setAccessError] = useState("");
   const handleRegister = async () => {
@@ -525,6 +540,14 @@ export default function LabRidge() {
     [raw.sessions, raw.results, raw.awards, raw.spotlights, maxLoops]
   );
   const latest = feed.sessions[0] || null;
+  const officialCount = raw.results.filter(row => row.score_source === "official-published").length;
+  const sourceNotice = officialCount
+    ? officialCount === raw.results.length
+      ? "Official published scores: recorded points and corrections are preserved, not recalculated from lap times."
+      : "Mixed score sources: official published points and manual calculations are both present. Review before publication."
+    : raw.sessions.some(session => /^Sample Session /i.test(session.name || ""))
+      ? "Sample results for testing — these are not verified event results."
+      : "Manual results: points are calculated from entered loop times. Historical published scores require a reviewed import.";
 
   const [mode, setMode] = useState("overall");
   const [sessionSlug, setSessionSlug] = useState("");
@@ -532,6 +555,7 @@ export default function LabRidge() {
   const [chartSlug, setChartSlug] = useState("");
   const [hidden, setHidden] = useState(() => new Set());
   const [search, setSearch] = useState("");
+  const [recordError, setRecordError] = useState("");
   const [record, setRecord] = useState(null); // { name, session }
   const [card, setCard] = useState(null); // { name, session, kind, winners }
   const [story, setStory] = useState(null);
@@ -543,6 +567,7 @@ export default function LabRidge() {
   const spotlightSession = aggregate ? feed.sessions.find((s) => s.slug === spotlightSlug) || latest : session;
   const rows = useMemo(() => ridgeStandings(feed, mode, session?.slug), [feed, mode, session]);
   const dates = useMemo(() => feed.sessions.slice().reverse(), [feed]);
+  const publishedLayout = usePublishedRidgeLayout({ enabled: !locked && PUBLISHED_LAYOUTS_ENABLED });
   const awards = useMemo(() => (spotlightSession ? sessionAwards(feed, spotlightSession.slug) : []), [feed, spotlightSession]);
 
   const loopsOf = (row) => (aggregate ? row.records.reduce((sum, r) => sum + Math.min(r.laps, maxLoops), 0) : Math.min(row.laps, maxLoops));
@@ -568,18 +593,18 @@ export default function LabRidge() {
     return top.length ? top : rows.filter((row) => row.value !== null).slice(0, PODIUM_SIZE);
   }, [mode, rows]);
   const series = journeyRows.map((row, i) => ({
+    key: ridgeAthleteKey(row),
     name: row.name,
     value: row.value,
     tone: (i % SERIES_TONES) + 1,
     shape: i % 3,
-    hidden: hidden.has(riderKey(row.name)),
+    hidden: hidden.has(ridgeAthleteKey(row)),
     points: trendPoints(feed, row),
   }));
   const chartSession = dates.find((d) => d.slug === chartSlug) || dates[dates.length - 1] || null;
-  const toggleSeries = (name) =>
+  const toggleSeries = (key) =>
     setHidden((current) => {
       const next = new Set(current);
-      const key = riderKey(name);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
@@ -618,11 +643,17 @@ export default function LabRidge() {
     ? raw.checkedAt.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })
     : "";
 
-  const openRecord = (name, slug) => setRecord({ name, session: slug || (!aggregate && session ? session.slug : "") });
+  const openRecord = (name, slug, athleteId = null) => {
+    if (!athleteId && feed.riders.filter(p => riderKey(p.name) === riderKey(name)).length !== 1) {
+      setRecordError("This name is ambiguous. Open the rider from the standings instead."); return;
+    }
+    setRecordError(""); setRecord({ name, athleteId, session: slug || (!aggregate && session ? session.slug : "") });
+  };
   const heroPhoto = images.ridgeHero ? `url("${images.ridgeHero}")` : "none";
 
   return (
     <>
+    {checkingAccess && <p role="status">Checking your Ridge Repeats access…</p>}
     <div className={`rtg-ridge${locked ? " rr-locked" : ""}`} data-mode={mode} style={{ "--rr-hero-photo": heroPhoto }} inert={locked} aria-hidden={locked || undefined}>
       <LabBackdrop className="rr-rtg-background" />
 
@@ -639,7 +670,7 @@ export default function LabRidge() {
         </button>
       </header>
 
-      <section className="rr-intro" aria-labelledby="rr-page-title">
+      {publishedLayout.document ? <LayoutRenderer document={publishedLayout.document} sectionData={ridgeLayoutSectionData(publishedLayout.document, { feed, sessionSlug: spotlightSession?.slug, officialAwards: awards, dataReady: !locked && !raw.loading && !raw.error && Boolean(raw.checkedAt) })} /> : <section className="rr-intro" aria-labelledby="rr-page-title">
         <div className="rr-intro-copy">
           <p className="rr-eyebrow">{copy.eyebrow}</p>
           <h1 id="rr-page-title">
@@ -655,9 +686,12 @@ export default function LabRidge() {
           ))}
           <b>{copy.artCaption}</b>
         </div>
-      </section>
+      </section>}
 
       <section className="rr-results" aria-labelledby="rr-board-title">
+        {raw.results.length > 0 && <p className="rr-muted" data-testid="ridge-score-source">{sourceNotice}</p>}
+        {recordError && <p className="rr-error" role="alert">{recordError}</p>}
+        {feed.diagnostics?.length > 0 && <p className="rr-error" role="alert">Some official records failed validation and are excluded. Review the import before publication.</p>}
         <div className="rr-toolbar">
           <div className="rr-mode-buttons" role="group" aria-label={boardTitle}>
             {MODES.map((m) => (
@@ -694,10 +728,10 @@ export default function LabRidge() {
             </p>
           </div>
           <div className="rr-connection">
-            <span className={`rr-status ${raw.error ? "failed" : raw.loading ? "" : "connected"}`} role="status" aria-live="polite">
-              {raw.loading ? copy.loadingLabel : fill(copy.statusLabel, { time: checked })}
-            </span>
             {latest && <button type="button" className="rr-refresh" onClick={() => setStory(spotlightSession?.slug || latest.slug)}>Session story</button>}
+            <span className={`rr-status ${raw.error ? "failed" : raw.loading ? "" : "connected"}`} role="status" aria-live="polite">
+              {raw.loading ? copy.loadingLabel : raw.error ? "Results unavailable" : fill(copy.statusLabel, { time: checked })}
+            </span>
             <button type="button" className="rr-refresh" onClick={raw.reload} disabled={raw.loading}>
               <span aria-hidden="true">↻</span> {copy.refreshLabel}
             </button>
@@ -712,7 +746,7 @@ export default function LabRidge() {
         <div className="rr-podium">
           {leaders.length ? (
             leaders.map((row) => (
-              <button key={row.name} type="button" className="rr-podium-card" data-place={row.place} onClick={() => openRecord(row.name, row.session)}>
+              <button key={ridgeAthleteKey(row)} type="button" className="rr-podium-card" data-place={row.place} onClick={() => openRecord(row.name, row.session, row.athleteId)}>
                 <span className="rr-podium-label">
                   <span className="rr-medal">#{row.place}</span>
                   <span>{podiumLabel}</span>
@@ -752,7 +786,7 @@ export default function LabRidge() {
             </div>
             <div className="rr-trend-legend" role="group" aria-label={copy.journeysTitle}>
               {series.map((s) => (
-                <button key={s.name} type="button" aria-pressed={!s.hidden} onClick={() => toggleSeries(s.name)}>
+                <button key={s.key || s.name} type="button" aria-pressed={!s.hidden} onClick={() => toggleSeries(s.key || s.name)}>
                   <span className={`rr-series-swatch rr-series-${s.tone}`} data-shape={s.shape} aria-hidden="true" />
                   {s.name} <strong>{signed(s.value)}</strong>
                 </button>
@@ -804,16 +838,16 @@ export default function LabRidge() {
                       {dates.map((d) => (
                         <th key={d.slug} scope="col">
                           {shortDate(d.date)}
-                          <small>{d.date.slice(0, 4)}</small>
+                          <small>{d.date?.slice(0, 4) || "Undated"}</small>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row) => (
-                      <tr key={row.name}>
+                      <tr key={ridgeAthleteKey(row)}>
                         <th scope="row">
-                          <button type="button" onClick={() => openRecord(row.name)}>
+                          <button type="button" onClick={() => openRecord(row.name, undefined, row.athleteId)}>
                             {row.name}
                           </button>
                         </th>
@@ -828,7 +862,7 @@ export default function LabRidge() {
                               style={{ "--rr-cell-strength": `${Math.round(10 + (Math.abs(value || 0) / heatMax) * 50)}%` }}
                             >
                               {rec ? (
-                                <button type="button" onClick={() => openRecord(row.name, d.slug)}>
+                                <button type="button" onClick={() => openRecord(row.name, d.slug, row.athleteId)}>
                                   {text}
                                 </button>
                               ) : (
@@ -870,7 +904,7 @@ export default function LabRidge() {
         <div className="rr-rider-list">
           {listed.length ? (
             listed.map((row) => (
-              <button key={row.name} type="button" className="rr-rider-row" data-place={row.place || ""} onClick={() => openRecord(row.name, row.session)}>
+              <button key={ridgeAthleteKey(row)} type="button" className="rr-rider-row" data-place={row.place || ""} onClick={() => openRecord(row.name, row.session, row.athleteId)}>
                 <span className="rr-rank">{row.place || "—"}</span>
                 <span className="rr-rider-info">
                   <Avatar name={row.name} photo={row.photo} />
@@ -942,7 +976,7 @@ export default function LabRidge() {
                     {award.winners.length ? (
                       award.winners.map((winner) => (
                         <button key={winner} type="button" className="rr-award-rider" onClick={() => openRecord(winner, spotlightSession.slug)}>
-                          <Avatar name={winner} photo={feed.riders.find((p) => riderKey(p.name) === riderKey(winner))?.photo} />
+                          <Avatar name={winner} photo={feed.riders.filter((p) => riderKey(p.name) === riderKey(winner)).length === 1 ? feed.riders.find((p) => riderKey(p.name) === riderKey(winner))?.photo : ""} />
                           <strong>{winner}</strong>
                           <span aria-hidden="true">↗</span>
                         </button>
@@ -961,6 +995,7 @@ export default function LabRidge() {
                       <button
                         type="button"
                         className="rr-award-share"
+                        disabled={award.winners.some(name => feed.riders.filter(p => riderKey(p.name) === riderKey(name)).length !== 1)}
                         onClick={() => setCard({ name: award.winners[0], session: spotlightSession.slug, kind: `spotlight:${award.slug}`, winners: award.winners })}
                       >
                         {copy.awardShare}
@@ -1013,6 +1048,7 @@ export default function LabRidge() {
           <RiderRecord
             feed={feed}
             name={record.name}
+            athleteId={record.athleteId}
             sessionSlug={record.session}
             onSession={(slug) => setRecord((r) => ({ ...r, session: slug }))}
             copy={copy}

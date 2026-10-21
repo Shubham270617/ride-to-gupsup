@@ -40,3 +40,34 @@ Database tests execute the actual migration in local PGlite PostgreSQL, includin
 Run `npm run build` and the targeted linter before deployment. Keep the old test deployment `dpl_BTaWEvsNjrDWN5u9jYA34hYPcHG4` available for rollback; never roll the live project.
 
 Automatic approval review rejected committing private rider records to GitHub. The safer code-only change excludes the original data, photos, audit exports and real-data test fixtures; no approval to export those records to GitHub is assumed.
+
+
+### Source-parity hardening (local, not imported)
+
+Historical entries now carry a versioned `officialScore` snapshot. Its five
+nullable lap-point slots, nullable improvement, completed count, highlight and
+total are preserved independently of missing historical durations. Ordinary
+native timing still uses the existing calculation/override engine. Existing
+`pointsOverride: null` means reset to calculated; it must not stand for an
+unknown authoritative point. Feed records explicitly carry source and rider ID.
+
+The offline preparation script now requires a **confirmed private**
+`native-Rider-Identity-Map.json` alongside source exports:
+`{"identities":[{"id":"existing-stable-id","name":"Confirmed name","aliases":[]}]}`.
+Do not generate this mapping from fuzzy names or per-session timer UUIDs. Retain
+existing assigned IDs across re-exports and renames. Unresolved/ambiguous names
+and duplicate rider/date records fail closed. Date, decimal/null and alias-chain
+validation is strict. Snapshot digests cover source files and mapping. All six
+historical award records are stored using the existing ID-based award overrides.
+
+No historical snapshot may be silently replaced by an ordinary timing, lap,
+points or award command. Such edits currently require an explicitly accepted
+source revision; that workflow is not implemented by this patch. New sessions
+continue using native timing and correction commands. Verify mode evidence for
+every published-source session before importing: preparation still assumes the
+Session Scores export contains approved LIVE history, as the existing four-date
+snapshot did. Do not use a broad/testing export as published history.
+
+`verify-google-import.mjs` now additionally checks stored total, fixed lap-point
+slots, source marker, snapshot identity, stable rider IDs and duplicate keys.
+It is not run against private records as part of synthetic automated tests.
