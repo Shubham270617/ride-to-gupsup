@@ -4,64 +4,74 @@ import { useSiteSettings } from "./publicData";
 
 // ============================================================================
 // SITE APPEARANCE — text size, typeface and text colour, set by an admin in
-// Admin -> Appearance and applied sitewide without touching code.
+// Admin -> Appearance and applied to the public site without touching code.
 //
-// Everything here is a fixed set of presets rather than free input, and
-// that is deliberate: an arbitrary pixel size or hex colour is exactly how
-// this kind of feature breaks a layout or makes text unreadable. Each
-// option below has been picked to stay within the design.
+// Like a word processor: the size is a number of pixels (8 … 24, where 16 is
+// the normal web size) and the font is picked from a familiar list (Arial,
+// Times New Roman, Georgia …). Both can be set for the whole site and
+// overridden per page. Colour is a small set of contrast-checked presets.
 //
 // How it is applied: by overriding the design tokens the whole site already
 // uses (--font-sans, --color-rtg-white, --color-rtg-mist) plus a root font
-// scale, all set on <html>. Nothing targets individual components, so there
-// is no page that can be styled into a corner.
+// scale, all set on <html>. Nothing targets individual components. Scaling
+// the ROOT font size is what keeps the layout intact — Tailwind's spacing
+// and type scales are in rem, so padding, gaps and text all grow together.
+// Headings keep the RTG display font; this changes body text.
 //
-// Note on size: scaling the ROOT font size is what keeps the layout intact
-// — Tailwind's spacing and type scales are in rem, so padding, gaps and
-// text all grow together in proportion. Hard-coded px values elsewhere in
-// the stylesheets deliberately do not scale, which is why the range is kept
-// narrow.
+// Per page: { "/events": { size: 18, font: "georgia" }, … } in one JSON
+// setting, applied as the visitor moves between pages. A page's entry also
+// covers the pages under it (an event's page follows /events). Anything a
+// page doesn't set follows the sitewide choice.
 //
-// Per page: an admin can also give any public page its own text size
-// (Admin -> Appearance -> Text size per page). That's stored as one JSON
-// setting, { "/events": "1.06", … }, and applied as the visitor moves
-// between pages; pages left on "Site default" follow the sitewide size.
-// Detail pages follow their section (an event's page follows /events).
-// The admin dashboard itself always uses the sitewide size.
+// The admin area is never restyled — always 16px Montserrat — so a tiny or
+// huge choice can't make the dashboard itself unusable. Admin -> Appearance
+// has its own live preview instead.
 // ============================================================================
 
 export const APPEARANCE_KEYS = {
-  scale: "text.theme.scale",
+  size: "text.theme.size",
+  scale: "text.theme.scale", // older setting (0.94 / 1 / 1.06 / 1.12), still honoured
   font: "text.theme.font",
   color: "text.theme.color",
   pages: "text.theme.pages",
 };
 
-export const TEXT_SCALES = [
-  { value: "0.94", label: "Compact", hint: "Slightly smaller — fits more on screen" },
-  { value: "1", label: "Default", hint: "The size the site was designed at" },
-  { value: "1.06", label: "Comfortable", hint: "A touch larger, easier to read" },
-  { value: "1.12", label: "Large", hint: "Noticeably larger — best for accessibility" },
-];
+export const DEFAULT_SIZE = 16;
+export const FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 24];
 
-// Both of these are already loaded by the Google Fonts import at the top of
-// index.css, so switching costs no extra network request. A typeface that
-// isn't already loaded is not offered — it would mean a flash of unstyled
-// text on every page for every visitor.
+// A word of warning shown next to sizes that are allowed but risky.
+export function sizeNote(px) {
+  if (px < 12) return "Very small — hard to read, especially on phones";
+  if (px < 14) return "Small — fine on desktop, tight on phones";
+  if (px > 20) return "Very large — pages get long and some layouts get tight";
+  if (px === DEFAULT_SIZE) return "Normal web size";
+  return "";
+}
+
+// `google` = loaded from Google Fonts only when chosen; the rest are
+// already loaded by index.css or installed on most computers (with a safe
+// fallback where a phone doesn't have them).
 export const BODY_FONTS = [
-  { value: "default", label: "Montserrat", hint: "The RTG default", stack: '"Montserrat", Arial, sans-serif' },
-  {
-    value: "grotesk",
-    label: "Space Grotesk",
-    hint: "Slightly more technical",
-    stack: '"Space Grotesk", "Montserrat", Arial, sans-serif',
-  },
-  {
-    value: "system",
-    label: "System default",
-    hint: "Matches the reader's device — fastest",
-    stack: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
-  },
+  { value: "default", label: "Montserrat", hint: "RTG default", stack: '"Montserrat", Arial, sans-serif' },
+  { value: "grotesk", label: "Space Grotesk", hint: "Technical", stack: '"Space Grotesk", "Montserrat", Arial, sans-serif' },
+  { value: "arial", label: "Arial", hint: "Classic", stack: 'Arial, "Helvetica Neue", Helvetica, sans-serif' },
+  { value: "verdana", label: "Verdana", hint: "Wide, very readable", stack: "Verdana, Geneva, Tahoma, sans-serif" },
+  { value: "tahoma", label: "Tahoma", hint: "Compact", stack: "Tahoma, Verdana, Segoe, sans-serif" },
+  { value: "trebuchet", label: "Trebuchet MS", hint: "Friendly", stack: '"Trebuchet MS", "Lucida Grande", sans-serif' },
+  { value: "segoe", label: "Segoe UI", hint: "Windows style", stack: '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif' },
+  { value: "system", label: "System default", hint: "Matches the device", stack: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif' },
+  { value: "times", label: "Times New Roman", hint: "Serif, newspaper", stack: '"Times New Roman", Times, Georgia, serif' },
+  { value: "georgia", label: "Georgia", hint: "Serif, elegant", stack: 'Georgia, "Times New Roman", serif' },
+  { value: "courier", label: "Courier New", hint: "Typewriter", stack: '"Courier New", Courier, monospace' },
+  { value: "roboto", label: "Roboto", hint: "Google", stack: '"Roboto", Arial, sans-serif', google: "Roboto:wght@400;500;700" },
+  { value: "opensans", label: "Open Sans", hint: "Google", stack: '"Open Sans", Arial, sans-serif', google: "Open+Sans:wght@400;600;700" },
+  { value: "lato", label: "Lato", hint: "Google", stack: '"Lato", Arial, sans-serif', google: "Lato:wght@400;700" },
+  { value: "poppins", label: "Poppins", hint: "Google", stack: '"Poppins", Arial, sans-serif', google: "Poppins:wght@400;500;600;700" },
+  { value: "inter", label: "Inter", hint: "Google", stack: '"Inter", Arial, sans-serif', google: "Inter:wght@400;500;600;700" },
+  { value: "nunito", label: "Nunito", hint: "Google, rounded", stack: '"Nunito", Arial, sans-serif', google: "Nunito:wght@400;600;700" },
+  { value: "raleway", label: "Raleway", hint: "Google", stack: '"Raleway", Arial, sans-serif', google: "Raleway:wght@400;500;600;700" },
+  { value: "merriweather", label: "Merriweather", hint: "Google, serif", stack: '"Merriweather", Georgia, serif', google: "Merriweather:wght@400;700" },
+  { value: "playfair", label: "Playfair Display", hint: "Google, serif", stack: '"Playfair Display", Georgia, serif', google: "Playfair+Display:wght@400;600;700" },
 ];
 
 export const TEXT_COLORS = [
@@ -70,7 +80,7 @@ export const TEXT_COLORS = [
   { value: "soft", label: "Softer", hint: "Gentler on bright screens", ink: "#2a2435", muted: "#7d7784" },
 ];
 
-// Every public page an admin can size on its own, grouped for the admin
+// Every public page an admin can style on its own, grouped for the admin
 // screen. `path` matches that page and everything under it (so /events
 // covers /events/<slug>); `exact` matches only the page itself.
 export const PAGE_TEXT_TARGETS = [
@@ -102,12 +112,29 @@ export const PAGE_TEXT_TARGETS = [
   { group: "Info & legal", path: "/community-guidelines", label: "Community Guidelines" },
 ];
 
-const VALID_SCALES = new Set(TEXT_SCALES.map((o) => o.value));
+const VALID_SIZES = new Set(FONT_SIZES);
+const VALID_FONTS = new Set(BODY_FONTS.map((f) => f.value));
 const KNOWN_PATHS = new Set(PAGE_TEXT_TARGETS.map((t) => t.path));
 
-// The saved per-page sizes, keeping only known pages and preset sizes — a
-// hand-edited or stale value can never set an arbitrary size.
-export function parsePageScales(raw) {
+// A saved size, or null if it isn't one of the offered sizes. Also accepts
+// the older scale presets (0.94 / 1 / 1.06 / 1.12), turned into pixels.
+export function toSize(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (VALID_SIZES.has(n)) return n;
+  if (n > 0.5 && n < 2) {
+    const px = Math.round(n * DEFAULT_SIZE);
+    return VALID_SIZES.has(px) ? px : null;
+  }
+  return null;
+}
+
+const toFont = (value) => (VALID_FONTS.has(value) ? value : null);
+
+// The saved per-page choices, keeping only known pages, offered sizes and
+// offered fonts — a hand-edited or stale value can never set something
+// arbitrary. Older saves stored just a scale per page ("/events": "1.06").
+export function parsePageSettings(raw) {
   let obj = raw;
   if (typeof raw === "string") {
     try {
@@ -117,14 +144,17 @@ export function parsePageScales(raw) {
     }
   }
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return {};
-  return Object.fromEntries(
-    Object.entries(obj)
-      .filter(([path, value]) => KNOWN_PATHS.has(path) && VALID_SCALES.has(String(value)))
-      .map(([path, value]) => [path, String(value)])
-  );
+  const out = {};
+  for (const [path, entry] of Object.entries(obj)) {
+    if (!KNOWN_PATHS.has(path)) continue;
+    const size = toSize(entry && typeof entry === "object" ? entry.size : entry);
+    const font = entry && typeof entry === "object" ? toFont(entry.font) : null;
+    if (size || font) out[path] = { ...(size ? { size } : {}), ...(font ? { font } : {}) };
+  }
+  return out;
 }
 
-// Which page-size entry applies to a URL: the most specific match wins, so
+// Which page entry applies to a URL: the most specific match wins, so
 // /lab/strava beats /lab, and /lab (exact) doesn't swallow /lab/ridge.
 export function pageTargetFor(pathname = "/") {
   const path = pathname.replace(/\/+$/, "") || "/";
@@ -136,17 +166,37 @@ export function pageTargetFor(pathname = "/") {
 }
 
 const pick = (list, value) => list.find((o) => o.value === value) || list[0];
+export const fontByValue = (value) => pick(BODY_FONTS, value);
 
-// `pathname` picks a page's own size when it has one; the admin area always
-// uses the sitewide size.
+// The sitewide size: the newer pixel setting, else the older scale, else 16.
+export function sitewideSize(settings = {}) {
+  return toSize(settings[APPEARANCE_KEYS.size]) ?? toSize(settings[APPEARANCE_KEYS.scale]) ?? DEFAULT_SIZE;
+}
+
+// What a given page gets. `pathname` under /admin always gets the plain
+// defaults for size and font.
 export function resolveAppearance(settings = {}, pathname = "") {
-  const sitewide = settings[APPEARANCE_KEYS.scale] ?? "1";
-  const target = pathname && !pathname.startsWith("/admin") ? pageTargetFor(pathname) : null;
-  const pageScale = target ? parsePageScales(settings[APPEARANCE_KEYS.pages])[target.path] : undefined;
-  const scale = pick(TEXT_SCALES, pageScale ?? sitewide);
-  const font = pick(BODY_FONTS, settings[APPEARANCE_KEYS.font] ?? "default");
   const color = pick(TEXT_COLORS, settings[APPEARANCE_KEYS.color] ?? "default");
-  return { scale, font, color };
+  if (pathname.startsWith("/admin")) {
+    return { size: DEFAULT_SIZE, font: BODY_FONTS[0], color };
+  }
+  const target = pathname ? pageTargetFor(pathname) : null;
+  const page = target ? parsePageSettings(settings[APPEARANCE_KEYS.pages])[target.path] || {} : {};
+  const size = page.size ?? sitewideSize(settings);
+  const font = pick(BODY_FONTS, page.font ?? settings[APPEARANCE_KEYS.font] ?? "default");
+  return { size, font, color };
+}
+
+// Google-hosted fonts are fetched only when actually used.
+export function ensureFontLoaded(font) {
+  if (!font?.google || typeof document === "undefined") return;
+  const id = `rtg-font-${font.value}`;
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${font.google}&display=swap`;
+  document.head.appendChild(link);
 }
 
 // Written to localStorage after each apply, and replayed on the next page
@@ -155,12 +205,13 @@ export function resolveAppearance(settings = {}, pathname = "") {
 const CACHE_KEY = "rtg_appearance";
 
 export function applyAppearance(settings, element = document.documentElement, pathname = window.location.pathname) {
-  const { scale, font, color } = resolveAppearance(settings, pathname);
-  element.style.setProperty("--rtg-text-scale", scale.value);
-  element.style.setProperty("--font-sans", font.stack);
-  element.style.setProperty("--color-rtg-white", color.ink);
-  element.style.setProperty("--color-rtg-mist", color.muted);
-  return { scale, font, color };
+  const result = resolveAppearance(settings, pathname);
+  ensureFontLoaded(result.font);
+  element.style.setProperty("--rtg-text-scale", String(result.size / DEFAULT_SIZE));
+  element.style.setProperty("--font-sans", result.font.stack);
+  element.style.setProperty("--color-rtg-white", result.color.ink);
+  element.style.setProperty("--color-rtg-mist", result.color.muted);
+  return result;
 }
 
 export function applyCachedAppearance(pathname = window.location.pathname) {
@@ -177,7 +228,7 @@ function cacheAppearance(settings) {
     window.localStorage.setItem(
       CACHE_KEY,
       JSON.stringify({
-        [APPEARANCE_KEYS.scale]: settings[APPEARANCE_KEYS.scale] ?? "1",
+        [APPEARANCE_KEYS.size]: String(sitewideSize(settings)),
         [APPEARANCE_KEYS.font]: settings[APPEARANCE_KEYS.font] ?? "default",
         [APPEARANCE_KEYS.color]: settings[APPEARANCE_KEYS.color] ?? "default",
         [APPEARANCE_KEYS.pages]: settings[APPEARANCE_KEYS.pages] ?? "{}",
@@ -189,23 +240,25 @@ function cacheAppearance(settings) {
 }
 
 // Mounted once, in App. Reads the saved settings and applies them — again
-// on every page change, since a page may have its own text size.
+// on every page change, since a page may have its own size and font.
 export function useAppearance() {
   const settings = useSiteSettings();
   const { pathname } = useLocation();
+  const size = settings[APPEARANCE_KEYS.size];
   const scale = settings[APPEARANCE_KEYS.scale];
   const font = settings[APPEARANCE_KEYS.font];
   const color = settings[APPEARANCE_KEYS.color];
   const pages = settings[APPEARANCE_KEYS.pages];
 
   useEffect(() => {
-    // An empty settings map means the request hasn't landed yet — apply the
-    // cached values for this page rather than flashing back to the defaults.
-    if (scale === undefined && font === undefined && color === undefined && pages === undefined) {
+    // Nothing loaded yet — apply the cached values for this page rather than
+    // flashing back to the defaults.
+    if ([size, scale, font, color, pages].every((v) => v === undefined)) {
       applyCachedAppearance(pathname);
       return;
     }
     const next = {
+      [APPEARANCE_KEYS.size]: size,
       [APPEARANCE_KEYS.scale]: scale,
       [APPEARANCE_KEYS.font]: font,
       [APPEARANCE_KEYS.color]: color,
@@ -213,5 +266,5 @@ export function useAppearance() {
     };
     applyAppearance(next, document.documentElement, pathname);
     cacheAppearance(next);
-  }, [scale, font, color, pages, pathname]);
+  }, [size, scale, font, color, pages, pathname]);
 }

@@ -79,25 +79,25 @@ describe("useWelcomeEmail()", () => {
 
 describe("appearance", () => {
   it("resolveAppearance falls back to defaults for unknown values", () => {
-    const r = resolveAppearance({ [APPEARANCE_KEYS.scale]: "9", [APPEARANCE_KEYS.font]: "comic-sans" });
-    expect(r.scale.value).toBe("0.94"); // first preset when unknown
+    const r = resolveAppearance({ [APPEARANCE_KEYS.size]: "99", [APPEARANCE_KEYS.font]: "comic-sans" }, "/");
+    expect(r.size).toBe(16);
     expect(r.font.value).toBe("default");
-    expect(resolveAppearance().scale.value).toBe("1");
+    expect(resolveAppearance().size).toBe(16);
   });
 
   it("applyAppearance sets the design tokens on <html>", () => {
-    applyAppearance({ [APPEARANCE_KEYS.scale]: "1.12", [APPEARANCE_KEYS.color]: "contrast" });
+    applyAppearance({ [APPEARANCE_KEYS.size]: "20", [APPEARANCE_KEYS.color]: "contrast" }, document.documentElement, "/");
     const style = document.documentElement.style;
-    expect(style.getPropertyValue("--rtg-text-scale")).toBe("1.12");
+    expect(style.getPropertyValue("--rtg-text-scale")).toBe("1.25");
     expect(style.getPropertyValue("--color-rtg-white")).toBe("#0b0712");
   });
 
   it("applyCachedAppearance replays the cache and ignores bad JSON", () => {
-    localStorage.setItem("rtg_appearance", JSON.stringify({ [APPEARANCE_KEYS.scale]: "1.06" }));
-    applyCachedAppearance();
-    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1.06");
+    localStorage.setItem("rtg_appearance", JSON.stringify({ [APPEARANCE_KEYS.size]: "12" }));
+    applyCachedAppearance("/");
+    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("0.75");
     localStorage.setItem("rtg_appearance", "{not json");
-    expect(() => applyCachedAppearance()).not.toThrow();
+    expect(() => applyCachedAppearance("/")).not.toThrow();
   });
 
   it("useAppearance waits for settings, then applies and caches them", () => {
@@ -107,20 +107,22 @@ describe("appearance", () => {
     rerender();
     expect(document.documentElement.style.getPropertyValue("--font-sans")).toContain("system-ui");
     expect(JSON.parse(localStorage.getItem("rtg_appearance"))).toEqual({
-      [APPEARANCE_KEYS.scale]: "1",
+      [APPEARANCE_KEYS.size]: "16",
       [APPEARANCE_KEYS.font]: "system",
       [APPEARANCE_KEYS.color]: "default",
       [APPEARANCE_KEYS.pages]: "{}",
     });
   });
 
-  it("useAppearance applies a page's own text size and follows navigation", () => {
-    state.settings = { [APPEARANCE_KEYS.scale]: "1", [APPEARANCE_KEYS.pages]: JSON.stringify({ "/events": "1.12" }) };
+  it("useAppearance applies a page's own font and size and follows navigation", () => {
+    state.settings = { [APPEARANCE_KEYS.size]: "16", [APPEARANCE_KEYS.pages]: JSON.stringify({ "/events": { size: 18, font: "georgia" } }) };
     const wrapper = (path) => ({ children }) => <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>;
     const onEvents = renderHook(() => useAppearance(), { wrapper: wrapper("/events/night-ride") });
-    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1.12");
+    expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1.125");
+    expect(document.documentElement.style.getPropertyValue("--font-sans")).toContain("Georgia");
     onEvents.unmount();
     renderHook(() => useAppearance(), { wrapper: wrapper("/about") });
     expect(document.documentElement.style.getPropertyValue("--rtg-text-scale")).toBe("1");
+    expect(document.documentElement.style.getPropertyValue("--font-sans")).toContain("Montserrat");
   });
 });
