@@ -223,42 +223,42 @@ export const VOLUNTEER_SECTIONS=[
         "field": "text.volunteer.hero.eyebrow",
         "key": "text.volunteer.hero.eyebrow",
         "label": "Eyebrow",
-        "defaultValue": "RIDE · TEA · GUPSHUP / CREW",
+        "defaultValue": "RIDE · TEA · GUPSHUP",
         "type": "text"
       },
       {
         "field": "text.volunteer.hero.titleBefore",
         "key": "text.volunteer.hero.titleBefore",
         "label": "Heading — first part",
-        "defaultValue": "Make the ",
+        "defaultValue": "RTG Crew ",
         "type": "text"
       },
       {
         "field": "text.volunteer.hero.titleAccent",
         "key": "text.volunteer.hero.titleAccent",
         "label": "Heading — accent",
-        "defaultValue": "movement",
+        "defaultValue": "& Opportunities",
         "type": "text"
       },
       {
         "field": "text.volunteer.hero.titleAfter",
         "key": "text.volunteer.hero.titleAfter",
         "label": "Heading — last part",
-        "defaultValue": " happen.",
+        "defaultValue": ".",
         "type": "text"
       },
       {
         "field": "text.volunteer.hero.intro",
         "key": "text.volunteer.hero.intro",
         "label": "Introduction",
-        "defaultValue": "Find your place behind the movement. Explore community support, creative roles and learning opportunities with RTG.",
+        "defaultValue": "Great days need great people. Bring your creativity, care and energy to the rides, runs and experiences that bring RTG together.",
         "type": "text"
       },
       {
         "field": "text.volunteer.hero.buttonLabel",
         "key": "text.volunteer.hero.buttonLabel",
         "label": "Explore button label",
-        "defaultValue": "Explore the roles ",
+        "defaultValue": "Find your role",
         "type": "text"
       }
     ]
@@ -271,41 +271,41 @@ export const VOLUNTEER_SECTIONS=[
         "field": "text.volunteer.roles.eyebrow",
         "key": "text.volunteer.roles.eyebrow",
         "label": "Eyebrow",
-        "defaultValue": "FIND YOUR PLACE",
+        "defaultValue": "FLEXIBLE CREW OPPORTUNITIES",
         "type": "text"
       },
       {
         "field": "text.volunteer.roles.title",
         "key": "text.volunteer.roles.title",
         "label": "Heading",
-        "defaultValue": "Different skills. ",
+        "defaultValue": "Your skills. ",
         "type": "text"
       },
       {
         "field": "text.volunteer.roles.accent",
         "key": "text.volunteer.roles.accent",
         "label": "Heading — accent",
-        "defaultValue": "One community.",
+        "defaultValue": "Our next great day.",
         "type": "text"
       }
     ]
   },
   {
     "id": "volunteer-journey",
-    "label": "Learning journey",
+    "label": "Crew journey",
     "fields": [
       {
         "field": "text.volunteer.journey.eyebrow",
         "key": "text.volunteer.journey.eyebrow",
         "label": "Eyebrow",
-        "defaultValue": "LEARN BY CONTRIBUTING",
+        "defaultValue": "GOOD WORK STARTS WITH A CLEAR BRIEF",
         "type": "text"
       },
       {
         "field": "text.volunteer.journey.title",
         "key": "text.volunteer.journey.title",
         "label": "Heading",
-        "defaultValue": "A journey, not just a shift.",
+        "defaultValue": "A little structure. A lot of possibility.",
         "type": "text"
       },
       {

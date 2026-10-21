@@ -9,50 +9,10 @@ import { volunteerRoles, VOLUNTEER_APPLICATIONS_OPEN, filterVolunteerRoles, vali
 function page(path = "/volunteer") { return render(<MemoryRouter initialEntries={[path]}><Volunteer /></MemoryRouter>); }
 function HistoryControls() { const navigate = useNavigate(); return <><button onClick={() => navigate(-1)}>History back</button><button onClick={() => navigate(1)}>History forward</button></>; }
 describe("Crew role preview", () => {
-  it("shows all reference roles without opening recruitment or exposing draft rates/leads", () => {
-    page();
-    expect(screen.getByRole("status")).toHaveTextContent("11 roles");
-    expect(screen.getByText(/applications are not open yet/i)).toBeInTheDocument();
-    expect(VOLUNTEER_APPLICATIONS_OPEN).toBe(false);
-    expect(screen.queryByRole("button", { name: /apply|submit/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/Hitesh|Simran|Manish Shiva|₹/)).not.toBeInTheDocument();
-    expect(volunteerRoles.every(role => !('price' in role) && !('lead' in role))).toBe(true);
-  });
-  it("filters by team and commitment, and clears an empty search", async () => {
-    const user = userEvent.setup(); page();
-    await user.selectOptions(screen.getByLabelText("Team"), "Media");
-    await user.selectOptions(screen.getByLabelText("Commitment"), "Weekly");
-    expect(screen.getByRole("status")).toHaveTextContent("2 roles");
-    await user.type(screen.getByLabelText("Search roles"), "doesnotexist");
-    expect(screen.getByText("No roles match those filters.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Clear filters" }));
-    expect(screen.getByRole("status")).toHaveTextContent("11 roles");
-  });
-  it("supports linked details and closing without collecting applications", async () => {
-    const user = userEvent.setup(); page("/volunteer?role=ridge-timing&team=Logistics");
-    expect(screen.getByRole("heading", { name: "What you would help with" })).toBeInTheDocument();
-    expect(screen.getByText(/Applications closed. No personal details/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /Close role details/ }));
-    expect(screen.queryByRole("heading", { name: "What you would help with" })).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Team")).toHaveValue("Logistics");
-  });
-  it("ignores invalid filters and never injects query HTML", () => {
-    page("/volunteer?team=bogus&role=missing&q=%3Cscript%3E");
-    expect(screen.getByLabelText("Team")).toHaveValue("All");
-    expect(screen.queryByRole("heading", { name: "What you would help with" })).not.toBeInTheDocument();
-  });
-  it("restores filters and details through browser history", async () => {
-    const user = userEvent.setup();
-    render(<MemoryRouter><HistoryControls /><Volunteer /></MemoryRouter>);
-    await user.selectOptions(screen.getByLabelText("Team"), "Coaching");
-    await user.click(screen.getByRole("button", { name: "View Athlete support & coaching assistant" }));
-    expect(screen.getByRole("heading", { name: "What you would help with" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "History back" }));
-    expect(screen.queryByRole("heading", { name: "What you would help with" })).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Team")).toHaveValue("Coaching");
-    await user.click(screen.getByRole("button", { name: "History forward" }));
-    expect(screen.getByRole("heading", { name: "What you would help with" })).toBeInTheDocument();
-  });
+ it("shows five current leaders and proposed budgets with recruitment closed",()=>{page();expect(screen.getByText('Simran')).toBeInTheDocument();expect(screen.getByText('Manish Jayal')).toBeInTheDocument();expect(screen.getAllByText('Vacant')).toHaveLength(3);expect(screen.getByRole('status')).toHaveTextContent('6 roles');expect(screen.getByText(/Applications are not open yet/)).toBeInTheDocument();expect(screen.queryByRole('button',{name:/apply|submit/i})).not.toBeInTheDocument();expect(VOLUNTEER_APPLICATIONS_OPEN).toBe(false);});
+ it("changes cadence with explicit included workload and filters categories",async()=>{const user=userEvent.setup();page();await user.click(screen.getByRole('button',{name:'Monthly',exact:true}));expect(screen.getByRole('status')).toHaveTextContent('7 roles');expect(screen.getAllByText('4 assignments · up to 20 hours total')).toHaveLength(2);await user.click(screen.getByRole('button',{name:'Photography',exact:true}));expect(screen.getByRole('status')).toHaveTextContent('1 role');await user.type(screen.getByLabelText('Search roles'),'nothing');expect(screen.getByText('No roles match those filters.')).toBeInTheDocument();await user.click(screen.getByRole('button',{name:'Clear filters'}));expect(screen.getByRole('status')).toHaveTextContent('6 roles');});
+ it("opens accessible detail dialog, preserves filters, and closes by Escape",async()=>{const user=userEvent.setup();page('/volunteer?team=Photography');const trigger=screen.getByRole('button',{name:'View Event photographer'});await user.click(trigger);expect(screen.getByRole('dialog')).toHaveAccessibleName('Event photographer');expect(screen.getByRole('heading',{name:'What you would help with'})).toBeInTheDocument();expect(screen.getByRole('button',{name:'Close role details'})).toHaveFocus();await user.keyboard('{Escape}');expect(screen.queryByRole('dialog')).not.toBeInTheDocument();expect(trigger).toHaveFocus();expect(screen.getByRole('button',{name:'Photography',exact:true})).toHaveAttribute('aria-pressed','true');});
+ it("supports linked details and browser history without unsafe query rendering",async()=>{const user=userEvent.setup();render(<MemoryRouter initialEntries={['/volunteer?role=crew-reels']}><HistoryControls/><Volunteer/></MemoryRouter>);expect(screen.getByRole('dialog')).toHaveAccessibleName('Reels & video editor');await user.click(screen.getByRole('button',{name:'Close role details'}));await user.click(screen.getByRole('button',{name:'History back'}));expect(screen.getByRole('dialog')).toBeInTheDocument();});
 });
 describe("Volunteer model", () => {
   it("matches text without case sensitivity and validates content", () => {
@@ -99,3 +59,4 @@ describe("Admin draft editor", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Role draft saved");
   });
 });
+

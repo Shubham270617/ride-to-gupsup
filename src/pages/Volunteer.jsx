@@ -1,74 +1,34 @@
 import { useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { volunteerRoles, VOLUNTEER_TEAMS, VOLUNTEER_COMMITMENTS, filterVolunteerRoles } from "../lib/volunteerRoles";
+import { crewLeads, crewOpportunities, proposalFor } from "../data/crewOpportunities";
 import "../components/volunteer/volunteer.css";
-
-// No network submissions: this phase deliberately leaves recruitment closed.
-export default function Volunteer({ roles = volunteerRoles, editor }) {
-  const t=(key,fallback)=>editor?.settings?.[key]??fallback;
-  const section=(id,child)=>editor?editor.section('volunteer-'+id,child):child;
-  const [params, setParams] = useSearchParams();
-  const team = VOLUNTEER_TEAMS.includes(params.get("team")) ? params.get("team") : "All";
-  const commitment = VOLUNTEER_COMMITMENTS.includes(params.get("commitment")) ? params.get("commitment") : "All";
-  const search = params.get("q") || "";
-  const visible = filterVolunteerRoles(roles, { team, commitment, search });
-  const selected = roles.find(role => role.id === params.get("role"));
-  const detailHeading = useRef(null);
-  useEffect(() => { if (selected) detailHeading.current?.focus(); }, [selected]);
-  function update(key, value, replace = false) {
-    const next = new URLSearchParams(params);
-    if (!value || value === "All") next.delete(key); else next.set(key, value);
-    if (key !== "role") next.delete("role");
-    setParams(next, { replace });
-  }
-  return (
-    <main className="rtg-crew">
-      {section('hero', <section className="rtg-crew-hero" aria-labelledby="crew-title">
-        <div className="rtg-crew-wrap">
-          <p className="rtg-crew-eyebrow">{t("text.volunteer.hero.eyebrow","RIDE · TEA · GUPSHUP / CREW")}</p>
-          <h1 id="crew-title">{t("text.volunteer.hero.titleBefore","Make the ")}<span>{t("text.volunteer.hero.titleAccent","movement")}</span>{t("text.volunteer.hero.titleAfter"," happen.")}</h1>
-          <p>{t("text.volunteer.hero.intro","Find your place behind the movement. Explore community support, creative roles and learning opportunities with RTG.")}</p>
-          <a className="rtg-crew-button" href="#crew-opportunities">{t("text.volunteer.hero.buttonLabel","Explore the roles ")}<span aria-hidden="true">↗</span></a>
-          <div className="rtg-crew-notice" role="note">
-            <strong>Role preview · applications are not open yet.</strong>
-            <p>These roles are being prepared. Availability, responsibilities, schedules, team leads and any payment terms must be confirmed by RTG before recruitment opens. No place or paid assignment is offered here.</p>
-          </div>
-        </div>
-      </section>)}
-      {section('roles', <section id="crew-opportunities" className="rtg-crew-wrap rtg-crew-section" aria-labelledby="crew-roles-title">
-        <p className="rtg-crew-eyebrow">{t("text.volunteer.roles.eyebrow","FIND YOUR PLACE")}</p>
-        <h2 id="crew-roles-title">{t("text.volunteer.roles.title","Different skills. ")}<span>{t("text.volunteer.roles.accent","One community.")}</span></h2>
-        <div className="rtg-crew-filters">
-          <label>Search roles<input type="search" value={search} placeholder="Try timing, photography or design" onChange={e => update("q", e.target.value, true)} /></label>
-          <label>Team<select value={team} onChange={e => update("team", e.target.value)}><option>All</option>{VOLUNTEER_TEAMS.map(value => <option key={value}>{value}</option>)}</select></label>
-          <label>Commitment<select value={commitment} onChange={e => update("commitment", e.target.value)}><option>All</option>{VOLUNTEER_COMMITMENTS.map(value => <option key={value}>{value}</option>)}</select></label>
-        </div>
-        <p className="rtg-crew-count" role="status">{visible.length} {visible.length === 1 ? "role" : "roles"} to explore</p>
-        {selected && <article className="rtg-crew-detail" aria-labelledby="crew-detail-title">
-          <button type="button" className="rtg-crew-text-button" onClick={() => update("role", "")}>← Close role details</button>
-          <p className="rtg-crew-eyebrow">{selected.team} · ROLE PREVIEW</p>
-          <h3 id="crew-detail-title" ref={detailHeading} tabIndex={-1}>{selected.title}</h3>
-          <p>{selected.intro}</p>
-          <h4>What you would help with</h4>
-          <ul>{selected.tasks.map(task => <li key={task}>{task}</li>)}</ul>
-          <h4>Who this could suit</h4><p>{selected.fit}</p>
-          <h4>The handover</h4><p>{selected.deliverable}</p>
-          <p className="rtg-crew-closed">Applications closed. No personal details are collected on this preview.</p>
-        </article>}
-        {visible.length ? <div className="rtg-crew-grid">{visible.map(role => <article className="rtg-crew-card" key={role.id}>
-          <div className="rtg-crew-card-top"><span>{role.team}</span>{role.ridge && <span>Ridge crew</span>}</div>
-          <h3>{role.title}</h3><p>{role.intro}</p>
-          <p className="rtg-crew-location">{role.location}</p>
-          <div className="rtg-crew-tags">{role.plans.map(plan => <span key={plan}>{plan}</span>)}</div>
-          <button type="button" aria-expanded={selected?.id === role.id} aria-label={`View ${role.title}`} onClick={() => update("role", role.id)}>Explore role <span aria-hidden="true">↗</span></button>
-        </article>)}</div> : <div className="rtg-crew-empty"><h3>No roles match those filters.</h3><p>Try another team or commitment, or clear your search.</p><button className="rtg-crew-button" type="button" onClick={() => setParams({})}>Clear filters</button></div>}
-      </section>)}
-      {section('journey', <section className="rtg-crew-journey" aria-labelledby="crew-journey-title"><div className="rtg-crew-wrap">
-        <p className="rtg-crew-eyebrow">{t("text.volunteer.journey.eyebrow","LEARN BY CONTRIBUTING")}</p><h2 id="crew-journey-title">{t("text.volunteer.journey.title","A journey, not just a shift.")}</h2>
-        <p>The reference programme includes three- and six-month internship pathways. Scope, supervision, learning goals and any stipend will be agreed before someone joins. Exploring a role does not reserve a place.</p>
-        <Link to="/community" className="rtg-crew-button">{t("text.volunteer.journey.buttonLabel","Meet the RTG community ↗")}</Link>
-      </div></section>)}
-    </main>
-  );
+const money=value=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(value);
+function Budget({role,cadence}){const p=proposalFor(role,cadence);return <div className="crew-budget"><small>PROPOSED PAYOUT</small>{p?<><strong>{money(p.amount)} <span>{p.label}</span></strong><p>{p.detail}</p></>:<p>Scope and remuneration to be confirmed by RTG.</p>}</div>;}
+function RoleDialog({role,cadence,onClose}){
+ const dialog=useRef(null),close=useRef(null);
+ useEffect(()=>{const previous=document.activeElement;const el=dialog.current;if(el?.showModal)el.showModal();else el?.setAttribute('open','');close.current?.focus();return()=>{el?.close?.();previous?.focus?.();};},[]);
+ return <dialog ref={dialog} className="crew-dialog" aria-labelledby="crew-detail-title" onCancel={e=>{e.preventDefault();onClose();}} onKeyDown={e=>{if(e.key==='Escape'){e.preventDefault();onClose();}if(e.key==='Tab'){e.preventDefault();close.current?.focus();}}}>
+ <button ref={close} className="crew-dialog-close" onClick={onClose} aria-label="Close role details">×</button><p className="rtg-crew-eyebrow">{role.team} / ROLE PREVIEW</p><h2 id="crew-detail-title">{role.title}</h2><p>{role.intro}</p><Budget role={role} cadence={cadence}/><h3>What you would help with</h3><ul>{role.tasks.map(task=><li key={task}>{task}</li>)}</ul><h3>What you bring</h3><p>{role.fit}</p><h3>The handover</h3><p>{role.deliverable}</p><p className="crew-preview-note">Proposed budget, pending RTG approval. Applications are not open yet; no personal details are collected here.</p></dialog>;
 }
-
+export default function Volunteer({ roles = crewOpportunities, editor, reference=true }) {
+ const t=(key,fallback)=>editor?.settings?.[key]??fallback;
+ const section=(id,child)=>editor?editor.section('volunteer-'+id,child):child;
+ const [params,setParams]=useSearchParams();
+ const catalogue=roles.filter(role=>role.team!=='Coaching');
+ const teams=[...new Set(catalogue.map(role=>role.team))];
+ const team=teams.includes(params.get('team'))?params.get('team'):'All';
+ const cadence=['One day','Weekly','Monthly'].includes(params.get('commitment'))?params.get('commitment'):'One day';
+ const search=params.get('q')||'';
+ const visible=catalogue.filter(role=>(team==='All'||role.team===team)&&role.plans.includes(cadence)&&`${role.title} ${role.intro}`.toLowerCase().includes(search.trim().toLowerCase()));
+ const selected=catalogue.find(role=>role.id===params.get('role'));
+ function update(key,value,replace=false){const next=new URLSearchParams(params);if(!value||value==='All')next.delete(key);else next.set(key,value);if(key!=='role')next.delete('role');setParams(next,{replace});}
+ return <main className="rtg-crew">
+ {section('hero',<section className="rtg-crew-hero"><div className="rtg-crew-wrap crew-hero-grid"><div><p className="rtg-crew-eyebrow">{t('text.volunteer.hero.eyebrow','RIDE · TEA · GUPSHUP')}</p><h1>{t('text.volunteer.hero.titleBefore','RTG Crew ')}<span>{t('text.volunteer.hero.titleAccent','& Opportunities')}{t('text.volunteer.hero.titleAfter','.')}</span></h1><p className="crew-intro">{t('text.volunteer.hero.intro','Great days need great people. Bring your creativity, care and energy to the rides, runs and experiences that bring RTG together.')}</p><a className="rtg-crew-button" href="#crew-opportunities">{t('text.volunteer.hero.buttonLabel','Find your role')} <span aria-hidden="true">↗</span></a><p className="crew-hero-caption">One day. A regular rhythm. A bigger part to play.</p></div><div className="crew-pass" aria-hidden="true"><div className="crew-pass-top">RTG / ALL ACCESS TO MAKING IT HAPPEN <span>✳</span></div><div className="crew-pass-title">GOOD<br/>PEOPLE.<br/><em>GREAT DAYS.</em></div><div className="crew-pass-bottom"><span>CREATIVE / COMMUNITY / CREW</span><span>↗</span></div></div></div></section>)}
+ {section('roles',<div className="rtg-crew-wrap rtg-crew-section"><section aria-labelledby="crew-leads-title"><div className="crew-section-heading"><div><p className="rtg-crew-eyebrow">THE PEOPLE & THE PURPOSE</p><h2 id="crew-leads-title">Five leads.<br/><span>One shared direction.</span></h2></div><p>Leadership across RTG. From creative direction to the details on the ground, each role has a distinct part to play.</p></div><div className="crew-leads">{crewLeads.map((lead,i)=><article className={`crew-lead crew-tone-${lead.tone}`} key={lead.role}><div className="crew-lead-top"><span className="crew-avatar">{lead.name?lead.name.split(' ').map(x=>x[0]).join(''):'↗'}</span><span className="crew-chip">{lead.name?'Team lead':'Vacant'}</span></div><p className="crew-lead-index">0{i+1} / {lead.tag}</p><h3>{lead.role}</h3><p className="crew-lead-name">{lead.name||'A place to make your mark'}</p></article>)}</div></section>
+ <section id="crew-opportunities" className="crew-opportunities" aria-labelledby="crew-roles-title"><div className="crew-section-heading"><div><p className="rtg-crew-eyebrow">{t('text.volunteer.roles.eyebrow','FLEXIBLE CREW OPPORTUNITIES')}</p><h2 id="crew-roles-title">{t('text.volunteer.roles.title','Your skills. ')}<span>{t('text.volunteer.roles.accent','Our next great day.')}</span></h2></div><p>Choose a rhythm that fits. These starter budgets are proposals, pending RTG approval—not confirmed offers.</p></div><div className="crew-toolbar"><div className="crew-cadence" role="group" aria-label="Commitment">{['One day','Weekly','Monthly'].map(value=><button key={value} aria-pressed={cadence===value} onClick={()=>update('commitment',value)}>{value==='One day'?'Per session':value}</button>)}</div><label className="crew-search"><span>Search roles</span><input type="search" value={search} placeholder="Photography, design, logistics…" onChange={e=>update('q',e.target.value,true)}/></label></div><div className="crew-filter-row"><div className="crew-categories" role="group" aria-label="Role category">{['All',...teams].map(value=><button key={value} aria-pressed={team===value} onClick={()=>update('team',value)}>{value==='All'?'All roles':value}</button>)}</div><p role="status">{visible.length} {visible.length===1?'role':'roles'} to explore</p></div><p className="crew-catalogue-note">{reference?'Proposed crew catalogue':'Approved role descriptions'} · Applications are not open yet.</p>
+ {visible.length?<div className="rtg-crew-grid">{visible.map(role=><article className={`rtg-crew-card crew-tone-${role.tone||'violet'}`} key={role.id}><div className="crew-card-art" aria-hidden="true"><span>{role.mark||'↗'}</span><i>RTG CREW / {role.team.toUpperCase()}</i></div><div className="crew-card-body"><p className="rtg-crew-eyebrow">{role.team}</p><h3>{role.title}</h3><p className="crew-card-intro">{role.intro}</p><Budget role={role} cadence={cadence}/><button aria-haspopup="dialog" aria-label={`View ${role.title}`} onClick={()=>update('role',role.id)}>Explore role <span aria-hidden="true">↗</span></button></div></article>)}</div>:<div className="rtg-crew-empty"><h3>No roles match those filters.</h3><p>Try a different category, rhythm or search.</p><button className="rtg-crew-button" onClick={()=>setParams({})}>Clear filters</button></div>}
+ </section></div>)}
+ {section('journey',<section className="rtg-crew-journey"><div className="rtg-crew-wrap"><p className="rtg-crew-eyebrow">{t('text.volunteer.journey.eyebrow','GOOD WORK STARTS WITH A CLEAR BRIEF')}</p><h2>{t('text.volunteer.journey.title','A little structure. A lot of possibility.')}</h2><div className="crew-steps">{[['01','Explore your fit','Find a role and a rhythm that match your skills.'],['02','Agree the details','RTG confirms the brief, hours, deliverables and payout before any paid work.'],['03','Make the day happen','Bring your best, work with the lead and finish with a clear handover.']].map(([n,title,body])=><div key={n}><span>{n}</span><h3>{title}</h3><p>{body}</p></div>)}</div><Link className="rtg-crew-button" to="/community">{t('text.volunteer.journey.buttonLabel','Meet the RTG community ↗')}</Link></div></section>)}
+ {selected&&<RoleDialog key={selected.id} role={selected} cadence={cadence} onClose={()=>update('role','')}/>}
+ </main>;
+}

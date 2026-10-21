@@ -15,8 +15,8 @@ it('reuses native About sections and propagates existing setting keys into neste
 });
 it('edits Volunteer presentation while preserving closed applications and no-payment commitment wording',()=>{
  render(<MemoryRouter><Volunteer roles={[]} editor={{section,settings:{'text.volunteer.hero.titleAccent':'community','text.volunteer.journey.buttonLabel':'Community review'}}}/></MemoryRouter>);
- expect(screen.getByRole('heading',{name:'Make the community happen.'})).toBeInTheDocument();expect(screen.getByRole('link',{name:'Community review'})).toHaveAttribute('href','/community');
- expect(screen.getByText('Role preview · applications are not open yet.')).toBeInTheDocument();expect(screen.getByText(/No place or paid assignment is offered here/)).toBeInTheDocument();
+ expect(screen.getByRole('heading',{name:'RTG Crew community.'})).toBeInTheDocument();expect(screen.getByRole('link',{name:'Community review'})).toHaveAttribute('href','/community');
+ expect(screen.getByText(/Applications are not open yet/)).toBeInTheDocument();expect(screen.getByText(/not confirmed offers/)).toBeInTheDocument();
  expect(sectionsFor('/volunteer').filter(s=>!s.readOnly)).toHaveLength(3);
 });
 it('rejects role, payment, recruitment-status and statistical overrides',()=>{
