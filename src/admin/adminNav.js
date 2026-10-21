@@ -136,6 +136,7 @@ export const groups = [
       { to: "/admin/site-content", label: "Site Content", icon: FileText },
       { to: "/admin/appearance", label: "Appearance", icon: Palette },
       { to: "/admin/layout-studio", label: "Layout Studio (draft)", icon: Palette },
+      { to: "/admin/site-editor", label: "Site visual editor (local draft)", icon: Palette },
       { to: "/admin/footer-links", label: "Footer Links", icon: FileText },
       { to: "/admin/faqs", label: "FAQ", icon: HelpCircle },
       { to: "/admin/general-safety", label: "General Safety", icon: ShieldAlert },
@@ -166,6 +167,7 @@ export function activeLink(pathname) {
     .filter((l) => (l.end ? pathname === l.to : pathname === l.to || pathname.startsWith(`${l.to}/`)))
     .sort((a, b) => b.to.length - a.to.length)[0];
 }
+
 
 
 

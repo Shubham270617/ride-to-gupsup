@@ -161,10 +161,13 @@ describe("chat (migration 025)", () => {
 });
 
 describe("admin menu (src/admin/adminNav.js)", () => {
-  it("has a sidebar entry for every /admin screen in App.jsx, and no dead links", async () => {
+  it("has a sidebar entry for every admin screen, and no dead links", async () => {
     const app = read("src/App.jsx");
     const block = app.slice(app.indexOf('path="/admin"'), app.indexOf("</Route>", app.indexOf('path="/admin"')));
     const routes = [...block.matchAll(/<Route path="([a-z0-9-]+)"/g)].map((m) => `/admin/${m[1]}`);
+    const editorRoutes = read("src/admin/site-editor/EditorEntry.jsx");
+    routes.push(...[...editorRoutes.matchAll(/<Route path="(\/admin[^"]*)"/g)].map(m => m[1]).filter(route => route !== '/admin/site-canvas'));
+    expect(editorRoutes).toContain('<ProtectedRoute>');
     const nav = read("src/admin/adminNav.js");
     const links = [...nav.matchAll(/to: "(\/admin[^"]*)"/g)].map((m) => m[1]);
     expect(routes.length).toBeGreaterThan(40);
@@ -184,4 +187,5 @@ describe("online now (migration 026)", () => {
     }
   });
 });
+
 

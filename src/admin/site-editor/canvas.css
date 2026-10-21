@@ -1,0 +1,20 @@
+.cms-section{position:relative;isolation:isolate;outline-offset:-3px;cursor:pointer}
+.cms-section[data-selected=true]{outline:3px solid #ff7b2c;z-index:2}
+.cms-select{position:absolute;right:8px;top:8px;z-index:80;background:#21143c;color:#fff;border:1px solid #ff7b2c;border-radius:6px;padding:6px 10px;font:12px system-ui;cursor:pointer}
+.cms-select:focus-visible{outline:3px solid #ff7b2c;outline-offset:3px}
+.cms-native{pointer-events:none}
+.cms-section[style*="--cms-padding"] .cms-native>section{padding-top:var(--cms-padding);padding-bottom:var(--cms-padding)}
+.cms-section[style*="--cms-background"] .cms-native>section{background-color:var(--cms-background)}
+.cms-section[style*="--cms-heading"] .cms-native :is(h1,h2,h3){font-size:var(--cms-heading)}
+.cms-section[style*="--cms-font"] .cms-native :is(h1,h2,h3,p){font-family:var(--cms-font)}
+.cms-section[style*="--cms-body"] .cms-native p{font-size:var(--cms-body)}
+.cms-section[style*="--cms-x"] .cms-native :is(h1,h2,p),.cms-section[style*="--cms-y"] .cms-native :is(h1,h2,p){translate:var(--cms-x,0px) var(--cms-y,0px)}
+.cms-section[style*="--cms-spacing"] .cms-native :is(h1,h2,h3){letter-spacing:var(--cms-spacing)}
+.cms-section[style*="--cms-line"] .cms-native :is(h1,h2,h3){line-height:var(--cms-line)}
+.cms-section[style*="--cms-align"] .cms-native :is(h1,h2,h3,p){text-align:var(--cms-align)}
+.cms-section[style*="--cms-button-size"] .cms-native .btn-shine{font-size:var(--cms-button-size)!important}
+.cms-section[style*="--cms-radius"] .cms-native .btn-shine{border-radius:var(--cms-radius)!important}
+.cms-section[data-button-style="solid"] .cms-native .btn-shine{background:#f45b18!important;color:#fff!important}
+.cms-section[data-button-style="outline"] .cms-native .btn-shine{background:transparent!important;border:2px solid currentColor!important}
+.cms-section[data-button-style="plain"] .cms-native .btn-shine{background:transparent!important;border:0!important;box-shadow:none!important}
+.cms-section[data-cms-section="hero"][style*="--cms-image-"] .cms-native img{object-position:var(--cms-image-x,50%) var(--cms-image-y,50%)}
