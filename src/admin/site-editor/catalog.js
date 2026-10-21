@@ -1,4 +1,10 @@
+import {ABOUT_SECTIONS,VOLUNTEER_SECTIONS} from '../../lib/siteEditor/pageContent.js';
+import { isCommunityDetail } from '../../lib/siteEditor/schema.js';
+export { EMPTY_DRAFT, emptyDraft, isCommunityDetail, STYLE_BOUNDS, validateDraft } from '../../lib/siteEditor/schema.js';
 import * as content from '../../lib/publicData';
+import { LAB_PAGE_TEXT } from '../../data/labContent';
+import { buildLabCopy, labPageKey } from '../../lib/labData';
+import { launchLabCopy } from '../../lib/launchFeatures';
 import { heroSlides } from '../../data/content';
 
 const group = (id, label, fields, key, resolve) => ({ id, label, fields: fields.map(f => ({ ...f, key: key(f.field) })), resolve });
@@ -14,6 +20,11 @@ export const HOME_SECTIONS = [
   { id: 'join', label: 'Join band and shared footer', fields: [], readOnly: true, resolve: () => ({}) },
   { id: 'navigation', label: 'Shared navigation', fields: [], readOnly: true, resolve: () => ({}) },
 ];
+export const COMMUNITY_SECTIONS = ['hero','place','way','motion','network','cities'].map(id=>({...group('community-'+id,({hero:'Community hero',place:'Find Your Place',way:'The RTG Way',motion:'RTG in Motion',network:'Community network',cities:'Community cities'})[id],content.COMMUNITY_PAGE_FIELDS.filter(f=>f.group===id),content.communityPageKey,content.buildCommunityPageCopy),imageKey:({hero:'communityHero',way:'communityWay',network:'communityIndiaMap'})[id]}));
+const lockedLab = new Set(['heroText','heroNotes','coreBottom','labsTitle','labsTitleAccent','labsText','aboutBody','futureTitle','futureText','futureNote']);
+export const LAB_SECTIONS = ['hero','labs','principles'].map(id=>group('lab-'+id,({hero:'Lab introduction',labs:'Lab programmes',principles:'Lab principles'})[id],LAB_PAGE_TEXT.filter(f=>f.group===id&&!lockedLab.has(f.field)),labPageKey,s=>launchLabCopy(buildLabCopy(s))));
+export const DETAIL_SECTIONS = ['intro','about','join','activities'].map(id=>({id:'detail-'+id,label:({intro:'Community identity',about:'About this community',join:'Joining information',activities:'Published activities'})[id],fields:[],resolve:()=>({})}));
+export function sectionsFor(page='/') { return [...(page==='/about'?ABOUT_SECTIONS:page==='/volunteer'?VOLUNTEER_SECTIONS:isCommunityDetail(page)?DETAIL_SECTIONS:page==='/community'?COMMUNITY_SECTIONS:page==='/lab'?LAB_SECTIONS:HOME_SECTIONS.filter(s=>!s.readOnly)),...HOME_SECTIONS.filter(s=>s.readOnly)]; }
 export const HERO_SLIDES = heroSlides;
 export function sectionFields(section, slide = 0) {
   if (section.id !== 'hero') return section.fields;
@@ -32,39 +43,5 @@ export const PAGE_REGISTRY = [
   ['/challenges','Challenges'], ['/calendar','Calendar'], ['/race-results','Race results'], ['/lab','Lab'], ['/lab/ridge','Ridge'],
   ['/membership','Membership'], ['/membership/checkout','Membership checkout'], ['/safety','Safety'], ['/dashboard','Dashboard'], ['/blog','Blog'],
   ['/sponsors','Sponsors'], ['/gallery','Gallery'], ['/contact','Contact'], ['/chat','Chat'], ['/faq','FAQ'], ['/privacy','Privacy'], ['/terms','Terms'], ['/community-guidelines','Community guidelines'],
-].map(([path,label]) => ({ path, label, coverage: path === '/' ? 'Local section editing' : 'Not connected in this slice' }));
-export const STYLE_BOUNDS = { headingSize: [16,160], bodySize: [10,32], padding: [0,160], textX: [-120,120], textY: [-120,120], letterSpacing: [-2,12], lineHeight: [0.8,2.5], buttonSize: [10,32], buttonRadius: [0,60], imageX: [0,100], imageY: [0,100], motionDuration: [0.1,3], motionDistance: [0,100] };
-const allowedText = new Set(HOME_SECTIONS.flatMap(s => s.id === 'hero' ? heroSlides.flatMap((_,i) => sectionFields(s,i).map(f=>f.key)) : s.fields.map(f=>f.key)));
-export const EMPTY_DRAFT = { schema: 'home-visual-v1', page: '/', text: {}, images: {}, sections: {} };
-export function validateDraft(value) {
-  if (!value || value.schema !== EMPTY_DRAFT.schema || value.page !== '/' || JSON.stringify(value).length > 100000) throw new Error('Unsupported Home draft.');
-  const next = structuredClone(EMPTY_DRAFT);
-  for (const [key,text] of Object.entries(value.text || {})) {
-    if (!allowedText.has(key) || typeof text !== 'string' || text.length > 2000) throw new Error('Invalid text override.');
-    if (/Link$/.test(key) && !(/^(\/(?!\/)|#[a-zA-Z0-9_-]|https:\/\/)/.test(text))) throw new Error('Use a site path, section anchor or HTTPS button link.');
-    next.text[key] = text;
-  }
-  for (const [key,url] of Object.entries(value.images || {})) {
-    if (!heroSlides.some(s=>s.imageKey===key) || typeof url !== 'string' || !/^https:\/\//.test(url) || url.length > 2000) throw new Error('Use an HTTPS image URL.');
-    next.images[key] = url;
-  }
-  for (const [id,devices] of Object.entries(value.sections || {})) {
-    if (!HOME_SECTIONS.some(s=>s.id===id && !s.readOnly)) throw new Error('This section is read-only.');
-    next.sections[id] = {};
-    for (const [device,style] of Object.entries(devices)) {
-      if (!['desktop','mobile'].includes(device)) throw new Error('Invalid viewport.');
-      next.sections[id][device] = {};
-      for (const [key,val] of Object.entries(style)) {
-        if (STYLE_BOUNDS[key]) { const [min,max]=STYLE_BOUNDS[key]; if (typeof val !== 'number' || !Number.isFinite(val) || val<min || val>max) throw new Error(`${key} must be between ${min} and ${max}.`); }
-        else if (key === 'font') { if (!['native','sans-serif','serif','monospace'].includes(val)) throw new Error('Invalid font.'); }
-        else if (key === 'align') { if (!['left','center','right'].includes(val)) throw new Error('Invalid alignment.'); }
-        else if (key === 'buttonStyle') { if (!['solid','outline','plain'].includes(val)) throw new Error('Invalid button style.'); }
-        else if (key === 'background') { if (!/^#[0-9a-f]{6}$/i.test(val)) throw new Error('Invalid background.'); }
-        else throw new Error('Unsupported style.');
-        next.sections[id][device][key] = val;
-      }
-    }
-  }
-  return next;
-}
+].map(([path,label]) => ({ path, label, coverage: path==='/community/:communityId'?'Published group selection · styles only':['/', '/community','/lab','/about','/volunteer'].includes(path) ? 'Local section editing' : 'Not connected in this slice' }));
 export function resolvedStyle(draft,id,device) { return { ...draft.sections[id]?.desktop, ...(device==='mobile' ? draft.sections[id]?.mobile : {}) }; }

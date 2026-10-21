@@ -27,8 +27,10 @@ export default function Section({
   // overrides from "text.about.mission.{eyebrow,title,subtitle}", falling
   // back to whatever's passed in as props above when nothing's been set.
   contentKey,
+  editorSettings,
 }) {
-  const settings = useSiteSettings();
+  const nativeSettings = useSiteSettings();
+  const settings = {...nativeSettings,...editorSettings};
   const isMobile = useIsMobile();
   const resolvedEyebrow = contentKey ? pickText(settings, `text.${contentKey}.eyebrow`, eyebrow) : eyebrow;
   const resolvedTitle = contentKey ? pickText(settings, `text.${contentKey}.title`, title) : title;
@@ -89,3 +91,4 @@ export default function Section({
     </section>
   );
 }
+

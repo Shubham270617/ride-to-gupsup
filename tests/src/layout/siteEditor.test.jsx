@@ -4,7 +4,7 @@ import SiteEditor from '../../../src/admin/site-editor/SiteEditor';
 import { EMPTY_DRAFT, validateDraft, resolvedStyle, HOME_SECTIONS } from '../../../src/admin/site-editor/catalog';
 afterEach(()=>{cleanup();localStorage.clear();});
 function select(id, source) {
-  const iframe=screen.getByTitle('Actual Home page canvas');
+  const iframe=screen.getByTitle('Actual page canvas');
   act(()=>window.dispatchEvent(new MessageEvent('message',{origin:window.location.origin,source:source||iframe.contentWindow,data:{channel:'rtg-local-canvas',type:'select',id}})));
 }
 describe('Home visual editor foundation',()=>{

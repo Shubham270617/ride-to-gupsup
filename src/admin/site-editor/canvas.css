@@ -3,8 +3,8 @@
 .cms-select{position:absolute;right:8px;top:8px;z-index:80;background:#21143c;color:#fff;border:1px solid #ff7b2c;border-radius:6px;padding:6px 10px;font:12px system-ui;cursor:pointer}
 .cms-select:focus-visible{outline:3px solid #ff7b2c;outline-offset:3px}
 .cms-native{pointer-events:none}
-.cms-section[style*="--cms-padding"] .cms-native>section{padding-top:var(--cms-padding);padding-bottom:var(--cms-padding)}
-.cms-section[style*="--cms-background"] .cms-native>section{background-color:var(--cms-background)}
+.cms-section[style*="--cms-padding"] .cms-native>:is(section,header){padding-top:var(--cms-padding);padding-bottom:var(--cms-padding)}
+.cms-section[style*="--cms-background"] .cms-native>:is(section,header){background-color:var(--cms-background)}
 .cms-section[style*="--cms-heading"] .cms-native :is(h1,h2,h3){font-size:var(--cms-heading)}
 .cms-section[style*="--cms-font"] .cms-native :is(h1,h2,h3,p){font-family:var(--cms-font)}
 .cms-section[style*="--cms-body"] .cms-native p{font-size:var(--cms-body)}

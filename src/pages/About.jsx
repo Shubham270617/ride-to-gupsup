@@ -16,22 +16,23 @@ import { StaggerGroup, StaggerItem } from "../components/ui/Reveal";
 
 const PILLAR_ICONS = { bike: Bike, footprints: Footprints, trophy: Trophy, flag: Flag, mountain: Mountain, coffee: Coffee };
 
-export default function About() {
-  const images = useSiteImages();
-  const settings = useSiteSettings();
+export default function About({ editor }) {
+  const nativeImages = useSiteImages(); const nativeSettings=useSiteSettings();
+  const images={...nativeImages,...editor?.images}; const settings={...nativeSettings,...editor?.settings};
+  const section=(id,child)=>editor?editor.section('about-'+id,child):child;
   const t = (key, fallback) => pickText(settings, key, fallback);
 
   return (
     <>
-      <PageHero
+      {section('hero', <PageHero
         image={images.aboutHero}
-        eyebrow="Our Story"
-        title="More Than Sport. A Community."
-        subtitle="RideTeaGupShup brings cyclists, runners and endurance enthusiasts together to move, connect, learn and create experiences worth remembering."
-      />
+        eyebrow={t('text.about.hero.eyebrow',"Our Story")}
+        title={t('text.about.hero.title',"More Than Sport. A Community.")}
+        subtitle={t('text.about.hero.subtitle',"RideTeaGupShup brings cyclists, runners and endurance enthusiasts together to move, connect, learn and create experiences worth remembering.")}
+      />)}
 
       {/* HOW IT STARTED */}
-      <Section contentKey="about.howItStarted" light eyebrow="Our Origin" title="How It Started" center={false}>
+      {section('howItStarted', <Section editorSettings={editor?.settings} contentKey="about.howItStarted" light eyebrow="Our Origin" title="How It Started" center={false}>
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <Reveal direction="right">
             <p className="text-rtg-mist text-lg leading-relaxed mb-6">
@@ -47,10 +48,10 @@ export default function About() {
             </div>
           </Reveal>
         </div>
-      </Section>
+      </Section>)}
 
       {/* WHY RTG EXISTS */}
-      <Section contentKey="about.whyExists" light eyebrow="Why We're Here" title="Why RTG Exists">
+      {section('whyExists', <Section editorSettings={editor?.settings} contentKey="about.whyExists" light eyebrow="Why We're Here" title="Why RTG Exists">
         <StaggerGroup className="grid sm:grid-cols-3 gap-6">
           {whyRtgExists.map((w) => (
             <StaggerItem key={w.title}>
@@ -61,10 +62,10 @@ export default function About() {
             </StaggerItem>
           ))}
         </StaggerGroup>
-      </Section>
+      </Section>)}
 
       {/* THE RTG JOURNEY — horizontal on desktop, vertical on mobile */}
-      <Section contentKey="about.journey" light eyebrow="How Far We've Come" title="The RTG Journey">
+      {section('journey', <Section editorSettings={editor?.settings} contentKey="about.journey" light eyebrow="How Far We've Come" title="The RTG Journey">
         {/* Desktop: horizontal */}
         <div className="hidden md:block relative">
           <div className="absolute top-[7px] left-0 right-0 h-px bg-white/10" />
@@ -98,10 +99,10 @@ export default function About() {
             </Reveal>
           ))}
         </div>
-      </Section>
+      </Section>)}
 
       {/* MISSION & VISION */}
-      <Section contentKey="about.missionVision" light eyebrow="What Drives Us" title="Mission & Vision">
+      {section('missionVision', <Section editorSettings={editor?.settings} contentKey="about.missionVision" light eyebrow="What Drives Us" title="Mission & Vision">
         <div className="grid md:grid-cols-2 gap-6">
           <Reveal>
             <GlassCard className="h-full">
@@ -122,10 +123,10 @@ export default function About() {
             </GlassCard>
           </Reveal>
         </div>
-      </Section>
+      </Section>)}
 
       {/* HOW WE BRING THE COMMUNITY TOGETHER */}
-      <Section contentKey="about.howWeBring" light eyebrow="What We Offer" title="How We Bring the Community Together">
+      {section('howWeBring', <Section editorSettings={editor?.settings} contentKey="about.howWeBring" light eyebrow="What We Offer" title="How We Bring the Community Together">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {communityPillars.map((p) => {
             const Icon = PILLAR_ICONS[p.icon];
@@ -140,10 +141,10 @@ export default function About() {
             );
           })}
         </StaggerGroup>
-      </Section>
+      </Section>)}
 
       {/* CORE VALUES */}
-      <Section contentKey="about.coreValues" light eyebrow="What We Stand For" title="Our Core Values">
+      {section('coreValues', <Section editorSettings={editor?.settings} contentKey="about.coreValues" light eyebrow="What We Stand For" title="Our Core Values">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {coreValues.map((v) => (
             <StaggerItem key={v.title}>
@@ -154,10 +155,10 @@ export default function About() {
             </StaggerItem>
           ))}
         </StaggerGroup>
-      </Section>
+      </Section>)}
 
       {/* RTG IN MOTION */}
-      <Section contentKey="about.motion" light eyebrow="RTG in Motion" title="Where We Stand Today">
+      {section('motion', <Section editorSettings={editor?.settings} contentKey="about.motion" light eyebrow="RTG in Motion" title="Where We Stand Today">
         <StaggerGroup className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {rtgInMotion.map((m) => (
             <StaggerItem key={m.key}>
@@ -170,10 +171,10 @@ export default function About() {
             </StaggerItem>
           ))}
         </StaggerGroup>
-      </Section>
+      </Section>)}
 
       {/* THE ROAD AHEAD */}
-      <Section contentKey="about.roadAhead" light eyebrow="What's Coming" title="The Road Ahead">
+      {section('roadAhead', <Section editorSettings={editor?.settings} contentKey="about.roadAhead" light eyebrow="What's Coming" title="The Road Ahead">
         <Reveal className="text-center">
           <p className="text-rtg-mist text-lg leading-relaxed max-w-2xl mx-auto">
             {t(
@@ -182,7 +183,8 @@ export default function About() {
             )}
           </p>
         </Reveal>
-      </Section>
+      </Section>)}
     </>
   );
 }
+

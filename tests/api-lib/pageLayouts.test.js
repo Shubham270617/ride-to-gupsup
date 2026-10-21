@@ -20,3 +20,35 @@ describe('page layout security and revision boundary', () => {
  it('returns a conflict for stale revision, no fabricated success', async () => { db.rpc.mockResolvedValue({error:{message:'revision_conflict'}}); expect((await call({body:{pageKey:'ridge',action:'publish',expectedRevision:1}})).statusCode).toBe(409); });
  it('returns failure without leaking database errors', async () => { db.rpc.mockResolvedValue({error:{message:'secret schema details'}}); const res=await call({body:{pageKey:'ridge',action:'publish',expectedRevision:1}}); expect(res.statusCode).toBe(503); expect(JSON.stringify(res.body)).not.toContain('secret'); });
 });
+
+
+it('sitewide drafts reject publication and public reads without querying data',async()=>{
+ for(const options of [{body:{pageKey:'site/home',action:'publish',expectedRevision:1}},{method:'GET',query:{pageKey:'site/home',action:'published'}}])expect((await call(options)).statusCode).toBe(400);
+ expect(db.from).not.toHaveBeenCalled();expect(db.rpc).not.toHaveBeenCalled();
+});
+it('sitewide envelopes bind to page keys and reuse verified owner authorization',async()=>{
+ const {wrapDraft,emptyDraft}=await import('../../src/lib/siteEditor/schema.js');const document=wrapDraft(emptyDraft('/community'));db.rpc.mockResolvedValue({data:{revision:1}});
+ expect((await call({body:{pageKey:'site/home',action:'save',expectedRevision:0,document}})).statusCode).toBe(400);
+ expect((await call({body:{pageKey:'site/community',action:'save',expectedRevision:0,document}})).statusCode).toBe(200);
+ expect(db.rpc).toHaveBeenCalledWith('rtg_write_site_draft',{p_page_key:'site/community',p_expected_revision:0,p_document:document,p_actor:'approved-admin'});
+});
+it.each([
+ ['site/volunteer','/volunteer',{text:{'text.volunteer.applications.open':'true'}}],
+ ['site/volunteer','/volunteer',{text:{'text.volunteer.roles.payment':'Guaranteed stipend'}}],
+ ['site/volunteer','/volunteer',{text:{'role.record.title':'changed'}}],
+ ['site/about','/about',{text:{'text.about.motion.members':'9000'}}],
+ ['site/home','/',{sections:{navigation:{desktop:{headingSize:70}}}}],
+ ['site/home','/',{sections:{join:{desktop:{headingSize:70}}}}],
+ ['site/home','/',{text:{'rider.result':'999'}}],
+ ['site/community/11111111-1111-4111-8111-111111111111','/community/11111111-1111-4111-8111-111111111111',{text:{'group.contact_person':'changed'}}],
+])('rejects forbidden record/chrome fields server-side for %s',async(pageKey,page,overrides)=>{
+ const {wrapDraft,emptyDraft}=await import('../../src/lib/siteEditor/schema.js');const document=wrapDraft(emptyDraft(page));Object.assign(document.sections[0].content,overrides);
+ expect((await call({body:{pageKey,action:'save',expectedRevision:0,document}})).statusCode).toBe(400);expect(db.rpc).not.toHaveBeenCalled();
+});
+it.each(['/about','/volunteer'])('saves approved per-page copy through the same RPC for %s',async page=>{
+ const {wrapDraft,emptyDraft}=await import('../../src/lib/siteEditor/schema.js');const document=wrapDraft({...emptyDraft(page),text:{[page==='/about'?'text.about.hero.title':'text.volunteer.hero.titleAccent']:'Review'}});db.rpc.mockResolvedValue({data:{revision:1}});
+ expect((await call({body:{pageKey:'site'+page,action:'save',expectedRevision:0,document}})).statusCode).toBe(200);expect(db.rpc).toHaveBeenCalledWith('rtg_write_site_draft',expect.objectContaining({p_actor:'approved-admin',p_document:document}));
+});
+it.each(['/about','/volunteer'])('preserves owner allowlist for %s',async page=>{
+ requireAdmin.mockResolvedValue({ok:true,user:{id:'unapproved-admin'},supabaseAdmin:db});expect((await call({body:{pageKey:'site'+page,action:'save',expectedRevision:0}})).statusCode).toBe(403);expect(db.rpc).not.toHaveBeenCalled();
+});

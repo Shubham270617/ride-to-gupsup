@@ -1,6 +1,6 @@
 import { validateLayout } from './model';
 // Caller injects a session-token reader. No service keys enter the browser.
-export function createLayoutStore({ getAccessToken, fetcher = fetch, endpoint = '/api/admin/page-layouts', requestTimeoutMs = 20000 }) {
+export function createLayoutStore({ getAccessToken, fetcher = fetch, endpoint = '/api/admin/page-layouts', requestTimeoutMs = 20000, validateDocument = validateLayout }) {
   async function request(action, pageKey, payload) {
     const read = ['draft', 'published'].includes(action);
     const controller = new AbortController();
@@ -30,7 +30,8 @@ export function createLayoutStore({ getAccessToken, fetcher = fetch, endpoint = 
       });
       const body = await response.json();
       if (!response.ok) { const error = new Error(body.error === 'revision_conflict' ? 'This page changed elsewhere. Reload before saving.' : body.error || 'Layout request failed.'); error.status = response.status; throw error; }
-      if (body.layout?.document) body.layout.document = validateLayout(body.layout.document);
+      if (body.layout && body.layout.page_key !== pageKey) throw new Error('Response belongs to another page.');
+      if (body.layout?.document) body.layout.document = validateDocument(body.layout.document);
       return body.layout;
     };
     try { return await Promise.race([operation(), timeout]); }
@@ -43,5 +44,6 @@ export function createLayoutStore({ getAccessToken, fetcher = fetch, endpoint = 
       throw error;
     } finally { clearTimeout(timer); }
   }
-  return { loadDraft: pageKey => request('draft', pageKey), loadPublished: pageKey => request('published', pageKey), saveDraft: (pageKey, document, expectedRevision) => request('save', pageKey, { document: validateLayout(document), expectedRevision }), publish: (pageKey, expectedRevision) => request('publish', pageKey, { expectedRevision }) };
+  return { loadDraft: pageKey => request('draft', pageKey), loadPublished: pageKey => request('published', pageKey), saveDraft: (pageKey, document, expectedRevision) => request('save', pageKey, { document: validateDocument(document), expectedRevision }), publish: (pageKey, expectedRevision) => request('publish', pageKey, { expectedRevision }) };
 }
+

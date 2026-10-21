@@ -144,8 +144,10 @@ function StravaRewardPeriods({ copy }) {
       )}</>;
 }
 
-export default function Lab() {
-  const settings = useSiteSettings();
+export default function Lab({ editor }) {
+  const nativeSettings = useSiteSettings();
+  const settings = useMemo(()=>({...nativeSettings,...editor?.settings}),[nativeSettings,editor?.settings]);
+  const section = (id,child)=>editor?editor.section('lab-'+id,child):child;
   const copy = useMemo(() => launchLabCopy(buildLabCopy(settings)), [settings]);
   const { items: allLabs } = useLabProgrammes();
   const labs = visibleLabProgrammes(allLabs);
@@ -159,7 +161,7 @@ export default function Lab() {
     <div className="rtg-lab">
       <LabBackdrop />
 
-      <section className="hero shell" aria-labelledby="lab-hero-title">
+      {section('hero', <section className="hero shell" aria-labelledby="lab-hero-title">
         <div className="hero-copy">
           <div className="eyebrow">
             <i /> {copy.heroEyebrow}
@@ -213,11 +215,11 @@ export default function Lab() {
           </div>
           <div className="visual-label">{copy.visualLabel}</div>
         </div>
-      </section>
+      </section>)}
 
       {STRAVA_ENABLED && <StravaRewardPeriods copy={copy} />}
 
-      <section className="shell labs-section" id="labs">
+      {section('labs', <section className="shell labs-section" id="labs">
         <div className="section-heading">
           <div>
             <div className="eyebrow">{copy.labsEyebrow}</div>
@@ -244,9 +246,9 @@ export default function Lab() {
           </div>
           <span className="future-note">{copy.futureNote}</span>
         </div>
-      </section>
+      </section>)}
 
-      <section className="shell principles">
+      {section('principles', <section className="shell principles">
         <div>
           <div className="eyebrow">{copy.principlesEyebrow}</div>
           <h2>
@@ -262,7 +264,7 @@ export default function Lab() {
             <p>{item.text}</p>
           </article>
         ))}
-      </section>
+      </section>)}
 
       <LabDialog open={Boolean(info)} onClose={() => setInfo(null)} labelledBy="lab-info-title">
         {info && (
@@ -284,4 +286,5 @@ export default function Lab() {
     </div>
   );
 }
+
 

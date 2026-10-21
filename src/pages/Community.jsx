@@ -960,10 +960,13 @@ function Cities({ copy, cities, moments }) {
   );
 }
 
-export default function Community() {
-  const settings = useSiteSettings();
+export default function Community({ editor }) {
+  const nativeSettings = useSiteSettings();
+  const settings = useMemo(()=>({...nativeSettings,...editor?.settings}),[nativeSettings,editor?.settings]);
+  const section = (id,child)=>editor?editor.section('community-'+id,child):child;
   const copy = useMemo(() => buildCommunityPageCopy(settings), [settings]);
-  const images = useSiteImages();
+  const nativeImages = useSiteImages();
+  const images = {...nativeImages,...editor?.images};
   const paths = useCommunityPaths();
   const principles = useCommunityPrinciples();
   const milestones = useCommunityMilestones();
@@ -974,13 +977,14 @@ export default function Community() {
 
   return (
     <div className="rtg-com">
-      <Hero copy={copy} image={images.communityHero} />
-      <FindYourPlace copy={copy} paths={paths} />
-      <RtgWay copy={copy} principles={principles} image={images.communityWay} />
-      <InMotion copy={copy} milestones={milestones} />
-      <Network copy={copy} groups={networkGroups} pins={networkPins} mapImage={images.communityIndiaMap} />
-      <Cities copy={copy} cities={cities} moments={cityMoments} />
+      {section('hero', <Hero copy={copy} image={images.communityHero} />)}
+      {section('place', <FindYourPlace copy={copy} paths={paths} />)}
+      {section('way', <RtgWay copy={copy} principles={principles} image={images.communityWay} />)}
+      {section('motion', <InMotion copy={copy} milestones={milestones} />)}
+      {section('network', <Network copy={copy} groups={networkGroups} pins={networkPins} mapImage={images.communityIndiaMap} />)}
+      {section('cities', <Cities copy={copy} cities={cities} moments={cityMoments} />)}
     </div>
   );
 }
+
 

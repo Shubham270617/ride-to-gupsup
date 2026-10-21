@@ -63,3 +63,16 @@ export function useCommunityDetail(id) {
   // Never render the previous community while a new route is loading.
   return { ...(state.id === id ? state : { loading: true }), retry: () => setAttempt((n) => n + 1) };
 }
+
+
+// Selector uses only actual published IDs and names; never static placeholders.
+export function usePublishedCommunityChoices() {
+ const [state,setState]=useState({items:[],loading:true,error:null});
+ useEffect(()=>{let cancelled=false;
+  if(!isSupabaseConfigured){setState({items:[],loading:false,error:'Community selection needs the existing configured client.'});return;}
+  Promise.resolve(supabase.from('community_network_groups').select('id,name').eq('published',true).order('name',{ascending:true}))
+   .then(({data,error})=>{if(!cancelled)setState({items:error?[]:(data||[]).filter(row=>UUID.test(row.id)),loading:false,error:error?'Published communities could not be loaded.':null});})
+   .catch(()=>{if(!cancelled)setState({items:[],loading:false,error:'Published communities could not be loaded.'});});
+  return()=>{cancelled=true;};
+ },[]);return state;
+}

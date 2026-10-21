@@ -4,7 +4,9 @@ import { volunteerRoles, VOLUNTEER_TEAMS, VOLUNTEER_COMMITMENTS, filterVolunteer
 import "../components/volunteer/volunteer.css";
 
 // No network submissions: this phase deliberately leaves recruitment closed.
-export default function Volunteer({ roles = volunteerRoles }) {
+export default function Volunteer({ roles = volunteerRoles, editor }) {
+  const t=(key,fallback)=>editor?.settings?.[key]??fallback;
+  const section=(id,child)=>editor?editor.section('volunteer-'+id,child):child;
   const [params, setParams] = useSearchParams();
   const team = VOLUNTEER_TEAMS.includes(params.get("team")) ? params.get("team") : "All";
   const commitment = VOLUNTEER_COMMITMENTS.includes(params.get("commitment")) ? params.get("commitment") : "All";
@@ -21,21 +23,21 @@ export default function Volunteer({ roles = volunteerRoles }) {
   }
   return (
     <main className="rtg-crew">
-      <section className="rtg-crew-hero" aria-labelledby="crew-title">
+      {section('hero', <section className="rtg-crew-hero" aria-labelledby="crew-title">
         <div className="rtg-crew-wrap">
-          <p className="rtg-crew-eyebrow">RIDE · TEA · GUPSHUP / CREW</p>
-          <h1 id="crew-title">Make the <span>movement</span> happen.</h1>
-          <p>Find your place behind the movement. Explore community support, creative roles and learning opportunities with RTG.</p>
-          <a className="rtg-crew-button" href="#crew-opportunities">Explore the roles <span aria-hidden="true">↗</span></a>
+          <p className="rtg-crew-eyebrow">{t("text.volunteer.hero.eyebrow","RIDE · TEA · GUPSHUP / CREW")}</p>
+          <h1 id="crew-title">{t("text.volunteer.hero.titleBefore","Make the ")}<span>{t("text.volunteer.hero.titleAccent","movement")}</span>{t("text.volunteer.hero.titleAfter"," happen.")}</h1>
+          <p>{t("text.volunteer.hero.intro","Find your place behind the movement. Explore community support, creative roles and learning opportunities with RTG.")}</p>
+          <a className="rtg-crew-button" href="#crew-opportunities">{t("text.volunteer.hero.buttonLabel","Explore the roles ")}<span aria-hidden="true">↗</span></a>
           <div className="rtg-crew-notice" role="note">
             <strong>Role preview · applications are not open yet.</strong>
             <p>These roles are being prepared. Availability, responsibilities, schedules, team leads and any payment terms must be confirmed by RTG before recruitment opens. No place or paid assignment is offered here.</p>
           </div>
         </div>
-      </section>
-      <section id="crew-opportunities" className="rtg-crew-wrap rtg-crew-section" aria-labelledby="crew-roles-title">
-        <p className="rtg-crew-eyebrow">FIND YOUR PLACE</p>
-        <h2 id="crew-roles-title">Different skills. <span>One community.</span></h2>
+      </section>)}
+      {section('roles', <section id="crew-opportunities" className="rtg-crew-wrap rtg-crew-section" aria-labelledby="crew-roles-title">
+        <p className="rtg-crew-eyebrow">{t("text.volunteer.roles.eyebrow","FIND YOUR PLACE")}</p>
+        <h2 id="crew-roles-title">{t("text.volunteer.roles.title","Different skills. ")}<span>{t("text.volunteer.roles.accent","One community.")}</span></h2>
         <div className="rtg-crew-filters">
           <label>Search roles<input type="search" value={search} placeholder="Try timing, photography or design" onChange={e => update("q", e.target.value, true)} /></label>
           <label>Team<select value={team} onChange={e => update("team", e.target.value)}><option>All</option>{VOLUNTEER_TEAMS.map(value => <option key={value}>{value}</option>)}</select></label>
@@ -60,12 +62,13 @@ export default function Volunteer({ roles = volunteerRoles }) {
           <div className="rtg-crew-tags">{role.plans.map(plan => <span key={plan}>{plan}</span>)}</div>
           <button type="button" aria-expanded={selected?.id === role.id} aria-label={`View ${role.title}`} onClick={() => update("role", role.id)}>Explore role <span aria-hidden="true">↗</span></button>
         </article>)}</div> : <div className="rtg-crew-empty"><h3>No roles match those filters.</h3><p>Try another team or commitment, or clear your search.</p><button className="rtg-crew-button" type="button" onClick={() => setParams({})}>Clear filters</button></div>}
-      </section>
-      <section className="rtg-crew-journey" aria-labelledby="crew-journey-title"><div className="rtg-crew-wrap">
-        <p className="rtg-crew-eyebrow">LEARN BY CONTRIBUTING</p><h2 id="crew-journey-title">A journey, not just a shift.</h2>
+      </section>)}
+      {section('journey', <section className="rtg-crew-journey" aria-labelledby="crew-journey-title"><div className="rtg-crew-wrap">
+        <p className="rtg-crew-eyebrow">{t("text.volunteer.journey.eyebrow","LEARN BY CONTRIBUTING")}</p><h2 id="crew-journey-title">{t("text.volunteer.journey.title","A journey, not just a shift.")}</h2>
         <p>The reference programme includes three- and six-month internship pathways. Scope, supervision, learning goals and any stipend will be agreed before someone joins. Exploring a role does not reserve a place.</p>
-        <Link to="/community" className="rtg-crew-button">Meet the RTG community ↗</Link>
-      </div></section>
+        <Link to="/community" className="rtg-crew-button">{t("text.volunteer.journey.buttonLabel","Meet the RTG community ↗")}</Link>
+      </div></section>)}
     </main>
   );
 }
+

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoute';
-const SiteEditor = lazy(() => import('./SiteEditor'));
+const SiteEditor = lazy(() => import('./MultiPageEditor'));
 const HomeCanvas = lazy(() => import('./HomeCanvas'));
 // Keep these surfaces outside App: no visit tracking, welcome email, chat or cart side effects.
 export default function EditorEntry({ children }) {
