@@ -14,7 +14,7 @@ const handler=createTimingCodeHandler({getDb:()=>adapter,authorize:async()=>({ok
 const api=async body=>{const res=mockRes();await handler(mockReq({method:'POST',headers:{origin,...(cookie?{cookie}:{})},body}),res);return res;};
 beforeAll(async()=>{
  db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select null::uuid$$;create table admin_profiles(id uuid primary key);insert into admin_profiles values('${owner}');create table lab_registrations(user_id uuid,programme_slug text);create function is_admin() returns boolean language sql as $$select false$$;grant usage on schema auth,public to service_role,authenticated,anon;grant select on admin_profiles,auth.users to service_role;`);
- for(const p of ['migrations/20261020211425_native_ridge_workspace.sql','migrations/20261021152152_ridge_volunteer_timing_access.sql','proposals/volunteer-testing-dates.sql','proposals/timing-code-access.sql','proposals/session-timing-codes.sql'])await db.exec(sql(p));
+ for(const p of ['migrations/20261020211425_native_ridge_workspace.sql','migrations/20261021152152_ridge_volunteer_timing_access.sql','migrations/20261021170333_ridge_scoped_code_access_and_testing_dates.sql','migrations/20261021174900_session_timing_codes.sql'])await db.exec(sql(p));
  await db.query('update ridge_workspace set state=$1,version=0',[state]);await db.exec('set role service_role');
  vi.stubEnv('RTG_TIMING_CODES_ENABLED','true');vi.stubEnv('RTG_TIMING_CODE_ORIGIN',origin);vi.stubEnv('RTG_TIMING_CODE_PEPPER',pepper);vi.stubEnv('RTG_LAYOUT_EDITOR_ADMIN_IDS',owner);
 },20000);
