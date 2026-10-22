@@ -204,7 +204,7 @@ describe("per-section text (Admin -> Appearance)", () => {
   });
 
   it("every public font size follows the section factor", () => {
-    for (const file of ["src/index.css", "src/styles/lab.css"]) {
+    for (const file of ["src/index.css", "src/styles/lab.css", "src/styles/community-detail.css", "src/components/volunteer/volunteer.css", "src/components/lab/ridgeIntro.css"]) {
       const sizes = [...read(file).matchAll(/font-size\s*:\s*([^;}]*)/g)].map((m) => m[1].trim());
       const fixed = sizes.filter((v) => /(rem|px|vw)\b/.test(v) && !v.includes("--rtg-sec") && !v.includes("--rtg-text-scale"));
       expect(fixed, file).toEqual([]);
