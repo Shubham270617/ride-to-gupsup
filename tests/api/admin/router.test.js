@@ -92,7 +92,7 @@ describe("path-preserving consolidated admin dispatcher", () => {
 describe("deployment shape", () => {
   it("has exactly 12 functions, with admin implementation outside api", () => {
     const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walk(path.join(dir, entry.name)) : entry.name.endsWith(".js") ? [path.join(dir, entry.name)] : []);
-    const files = walk("api");
+    const files = walk("api").map((file) => file.split(path.sep).join("/")); // same on Windows
     expect(files).toHaveLength(12);
     expect(files.filter(file => file.startsWith("api/admin/"))).toEqual(["api/admin/[adminRoute].js"]);
   });
