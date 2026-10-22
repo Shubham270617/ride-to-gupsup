@@ -20,7 +20,10 @@ export const HOME_SECTIONS = [
   { id: 'navigation', label: 'Shared navigation', fields: [], readOnly: true, resolve: () => ({}) },
 ];
 export const COMMUNITY_SECTIONS = ['hero','place','way','motion','network','cities'].map(id=>({...group('community-'+id,({hero:'Community hero',place:'Find Your Place',way:'The RTG Way',motion:'RTG in Motion',network:'Community network',cities:'Community cities'})[id],content.COMMUNITY_PAGE_FIELDS.filter(f=>f.group===id),content.communityPageKey,content.buildCommunityPageCopy),imageKey:({hero:'communityHero',way:'communityWay',network:'communityIndiaMap'})[id]}));
-export const LAB_SECTIONS = ['hero','labs','principles'].map(id=>group('lab-'+id,({hero:'Lab introduction',labs:'Lab programmes',principles:'Lab principles'})[id],LAB_PAGE_TEXT.filter(f=>f.group===id),labPageKey,s=>buildLabCopy(s)));
+// Lab fields the editor leaves alone, matching the server allowlist in
+// api-lib/pageLayouts.js. Edit them in Admin -> Site Content instead.
+const lockedLab = new Set(['heroText','heroNotes','coreBottom','labsTitle','labsTitleAccent','labsText','aboutBody','futureTitle','futureText','futureNote']);
+export const LAB_SECTIONS = ['hero','labs','principles'].map(id=>group('lab-'+id,({hero:'Lab introduction',labs:'Lab programmes',principles:'Lab principles'})[id],LAB_PAGE_TEXT.filter(f=>f.group===id&&!lockedLab.has(f.field)),labPageKey,s=>buildLabCopy(s)));
 export const DETAIL_SECTIONS = ['intro','about','join','activities'].map(id=>({id:'detail-'+id,label:({intro:'Community identity',about:'About this community',join:'Joining information',activities:'Published activities'})[id],fields:[],resolve:()=>({})}));
 export function sectionsFor(page='/') { return [...(page==='/about'?ABOUT_SECTIONS:page==='/volunteer'?VOLUNTEER_SECTIONS:isCommunityDetail(page)?DETAIL_SECTIONS:page==='/community'?COMMUNITY_SECTIONS:page==='/lab'?LAB_SECTIONS:HOME_SECTIONS.filter(s=>!s.readOnly)),...HOME_SECTIONS.filter(s=>s.readOnly)]; }
 export const HERO_SLIDES = heroSlides;

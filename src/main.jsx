@@ -6,6 +6,7 @@ import "./styles/lab.css";
 import App from "./App.jsx";
 import EditorEntry from "./admin/site-editor/EditorEntry";
 import { applyCachedAppearance } from "./lib/appearance";
+import { SITE_EDITOR_READY } from "./lib/features";
 
 // Replays the admin's last-known text size/font/colour before the first
 // paint, so the saved appearance doesn't visibly snap into place once the
@@ -15,7 +16,7 @@ applyCachedAppearance();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <EditorEntry><App /></EditorEntry>
+      {SITE_EDITOR_READY ? <EditorEntry><App /></EditorEntry> : <App />}
     </BrowserRouter>
   </StrictMode>
 );

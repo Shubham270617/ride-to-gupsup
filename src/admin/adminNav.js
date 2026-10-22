@@ -1,5 +1,6 @@
 // The admin menu: every screen, its group and icon. Used by the sidebar
 // (AdminLayout.jsx) and by each page header (AdminPageHeader.jsx).
+import { SITE_EDITOR_READY } from "../lib/features";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -136,8 +137,12 @@ export const groups = [
       { to: "/admin/site-images", label: "Site Photos", icon: ImageIcon },
       { to: "/admin/site-content", label: "Site Content", icon: FileText },
       { to: "/admin/appearance", label: "Appearance", icon: Palette },
-      { to: "/admin/layout-studio", label: "Layout Studio (draft)", icon: Palette },
-      { to: "/admin/site-editor", label: "Site visual editor (local draft)", icon: Palette },
+      ...(SITE_EDITOR_READY
+        ? [
+            { to: "/admin/layout-studio", label: "Layout Studio (draft)", icon: Palette },
+            { to: "/admin/site-editor", label: "Site visual editor (local draft)", icon: Palette },
+          ]
+        : []),
       { to: "/admin/footer-links", label: "Footer Links", icon: FileText },
       { to: "/admin/faqs", label: "FAQ", icon: HelpCircle },
       { to: "/admin/general-safety", label: "General Safety", icon: ShieldAlert },

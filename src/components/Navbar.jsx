@@ -19,6 +19,7 @@ import useMyAvatar from "../lib/useMyAvatar";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
+import { FEATURE_KEYS, useFeature } from "../lib/features";
 
 /* =========================================================
    NAVIGATION LINKS
@@ -278,6 +279,9 @@ function HiddenAdminLink({ className = "" }) {
 
 export default function Navbar() {
   const images = useSiteImages();
+  // "Volunteer" only while the RTG Crew page is switched on (Admin -> Volunteer roles).
+  const volunteerOn = useFeature(FEATURE_KEYS.volunteer).on;
+  const shownLinks = links.filter((link) => link.to !== "/volunteer" || volunteerOn);
 
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -401,7 +405,7 @@ export default function Navbar() {
             mr-6
           "
         >
-          {links.map((link) => (
+          {shownLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -590,7 +594,7 @@ export default function Navbar() {
             >
               {/* Navigation links */}
 
-              {links.map((link) => (
+              {shownLinks.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}

@@ -17,6 +17,8 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
 import Volunteer from "./pages/ConnectedVolunteer";
+import FeatureGate from "./components/FeatureGate";
+import { FEATURE_KEYS, SITE_EDITOR_READY } from "./lib/features";
 import CommunityDetail from "./pages/CommunityDetail";
 import WeeklyRides from "./pages/WeeklyRides";
 import WeeklySessionDetail from "./pages/WeeklySessionDetail";
@@ -60,7 +62,7 @@ const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
 const RidgeImportPreview = lazy(() => import("./admin/pages/RidgeImportPreview"));
 const RidgeAdmin = lazy(() => import("./admin/pages/RidgeAdmin"));
-const VolunteerAdmin = lazy(() => import("./admin/pages/VolunteerAdmin"));
+const VolunteerAdmin = lazy(() => import("./admin/pages/VolunteerRolesAdmin"));
 const LayoutStudioAdmin = lazy(() => import("./admin/pages/ConnectedLayoutStudioAdmin"));
 const AppearanceAdmin = lazy(() => import("./admin/pages/AppearanceAdmin"));
 const MessagesAdmin = lazy(() => import("./admin/pages/MessagesAdmin"));
@@ -191,8 +193,8 @@ export default function App() {
           <Route path="site-images" element={<SiteImagesAdmin />} />
           <Route path="site-content" element={<SiteContentAdmin />} />
           <Route path="appearance" element={<AppearanceAdmin />} />
-          <Route path="layout-studio" element={<LayoutStudioAdmin />} />
-          <Route path="volunteer" element={<VolunteerAdmin persistenceEnabled />} />
+          {SITE_EDITOR_READY && <Route path="layout-studio" element={<LayoutStudioAdmin />} />}
+          <Route path="volunteer" element={<VolunteerAdmin />} />
           <Route path="messages" element={<MessagesAdmin />} />
           <Route path="orders" element={<OrdersAdmin />} />
           <Route path="ai" element={<AiAdmin />} />
@@ -204,7 +206,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/community" element={<Community />} />
-          <Route path="/volunteer" element={<Volunteer />} />
+          <Route path="/volunteer" element={<FeatureGate feature={FEATURE_KEYS.volunteer}><Volunteer /></FeatureGate>} />
           <Route path="/community/:communityId" element={<CommunityDetail />} />
           <Route path="/weekly-rides" element={<WeeklyRides />} />
           <Route path="/weekly-rides/:slug" element={<WeeklySessionDetail />} />
