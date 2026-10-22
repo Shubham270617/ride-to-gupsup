@@ -19,9 +19,10 @@ const MAX_ADMIN_SEATS = 3;
 // their contact info, when they last logged in, and whether they currently
 // have admin access.
 //
-// Admin access requires an existing admin_profiles membership. Login only
-// confirms that membership; it never creates it. The database retains its
-// three-seat limit. Revocation does not allow automatic re-enrolment.
+// Admin access is 3 seats (admin_profiles rows): the first 3 people to sign
+// in at /admin/login take them (api/auth/claim-bootstrap-admin.js), and the
+// database refuses a 4th (the admin_seat_cap trigger). Revoking an admin
+// here frees their seat for the next person who signs in there.
 export default function AdminsAdmin() {
   const { user } = useAdminSession();
   const confirm = useConfirm();
@@ -179,8 +180,8 @@ export default function AdminsAdmin() {
       />
 
       {/* ---------------------------------------------------------------
-          Existing admin memberships and the database's three-seat limit.
-          Vacancies require separately approved provisioning, not signup.
+          The 3 admin seats. A seat is taken by signing in at /admin/login
+          while one is free; revoking an admin frees theirs.
           --------------------------------------------------------------- */}
       <div className="glass rounded-2xl p-5 mb-8 max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
@@ -193,8 +194,8 @@ export default function AdminsAdmin() {
         </div>
         <p className="text-rtg-mist text-xs mb-4">
           {seatsUsed < MAX_ADMIN_SEATS
-            ? `${MAX_ADMIN_SEATS - seatsUsed} vacant seat${MAX_ADMIN_SEATS - seatsUsed === 1 ? "" : "s"}. New access requires separately approved provisioning; signup and login do not grant admin access.`
-            : "All seats are in use. Revoking access does not automatically authorise another account."}
+            ? `${MAX_ADMIN_SEATS - seatsUsed} seat${MAX_ADMIN_SEATS - seatsUsed === 1 ? " is" : "s are"} free — the next person to sign in at /admin/login becomes an admin.`
+            : "All seats are taken. Revoke an admin below to free a seat for the next person who signs in at /admin/login."}
         </p>
 
         <ul className="flex flex-col gap-2">
@@ -210,7 +211,7 @@ export default function AdminsAdmin() {
           ))}
           {Array.from({ length: Math.max(0, MAX_ADMIN_SEATS - seatsUsed) }, (_, i) => (
             <li key={`free-${i}`} className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 px-4 py-2.5 text-sm text-rtg-mist">
-              <ShieldAlert size={14} className="shrink-0" /> Vacant — approval required
+              <ShieldAlert size={14} className="shrink-0" /> Free seat
             </li>
           ))}
         </ul>
@@ -294,4 +295,3 @@ export default function AdminsAdmin() {
     </div>
   );
 }
-

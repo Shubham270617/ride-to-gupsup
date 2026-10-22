@@ -104,11 +104,11 @@ export default function AdminLogin() {
         setFullName("");
         if (!data.session) {
           // Only when Supabase's "Confirm email" setting is on.
-          setNotice("Account created. Confirm your email from the link Supabase sent. Creating an account does not grant admin access; access must be arranged separately.");
+          setNotice("Account created. Confirm your email from the link Supabase sent, then log in here to take a free admin seat.");
           switchMode("login");
           return;
         }
-        // Signed in straight away — confirm existing admin membership only.
+        // Signed in straight away — take a seat now if one is free.
         const claim = await claimBootstrapAdmin();
         if (!claim.granted) {
           await supabase.auth.signOut();
@@ -116,7 +116,7 @@ export default function AdminLogin() {
           setError(
             claim.reason === "request_failed"
               ? "Couldn't reach the server to check admin status — on a local dev server, run `vercel dev` instead of `vite`, or try this on the live site."
-              : claim.message || "This account does not have admin access."
+              : claim.message || "Couldn't give this account admin access."
           );
           return;
         }
@@ -131,8 +131,8 @@ export default function AdminLogin() {
       if (signInError) throw signInError;
 
       // The server decides, not this page. api/auth/claim-bootstrap-admin
-      // confirms existing admin membership only. Signing in or creating an
-      // account never grants access, even when an admin seat is vacant.
+      // lets an existing admin in, gives a free seat to anyone else while
+      // fewer than 3 admins exist, and refuses with "seats_full" after that.
       // The dashboard itself is protected independently by RLS (is_admin()),
       // so this branch is about showing an honest message.
       const { granted, reason, message } = await claimBootstrapAdmin();
@@ -222,14 +222,14 @@ export default function AdminLogin() {
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-rtg-orange-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-rtg-orange-600">
             <ShieldCheck size={12} /> Staff only
           </p>
-          <h1 className="font-display text-4xl leading-none mb-2">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+          <h1 className="font-display text-4xl leading-none mb-2">{mode === "login" ? "Welcome back" : "Create your admin login"}</h1>
           <p className="text-rtg-mist text-sm mb-7">Manage RTG's events, gallery, store, and more.</p>
 
           {notAuthorized && (
             <div className="mb-6 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3">
               <p className="text-sm font-semibold text-rtg-orange-600">Access denied</p>
               <p className="text-xs text-rtg-mist mt-1">
-                You're signed in, but that account does not have admin access. Use an existing authorised admin account or ask an administrator to arrange access.
+                You're signed in, but that account isn't one of the 3 admins. Log in again here to take a seat if one is free.
               </p>
             </div>
           )}
@@ -366,4 +366,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-
