@@ -1,11 +1,15 @@
 import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
-import { advanceStravaBackfill } from "../../api-lib/stravaSync.js";
+import { advanceStravaBackfill, syncNewActivities } from "../../api-lib/stravaSync.js";
 
 // How many members to pick up in a single invocation. The job only runs
 // once a day (Vercel Hobby), so it takes a generous batch; the time budget
 // below still stops it cleanly, and anyone it doesn't reach waits for the
 // next run — their watermarks mean nothing is lost by waiting.
 const MEMBERS_PER_RUN = 25;
+
+// Members whose history is complete, checked for new rides in the same run
+// (about one Strava request each when nothing is new).
+const NEW_ACTIVITY_MEMBERS_PER_RUN = 60;
 
 // Leave headroom before the platform kills the function. Every page is
 // committed to the watermark as it lands, so being cut off early is safe —
@@ -91,5 +95,32 @@ export default async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ processed: results.length, results });
+  // Then, with the time left: new rides for members whose history is
+  // complete. The walk above never looks at them again, so without this a
+  // missed webhook meant a ride never arrived. Longest-unchecked first, so
+  // anyone not reached tonight is first in line tomorrow.
+  const newActivities = [];
+  if (!onlyUserId && Date.now() < deadline) {
+    const { data: caughtUp, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("strava_backfill_done", true)
+      .not("strava_refresh_token", "is", null)
+      .order("strava_checked_at", { ascending: true, nullsFirst: true })
+      .limit(NEW_ACTIVITY_MEMBERS_PER_RUN);
+    if (error) console.error("[cron/strava-backfill] new-activity query failed", error);
+    for (const member of caughtUp || []) {
+      if (Date.now() > deadline) break;
+      try {
+        const { fetched, rateLimited } = await syncNewActivities(supabaseAdmin, member.id, { deadline });
+        newActivities.push({ userId: member.id, fetched });
+        if (rateLimited) break;
+      } catch (err) {
+        console.error("[cron/strava-backfill] new-activity sync failed", member.id, err);
+        newActivities.push({ userId: member.id, error: err.message });
+      }
+    }
+  }
+
+  res.status(200).json({ processed: results.length, results, newActivities });
 }

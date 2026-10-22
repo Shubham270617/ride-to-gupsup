@@ -323,12 +323,13 @@ The old Leaderboard page was replaced by the RTG Lab (migration 016); `/leaderbo
 
 Permissions requested: `read,activity:read_all` (this includes activities the athlete marked private on Strava, so their totals are correct; only aggregated totals are shown publicly).
 
-**Keeping data current.** Two mechanisms work together:
+**Keeping data current.** New rides reach the site three ways, so none depends on a single one, and nobody has to press Resync:
 
 | Mechanism | File | What it does |
 |---|---|---|
-| **Webhook** | `api/webhooks/strava.js` | Strava calls it whenever a connected athlete creates, updates or deletes an activity. The server fetches that one activity, saves it, and recalculates the member's totals. Errors return a 500 so Strava retries; saving is keyed on the Strava activity id, so a retry never duplicates. |
-| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **once a day**, 03:00 IST, in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 25 members and about 45 seconds per run. Only an empty page from Strava ends a member's walk (a short page used to stop it early and leave older history out). When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. |
+| **Webhook** (instant) | `api/webhooks/strava.js` | Only works once registered: **Admin → Members → Strava live updates → Turn on** (`api-lib/admin/strava-webhook.js`; it also shows which Vercel settings are missing). Strava calls it whenever a connected athlete creates, updates or deletes an activity. The server fetches that one activity, saves it, and recalculates the member's totals. Errors return a 500 so Strava retries; saving is keyed on the Strava activity id, so a retry never duplicates. |
+| **Member opens the site** | `src/lib/useStravaRefresh.js` → `POST /api/auth/account?op=strava-refresh` (`api-lib/stravaRefresh.js`) | For a signed-in member with Strava, fetches only rides newer than the newest one saved (looking back one day for late uploads): one Strava request when nothing is new. At most every 10 minutes per member (`profiles.strava_checked_at`, migration 030). The Dashboard and leaderboard re-read when rides arrive. |
+| **Backfill job** | `api/cron/strava-backfill.js` (scheduled **once a day**, 03:00 IST, in `vercel.json`) | Walks each member's **entire history** backwards, 200 activities per page, saving its position after every page (`profiles.strava_synced_through`) so an interrupted run resumes. Up to 25 members and about 45 seconds per run. Only an empty page from Strava ends a member's walk (a short page used to stop it early and leave older history out). When it passes a member's first ever activity, it marks them done (`strava_backfill_done`). If Strava's rate limit is hit, it stops and resumes next run. With the time left it then checks up to 60 members whose history is complete for **new** rides, longest-unchecked first (before this, a ride missed by the webhook never arrived). |
 | **Admin resync** | `POST /api/admin/strava-resync` (Admin → Members → "Resync Strava") | Clears everyone's position and walks every connected member's full history again. The button keeps going (about 40 seconds per round) and shows progress until every member is done, usually within minutes; if Strava's rate limit is hit it says so, and pressing it again later (or the daily job) finishes the rest. |
 
 Access tokens are refreshed automatically when within 5 minutes of expiry (`api-lib/stravaAuth.js`).
@@ -829,6 +830,7 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 027 | Ridge volunteer assignments survive an admin's removal (`assigned_by` set to empty) and are deleted with a deleted account. Run after Randeep's four `2026…` Ridge migrations. |
 | 028 | RTG Crew roles: `volunteer_roles` (public) and `volunteer_role_drafts` (admins only). |
 | 029 | Admins are 3 fixed emails: `admin_email_allowed()`, `is_admin()` requires a confirmed listed email, `admin_email_guard` trigger. **Deletes** admin rows of anyone not on the list. |
+| 030 | `profiles.strava_checked_at`: when a member was last checked for new Strava rides (member refresh and nightly job). |
 | 025 | Live chat: `chat_messages` (community room), `direct_messages` (private, only the two people can read them), `chat_bans` (admin mutes), spam limit of 5 messages per 10 seconds, and Realtime streaming. |
 
 Each file starts with a header explaining what it does. Read it before running, especially those marked "deletes".
@@ -858,7 +860,7 @@ After migration 029, each of the 3 admin emails (`simranbaghelgame@gmail.com`, `
 1. Create an app at <https://developers.strava.com> (Strava → Settings → My API Application). Category "Community"; **Authorization Callback Domain** is the bare domain (no `https://`, no path; `localhost` for local testing).
 2. Put the Client ID and Secret in `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET`.
 3. Set `STRAVA_WEBHOOK_VERIFY_TOKEN` and `CRON_SECRET`.
-4. **After the site is live**, run `node scripts/register-strava-webhook.mjs` once. It reads `api/.env.local` and registers `https://rideteagupshup.com/api/webhooks/strava` (the address is hard-coded in the script; edit it if the domain differs). Strava allows only one subscription per app.
+4. **After the site is live**, set `STRAVA_WEBHOOK_VERIFY_TOKEN` in Vercel (any long random text), redeploy, then press **Admin → Members → Strava live updates → Turn on live updates**. (Or run `node scripts/register-strava-webhook.mjs` once.) It reads `api/.env.local` and registers `https://rideteagupshup.com/api/webhooks/strava` (the address is hard-coded in the script; edit it if the domain differs). Strava allows only one subscription per app.
 
 ### 8.8 Deploying
 
@@ -913,7 +915,7 @@ The admins are fixed to 3 email addresses. To change them, a developer edits `ap
 | Welcome email not sent | Migration 022 not run, Brevo not configured, account older than 7 days, or already sent (`profiles.welcome_email_sent_at` set). Clearing that column (and the browser's `rtg_welcome_checked_<id>` entry) allows a retry. |
 | Email images missing | `FRONTEND_URL` not set to the live site, or the site not yet deployed. |
 | Strava totals too low | `CRON_SECRET` missing (the backfill refuses to run); the daily schedule not active; Strava rate limits (the job resumes). Use Admin → Members → Resync Strava. |
-| New rides not appearing | The webhook was never registered, or registered against a different domain; check function logs for `[webhooks/strava]`. |
+| New rides not appearing instantly | Admin → Members → Strava live updates shows whether the webhook is on and which settings are missing. Even when it's off, rides arrive when the member opens the site and in the nightly job. Check function logs for `[webhooks/strava]`. |
 | "Connect Strava" not shown | `STRAVA_CLIENT_ID`/`SECRET` not set (`/api/auth/providers` reports `strava: false`). |
 | "That Strava account is already connected to a different RTG member" | Each Strava athlete can be linked to only one RTG account. |
 | Phone login always says incorrect | `VITE_SUPABASE_ANON_KEY` not available to the server functions, or the phone saved in the profile differs (stored as `+91…`). |

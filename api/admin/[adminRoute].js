@@ -1,6 +1,7 @@
 import timingCodes from "../../api-lib/timingCodes.js";
 import ridge from "../../api-lib/admin/ridge.js";
 import stravaResync from "../../api-lib/admin/strava-resync.js";
+import stravaWebhook from "../../api-lib/admin/strava-webhook.js";
 import pageLayouts from "../../api-lib/pageLayouts.js";
 import volunteerRidge from "../../api-lib/volunteerRidge.js";
 import timingOwner from "../../api-lib/timingOwner.js";
@@ -15,6 +16,7 @@ const ROUTES = Object.freeze({
   "/api/admin/ridge": ridge,
   "/api/admin/ridge-timing-codes": timingCodes,
   "/api/admin/strava-resync": stravaResync,
+  "/api/admin/strava-webhook": stravaWebhook,
   "/api/admin/page-layouts": pageLayouts,
   "/api/admin/volunteer-ridge": volunteerRidge,
   "/api/admin/ridge-timing-owner": timingOwner,

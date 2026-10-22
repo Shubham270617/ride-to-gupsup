@@ -1,6 +1,7 @@
 import { PublicDataStatusContext } from './publicDataStatus';
 import { useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
+import { useStravaSyncedTick } from "./stravaEvents";
 import {
   products as staticProducts,
   blogPosts as staticBlogPosts,
@@ -427,6 +428,7 @@ export function useSponsorOpportunities() {
 // needed here beyond who's currently signed in.
 export function useMyStravaActivities(userId) {
   const [activities, setActivities] = useState([]);
+  const synced = useStravaSyncedTick();
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) {
       setActivities([]);
@@ -445,7 +447,7 @@ export function useMyStravaActivities(userId) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, synced]);
   return activities;
 }
 
@@ -453,6 +455,7 @@ export function useMyStravaActivities(userId) {
 // leaderboard, just filtered to one row, for the Dashboard's own summary.
 export function useMyLeaderboardStats(userId) {
   const [stats, setStats] = useState(null);
+  const synced = useStravaSyncedTick();
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) {
       setStats(null);
@@ -470,7 +473,7 @@ export function useMyLeaderboardStats(userId) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, synced]);
   return stats;
 }
 

@@ -13,6 +13,7 @@ import { ChatProvider } from "./lib/ChatContext";
 import { CartProvider } from "./lib/CartContext";
 import { useAppearance } from "./lib/appearance";
 import useWelcomeEmail from "./lib/useWelcomeEmail";
+import useStravaRefresh from "./lib/useStravaRefresh";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Community from "./pages/Community";
@@ -97,6 +98,7 @@ export default function App() {
 
   // Sends a brand-new member their welcome email, once (api-lib/welcomeEmail.js).
   useWelcomeEmail();
+  useStravaRefresh();
 
   const exempt = INTRO_EXEMPT_PREFIXES.some((p) => location.pathname.startsWith(p));
 

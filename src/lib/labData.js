@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import { useSupabaseList } from "./publicData";
+import { useStravaSyncedTick } from "./stravaEvents";
 import { LAB_PAGE_TEXT, RIDGE_PAGE_TEXT, MEMBERSHIP_PAGE_TEXT } from "../data/labContent";
 
 // ============================================================================
@@ -258,6 +259,7 @@ export function useStravaBoard(sportSlug, range, prior) {
   const end = range ? isoDate(range.cutoff) : null;
   const prevStart = prior ? isoDate(prior.start) : null;
   const prevEnd = prior ? isoDate(prior.cutoff) : null;
+  const synced = useStravaSyncedTick();
 
   useEffect(() => {
     if (!isSupabaseConfigured || !sportSlug || !start) {
@@ -309,7 +311,7 @@ export function useStravaBoard(sportSlug, range, prior) {
     return () => {
       cancelled = true;
     };
-  }, [sportSlug, start, end, prevStart, prevEnd]);
+  }, [sportSlug, start, end, prevStart, prevEnd, synced]);
 
   return state;
 }

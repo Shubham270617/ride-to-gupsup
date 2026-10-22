@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import Pagination from "../components/Pagination";
 import AdminPageHeader from "../components/AdminPageHeader";
+import StravaLiveUpdates from "../components/StravaLiveUpdates";
 import { ADMIN_EMAILS, normalizeEmail } from "../../../api-lib/adminEmails.js";
 
 const PAGE_SIZE = 20;
@@ -153,6 +154,8 @@ export default function AdminsAdmin() {
           </button>
         }
       />
+
+      <StravaLiveUpdates />
 
       {/* ---------------------------------------------------------------
           The 3 fixed admin emails, and whether each has signed in yet.

@@ -261,6 +261,82 @@ export async function backfillRecentActivities(supabaseAdmin, userId) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// New activity, without waiting for a webhook
+// ---------------------------------------------------------------------------
+// The backfill above only walks BACKWARDS, and stops for good once a
+// member's history is complete — after that, new rides arrive only through
+// the Strava webhook. If the webhook isn't registered, or Strava drops an
+// event, a new ride never showed up until an admin pressed Resync.
+//
+// This walks FORWARDS from the newest ride we already hold: one request
+// when nothing is new. It looks back a day before that ride, so a ride
+// uploaded late with an earlier start time is still caught (upserts make the
+// overlap harmless). Used by the member's own refresh when they open the
+// site (api-lib/stravaRefresh.js) and by the nightly job.
+const LOOKBACK_SECONDS = 24 * 60 * 60;
+const FIRST_LOOK_SECONDS = 30 * 24 * 60 * 60;
+
+export async function syncNewActivities(
+  supabaseAdmin,
+  userId,
+  { maxPages = 5, deadline = Date.now() + 20_000 } = {}
+) {
+  const token = await getValidStravaAccessToken(supabaseAdmin, userId);
+  if (!token) return { fetched: 0 };
+
+  const { data: newest } = await supabaseAdmin
+    .from("strava_activities")
+    .select("start_date")
+    .eq("user_id", userId)
+    .order("start_date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let cursor = newest?.start_date
+    ? epochSeconds(newest.start_date) - LOOKBACK_SECONDS
+    : epochSeconds(Date.now()) - FIRST_LOOK_SECONDS;
+
+  let fetched = 0;
+  let rateLimited = false;
+
+  for (let page = 0; page < maxPages; page++) {
+    if (Date.now() > deadline) break;
+
+    const url = `https://www.strava.com/api/v3/athlete/activities?per_page=${STRAVA_PAGE_SIZE}&after=${cursor}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.status === 429) {
+      console.warn("[stravaSync] rate limited, pausing new-activity sync for", userId);
+      rateLimited = true;
+      break;
+    }
+    if (!res.ok) {
+      console.error("[stravaSync] new-activity fetch failed", res.status);
+      break;
+    }
+
+    const activities = await res.json();
+    if (!Array.isArray(activities) || activities.length === 0) break;
+
+    await upsertActivities(
+      supabaseAdmin,
+      activities.map((a) => ({ user_id: userId, ...mapActivity(a) }))
+    );
+    fetched += activities.length;
+
+    // Step past the newest one in this batch (whatever order Strava used).
+    // `after` is exclusive; the guard stops a malformed date looping forever.
+    const newestEpoch = Math.max(...activities.map((a) => epochSeconds(a.start_date)).filter(Number.isFinite));
+    if (!Number.isFinite(newestEpoch) || newestEpoch <= cursor) break;
+    cursor = newestEpoch;
+  }
+
+  await supabaseAdmin.from("profiles").update({ strava_checked_at: new Date().toISOString() }).eq("id", userId);
+  if (fetched > 0) await recomputeLeaderboard(supabaseAdmin, userId);
+
+  return rateLimited ? { fetched, rateLimited } : { fetched };
+}
+
 // Forces a member's history to be walked again from scratch — the admin
 // "Resync" action. Clearing the watermark is enough; the upserts are
 // idempotent, so the walk simply rewrites what it already has and picks up

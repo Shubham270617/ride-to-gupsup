@@ -3,11 +3,11 @@ import { createFakeSupabase } from "../../helpers/fakeSupabase.js";
 import { mockReq, mockRes } from "../../helpers/http.js";
 
 vi.mock("../../../api-lib/supabaseAdmin.js", () => ({ getSupabaseAdmin: vi.fn() }));
-vi.mock("../../../api-lib/stravaSync.js", () => ({ advanceStravaBackfill: vi.fn() }));
+vi.mock("../../../api-lib/stravaSync.js", () => ({ advanceStravaBackfill: vi.fn(), syncNewActivities: vi.fn() }));
 vi.mock("../../../api-lib/storageDestroy.js", () => ({ destroyStorageAsset: vi.fn() }));
 
 import { getSupabaseAdmin } from "../../../api-lib/supabaseAdmin.js";
-import { advanceStravaBackfill } from "../../../api-lib/stravaSync.js";
+import { advanceStravaBackfill, syncNewActivities } from "../../../api-lib/stravaSync.js";
 import { destroyStorageAsset } from "../../../api-lib/storageDestroy.js";
 import purgeMedia from "../../../api/cron/purge-media.js";
 import stravaBackfill from "../../../api/cron/strava-backfill.js";
@@ -93,7 +93,7 @@ describe("cron: purge-media", () => {
 
 describe("cron: strava-backfill", () => {
   it("advances up to 25 pending members per (daily) run, oldest watermark first", async () => {
-    db.on("profiles", { data: [{ id: "a" }, { id: "b" }] }, { action: "select" });
+    db.on("profiles", { data: [{ id: "a" }, { id: "b" }] }, { action: "select", times: 1 });
     advanceStravaBackfill.mockResolvedValue({ done: false, fetched: 200 });
     const res = await call(stravaBackfill, { auth: "Bearer cron-secret" });
     expect(res.statusCode).toBe(200);
@@ -103,12 +103,45 @@ describe("cron: strava-backfill", () => {
         { userId: "a", fetched: 200, done: false },
         { userId: "b", fetched: 200, done: false },
       ],
+      newActivities: [],
     });
     const [q] = db.queriesFor("profiles", "select");
     expect(q.limit).toBe(25);
     expect(q.hasFilter("eq", "strava_backfill_done", false)).toBe(true);
     expect(q.order[0]).toMatchObject({ column: "strava_synced_through", ascending: true, nullsFirst: true });
     expect(advanceStravaBackfill).toHaveBeenCalledWith(db, "a", { deadline: expect.any(Number) });
+  });
+
+  it("then checks members whose history is complete for new rides, longest-unchecked first", async () => {
+    db.on("profiles", { data: [] }, { action: "select", times: 1 });
+    db.on("profiles", { data: [{ id: "c" }, { id: "d" }, { id: "e" }] }, { action: "select" });
+    syncNewActivities.mockResolvedValueOnce({ fetched: 2 }).mockRejectedValueOnce(new Error("revoked")).mockResolvedValueOnce({ fetched: 0 });
+    const res = await call(stravaBackfill, { auth: "Bearer cron-secret" });
+    expect(res.body.newActivities).toEqual([
+      { userId: "c", fetched: 2 },
+      { userId: "d", error: "revoked" },
+      { userId: "e", fetched: 0 },
+    ]);
+    const q = db.queriesFor("profiles", "select")[1];
+    expect(q.hasFilter("eq", "strava_backfill_done", true)).toBe(true);
+    expect(q.order[0]).toMatchObject({ column: "strava_checked_at", ascending: true, nullsFirst: true });
+    expect(q.limit).toBe(60);
+  });
+
+  it("stops checking for new rides once Strava rate-limits", async () => {
+    db.on("profiles", { data: [] }, { action: "select", times: 1 });
+    db.on("profiles", { data: [{ id: "c" }, { id: "d" }] }, { action: "select" });
+    syncNewActivities.mockResolvedValueOnce({ fetched: 1, rateLimited: true });
+    const res = await call(stravaBackfill, { auth: "Bearer cron-secret" });
+    expect(res.body.newActivities).toEqual([{ userId: "c", fetched: 1 }]);
+    expect(syncNewActivities).toHaveBeenCalledTimes(1);
+  });
+
+  it("?userId= (the admin Resync) doesn't run the new-ride check for everyone", async () => {
+    db.on("profiles", { data: [{ id: "solo" }] }, { action: "select" });
+    advanceStravaBackfill.mockResolvedValue({ done: true, fetched: 0 });
+    await call(stravaBackfill, { auth: "Bearer cron-secret", query: { userId: "solo" } });
+    expect(syncNewActivities).not.toHaveBeenCalled();
   });
 
   it("one member's failure doesn't stop the others", async () => {
