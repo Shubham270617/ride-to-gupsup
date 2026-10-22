@@ -86,6 +86,8 @@ const VolunteerTimerDemo = lazy(() => import('./volunteer-timer/VolunteerTimerDe
 const VolunteerTimerRoute = lazy(() => import('./volunteer-timer/VolunteerTimerRoute'));
 const INTRO_EXEMPT_PREFIXES = ["/volunteer/ridge", "/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
 
+const PersonalStravaEntry=lazy(()=>import("./strava-personal/PersonalEntry"));
+
 export default function App() {
   const location = useLocation();
   const [introDone, setIntroDone] = useState(false);
@@ -105,6 +107,7 @@ export default function App() {
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
+        <Route path="/personal-strava" element={<Suspense fallback={<AdminFallback/>}><PersonalStravaEntry/></Suspense>}/>
         <Route path="/volunteer/ridge/code" element={<Suspense fallback={<AdminFallback/>}><CodeTimerRoute/></Suspense>}/>
         <Route path="/volunteer/ridge/demo" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerDemo/></Suspense>}/>
         <Route path="/volunteer/ridge" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerRoute/></Suspense>}/>

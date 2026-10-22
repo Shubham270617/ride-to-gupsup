@@ -7,10 +7,14 @@ import providersHandler from "./api/auth/providers.js";
 import authStartHandler from "./api/auth/[provider]/start.js";
 import authCallbackHandler from "./api/auth/[provider]/callback.js";
 
+import personalStravaHandler from "./api-lib/strava-personal/handler.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(express.json());
+
+app.all("/api/admin/personal-strava", personalStravaHandler);
 
 app.post("/api/cloudinary/sign", signHandler);
 app.get("/api/auth/providers", providersHandler);
@@ -30,3 +34,4 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`RTG server listening on port ${port}`);
 });
+

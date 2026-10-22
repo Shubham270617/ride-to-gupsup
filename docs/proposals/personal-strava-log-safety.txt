@@ -1,0 +1,63 @@
+Personal Strava logging safety decision — 22 October 2026
+Read-only inspection; no activation, secrets, provider calls or logs read.
+
+Verified TEST scope:
+Vercel prj_mbrInjM6Ton7fB1qynFP1KdivPk8 / team_eQJzzoRk0TqbUgwscTpFDCyF.
+Project-filtered list_drains returned zero drains. Team members returned one
+confirmed OWNER, no other listed members. get_team did not expose billing plan
+or Observability Plus settings; actual plan-specific retention is not verified.
+
+Official documentation:
+https://vercel.com/docs/logs/runtime
+Runtime retention: Hobby 1 hour, Pro 1 day, Enterprise 3 days; Observability Plus
+30 days. This is product retention, not a claim about internal provider backups.
+Logs are viewable through project/team access. No public log share was created.
+https://vercel.com/docs/drains/reference/logs
+proxy.path includes query parameters. Drain filters can exclude paths before
+forwarding; this does not remove original Vercel platform logs.
+https://vercel.com/docs/drains/using-drains
+Drain source/project/path filters are supported. No documented universal
+application-controlled query redaction switch was found.
+https://developers.strava.com/docs/authentication/
+Authorization codes arrive in query, are short-lived and single-use; token exchange
+requires client secret. Our login-bound, one-use state additionally prevents a
+log reader with only code/state using the app exchange endpoint as another user.
+https://developers.strava.com/docs/webhooks/
+Subscription verification token is a GET handshake, NOT a signed POST authenticator.
+No custom signature header can be assumed. Moving a bearer key from query into
+path would not solve logging exposure. Strava documents one subscription per app.
+
+Concrete activation posture:
+- Keep current zero-drain configuration; immediately before activation recheck it.
+- Keep log access limited to trusted owner/operators. Current inventory is one owner.
+- Do not forward, paste, screenshot or expose personal endpoint raw URLs/logs.
+- If a drain is added later, exclude the entire /api/admin/personal-strava endpoint
+  using the documented log/path prefix filter before forwarding. Review integrations
+  and log access before enabling such a drain; no drain change is needed today.
+- Use independently random webhook and handshake secrets, never client secret or
+  refresh/access token in the inbound URL. Existing handler already separates these.
+- If webhook URL is disclosed, pause personal feature and replace subscription/key
+  through approved owner workflow. No silent rotation or existing-app takeover.
+- OAuth no-store/no-referrer, nonce CSP, immediate query clearing and no external
+  callback resources remain useful browser safeguards, not infrastructure redaction.
+
+Bounded residual risk:
+A trusted Vercel log reader may see callback query values. OAuth code alone cannot
+fetch tokens without app secret or the bound authenticated website session.
+Webhook key disclosure could allow forged invalidation or local deauthorization
+for the single configured athlete/subscription; it cannot read activities/tokens,
+issue OAuth grants, change rules or access another athlete. It is therefore still
+sensitive (availability/integrity), even though not an API access token.
+
+Decision for parent:
+Do NOT require an unattainable proof of zero infrastructure logging. For this
+owner-only TEST, normal trusted-host logging can be an explicit part of the pending
+activation approval with the controls above. No extra infrastructure mutation is
+needed under the verified zero-drain/single-owner state. If the owner requires zero
+bearer-URL visibility to the hosting provider, current direct Strava webhook design
+cannot meet it: a separately approved ingress/trust-boundary design is required,
+not an imaginary custom signature or path-only rename. No such service is created.
+
+No runtime change needed for this decision, so previous 954-pass/2 environment
+failure verification remains applicable. Real OAuth/webhook behavior still needs
+post-approval acceptance. Approval, deployment, DB install and consent remain pending.
