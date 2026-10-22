@@ -9,7 +9,7 @@ import Reveal from "../ui/Reveal";
 const SCROLL_SPEED = 55;
 // The row must be wider than the screen for the loop to hide its seam, so a
 // short product list is repeated until one copy holds at least this many.
-const MIN_CARDS_PER_COPY = 4;
+const MIN_CARDS_PER_COPY = 6;
 
 // One backdrop per card, cycled — shown behind the product photo (and on
 // its own when a product has no photo yet).
@@ -43,7 +43,7 @@ function MerchCard({ product, index, copy, images, inert }) {
       <Link
         to={productPath}
         tabIndex={tabIndex}
-        className="rtg-merch-visual relative block aspect-[4/3] sm:aspect-[3/2] overflow-hidden"
+        className="rtg-merch-visual relative block aspect-[4/5] overflow-hidden"
         style={{ backgroundImage: VISUAL_BACKDROPS[index % VISUAL_BACKDROPS.length] }}
       >
         <span className="absolute left-1/2 top-1/2 w-[120px] h-[120px] sm:w-[220px] sm:h-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px] bg-[radial-gradient(circle,rgba(255,255,255,0.28),rgba(255,255,255,0.03)_50%,transparent_72%)]" />

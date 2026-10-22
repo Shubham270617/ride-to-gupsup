@@ -631,7 +631,8 @@ html {
 }
 .rtg-merch-viewport:hover .rtg-merch-track { animation-play-state: paused; }
 
-/* Three cards across on desktop, two on tablets and phones */
+/* Four cards across on desktop, three on tablets, two on phones — narrow
+   and tall (4:5 photo box) like the product photos themselves. */
 .rtg-merch-card {
   flex: 0 0 calc((100vw - 34px) / 2);
   display: flex;
@@ -649,7 +650,8 @@ html {
   transition: transform 0.3s cubic-bezier(0.2, 0.75, 0.25, 1), box-shadow 0.3s;
 }
 @media (min-width: 640px) { .rtg-merch-card { flex-basis: calc((100vw - 62px) / 2); border-radius: 30px; } }
-@media (min-width: 1024px) { .rtg-merch-card { flex-basis: calc((100vw - 84px) / 3); } }
+@media (min-width: 768px) { .rtg-merch-card { flex-basis: calc((100vw - 84px) / 3); } }
+@media (min-width: 1024px) { .rtg-merch-card { flex-basis: min(calc((100vw - 106px) / 4), 420px); } }
 .rtg-merch-card:hover {
   transform: translateY(-6px);
   box-shadow:
