@@ -1,13 +1,26 @@
 {
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ],
   "functions": {
-    "api/cron/strava-backfill.js": { "maxDuration": 60 },
-    "api/admin/strava-resync.js": { "maxDuration": 60 }
+    "api/cron/strava-backfill.js": {
+      "maxDuration": 60
+    },
+    "api/admin/*.js": {
+      "maxDuration": 60
+    }
   },
   "crons": [
-    { "path": "/api/cron/purge-media", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/strava-backfill", "schedule": "30 21 * * *" }
+    {
+      "path": "/api/cron/purge-media",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/strava-backfill",
+      "schedule": "30 21 * * *"
+    }
   ]
 }

@@ -1,0 +1,162 @@
+{
+  "state": {
+    "schemaVersion": 1,
+    "riders": [
+      {
+        "id": "a",
+        "name": "Asha",
+        "photo": ""
+      },
+      {
+        "id": "b",
+        "name": "Bala",
+        "photo": ""
+      },
+      {
+        "id": "c",
+        "name": "Chetan",
+        "photo": ""
+      }
+    ],
+    "sessions": [
+      {
+        "id": "2026-10-10",
+        "date": "2026-10-10",
+        "mode": "live",
+        "finished": true,
+        "awardOverrides": [],
+        "entries": [
+          {
+            "riderId": "a",
+            "laps": [
+              {
+                "durationMs": 1200000
+              },
+              {
+                "durationMs": 1080000
+              },
+              {
+                "durationMs": 972000
+              },
+              {
+                "durationMs": 874800
+              },
+              {
+                "durationMs": 787320
+              }
+            ],
+            "adjustment": 0
+          },
+          {
+            "riderId": "b",
+            "laps": [
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              }
+            ],
+            "adjustment": 0
+          },
+          {
+            "riderId": "c",
+            "laps": [
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              }
+            ],
+            "adjustment": 0
+          }
+        ]
+      },
+      {
+        "id": "2026-10-17",
+        "date": "2026-10-17",
+        "mode": "live",
+        "finished": true,
+        "awardOverrides": [],
+        "entries": [
+          {
+            "riderId": "a",
+            "laps": [
+              {
+                "durationMs": 1200000
+              },
+              {
+                "durationMs": 1080000
+              },
+              {
+                "durationMs": 972000
+              },
+              {
+                "durationMs": 874800
+              },
+              {
+                "durationMs": 787320
+              }
+            ],
+            "adjustment": 0
+          },
+          {
+            "riderId": "b",
+            "laps": [
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              },
+              {
+                "durationMs": 900000
+              }
+            ],
+            "adjustment": 0
+          },
+          {
+            "riderId": "c",
+            "laps": [
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              },
+              {
+                "durationMs": 1100000
+              }
+            ],
+            "adjustment": 0
+          }
+        ]
+      }
+    ]
+  }
+}

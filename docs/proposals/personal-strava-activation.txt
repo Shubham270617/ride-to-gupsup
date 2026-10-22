@@ -1,0 +1,297 @@
+PERSONAL STRAVA TEST PREPARATION — INACTIVE, UNTESTED
+
+No routes, deployment, credentials, grants or database changes are activated.
+Base deployed release remains c184bd9db96969c9c1dc8bc0e9cffc495a61864f.
+
+NEXT NON-SECRET OWNER INPUT
+Personal app Client ID; whether its owning account has an active subscription;
+current athlete capacity/connected count; currently configured Authorization
+Callback Domain; personal Strava athlete ID. Do not send Client Secret, tokens,
+authorization codes or screenshots containing them in chat.
+
+INTENDED ISOLATION
+Only https://rtg-website-three.vercel.app and TEST Supabase
+cxwfjrntfqlyaqppxggh. Candidate callback:
+https://rtg-website-three.vercel.app/api/auth/personal-strava/callback
+This path is a contract only, not a deployed endpoint yet.
+Separate server variables RTG_PERSONAL_STRAVA_CLIENT_ID,
+RTG_PERSONAL_STRAVA_CLIENT_SECRET, RTG_PERSONAL_STRAVA_ATHLETE_ID,
+RTG_PERSONAL_STRAVA_USER_ID, RTG_PERSONAL_STRAVA_ORIGIN,
+RTG_PERSONAL_STRAVA_ENABLED. No values have been configured.
+Never refresh or overwrite profiles.strava_* tokens with the personal app.
+
+CODE PREPARED
+api-lib/strava-personal/connection.js: fail-closed TEST configuration, verified
+login binding, 10-minute random one-use state contract, exact callback,
+read/activity:read consent, bounded exchange, own-athlete verification,
+separate app-bound vault interface. No route or persistent adapter installed.
+metrics.js: explicit own-athlete metric projection, preserves missing values,
+rejects another athlete, no full response/map/location/token storage.
+scoring.js: versioned synthetic-only basic coefficient calculator, explicit
+eligibility, missing-metric refusal and score breakdown. This is not approved
+RTG scoring. Advanced rule conditions/bonuses/windows remain to implement.
+
+REMAINING BEFORE ACTIVATION
+1. Confirm actual personal app metadata and applicable Strava terms/tier.
+2. Finish connection controller, atomic expiring state storage and separate
+   encrypted token vault; code currently defines their interfaces only.
+3. Implement refresh rotation, granted-scope persistence, disconnect/deauthorize
+   cleanup, deletion confirmation and cache expiry under verified policy.
+4. Isolate callback/webhook and jobs from old shared profiles, public totals and
+   wheelikx application. No club-feed assumption: per-athlete OAuth only.
+5. Test denied consent, wrong account/app/login/athlete, replay, scope refusal,
+   timeout, concurrent refresh, revocation/deletion and no token leakage.
+6. Review exact storage/RLS/ACL and secure configuration changes, then obtain
+   action-time approval before installation/credential setup/OAuth grant.
+7. User enters secrets only through approved secure platform entry, not chat.
+8. Owner personally authorizes only their own athlete; verify minimal metrics.
+9. No cross-athlete administrator export, derived rankings or publication until
+   permitted use is resolved. No automatic LIVE deployment.
+
+DATA CONTRACT
+activity.id -> activityId; athlete.id -> athleteId (must match binding)
+sport_type (type fallback) -> sport; start_date -> UTC startedAt
+distance -> distanceM; moving_time -> movingSeconds;
+elapsed_time -> elapsedSeconds; total_elevation_gain -> elevationM;
+average_speed -> averageSpeedMps; manual/trainer -> nullable eligibility facts.
+No documented total_elevation_loss is assumed. Missing metrics remain null.
+Activity name/photos/HR/GPS are excluded from this preparation contract.
+
+RULES REQUIREMENTS
+Separate whole-activity eligibility from per-rule predicates. A failed scoring
+predicate should zero only that rule, not invalidate the activity. Future
+versioned rules need metric/fixed bonus, threshold, multiplier, caps, AND/OR,
+time windows, precision and deterministic explanations. Current basic module
+is a synthetic workbench foundation, not parity with the reference tool.
+No inferred historic formula or winner logic is approved. Only two community
+partners are approved; five demo profile pages confer no hosting permissions.
+
+RUNTIME BLOCKER
+No node/npm/bun/deno found on PATH or checked standard Homebrew, /usr/local,
+NVM/Mise/Volta locations. Prior /tmp Node runtime is absent. Bundled dependency
+loader returned unavailable for this thread. No installation attempted.
+Synthetic tests are authored, NOT executed. No readiness claim is made.
+
+UPDATE: personal Client ID 272337 is user-confirmed (non-secret). Capacity '10'
+is still awaiting context; do not treat it as verified or configure it.
+New rulesV2.js supports explicit points/per-unit numerator/denominator,
+distance km/ascent m/moving min/average speed km/h, opt-in rules, thresholds,
+fractional vs completed units, fixed bonuses, caps, AND/OR conditions and
+next-version before/after preview. Per-rule failure zeros only that rule;
+whole-activity sport/manual/trainer eligibility remains separate. Synthetic
+only; no persistence or retroactive application. Schedule windows, admin UI,
+real scoring authorization and publication are still absent. Six regression
+cases authored in tests/strava-personal/rulesV2.test.js; not executed yet.
+
+RUNTIME/LIFECYCLE UPDATE
+Found installed /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node,
+version v24.21.0, darwin arm64. Node built-in tests run without installation.
+Vitest startup fails because bundled signed Node refuses the Rolldown native
+module's different Team ID. Do NOT disable macOS library validation or change
+signatures. Normal official standalone Node is the safe remedy if approved:
+download node-v22.22.0-darwin-arm64.tar.gz and SHASUMS256.txt from
+https://nodejs.org/dist/v22.22.0/ ; verify SHA256; extract only under task tools
+or /tmp; use process-local PATH. No global installer/Homebrew/sudo/system PATH.
+Prior known path was /tmp/node-v22.22.0-darwin-arm64/bin/node; the original
+installation command/approval was not recovered, so no new download attempted.
+
+vault.js adds AES-256-GCM envelope with app/user/athlete/revision authenticated
+binding. lifecycle.js defines locked rotation and disconnect. Refreshing status
+is persisted BEFORE exchange; uncertain response/storage requires reconnect,
+not blind replay. Local data erasure is independent of remote revoke success;
+never claim confirmed remote revocation after network failure.
+Production adapter is NOT implemented: it must provide cross-instance locking,
+atomic revision transitions, separate ciphertext-only vault, pending-state TTL,
+minimal encrypted/cached metrics with policy-approved retention, erasure and
+no browser table grants. No SQL has been installed or credentials stored.
+Node built-in tests: 7 passed, including vault binding/tamper, lost refresh,
+local deletion vs remote uncertainty, OAuth binding, metrics and scoring.
+UI/Vitest/build remain unverified until ordinary Node runtime is available.
+Client272337/capacity10/annualpaid are user-confirmed, not provider-verified.
+Allowed IAB tab inventory is empty; no existing personal Strava session found.
+
+APPROVED RUNTIME INSTALLED / 22 OCTOBER
+Official Node22.22.0 archive downloaded from nodejs.org, SHA256 checked against
+its official SHASUMS256.txt (OK), extracted under task/.task-tools/node-download.
+No system settings/global installation/security exceptions changed.
+Process-local PATH used for tests/build/lint.
+Focused:27 passed in6 files. Full:921 passed,2 existing Python environment
+failures,1 expected fail,1 todo. Build passed; lint warnings only. Separate
+Node built-in7 tests also passed. Vitest tests moved into tests/api-lib so the
+repository test discovery actually includes them.
+
+New RuleWorkbench.jsx provides synthetic points/per-quantity controls, metric,
+bonus, enable, counting mode, threshold and cap, with versioned before/after
+preview. Empty intermediate numeric input is allowed; invalid input prevents
+preview; changing input invalidates prior preview. No save/apply action exists.
+controller.js is an unwired fail-closed factory with method/origin/current
+verified personal-account checks. No production auth route was changed.
+
+PERSISTENT STORAGE ACTIVATION DESIGN (NOT INSTALLED)
+Use separate service-only tables for (1) expiring hashed OAuth state bound to
+client/user/login; (2) connection ciphertext bound to client/user/athlete and
+monotonic revision; (3) transient minimal activity cache only if permitted;
+(4) deletion/reconnect outcome metadata without tokens or raw payloads.
+RLS enabled; revoke all browser-role table access. State consumption must be a
+single conditional DELETE/RETURNING matching identity/app/login and expiry.
+Refresh requires database coordination, not process memory. Persist refresh
+in-progress before provider exchange; expired/uncertain leases require
+reconnect instead of refreshing again. Token persistence must be revision-
+fenced and reject completion after deletion/revocation. All reads validate
+current owner connection, app and status. Provider deauthorization must block
+reads and purge token/cache independently from UI. Retention/cache scope,
+webhook validation and exact SQL/RPC set need review before approval request.
+No claim that persistent adapter, callback page, admin save/history or webhook
+lifecycle is finished. No credentials/configuration/deployment performed.
+
+INACTIVE INTEGRATION CANDIDATE — 22 October 2026, current status
+The personal callback domain is now user-reported updated to
+rtg-website-three.vercel.app. This was not independently verified with Strava.
+Personal client ID272337, capacity10 and annual subscription remain user-reported.
+
+Implemented locally (not imported by existing deployed routes):
+- api-lib/strava-personal/integration.js assembles verified login, service,
+  provider and persistent vault adapters. Existing legacy Strava routes untouched.
+- authenticate.js uses verified getUser, then exact auth.sessions check and
+  existing owner authorization. Never trusts user_metadata for owner permission.
+- store.js + supabase/proposals/personal-strava.sql implement one-use OAuth
+  state, token vault generation CAS, cross-instance refresh leases, persisted
+  refresh uncertainty, deletion tombstones, and immutable synthetic rule history.
+- service.js handles begin/complete/status/own activity pages/disconnect and
+  owner-only synthetic history/preview/save. Provider responses are transient;
+  no raw activity storage, exported corpus or public leaderboard writes.
+- provider.js uses bounded calls and current /oauth/revoke (empty200 supported).
+- webhook.js validates secret callback path + subscription + athlete, handles
+  deauthorization/deletion and invalidates in-flight reads on activity updates.
+  Strava events are NOT cryptographically signed. Callback secret must be
+  redacted from infrastructure logs before activation; subscription ID alone
+  is not authentication. Old deauthorization events are fenced by connection
+  authorization time (provider event times have one-second resolution).
+- PersonalCallback.jsx clears callback query immediately and requires explicit
+  completion; no automatic replay after uncertain response.
+- RuleWorkbench.jsx supports metric numerator/denominator, threshold, fractional
+  or completed units, caps, fixed bonuses, AND/OR conditions, activity eligibility
+  and UTC schedule window. Real activity scoring remains refused.
+- RuleHistory.jsx exposes explicit synthetic revision save/history; retries keep
+  the same document and request ID. No real result recalculation/publication.
+
+Proposed DB activation scope (NOT applied):
+Private schema rtg_personal, three RLS tables connections/states/rule_history.
+No anon/authenticated schema/table access. service_role has connection/state
+CRUD and append/read-only history (no history update/delete).
+public.rtg_personal_store(text,jsonb): invoker, service_role execute only.
+public.rtg_personal_session_alive(uuid,uuid): narrow definer boolean check against
+existing auth.users/auth.sessions, service_role execute only; no browser access
+and no session row exposure. No existing table, guard, grant or data is changed.
+Installation itself inserts no data. SQL is a proposal, not a migration-history
+receipt; generate a proper migration through CLI when activation is approved.
+
+Activation prerequisites / secure input:
+1. Non-secret owning athlete ID and exact existing TEST account UUID still needed.
+2. User enters personal app secret directly into this TEST project's Vercel
+   Settings > Environment Variables secure field; never chat, source, artifacts
+   or environment dump. Separate server-only vault key and webhook secrets must
+   be generated/set through an approved secret-preserving path, not printed.
+3. Explicit approval for TEST storage installation, server secret configuration,
+   route wiring/deployment, personal webhook subscription and user OAuth consent.
+4. Wire the inactive factories to dedicated TEST paths, never the legacy shared
+   profiles.strava_* flow. Callback must be a dedicated entry without analytics,
+   with no-store/no-referrer/CSP and query redaction at the edge. Its proposed URL
+   remains /api/auth/personal-strava/callback. The React component is ready but
+   no production entry or route is mounted by this candidate.
+5. Confirm personal app has no existing webhook to overwrite. Do not modify
+   wheelikx or LIVE app. Confirm effective ACLs, login revocation and end-to-end
+   callback/refresh/disconnect with the owner before calling connectivity verified.
+6. Cross-athlete rankings, administrative downloads and derived analytics remain
+   separate policy questions; this candidate grants none of those capabilities.
+
+Server env NAMES only (no values/credentials in this document):
+RTG_PERSONAL_STRAVA_ENABLED, RTG_PERSONAL_STRAVA_ORIGIN,
+RTG_PERSONAL_STRAVA_CLIENT_ID, RTG_PERSONAL_STRAVA_CLIENT_SECRET,
+RTG_PERSONAL_STRAVA_ATHLETE_ID, RTG_PERSONAL_STRAVA_USER_ID,
+RTG_PERSONAL_STRAVA_VAULT_KEY; proposed webhook configuration uses
+RTG_PERSONAL_STRAVA_WEBHOOK_SECRET, RTG_PERSONAL_STRAVA_VERIFY_TOKEN,
+RTG_PERSONAL_STRAVA_SUBSCRIPTION_ID. Existing SUPABASE_URL/service client stays
+TEST-bound. No VITE_ prefix for any secret. Factory rejects other origins/DB URLs.
+
+Rollback after a future approved activation: disable the personal flag/remove
+personal route dispatch first; stop subscription only for personal app; revoke
+personal grant with owner consent, erase personal vault/state, preserve only
+non-secret synthetic rule history if wanted. Never touch legacy token columns,
+Ridge, Crew, community data or LIVE. Keep vault key until necessary revocation
+is resolved, then remove. Unknown provider revocation is explicitly reported;
+local token deletion still completes. User may revoke manually in Strava's
+connected-app settings if provider revocation could not be confirmed.
+
+Validation is synthetic only: executable PGlite SQL, injected mocked provider,
+React DOM behavior, full repository regression suite and production build.
+No personal provider requests, DB writes, secret configuration, OAuth grants,
+push or deployments were performed. Existing public site behavior is unchanged.
+
+Final verification receipt:
+- Full repository:939 passed,2 known Python-environment failures,1 expected
+  failure,1 todo (943 total);99 files passed/1 baseline file failed.
+- Afterwards added account-deletion cascade regression:all11 SQL/storage tests
+  passed. This proposed FK cascade deletes only new personal-schema rows when
+  auth.users is deleted; it does not prevent existing account deletion. No change
+  to existing user tables or permissions. Synthetic history is immutable during
+  the account lifetime, but is purged on account deletion.
+- Build passed; lint passed with pre-existing warnings;7 standalone Node tests
+  passed. UI components tested through React DOM, not a deployed browser route.
+- No authenticated real-provider acceptance has occurred. Callback hosting/CSP,
+  webhook log redaction/registration, effective remote ACLs and real consent,
+  refresh and deletion acceptance remain activation-stage checks.
+
+Independent security review — follow-up candidate
+Confirmed personal app is now pinned to272337 in runtime configuration, so even
+TEST origin/DB cannot accidentally select a different app's credentials.
+Parent resolved the user's supplied personal profile short link to athlete
+120094763. Use that as the planned expected athlete binding; OAuth must verify
+it, rather than treating the profile link as authentication. No environment value
+was configured. Resolve TEST account UUID through the existing verified login.
+
+Reviewer reproduced and patches address:
+1. Delayed disconnect erasing a newer grant: final deletion now checks SQL lease,
+   revision and deleting state. Reconnect is blocked during deleting, even if
+   lease expires. Failed remote revoke erases local tokens but persists
+   revocation_pending; no new grant until a deauthorization webhook clears it.
+   Missing webhook/unknown remote revocation requires explicit operational
+   reconciliation; this is an activation acceptance requirement, not auto-retry.
+2. Deauthorization during slow OAuth save: DB records OAuth-state started_at,
+   consumes it once, and uses this conservative grant-start boundary rather than
+   token-save time. Events during exchange cannot be silently ignored.
+3. Incorrect app credentials: config now refuses all client IDs except272337.
+4. Definite rules CAS conflict: SQL P4091 becomes typed rule_conflict, distinct
+   from unknown write outcomes. UI stops stale retries and explicitly loads the
+   latest revision for a new preview while retaining edits. Unknown outcomes
+   keep the original document/request ID.
+
+Vercel compatibility / unresolved wiring:
+- Existing app is Vite with Node API functions, not Next App Router. Do not copy
+  Next route conventions into it. Current Node22 tests support crypto and abort
+  APIs. No process-local lock or filesystem write is used for runtime state.
+- No current src/App route or API dispatcher imports the personal integration.
+  Existing /api/auth/[provider]/callback.js receives the proposed callback path
+  and returns not_configured today. Dedicated callback/API/webhook/dashboard
+  entry wiring is NOT implemented; a passing Vite build does not prove those
+  entries bundle or work. Do not enable the flag before this is corrected.
+- Callback entry needs no-store/no-referrer/CSP, no third-party loaders, early
+  query clearing and edge query redaction. Webhook path secret logging needs
+  verified redaction. Webhook subscription must be personal-app-only and must
+  not replace an existing subscription without review.
+- Real remote auth.sessions compatibility, ACL checks, consent/refresh/expiry,
+  callback account switching, webhook delivery and deletion recovery remain
+  unverified. Local SQL and mocked provider tests are NOT operational acceptance.
+
+Secret UI plan (from Vercel env-vars skill): correct existing TEST project,
+Settings > Environment Variables, type Secret for personal client secret,
+vault key, webhook secret and verification token. Scope only to this TEST
+project's intended main deployment environment; no shared team/global or LIVE
+variables, no VITE_ names. User enters client secret directly in the protected
+UI. Generate new random vault/webhook values through a separately approved
+secret-preserving path without displaying them. Do not pull or dump existing
+LIVE/TEST secrets. Remaining nonsecret config uses Config type.
+
+SUPERSEDING CURRENT STATUS: see personal-strava-current-status.txt. Routes are now
+mounted behind inactive default; older unmounted descriptions/test counts above
+are historical, not current. No activation has occurred.

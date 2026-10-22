@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { communityPagePath } from "../lib/communityDetails";
 import Reveal from "../components/ui/Reveal";
 import {
   useCommunityPaths,
@@ -758,6 +759,7 @@ function Network({ copy, groups, pins, mapImage }) {
                   {group.tagline && <span className="rtg-com-net-tagline">{group.tagline}</span>}
                   <h3 className="font-display">{group.name}</h3>
                   {group.desc && <p>{group.desc}</p>}
+                  <Link to={communityPagePath(group.id)} className="rtg-com-btn rtg-com-btn-orange" aria-label={`Explore ${group.name}`}>Explore community →</Link>
 
                   {contacts.length > 0 && (
                     <div className="rtg-com-net-contacts">
@@ -958,10 +960,13 @@ function Cities({ copy, cities, moments }) {
   );
 }
 
-export default function Community() {
-  const settings = useSiteSettings();
+export default function Community({ editor }) {
+  const nativeSettings = useSiteSettings();
+  const settings = useMemo(()=>({...nativeSettings,...editor?.settings}),[nativeSettings,editor?.settings]);
+  const section = (id,child)=>editor?editor.section('community-'+id,child):child;
   const copy = useMemo(() => buildCommunityPageCopy(settings), [settings]);
-  const images = useSiteImages();
+  const nativeImages = useSiteImages();
+  const images = {...nativeImages,...editor?.images};
   const paths = useCommunityPaths();
   const principles = useCommunityPrinciples();
   const milestones = useCommunityMilestones();
@@ -972,12 +977,14 @@ export default function Community() {
 
   return (
     <div className="rtg-com">
-      <Hero copy={copy} image={images.communityHero} />
-      <FindYourPlace copy={copy} paths={paths} />
-      <RtgWay copy={copy} principles={principles} image={images.communityWay} />
-      <InMotion copy={copy} milestones={milestones} />
-      <Network copy={copy} groups={networkGroups} pins={networkPins} mapImage={images.communityIndiaMap} />
-      <Cities copy={copy} cities={cities} moments={cityMoments} />
+      {section('hero', <Hero copy={copy} image={images.communityHero} />)}
+      {section('place', <FindYourPlace copy={copy} paths={paths} />)}
+      {section('way', <RtgWay copy={copy} principles={principles} image={images.communityWay} />)}
+      {section('motion', <InMotion copy={copy} milestones={milestones} />)}
+      {section('network', <Network copy={copy} groups={networkGroups} pins={networkPins} mapImage={images.communityIndiaMap} />)}
+      {section('cities', <Cities copy={copy} cities={cities} moments={cityMoments} />)}
     </div>
   );
 }
+
+

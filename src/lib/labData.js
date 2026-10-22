@@ -374,135 +374,134 @@ export const riderKey = (name) => String(name || "").trim().toLocaleLowerCase();
 // Sessions, results, awards and Spotlight winners (Admin -> Ridge Repeats —
 // …), read together and re-read on demand. `checkedAt` is when they were
 // last read.
-export function useRidgeFeed() {
-  const [state, setState] = useState({ sessions: [], results: [], awards: [], spotlights: [], loading: true, error: "", checkedAt: null });
+export function useRidgeFeed(enabled = true) {
+  const empty = { sessions: [], results: [], awards: [], spotlights: [] };
+  const [state, setState] = useState({ ...empty, loading: false, error: "", checkedAt: null });
   const [tick, setTick] = useState(0);
-
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setState((s) => ({ ...s, loading: false }));
+    if (!enabled || !isSupabaseConfigured) {
+      setState({ ...empty, loading: false, error: "", checkedAt: null });
       return;
     }
     let cancelled = false;
-    setState((s) => ({ ...s, loading: true }));
-    const read = (table, order) => supabase.from(table).select("*").eq("published", true).order(order, { ascending: true });
-    Promise.all([
-      read("ridge_sessions", "session_date"),
-      read("ridge_results", "sort_order"),
-      read("ridge_awards", "sort_order"),
-      read("ridge_spotlights", "sort_order"),
-    ]).then(([sessions, results, awards, spotlights]) => {
+    const read = async () => {
+      const { data, error } = await supabase.from("ridge_publication").select("feed,updated_at").eq("singleton", true).maybeSingle();
       if (cancelled) return;
-      const error = [sessions, results, awards, spotlights].find((r) => r.error)?.error?.message || "";
-      setState({
-        sessions: sessions.data || [],
-        results: results.data || [],
-        awards: awards.data || [],
-        spotlights: spotlights.data || [],
-        loading: false,
-        error,
-        checkedAt: new Date(),
-      });
-    });
-    return () => {
-      cancelled = true;
+      setState({ ...(data?.feed || empty), loading: false, error: error || !data ? "Ridge results are not available yet. Please try again shortly." : "", checkedAt: data ? new Date(data.updated_at) : null });
     };
-  }, [tick]);
-
-  const reload = useCallback(() => setTick((n) => n + 1), []);
+    setState(s => ({ ...s, loading: true }));
+    read().catch(() => { if (!cancelled) setState(s => ({ ...s, loading: false, error: "Could not connect to Ridge results. Try refreshing." })); });
+    const interval = setInterval(() => read().catch(() => {}), 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [tick, enabled]);
+  const reload = useCallback(() => setTick(n => n + 1), []);
   return { ...state, reload };
 }
 
-// Turns the rows into the board's working shape. For each rider in each
-// session, from the loop times alone:
-//   lapPoints[i]  = (previous loop − this loop) ÷ previous loop × 100   (i ≥ 1)
-//   progress      = the sum of those, when 2..maxLoops loops were ridden
-//   ridgePoints   = progress + 1 per completed loop + Spotlight bonus + correction
-// Sessions come back newest first.
-export function buildRidgeFeed({ sessions, results, awards, spotlights }, maxLoops) {
+export const ridgeAthleteKey = (row) => row.athleteId ? `id:${row.athleteId}` : `name:${riderKey(row.name)}`;
+const validRidgeDate = (date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+  Number.isFinite(Date.parse(`${date}T00:00:00Z`)) && new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;
+
+// Explicit official-published rows preserve source scores. Legacy manual rows
+// retain their original duration-based calculation. Never infer official status.
+export function buildRidgeFeed({ sessions = [], results = [], awards = [], spotlights = [] }, maxLoops) {
   const bySession = new Map();
+  const diagnostics = [];
+  const officialCounts = new Map();
+  results.filter(r => r.score_source === "official-published").forEach(r => {
+    const date = r.session_date || sessions.find(s => s.slug === r.session_slug)?.session_date;
+    const key = `${r.athlete_id}|${date}`;
+    officialCounts.set(key, (officialCounts.get(key) || 0) + 1);
+  });
   results.forEach((r) => {
-    const times = String(r.loop_times || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const secs = times.map(clockToSeconds);
-    const laps = times.length;
-    const lapPoints = secs.map((s, i) => (i === 0 || s === null || secs[i - 1] === null ? null : round2(((secs[i - 1] - s) / secs[i - 1]) * 100)));
-    const valid = laps >= 2 && laps <= maxLoops && secs.every((s) => s !== null);
-    const progress = valid ? round2(lapPoints.slice(1).reduce((sum, p) => sum + p, 0)) : null;
-    const spotlight = Number(r.spotlight_points) || 0;
-    const adjustment = Number(r.adjustment_points) || 0;
-    const row = {
-      id: r.id,
-      name: r.athlete_name,
-      session: r.session_slug,
-      photo: r.photo_url || "",
-      lapTimes: times,
-      lapSeconds: secs,
-      lapPoints,
-      laps,
-      progress,
-      spotlight,
-      adjustment,
-      ridgePoints: round2((progress || 0) + Math.min(laps, maxLoops) + spotlight + adjustment),
-    };
+    const official = r.score_source === "official-published";
+    const session = sessions.find(s => s.slug === r.session_slug);
+    const date = r.session_date || session?.session_date;
+    let row;
+    if (official) {
+      const reject = (code) => diagnostics.push({ id: r.id, code, source: "official-published" });
+      if (!r.athlete_id || r.identity_unresolved || !r.athlete_name || !session || !validRidgeDate(date) || date !== session.session_date) { reject("OFFICIAL_IDENTITY_OR_SESSION_INVALID"); return; }
+      if (officialCounts.get(`${r.athlete_id}|${date}`) > 1) { reject("OFFICIAL_DUPLICATE_RIDER_DATE"); return; }
+      if (!Array.isArray(r.lap_points) || r.lap_points.length !== 5 || r.lap_points[0] !== null ||
+          !r.lap_points.every(p => p === null || Number.isFinite(p)) ||
+          !(r.improvement === null || Number.isFinite(r.improvement)) ||
+          !Number.isInteger(r.completed_laps) || r.completed_laps < 0 || r.completed_laps > 5 ||
+          !Number.isFinite(r.highlight_score) || !Number.isFinite(r.total_score)) { reject("OFFICIAL_SCORE_INVALID"); return; }
+      if (r.improvement !== null && Math.abs(r.total_score - r.improvement - r.completed_laps - r.highlight_score) > 0.011 + Number.EPSILON * 100) { reject("OFFICIAL_TOTAL_MISMATCH"); return; }
+      // Missing historical durations remain empty fixed slots, not invented
+      // comparisons. l1_time is the only time the score-sheet itself supplies.
+      const raw = Array.isArray(r.lap_times) ? r.lap_times : r.loop_times != null ? String(r.loop_times).split(",") : [r.l1_time];
+      if (raw.length > 5) { reject("OFFICIAL_LAP_SLOTS_INVALID"); return; }
+      const times = Array.from({ length: 5 }, (_, i) => raw[i] == null ? "" : String(raw[i]).trim());
+      row = {
+        id: r.id, name: r.athlete_name, athleteId: r.athlete_id, session: r.session_slug,
+        photo: r.photo_url || "", lapTimes: times, lapSeconds: times.map(clockToSeconds),
+        lapPoints: [...r.lap_points], laps: r.completed_laps, progress: r.improvement,
+        spotlight: r.highlight_score, adjustment: 0, ridgePoints: r.total_score,
+        scoreSource: "official-published", provenance: r.provenance || null,
+      };
+    } else {
+      const times = String(r.loop_times || "").split(",").map(t => t.trim());
+      while (times.length && !times[times.length - 1]) times.pop();
+      const secs = times.map(clockToSeconds);
+      const laps = times.filter(Boolean).length;
+      const computedPoints = secs.map((v, i) => (i === 0 || v === null || secs[i - 1] === null ? null : round2(((secs[i - 1] - v) / secs[i - 1]) * 100)));
+      const lapPoints = Array.isArray(r.lap_points) ? r.lap_points : computedPoints;
+      const valid = laps >= 2 && laps <= maxLoops && secs.every(v => v !== null);
+      const progress = valid ? (Number.isFinite(r.progress_points) ? r.progress_points : round2(lapPoints.slice(1).reduce((sum, p) => sum + p, 0))) : null;
+      const spotlight = Number(r.spotlight_points) || 0;
+      const adjustment = Number(r.adjustment_points) || 0;
+      row = {
+        id: r.id, name: r.athlete_name, athleteId: r.athlete_id || null, session: r.session_slug,
+        photo: r.photo_url || "", lapTimes: times, lapSeconds: secs, lapPoints, laps, progress,
+        spotlight, adjustment, ridgePoints: Number.isFinite(r.total_score) ? r.total_score : round2((progress || 0) + Math.min(laps, maxLoops) + spotlight + adjustment),
+        scoreSource: "manual-derived", provenance: null,
+      };
+    }
+    row.key = ridgeAthleteKey(row);
     if (!bySession.has(row.session)) bySession.set(row.session, []);
     bySession.get(row.session).push(row);
   });
-
-  // Sessions with no date are kept, not dropped. session_date was added
-  // later (migration 016) and only backfilled for two sample rows, so every
-  // session created before that has a null here — and silently filtering
-  // them out made a board full of real results look completely empty.
-  // Undated sessions sort to the bottom and render without a date instead.
-  const list = sessions
-    .map((s) => ({
-      slug: s.slug,
-      name: s.name,
-      date: s.session_date || null,
-      stamp: s.session_date ? Date.parse(`${s.session_date}T00:00:00Z`) : 0,
-      riders: (bySession.get(s.slug) || []).map((row) => ({ ...row, date: s.session_date || null })),
-    }))
-    .sort((a, b) => b.stamp - a.stamp);
-  list.forEach((s) => s.riders.forEach((row) => (row.stamp = s.stamp)));
-
-  // One profile per rider: every session they rode (newest first) and totals.
+  // Undated legacy sessions stay visible, but cannot establish progress over time.
+  const list = sessions.map(s => ({
+    slug: s.slug, name: s.name, awardDefinitions: s.award_definitions || [], date: validRidgeDate(s.session_date) ? s.session_date : null,
+    stamp: validRidgeDate(s.session_date) ? Date.parse(`${s.session_date}T00:00:00Z`) : 0,
+    riders: (bySession.get(s.slug) || []).map(row => ({ ...row, date: validRidgeDate(s.session_date) ? s.session_date : null })),
+  })).sort((a, b) => b.stamp - a.stamp);
+  list.forEach(s => s.riders.forEach(row => { row.stamp = s.stamp; }));
   const riders = new Map();
-  list.forEach((s) =>
-    s.riders.forEach((row) => {
-      const key = riderKey(row.name);
-      if (!riders.has(key)) riders.set(key, { name: row.name, photo: "", records: [], totalPoints: 0 });
-      const profile = riders.get(key);
-      profile.records.push(row);
-      profile.totalPoints = round2(profile.totalPoints + row.ridgePoints);
-      if (!profile.photo && row.photo) profile.photo = row.photo;
-    })
-  );
-
-  const awardList = awards.map((a) => ({ slug: a.slug, name: a.name, description: a.description || "", tone: a.tone || "" }));
-  const winners = spotlights.map((w) => ({ session: w.session_slug, award: w.award_slug, name: w.athlete_name, metric: w.metric || "" }));
-
-  return { sessions: list, riders: [...riders.values()], awards: awardList, winners, maxLoops };
+  list.forEach(s => s.riders.forEach(row => {
+    const key = row.key;
+    if (!riders.has(key)) riders.set(key, { key, athleteId: row.athleteId, name: row.name, photo: "", records: [], totalPoints: 0, scoreSource: row.scoreSource });
+    const profile = riders.get(key);
+    profile.records.push(row);
+    profile.totalPoints = round2(profile.totalPoints + row.ridgePoints);
+    if (profile.scoreSource !== row.scoreSource) profile.scoreSource = "mixed";
+    if (!profile.photo && row.photo) profile.photo = row.photo;
+  }));
+  const awardList = awards.map(a => ({ slug: a.slug, name: a.name, description: a.description || "", tone: a.tone || "" }));
+  const winners = spotlights.map(w => ({ session: w.session_slug, award: w.award_slug, name: w.athlete_name, metric: w.metric || "" }));
+  const sources = new Set([...riders.values()].map(r => r.scoreSource));
+  const scoreSource = sources.size > 1 || sources.has("mixed") ? "mixed" : [...sources][0] || "empty";
+  return { sessions: list, riders: [...riders.values()], awards: awardList, winners, maxLoops, scoreSource, diagnostics,
+    hasOfficialScores: [...riders.values()].some(r => r.records.some(row => row.scoreSource === "official-published")) };
 }
 
-// Average progress per loop comparison of one session record (null when the
-// record does not qualify).
-export const averageProgress = (row) => (row && row.progress !== null ? row.progress / (row.laps - 1) : null);
+// Zero progress is meaningful; missing/non-finite progress and <=1 loop are not.
+export const averageProgress = (row) => row && Number.isFinite(row.progress) && Number.isInteger(row.laps) && row.laps >= 2 && row.laps <= 5
+  ? row.progress / (row.laps - 1) : null;
 
-// A rider's overall progress: latest qualifying session average minus first.
 export function overallRecord(profile) {
-  const qualifying = profile.records.filter((row) => averageProgress(row) !== null).slice().reverse();
+  const eligible = profile.records.filter(row => averageProgress(row) !== null && validRidgeDate(row.date));
+  const counts = new Map();
+  eligible.forEach(row => counts.set(row.date, (counts.get(row.date) || 0) + 1));
+  // Ambiguous same-date records cannot be picked by array order.
+  const duplicateDates = [...counts].filter(([, count]) => count > 1).map(([date]) => date);
+  const qualifying = eligible.filter(row => counts.get(row.date) === 1).slice().sort((a, b) => a.date.localeCompare(b.date));
   const first = qualifying[0];
   const latest = qualifying[qualifying.length - 1];
-  return {
-    ...profile,
-    qualifying,
-    first,
-    latest,
-    value: qualifying.length >= 2 ? averageProgress(latest) - averageProgress(first) : null,
-    place: null,
-  };
+  return { ...profile, qualifying, first, latest, duplicateDates,
+    value: qualifying.length >= 2 && !duplicateDates.length ? averageProgress(latest) - averageProgress(first) : null, place: null };
 }
 
 // Highest value first; equal values (to two decimals) share a place; riders
@@ -531,10 +530,13 @@ export function ridgeStandings(feed, mode, sessionSlug) {
 }
 
 // A rider's place on one session's progress board.
-export function sessionProgressRank(feed, name, sessionSlug) {
+export function sessionProgressRank(feed, name, sessionSlug, athleteId = null) {
   const session = feed.sessions.find((s) => s.slug === sessionSlug);
   const rows = rankRows((session?.riders || []).map((row) => ({ ...row, value: row.progress, place: null })));
-  return rows.find((row) => riderKey(row.name) === riderKey(name))?.place || null;
+  const matches = athleteId ? rows.filter(row => row.athleteId === athleteId) : typeof name === "object"
+    ? rows.filter(row => row.key === ridgeAthleteKey(name))
+    : rows.filter(row => row.key === name || riderKey(row.name) === riderKey(name));
+  return matches.length === 1 ? matches[0].place || null : null;
 }
 
 // A rider's journey for the charts: for every published session (oldest
@@ -553,9 +555,11 @@ export function trendPoints(feed, overall) {
 
 // The Spotlight awards of one session: every award, with its winners.
 export function sessionAwards(feed, sessionSlug) {
+  const definitions = feed.sessions.find(s => s.slug === sessionSlug)?.awardDefinitions || [];
   return feed.awards.map((award) => {
+    const definition = definitions.find(a => a.id === award.slug);
     const rows = feed.winners.filter((w) => w.session === sessionSlug && w.award === award.slug);
-    return { ...award, winners: rows.map((w) => w.name), metric: rows[0]?.metric || "" };
+    return { ...award, description: definition?.description || award.description, winners: rows.map((w) => w.name), metric: rows[0]?.metric || definition?.metric || "" };
   });
 }
 
@@ -669,3 +673,5 @@ export function useSplitPlans(plans) {
     [plans]
   );
 }
+
+

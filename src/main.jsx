@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import "./styles/lab.css";
 import App from "./App.jsx";
+import EditorEntry from "./admin/site-editor/EditorEntry";
 import { applyCachedAppearance } from "./lib/appearance";
 
 // Replays the admin's last-known text size/font/colour before the first
@@ -14,7 +15,8 @@ applyCachedAppearance();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <EditorEntry><App /></EditorEntry>
     </BrowserRouter>
   </StrictMode>
 );
+

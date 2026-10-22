@@ -1,0 +1,12 @@
+import {it,expect,vi,afterEach} from 'vitest';
+import {render,screen,act} from '@testing-library/react';
+import {MemoryRouter} from 'react-router-dom';
+import ConnectedVolunteer from '../../../src/pages/ConnectedVolunteer';
+import {volunteerRoles} from '../../../src/lib/volunteerRoles';
+import {createFakeSupabase} from '../../helpers/fakeSupabase';
+afterEach(()=>vi.useRealTimers());
+const page=client=>render(<MemoryRouter><ConnectedVolunteer client={client}/></MemoryRouter>);
+it('loads only approved snapshots and never private drafts',async()=>{const client=createFakeSupabase();client.on('volunteer_roles',{data:[{...volunteerRoles[0],title:'Approved synthetic role'}]});page(client);expect(await screen.findByRole('heading',{name:'Approved synthetic role'})).toBeInTheDocument();expect(screen.getByText(/Approved role descriptions/)).toBeInTheDocument();expect(client.queries.every(q=>q.table==='volunteer_roles')).toBe(true);expect(screen.queryByRole('button',{name:/apply|submit/i})).not.toBeInTheDocument();});
+it('labels reference catalogue only after a confirmed empty snapshot',async()=>{const client=createFakeSupabase();client.on('volunteer_roles',{data:[]});page(client);expect(await screen.findByText(/Proposed crew catalogue/)).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('7 roles');});
+it('does not disguise read failure as an empty reference catalogue; retry works',async()=>{const client=createFakeSupabase();client.on('volunteer_roles',{error:{message:'offline'}},{times:1});client.on('volunteer_roles',{data:[]});page(client);expect(await screen.findByRole('alert')).toHaveTextContent('could not be loaded');expect(screen.queryByText(/Proposed crew catalogue/)).not.toBeInTheDocument();await act(async()=>screen.getByRole('button',{name:'Try again'}).click());expect(await screen.findByText(/Proposed crew catalogue/)).toBeInTheDocument();});
+it('bounds a stalled read and ignores its late result',async()=>{vi.useFakeTimers();let finish;const client={from:()=>({select:()=>({order:()=>new Promise(r=>finish=r)})})};page(client);await act(async()=>{});await act(async()=>vi.advanceTimersByTime(20000));expect(screen.getByRole('alert')).toHaveTextContent('too long');await act(async()=>finish({data:volunteerRoles}));expect(screen.getByRole('alert')).toHaveTextContent('too long');});

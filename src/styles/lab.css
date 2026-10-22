@@ -1425,3 +1425,7 @@
   .rtg-lab .podium-card-cta { transition:none }
   .rtg-lab .podium-card-cta:hover { transform:none }
 }
+
+
+.rr-session-story-controls { display:flex; flex-wrap:wrap; gap:16px; align-items:center; }
+.rr-session-story-controls select { border:1px solid #d7cfe0; border-radius:8px; padding:8px; background:white; color:#2b153f; }

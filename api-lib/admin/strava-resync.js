@@ -1,5 +1,5 @@
-import { requireAdmin } from "../../api-lib/requireAdmin.js";
-import { advanceStravaBackfill, resetStravaBackfill } from "../../api-lib/stravaSync.js";
+import { requireAdmin } from "../requireAdmin.js";
+import { advanceStravaBackfill, resetStravaBackfill } from "../stravaSync.js";
 
 // POST /api/admin/strava-resync  { userId?: string, mode?: "restart" | "continue" }
 //
@@ -99,3 +99,4 @@ export default async function handler(req, res) {
     rateLimited,
   });
 }
+

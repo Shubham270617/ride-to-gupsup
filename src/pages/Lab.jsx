@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { STRAVA_ENABLED, launchLabCopy, launchLabPrinciples, visibleLabProgrammes } from "../lib/launchFeatures";
 import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
@@ -106,25 +107,61 @@ function LabCard({ lab, onAbout, stravaAlt }) {
   );
 }
 
-export default function Lab() {
-  const settings = useSiteSettings();
-  const copy = useMemo(() => buildLabCopy(settings), [settings]);
-  const { items: labs } = useLabProgrammes();
-  const periods = useLabPeriods();
+// These components only mount when the integration is available, so hidden
+// Strava totals and reward periods do not trigger background reads.
+function StravaHighlights() {
   const highlights = useLabHighlights();
-  const principles = useLabPrinciples();
+  const tileSpots = ["metric-distance", "metric-speed", "metric-elevation"];
+  return <>{highlights.slice(0, tileSpots.length).map((tile, i) => (
+            <div key={tile.id} className={`metric-float ${tileSpots[i]}`}>
+              <span className="icon">{tile.icon}</span>
+              <div>
+                <small>{tile.label}</small>
+                <strong>{tile.text}</strong>
+              </div>
+            </div>
+          ))}</>;
+}
+
+function StravaRewardPeriods({ copy }) {
+  const periods = useLabPeriods();
+  return <>{periods.length > 0 && (
+        <div className="reward-strip">
+          <div className="shell reward-inner" style={{ "--periods": periods.length }}>
+            <span>
+              {copy.stripLine1}
+              <br />
+              <b>{copy.stripLine2}</b>
+            </span>
+            {periods.map((period, i) => (
+              <div key={period.id}>
+                <strong>{pad2(i + 1)}</strong>
+                {period.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}</>;
+}
+
+export default function Lab({ editor }) {
+  const nativeSettings = useSiteSettings();
+  const settings = useMemo(()=>({...nativeSettings,...editor?.settings}),[nativeSettings,editor?.settings]);
+  const section = (id,child)=>editor?editor.section('lab-'+id,child):child;
+  const copy = useMemo(() => launchLabCopy(buildLabCopy(settings)), [settings]);
+  const { items: allLabs } = useLabProgrammes();
+  const labs = visibleLabProgrammes(allLabs);
+  const principles = launchLabPrinciples(useLabPrinciples());
   // The information window: null (closed), or { title, body }.
   const [info, setInfo] = useState(null);
 
   const notes = splitList(copy.heroNotes);
-  // The floating tiles sit at three fixed spots around the ring card.
-  const tileSpots = ["metric-distance", "metric-speed", "metric-elevation"];
 
   return (
     <div className="rtg-lab">
       <LabBackdrop />
 
-      <section data-text-section="hero" className="hero shell" aria-labelledby="lab-hero-title">
+      {section('hero', <section data-text-section="hero" className="hero shell" aria-labelledby="lab-hero-title">
         <div className="hero-copy">
           <div className="eyebrow">
             <i /> {copy.heroEyebrow}
@@ -158,15 +195,7 @@ export default function Lab() {
         <div className="hero-visual" aria-hidden="true">
           <div className="orbit orbit-a" />
           <div className="orbit orbit-b" />
-          {highlights.slice(0, tileSpots.length).map((tile, i) => (
-            <div key={tile.id} className={`metric-float ${tileSpots[i]}`}>
-              <span className="icon">{tile.icon}</span>
-              <div>
-                <small>{tile.label}</small>
-                <strong>{tile.text}</strong>
-              </div>
-            </div>
-          ))}
+          {STRAVA_ENABLED && <StravaHighlights />}
           <div className="core">
             <div className="core-label">{copy.coreLabel}</div>
             <svg className="core-ring" viewBox="0 0 260 260">
@@ -186,27 +215,11 @@ export default function Lab() {
           </div>
           <div className="visual-label">{copy.visualLabel}</div>
         </div>
-      </section>
+      </section>)}
 
-      {periods.length > 0 && (
-        <div className="reward-strip">
-          <div className="shell reward-inner" style={{ "--periods": periods.length }}>
-            <span>
-              {copy.stripLine1}
-              <br />
-              <b>{copy.stripLine2}</b>
-            </span>
-            {periods.map((period, i) => (
-              <div key={period.id}>
-                <strong>{pad2(i + 1)}</strong>
-                {period.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {STRAVA_ENABLED && <StravaRewardPeriods copy={copy} />}
 
-      <section data-text-section="labs" className="shell labs-section" id="labs">
+      {section('labs', <section data-text-section="labs" className="shell labs-section" id="labs">
         <div className="section-heading">
           <div>
             <div className="eyebrow">{copy.labsEyebrow}</div>
@@ -233,9 +246,9 @@ export default function Lab() {
           </div>
           <span className="future-note">{copy.futureNote}</span>
         </div>
-      </section>
+      </section>)}
 
-      <section data-text-section="principles" className="shell principles">
+      {section('principles', <section data-text-section="principles" className="shell principles">
         <div>
           <div className="eyebrow">{copy.principlesEyebrow}</div>
           <h2>
@@ -251,7 +264,7 @@ export default function Lab() {
             <p>{item.text}</p>
           </article>
         ))}
-      </section>
+      </section>)}
 
       <LabDialog open={Boolean(info)} onClose={() => setInfo(null)} labelledBy="lab-info-title">
         {info && (
@@ -273,3 +286,5 @@ export default function Lab() {
     </div>
   );
 }
+
+

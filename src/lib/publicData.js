@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { PublicDataStatusContext } from './publicDataStatus';
+import { useContext, useEffect, useState } from "react";
+import { STRAVA_ENABLED } from "./launchFeatures";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import {
   products as staticProducts,
@@ -54,11 +56,13 @@ import { images as staticImages } from "../data/images";
  * data — the one that actually has the match — ever gets a chance to load.
  */
 export function useSupabaseList(table, { staticFallback, mapRow, orderBy = "sort_order", ascending = true, filterPublished = true }) {
+  const reportSource = useContext(PublicDataStatusContext);
   const [items, setItems] = useState(staticFallback);
   const [loading, setLoading] = useState(isSupabaseConfigured);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) { reportSource(table, 'fallback: client not configured'); return; }
+    reportSource(table, 'loading');
     let query = supabase.from(table).select("*");
     if (filterPublished) query = query.eq("published", true);
     query = query.order(orderBy, { ascending });
@@ -66,13 +70,14 @@ export function useSupabaseList(table, { staticFallback, mapRow, orderBy = "sort
     let cancelled = false;
     query.then(({ data, error }) => {
       if (cancelled) return;
+      reportSource(table, error ? 'fallback: read failed' : data?.length ? 'current published rows loaded' : 'fallback: no published rows');
       if (!error && data && data.length > 0) setItems(data.map(mapRow));
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [table]);
+  }, [table, reportSource]);
 
   return { items, loading };
 }
@@ -424,7 +429,7 @@ export function useSponsorOpportunities() {
 export function useMyStravaActivities(userId) {
   const [activities, setActivities] = useState([]);
   useEffect(() => {
-    if (!isSupabaseConfigured || !userId) {
+    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
       setActivities([]);
       return;
     }
@@ -450,7 +455,10 @@ export function useMyStravaActivities(userId) {
 export function useMyLeaderboardStats(userId) {
   const [stats, setStats] = useState(null);
   useEffect(() => {
-    if (!isSupabaseConfigured || !userId) return;
+    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
+      setStats(null);
+      return;
+    }
     let cancelled = false;
     supabase
       .from("leaderboard_stats")
@@ -471,15 +479,19 @@ export function useMyLeaderboardStats(userId) {
 // admin-editable, no code changes needed). Currently just the sponsor deck
 // download link, but built to hold any future one-off setting too.
 export function useSiteSettings() {
+  const reportSource = useContext(PublicDataStatusContext);
   const [settings, setSettings] = useState({});
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) { reportSource('site_settings', 'fallback: client not configured'); return; }
+    reportSource('site_settings', 'loading');
     let cancelled = false;
     supabase
       .from("site_settings")
       .select("key,value")
-      .then(({ data }) => {
-        if (cancelled || !data) return;
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        reportSource('site_settings', error ? 'fallback: read failed' : data?.length ? 'current overrides loaded' : 'fallback: no overrides');
+        if (error || !data) return;
         const map = {};
         data.forEach((r) => {
           map[r.key] = r.value;
@@ -489,7 +501,7 @@ export function useSiteSettings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reportSource]);
   return settings;
 }
 
@@ -1124,15 +1136,19 @@ export function useStates() {
 // (see admin/pages/SiteImagesAdmin.jsx). Starts from the static defaults so
 // pages never show a blank image while this loads.
 export function useSiteImages() {
+  const reportSource = useContext(PublicDataStatusContext);
   const [overrides, setOverrides] = useState({});
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) { reportSource('site_images', 'fallback: client not configured'); return; }
+    reportSource('site_images', 'loading');
     let cancelled = false;
     supabase
       .from("site_images")
       .select("key,url")
-      .then(({ data }) => {
-        if (cancelled || !data) return;
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        reportSource('site_images', error ? 'fallback: read failed' : data?.length ? 'current overrides loaded' : 'fallback: no overrides');
+        if (error || !data) return;
         const map = {};
         data.forEach((r) => {
           map[r.key] = r.url;
@@ -1142,7 +1158,7 @@ export function useSiteImages() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reportSource]);
   return { ...staticImages, ...overrides };
 }
 
@@ -1298,3 +1314,5 @@ export function useLiveActivity() {
 
   return { todaysSession, todaysCalendarEvent, upcomingEvent, nextCalendarEvent };
 }
+
+

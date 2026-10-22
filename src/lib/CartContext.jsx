@@ -77,3 +77,9 @@ export function CartProvider({ children }) {
 export function useCart() {
   return useContext(CartContext);
 }
+
+
+// Visual-editor canvas: render the native navigation without reading/writing a cart.
+export function CartPreviewProvider({ children }) {
+  return <CartContext.Provider value={{ count: 0, items: [], setOpen: () => {} }}>{children}</CartContext.Provider>;
+}

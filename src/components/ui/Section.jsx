@@ -30,8 +30,10 @@ export default function Section({
   // Name Admin -> Appearance uses to give this section its own font/size.
   // Defaults to contentKey.
   textSection,
+  editorSettings,
 }) {
-  const settings = useSiteSettings();
+  const nativeSettings = useSiteSettings();
+  const settings = {...nativeSettings,...editorSettings};
   const isMobile = useIsMobile();
   const resolvedEyebrow = contentKey ? pickText(settings, `text.${contentKey}.eyebrow`, eyebrow) : eyebrow;
   const resolvedTitle = contentKey ? pickText(settings, `text.${contentKey}.title`, title) : title;
@@ -93,3 +95,4 @@ export default function Section({
     </section>
   );
 }
+

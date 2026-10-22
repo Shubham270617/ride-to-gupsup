@@ -224,7 +224,8 @@ const heroTextItem = {
 
 const MOBILE_FOCUS_CLASS = { top: "object-top", center: "object-center", bottom: "object-bottom" };
 
-function Hero({ images, settings, slides }) {
+function Hero({ images, settings, slides, editorSlide, editorMotion }) {
+  const textMotion = editorMotion ? { hidden: { opacity: 0, y: editorMotion.motionDistance ?? 28 }, show: { opacity: 1, y: 0, transition: { duration: editorMotion.motionDuration ?? 0.65, ease: HERO_EASE } } } : heroTextItem;
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "35%"]);
@@ -235,7 +236,8 @@ function Hero({ images, settings, slides }) {
   const stats = useMemo(() => buildStats(settings), [settings]);
   const states = useMemo(() => pickStates(settings), [settings]);
 
-  const [slide, setSlide] = useState(0);
+  const [activeSlide, setSlide] = useState(0);
+  const slide = editorSlide ?? activeSlide;
   const total = slides.length;
   const current = slides[slide];
 
@@ -248,10 +250,11 @@ function Hero({ images, settings, slides }) {
   // manual arrow click, so manually navigating never gets immediately
   // undone by an auto-advance a moment later.
   useEffect(() => {
+    if (editorSlide !== undefined) return;
     const t = setTimeout(() => goTo(slide + 1), HERO_SLIDE_DURATION);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slide]);
+  }, [slide, editorSlide]);
 
   // `min-h` (not a fixed height) below — lets the section grow taller than
   // one viewport if the headline + bottom band (slide nav, stats, presence
@@ -316,22 +319,22 @@ function Hero({ images, settings, slides }) {
         <div className="flex-1 flex items-center py-6 lg:py-8">
           <div className="w-full lg:max-w-[56%]">
             <AnimatePresence mode="wait">
-              <motion.div key={slide} variants={heroTextGroup} initial="hidden" animate="show" exit="exit">
+              <motion.div key={`${slide}:${editorMotion?.motionDuration}:${editorMotion?.motionDistance}`} variants={heroTextGroup} initial="hidden" animate="show" exit="exit">
                 <motion.span
-                  variants={heroTextItem}
+                  variants={textMotion}
                   className="block text-rtg-orange-400 font-bold tracking-[0.22em] uppercase text-[length:calc(0.625rem*var(--rtg-sec,1))] md:text-[length:calc(0.6875rem*var(--rtg-sec,1))] mb-4 md:mb-5"
                 >
                   {current.eyebrow}
                 </motion.span>
                 <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-[clamp(4.25rem,5.6vw,6.75rem)] leading-[0.92] mb-5 md:mb-7">
-                  <motion.span variants={heroTextItem} className="block">
+                  <motion.span variants={textMotion} className="block">
                     {current.title}
                   </motion.span>
-                  <motion.span variants={heroTextItem} className="block">
+                  <motion.span variants={textMotion} className="block">
                     <span className="text-gradient">{current.accent}</span>
                   </motion.span>
                 </h1>
-                <motion.p variants={heroTextItem} className="text-white/80 text-sm md:text-base lg:text-[clamp(0.9rem,0.9vw,1.0625rem)] max-w-[36rem] leading-relaxed">
+                <motion.p variants={textMotion} className="text-white/80 text-sm md:text-base lg:text-[clamp(0.9rem,0.9vw,1.0625rem)] max-w-[36rem] leading-relaxed">
                   {current.subtitle}
                 </motion.p>
               </motion.div>
@@ -411,32 +414,36 @@ function Hero({ images, settings, slides }) {
   );
 }
 
-export default function Home() {
-  const images = useSiteImages();
-  const settings = useSiteSettings();
+export default function Home({ editor }) {
+  const siteImages = useSiteImages();
+  const siteSettings = useSiteSettings();
+  const images = { ...siteImages, ...editor?.images };
+  const settings = useMemo(() => ({ ...siteSettings, ...editor?.settings }), [siteSettings, editor?.settings]);
+  const section = (id, children) => editor ? editor.section(id, children) : children;
   const heroSlides = useMemo(() => buildHeroSlides(settings), [settings]);
   return (
     <>
-      <Hero images={images} settings={settings} slides={heroSlides} />
+      {section('hero', <Hero images={images} settings={settings} slides={heroSlides} editorSlide={editor?.slide} editorMotion={editor?.heroMotion} />)}
 
       {/* WHY RTG + MORE WAYS TO MOVE — the two light sections directly
           under the hero. Neither paints a background: the fixed
           SiteBackground (see Layout) shows through both. */}
-      <WhyRtg settings={settings} />
-      <WaysToMove settings={settings} images={images} />
+      {section('why', <WhyRtg settings={settings} />)}
+      {section('ways', <WaysToMove settings={settings} images={images} />)}
 
       {/* TRAINING FORMATS — dark, photo-backed showcase with tabs, then
           UPCOMING EVENTS — the featured events as large slides. */}
-      <TrainingFormats images={images} />
-      <UpcomingEvents settings={settings} images={images} />
+      {section('training', <TrainingFormats images={images} />)}
+      {section('events', <UpcomingEvents settings={settings} images={images} />)}
 
       {/* MERCHANDISE HIGHLIGHTS — the store's products as a drifting row */}
-      <MerchHighlights settings={settings} images={images} />
+      {section('merch', <MerchHighlights settings={settings} images={images} />)}
 
       {/* COMMUNITY GALLERY — sticky copy beside a scrolling photo grid, then
           WHAT PEOPLE SAY — the testimonials, one at a time. */}
-      <GalleryShowcase settings={settings} />
-      <CommunityVoices settings={settings} />
+      {section('gallery', <GalleryShowcase settings={settings} />)}
+      {section('voices', <CommunityVoices settings={settings} />)}
     </>
   );
 }
+

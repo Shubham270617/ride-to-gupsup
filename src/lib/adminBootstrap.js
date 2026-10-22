@@ -1,10 +1,8 @@
 import { supabase } from "./supabaseClient";
 
-// Asks the server whether this account may enter the admin dashboard, and
-// grants the seat if it may. The decision belongs entirely to
-// api/auth/claim-bootstrap-admin.js, which hands out the 3 admin seats —
-// nothing here decides anything, it only relays the answer so the interface
-// can show the server's own wording.
+// Confirms whether this account already has admin membership. The server
+// performs no grant: signup, login and vacant seats do not confer access.
+// This helper only relays the response to the interface.
 //
 // A refusal arrives as HTTP 403 with a real body, so the old "any non-OK
 // response means the server was unreachable" shortcut would have hidden the
@@ -41,3 +39,4 @@ export async function claimBootstrapAdmin() {
     return { granted: false, reason: "request_failed" };
   }
 }
+

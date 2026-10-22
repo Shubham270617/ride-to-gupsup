@@ -1,0 +1,29 @@
+TEST installation checkpoint, 22 October 2026
+Supersedes earlier proposal statements that storage is absent/unapplied.
+
+Owner approved private TEST storage/configuration/deployment/webhook registration,
+including trusted-host callback-log exposure. Consent remains a later user action.
+Applied migration 20261022080617_personal_strava_private_storage on TEST
+cxwfjrntfqlyaqppxggh. Three RLS tables empty. Browser SELECT and RPC execution denied;
+service role has table CRUD except immutable rule_history SELECT/INSERT only.
+No existing tables, records or permissions were changed by this migration.
+
+Configured only TEST Vercel project prj_mbrInjM6Ton7fB1qynFP1KdivPk8 production target:
+RTG_PERSONAL_STRAVA_ENABLED=false
+RTG_PERSONAL_STRAVA_ORIGIN=https://rtg-website-three.vercel.app
+RTG_PERSONAL_STRAVA_CLIENT_ID=272337
+RTG_PERSONAL_STRAVA_ATHLETE_ID=120094763
+RTG_PERSONAL_STRAVA_USER_ID=f9523ecc-4d05-42c9-a9e5-446b239ae446
+Independent random vault/webhook/verification keys installed as sensitive secrets.
+No secret values in source/docs. User must supply CLIENT_SECRET directly in Vercel.
+No provider subscription or OAuth grant created. SUBSCRIPTION_ID still unset.
+
+User step: https://vercel.com/rtg19/rtg-website/settings/environment-variables
+Add RTG_PERSONAL_STRAVA_CLIENT_SECRET as Secret, Production only, using personal
+app 272337. Do not send it in chat. Leave ENABLED=false. Further deployment/registration
+must verify prerequisites; user OAuth consent occurs explicitly afterward.
+
+Candidate checks: 954 pass, two known missing-Python environment failures,
+one expected failure and one todo. Build/lint pass with warnings; standalone7/7.
+See current-status and log-safety docs for review evidence and remaining acceptance.
+Existing LIVE website, Wheelix app, rider data and legacy integrations untouched.
