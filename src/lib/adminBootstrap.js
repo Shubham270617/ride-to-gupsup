@@ -1,10 +1,9 @@
 import { supabase } from "./supabaseClient";
 
-// Asks the server whether this account may enter the admin dashboard, and
-// grants the seat if it may. The decision belongs entirely to
-// api/auth/claim-bootstrap-admin.js, which hands out the 3 admin seats —
-// nothing here decides anything, it only relays the answer so the interface
-// can show the server's own wording.
+// Asks the server whether this account may enter the admin dashboard
+// (only the 3 fixed RTG admin emails may). The decision belongs entirely to
+// api/auth/claim-bootstrap-admin.js — nothing here decides anything, it only
+// relays the answer so the interface can show the server's own wording.
 //
 // A refusal arrives as HTTP 403 with a real body, so the old "any non-OK
 // response means the server was unreachable" shortcut would have hidden the

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, ShieldOff, Search, ShieldAlert, RefreshCw } from "lucide-react";
+import { ShieldCheck, Search, ShieldAlert, RefreshCw } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
-import { useConfirm } from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
 import AdminPageHeader from "../components/AdminPageHeader";
+import { ADMIN_EMAILS, normalizeEmail } from "../../../api-lib/adminEmails.js";
 
 const PAGE_SIZE = 20;
 
@@ -13,26 +13,21 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-const MAX_ADMIN_SEATS = 3;
-
 // Every member who has ever signed up, in one place — how many there are,
 // their contact info, when they last logged in, and whether they currently
 // have admin access.
 //
-// Admin access is 3 seats (admin_profiles rows): the first 3 people to sign
-// in at /admin/login take them (api/auth/claim-bootstrap-admin.js), and the
-// database refuses a 4th (the admin_seat_cap trigger). Revoking an admin
-// here frees their seat for the next person who signs in there.
+// Admin access is fixed to 3 email addresses (api-lib/adminEmails.js). Each
+// gets its admin_profiles row the first time it signs in at /admin/login;
+// nobody else can, so there is nothing to grant or revoke here.
 export default function AdminsAdmin() {
   const { user } = useAdminSession();
-  const confirm = useConfirm();
   const [members, setMembers] = useState([]);
   const [adminIds, setAdminIds] = useState(new Set());
   const [resyncing, setResyncing] = useState(false);
   const [resyncNote, setResyncNote] = useState("");
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
 
@@ -50,30 +45,6 @@ export default function AdminsAdmin() {
   useEffect(() => {
     loadAll();
   }, []);
-
-  const revokeAdmin = async (member) => {
-    const ok = await confirm({
-      title: "Remove admin access?",
-      message: `${member.email || member.full_name} will lose access to the admin dashboard, and their seat goes to the next person who signs in at /admin/login.`,
-      confirmLabel: "Remove access",
-    });
-    if (!ok) return;
-    setBusyId(member.id);
-    setError("");
-    try {
-      const { error: err } = await supabase.from("admin_profiles").delete().eq("id", member.id);
-      if (err) throw err;
-      setAdminIds((prev) => {
-        const next = new Set(prev);
-        next.delete(member.id);
-        return next;
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
 
   // Clears every connected member's sync watermark and starts walking their
   // Strava history again from today back to their first ever activity. The
@@ -142,8 +113,12 @@ export default function AdminsAdmin() {
     }
   };
 
-  const seatsUsed = adminIds.size;
-  const admins = members.filter((m) => adminIds.has(m.id));
+  // Each fixed admin email, with the member account that signed in with it.
+  const adminSlots = ADMIN_EMAILS.map((email) => {
+    const member = members.find((m) => normalizeEmail(m.email) === email);
+    return { email, member, active: Boolean(member && adminIds.has(member.id)) };
+  });
+  const activeAdmins = adminSlots.filter((slot) => slot.active).length;
 
   const q = query.trim().toLowerCase();
   const filtered = q
@@ -161,10 +136,10 @@ export default function AdminsAdmin() {
     <div>
       <AdminPageHeader
         title="Members"
-        description={`Everyone who has ever signed up, when they last logged in, and whether they have admin access. The first ${MAX_ADMIN_SEATS} people to sign in at /admin/login are the admins.`}
+        description={`Everyone who has ever signed up, when they last logged in, and whether they have admin access. Only the ${ADMIN_EMAILS.length} RTG admin email addresses can be admins.`}
         stats={[
           { label: "signed up", value: members.length },
-          { label: `of ${MAX_ADMIN_SEATS} admin seats used`, value: seatsUsed },
+          { label: `of ${ADMIN_EMAILS.length} admins signed in`, value: activeAdmins },
         ]}
         actions={
           <button
@@ -180,38 +155,36 @@ export default function AdminsAdmin() {
       />
 
       {/* ---------------------------------------------------------------
-          The 3 admin seats. A seat is taken by signing in at /admin/login
-          while one is free; revoking an admin frees theirs.
+          The 3 fixed admin emails, and whether each has signed in yet.
           --------------------------------------------------------------- */}
       <div className="glass rounded-2xl p-5 mb-8 max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
           <h2 className="font-display text-xl flex items-center gap-2">
-            <ShieldCheck size={17} className="text-rtg-orange-400" /> Admin seats
+            <ShieldCheck size={17} className="text-rtg-orange-400" /> Admin emails
           </h2>
           <span className="text-xs text-rtg-mist">
-            {seatsUsed} of {MAX_ADMIN_SEATS} seats in use
+            {activeAdmins} of {ADMIN_EMAILS.length} signed in
           </span>
         </div>
         <p className="text-rtg-mist text-xs mb-4">
-          {seatsUsed < MAX_ADMIN_SEATS
-            ? `${MAX_ADMIN_SEATS - seatsUsed} seat${MAX_ADMIN_SEATS - seatsUsed === 1 ? " is" : "s are"} free — the next person to sign in at /admin/login becomes an admin.`
-            : "All seats are taken. Revoke an admin below to free a seat for the next person who signs in at /admin/login."}
+          Only these addresses can open the admin dashboard. Each becomes active the first time it signs in at /admin/login. To change the list, ask your developer — it is fixed in the code and the database.
         </p>
 
         <ul className="flex flex-col gap-2">
-          {admins.map((m) => (
-            <li key={m.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-rtg-purple-950/[0.04] px-4 py-2.5 text-sm text-rtg-white">
-              <ShieldCheck size={14} className="shrink-0 text-rtg-orange-600" />
+          {adminSlots.map(({ email, member, active }) => (
+            <li
+              key={email}
+              className={`flex flex-wrap items-center gap-2 rounded-xl px-4 py-2.5 text-sm ${
+                active ? "bg-rtg-purple-950/[0.04] text-rtg-white" : "border border-dashed border-rtg-border text-rtg-mist"
+              }`}
+            >
+              {active ? <ShieldCheck size={14} className="shrink-0 text-rtg-orange-600" /> : <ShieldAlert size={14} className="shrink-0" />}
               <span className="min-w-0 break-all">
-                {m.full_name || m.email || "Admin"}
-                {m.full_name && m.email && <span className="text-xs text-rtg-mist"> · {m.email}</span>}
-                {m.id === user?.id && <span className="text-xs text-rtg-mist"> (you)</span>}
+                {email}
+                {member?.full_name && <span className="text-xs text-rtg-mist"> · {member.full_name}</span>}
+                {member && member.id === user?.id && <span className="text-xs text-rtg-mist"> (you)</span>}
               </span>
-            </li>
-          ))}
-          {Array.from({ length: Math.max(0, MAX_ADMIN_SEATS - seatsUsed) }, (_, i) => (
-            <li key={`free-${i}`} className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 px-4 py-2.5 text-sm text-rtg-mist">
-              <ShieldAlert size={14} className="shrink-0" /> Free seat
+              <span className="ml-auto text-xs">{active ? "Active" : "Not signed in yet"}</span>
             </li>
           ))}
         </ul>
@@ -260,19 +233,9 @@ export default function AdminsAdmin() {
                     <td className="px-5 py-3 text-rtg-mist">{formatDate(m.created_at)}</td>
                     <td className="sticky right-0 bg-[var(--glass-bg)] shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.6)] px-5 py-3 text-right">
                       {isAdmin ? (
-                        m.id === user?.id ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-600">
-                            <ShieldCheck size={13} /> Admin
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => revokeAdmin(m)}
-                            disabled={busyId === m.id}
-                            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-full bg-rtg-purple-950/[0.04] text-rtg-mist px-3.5 py-1.5 hover:text-rtg-orange-400 hover:bg-rtg-purple-950/[0.07] transition-colors disabled:opacity-60"
-                          >
-                            <ShieldOff size={13} /> Revoke
-                          </button>
-                        )
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-orange-600">
+                          <ShieldCheck size={13} /> Admin
+                        </span>
                       ) : (
                         <span className="text-xs text-rtg-mist">Member</span>
                       )}

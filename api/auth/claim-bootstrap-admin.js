@@ -1,16 +1,16 @@
 import { getSupabaseAdmin } from "../../api-lib/supabaseAdmin.js";
+import { isAdminAccount, isAdminEmail } from "../../api-lib/adminEmails.js";
 
 // POST /api/auth/claim-bootstrap-admin — called right after a successful
 // sign-in on /admin/login (and from the Google callback) to decide whether
 // this account may enter the admin dashboard.
 //
-// The rule: the first 3 people to sign in on the admin page are the admins.
-// An account that already holds a seat is let straight in; anyone else gets
-// a seat if one is free, and a 409 "seats_full" once all 3 are taken. The
-// limit itself is enforced by the admin_seat_cap trigger in the database
-// (supabase/schema.sql), under a lock, so two people signing in at the same
-// moment can never end up as a 4th admin. Removing an admin (Admin →
-// Members) frees their seat for the next person who signs in here.
+// The rule: only the 3 fixed RTG admin emails (api-lib/adminEmails.js) are
+// admins. Signing in with one of them, once the email is verified, gives
+// that account its admin_profiles row (if it doesn't have it yet). Every
+// other account is refused with 403 "not_admin_email". The database
+// enforces the same list (admin_email_guard trigger and is_admin(), see
+// supabase/migrations/029_fixed_admin_emails.sql).
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "method_not_allowed" });
@@ -36,12 +36,34 @@ export default async function handler(req, res) {
   }
   const user = userData.user;
 
+  if (!isAdminEmail(user.email)) {
+    res.status(403).json({
+      granted: false,
+      reason: "not_admin_email",
+      message: "Only the RTG admin email addresses can open the admin dashboard.",
+    });
+    return;
+  }
+  if (!isAdminAccount(user)) {
+    res.status(403).json({
+      granted: false,
+      reason: "email_not_confirmed",
+      message: "Confirm this email address first (use the link Supabase emailed you), then log in again.",
+    });
+    return;
+  }
+
   // Already an admin — nothing to grant, just confirm.
-  const { data: existingAdmin } = await supabaseAdmin
+  const { data: existingAdmin, error: adminErr } = await supabaseAdmin
     .from("admin_profiles")
     .select("id")
     .eq("id", user.id)
     .maybeSingle();
+  if (adminErr) {
+    console.error("[claim-bootstrap-admin] admin_profiles lookup", adminErr);
+    res.status(503).json({ granted: false, reason: "admin_check_failed", message: "Admin access could not be checked. Please try again." });
+    return;
+  }
   if (existingAdmin) {
     res.status(200).json({ granted: true, alreadyAdmin: true });
     return;
@@ -51,9 +73,9 @@ export default async function handler(req, res) {
 
   // admin_profiles.id has a foreign key to profiles.id, so an account with
   // no profiles row (created before the signup trigger existed, or whose
-  // row was deleted by hand) could never be granted a seat — the insert
-  // below failed with a foreign-key error. Make sure the row exists first;
-  // ignoreDuplicates leaves an existing row untouched.
+  // row was deleted by hand) could never be made an admin — the insert
+  // below would fail. Make sure the row exists first; ignoreDuplicates
+  // leaves an existing row untouched.
   const { error: profileErr } = await supabaseAdmin
     .from("profiles")
     .upsert({ id: user.id, email: user.email, full_name: fullName }, { onConflict: "id", ignoreDuplicates: true });
@@ -63,22 +85,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { error: insertErr } = await supabaseAdmin
-    .from("admin_profiles")
-    .insert({ id: user.id, full_name: fullName });
-
+  const { error: insertErr } = await supabaseAdmin.from("admin_profiles").insert({ id: user.id, full_name: fullName });
   if (insertErr) {
-    // The seat-cap trigger surfaces as an insert error. Report it
-    // distinctly so the interface can say something useful.
-    const seatsFull = /seat cap/i.test(insertErr.message || "");
-    if (!seatsFull) console.error("[claim-bootstrap-admin] admin_profiles insert", insertErr);
-    res.status(seatsFull ? 409 : 500).json({
-      granted: false,
-      reason: seatsFull ? "seats_full" : "grant_failed",
-      message: seatsFull
-        ? "All 3 admin seats are in use. An existing admin must remove someone in Admin → Members first."
-        : insertErr.message,
-    });
+    console.error("[claim-bootstrap-admin] admin_profiles insert", insertErr);
+    res.status(500).json({ granted: false, reason: "grant_failed", message: insertErr.message });
     return;
   }
 

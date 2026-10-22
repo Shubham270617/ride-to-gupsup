@@ -86,8 +86,22 @@ describe("database migrations match the code", () => {
   });
 });
 
-describe("admin access: the first 3 people to sign in at /admin/login", () => {
+describe("admin access: 3 fixed admin emails", () => {
   const schema = () => read("supabase/schema.sql");
+
+  it("the email list is the same in the server code, migration 029 and schema.sql", async () => {
+    const { ADMIN_EMAILS } = await import("../../api-lib/adminEmails.js");
+    for (const file of ["supabase/schema.sql", "supabase/migrations/029_fixed_admin_emails.sql"]) {
+      const fn = read(file).match(/function public\.admin_email_allowed[\s\S]*?\$\$;/)[0];
+      expect([...fn.matchAll(/'([^']+@[^']+)'/g)].map((m) => m[1]), file).toEqual([...ADMIN_EMAILS]);
+    }
+  });
+
+  it("is_admin() requires a confirmed, listed email", () => {
+    const fn = schema().match(/create or replace function is_admin\(\)[\s\S]*?\$\$;/)[0];
+    expect(fn).toContain("admin_email_allowed(u.email)");
+    expect(fn).toContain("email_confirmed_at is not null");
+  });
 
   it("schema.sql's is_admin() only checks for an admin_profiles seat", () => {
     const fn = schema().match(/create or replace function is_admin\(\)[\s\S]*?\$\$;/)[0];

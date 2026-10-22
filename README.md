@@ -61,11 +61,10 @@ your project dashboard:
      var. It goes in `api/.env.local` for local dev, and in your deploy
      host's environment variable settings for production. This key bypasses
      all security rules — treat it like a master password.
-3. **Create your admins**: the first 3 people to sign in at
-   `/admin/login` (Log In or Sign Up, email/password or Google) become the
-   admins — no SQL needed. A 4th is refused until an existing admin is
-   revoked in **Admin → Members**, which frees that seat. While a seat is
-   free, *anyone* who signs in there takes it, so fill all 3 yourselves.
+3. **Admins**: only 3 fixed email addresses can be admins
+   (`api-lib/adminEmails.js`, enforced in the database by migration 029).
+   Each signs in once at `/admin/login` (Google, or email/password after
+   confirming the email). Keep Supabase's "Confirm email" setting on.
 
 ### 1b. Email sending (REQUIRED for password reset and login codes)
 

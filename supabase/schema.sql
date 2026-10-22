@@ -171,11 +171,24 @@ create policy "admin_profiles self read" on admin_profiles
   for select using (auth.uid() = id);
 
 -- ----------------------------------------------------------------------------
--- Who is an admin: whoever holds one of the 3 rows in admin_profiles. The
--- first 3 people to sign in at /admin/login take them
--- (api/auth/claim-bootstrap-admin.js); the admin_seat_cap trigger below
--- refuses a 4th.
+-- Who is an admin: one of the 3 fixed RTG admin emails, verified, holding
+-- a row in admin_profiles (migration 029). Signing in at /admin/login with
+-- one of them creates the row (api/auth/claim-bootstrap-admin.js). The same
+-- list is in api-lib/adminEmails.js — change both together.
 -- ----------------------------------------------------------------------------
+
+create or replace function public.admin_email_allowed(p_email text)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select lower(btrim(coalesce(p_email, ''))) = any (array[
+    'simranbaghelgame@gmail.com',
+    'shub88510@gmail.com',
+    'wheelikx@gmail.com'
+  ]);
+$$;
 
 -- Helper: is the current request from an admin? Every admin-gated RLS
 -- policy on every table in this file is written against this one function,
@@ -186,10 +199,42 @@ language sql
 security definer set search_path = public
 stable
 as $$
-  select exists (select 1 from public.admin_profiles ap where ap.id = auth.uid());
+  select exists (
+    select 1
+    from public.admin_profiles ap
+    join auth.users u on u.id = ap.id
+    where ap.id = auth.uid()
+      and u.email_confirmed_at is not null
+      and public.admin_email_allowed(u.email)
+  );
 $$;
 
--- The email allowlist that used to sit here was removed in migration 024.
+-- Nobody else can be given an admin_profiles row, whichever way it is
+-- inserted.
+create or replace function enforce_admin_email()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not exists (
+    select 1 from auth.users u
+    where u.id = new.id
+      and u.email_confirmed_at is not null
+      and public.admin_email_allowed(u.email)
+  ) then
+    raise exception 'Only the RTG admin email addresses can be admins.' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists admin_email_guard on admin_profiles;
+create trigger admin_email_guard
+  before insert or update on admin_profiles
+  for each row execute function enforce_admin_email();
+
+-- The old email allowlist table from migrations 020/023 was removed in 024.
 drop trigger if exists admin_allowlist_guard on admin_profiles;
 drop function if exists enforce_admin_allowlist();
 drop table if exists admin_allowed_emails cascade;
@@ -1269,19 +1314,16 @@ drop function if exists claim_admin_if_seats_open();
 -- ============================================================================
 -- Setting up your admins
 -- ============================================================================
--- The first 3 people to sign in at /admin/login (email/password or Google)
--- are the admins. api/auth/claim-bootstrap-admin.js gives each of them a
--- row in admin_profiles; the admin_seat_cap trigger refuses a 4th.
---
--- While a seat is free, ANYONE who signs in at /admin/login takes it — so
--- fill all 3 seats yourselves. Once they are full, everyone else is refused:
---   * the endpoint answers 409 "seats_full" and grants nothing;
+-- The admins are 3 fixed email addresses (admin_email_allowed() above,
+-- api-lib/adminEmails.js). Each signs in once at /admin/login (Google, or
+-- email/password after confirming the email);
+-- api/auth/claim-bootstrap-admin.js then gives it a row in admin_profiles.
+-- Everyone else is refused:
+--   * the endpoint answers 403 "not_admin_email" and grants nothing;
+--   * the admin_email_guard trigger refuses their admin_profiles row;
 --   * is_admin() returns false for them, so every RLS policy on every table
 --     denies them — opening /admin directly or calling the API with curl
 --     changes nothing.
---
--- Revoking an admin (Admin -> Members) deletes their admin_profiles row and
--- frees the seat for the next person who signs in at /admin/login.
 -- ============================================================================
 
 -- ============================================================================

@@ -485,11 +485,11 @@ It runs on Supabase Realtime (no server functions, so it doesn't count toward Ve
 ### 5.1 Getting access
 
 - **Address:** `/admin/login`. There is no visible link. In the current uncommitted code, the navbar contains an **invisible** link to `/admin/login` (a transparent dot after Signup) for logged-out visitors; the README says such a dot was removed. Either way, hiding the link is not the protection.
-- **The rule: the first 3 people to sign in at `/admin/login` are the admins.** Signing in there (Log In or Sign Up, email/password, phone/password or Google) gives the account a seat (`admin_profiles`) through `/api/auth/claim-bootstrap-admin` if one of the 3 is free.
-- **While a seat is free, anyone who signs in there takes it**, so the team should fill all 3 seats themselves.
-- **Once all 3 are taken**, everyone else is refused ("All admin seats are taken"), and `is_admin()`, used by every security rule, returns false for them.
-- **Seat cap:** a database trigger (`admin_seat_cap`) refuses a 4th seat.
-- **Revoking an admin** in Admin → Members deletes their seat and frees it for the next person who signs in at `/admin/login`.
+- **The rule: the admins are 3 fixed email addresses**: `simranbaghelgame@gmail.com`, `shub88510@gmail.com` and `wheelikx@gmail.com` (migration 029, `api-lib/adminEmails.js`).
+- Signing in at `/admin/login` with one of them (Google, or email/password once the email is confirmed) gives the account its `admin_profiles` row through `/api/auth/claim-bootstrap-admin`. Everyone else is refused ("Not an admin account").
+- **Enforced three times:** the sign-in endpoint, `requireAdmin` on every admin API call, and the database (`is_admin()`, used by every security rule, plus the `admin_email_guard` trigger on `admin_profiles`).
+- **Keep Supabase's "Confirm email" setting on.** The email must be verified, so nobody can sign up with an admin's address and their own password.
+- **Changing the list** means editing `api-lib/adminEmails.js`, `admin_email_allowed()` in `supabase/schema.sql`, and running the new SQL in Supabase. The tests check that the lists match. There is no Revoke button.
 - **One account, two roles:** an admin is a normal member with a seat. They use the same login.
 - The email allowlist used by earlier versions (migrations 020 and 023) was removed in migration 024.
 
@@ -649,7 +649,7 @@ Vercel's Hobby plan allows **12 functions per deployment**, and `api/` is exactl
 | `/api/auth/account?op=phone-login` | POST | Phone + password to a session | Anyone (credentials checked) |
 | `/api/auth/account?op=password-reset` | POST | `action`: `request`, `verify`, `complete` | Anyone (rate-limited) |
 | `/api/auth/account?op=welcome` | POST | Send the welcome email once | Logged-in member |
-| `/api/auth/claim-bootstrap-admin` | POST | Give the caller a free admin seat (first 3 rule) | Logged-in member; 409 `seats_full` once 3 admins exist |
+| `/api/auth/claim-bootstrap-admin` | POST | Let one of the 3 fixed admin emails in (creates its admin row on first sign-in) | Logged-in member; 403 `not_admin_email` / `email_not_confirmed` for anyone else |
 | `/api/auth/delete-account` | POST | Delete the caller's own account | Logged-in member |
 | `/api/admin/strava-resync` | POST | Reset and re-walk Strava histories (all, or `userId`) | Admin only (checked on the server) |
 | `/api/ai/chat` | POST | Tapri replies | Anyone (member token optional) |
@@ -826,6 +826,9 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 021 | `password_reset_codes` table |
 | 022 | `profiles.welcome_email_sent_at`; marks members older than a week as already welcomed |
 | 024 | Removes the admin email allowlist (and 023's clean-up): admins are the first 3 people to sign in at `/admin/login`; `is_admin()` = holds a seat; 3-seat cap kept. Supersedes 020/023 — do not re-run 020 afterwards. |
+| 027 | Ridge volunteer assignments survive an admin's removal (`assigned_by` set to empty) and are deleted with a deleted account. Run after Randeep's four `2026…` Ridge migrations. |
+| 028 | RTG Crew roles: `volunteer_roles` (public) and `volunteer_role_drafts` (admins only). |
+| 029 | Admins are 3 fixed emails: `admin_email_allowed()`, `is_admin()` requires a confirmed listed email, `admin_email_guard` trigger. **Deletes** admin rows of anyone not on the list. |
 | 025 | Live chat: `chat_messages` (community room), `direct_messages` (private, only the two people can read them), `chat_bans` (admin mutes), spam limit of 5 messages per 10 seconds, and Realtime streaming. |
 
 Each file starts with a header explaining what it does. Read it before running, especially those marked "deletes".
@@ -848,7 +851,7 @@ Each file starts with a header explaining what it does. Read it before running, 
 
 ### 8.6 First admins
 
-No SQL needed: after migration 024, the first 3 people to sign in at `/admin/login` become the admins. Fill all 3 seats with the team straight away, because any free seat goes to whoever signs in there next.
+After migration 029, each of the 3 admin emails (`simranbaghelgame@gmail.com`, `shub88510@gmail.com` and `wheelikx@gmail.com`) signs in once at `/admin/login`. Nobody else can become an admin.
 
 ### 8.7 Strava set-up
 
@@ -894,8 +897,7 @@ No SQL needed: after migration 024, the first 3 people to sign in at `/admin/log
 
 ### 9.2 Adding or removing an admin
 
-1. All 3 seats taken? Revoke one in Admin → Members to free it.
-2. The new person signs in at `/admin/login` (signing up there first if they have no account). They take the free seat automatically.
+The admins are fixed to 3 email addresses. To change them, a developer edits `api-lib/adminEmails.js` and `admin_email_allowed()` in `supabase/schema.sql` (the tests check they match), and the same `create or replace function public.admin_email_allowed…` SQL is run in Supabase. Remove the old person's row with `delete from admin_profiles where id = '<their id>';`. The new person then signs in at `/admin/login`.
 
 ### 9.3 Changing images and text in code
 

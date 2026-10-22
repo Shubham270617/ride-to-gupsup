@@ -104,11 +104,11 @@ export default function AdminLogin() {
         setFullName("");
         if (!data.session) {
           // Only when Supabase's "Confirm email" setting is on.
-          setNotice("Account created. Confirm your email from the link Supabase sent, then log in here to take a free admin seat.");
+          setNotice("Account created. Confirm your email from the link Supabase sent, then log in here. Only the RTG admin email addresses get into the dashboard.");
           switchMode("login");
           return;
         }
-        // Signed in straight away — take a seat now if one is free.
+        // Signed in straight away — check it's one of the admin emails.
         const claim = await claimBootstrapAdmin();
         if (!claim.granted) {
           await supabase.auth.signOut();
@@ -131,8 +131,8 @@ export default function AdminLogin() {
       if (signInError) throw signInError;
 
       // The server decides, not this page. api/auth/claim-bootstrap-admin
-      // lets an existing admin in, gives a free seat to anyone else while
-      // fewer than 3 admins exist, and refuses with "seats_full" after that.
+      // lets in only the 3 fixed RTG admin emails (verified) and refuses
+      // everyone else with "not_admin_email".
       // The dashboard itself is protected independently by RLS (is_admin()),
       // so this branch is about showing an honest message.
       const { granted, reason, message } = await claimBootstrapAdmin();
@@ -229,7 +229,7 @@ export default function AdminLogin() {
             <div className="mb-6 rounded-2xl border border-rtg-orange-400/30 bg-rtg-orange-400/10 px-4 py-3">
               <p className="text-sm font-semibold text-rtg-orange-600">Access denied</p>
               <p className="text-xs text-rtg-mist mt-1">
-                You're signed in, but that account isn't one of the 3 admins. Log in again here to take a seat if one is free.
+                You're signed in, but that account isn't one of the RTG admin email addresses. Log in with an admin email to continue.
               </p>
             </div>
           )}
