@@ -142,25 +142,33 @@ export default function AdminsAdmin() {
           { label: "signed up", value: members.length },
           { label: `of ${ADMIN_EMAILS.length} admins signed in`, value: activeAdmins },
         ]}
-        actions={
+      />
+
+      {/* Strava and the admin emails side by side on wide screens. */}
+      <div className="mb-8 grid items-start gap-6 lg:grid-cols-2">
+      <StravaLiveUpdates>
+        {/* Rarely needed now that new rides arrive by themselves: re-reads
+            every member's whole Strava history, to repair totals that look
+            wrong. */}
+        <div className="mt-4 border-t border-rtg-border pt-3">
           <button
+            type="button"
             onClick={resyncStrava}
             disabled={resyncing}
             title="Pull every connected member's full Strava history again"
-            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/20 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-mist transition-colors hover:text-rtg-orange-600 disabled:opacity-60"
           >
-            <RefreshCw size={15} className={resyncing ? "animate-spin" : ""} />
-            {resyncing ? "Resyncing…" : "Resync Strava"}
+            <RefreshCw size={13} className={resyncing ? "animate-spin" : ""} />
+            {resyncing ? "Resyncing…" : "Full resync (only if someone's totals look wrong)"}
           </button>
-        }
-      />
-
-      <StravaLiveUpdates />
+          {resyncNote && <p className="mt-2 text-xs text-rtg-mist">{resyncNote}</p>}
+        </div>
+      </StravaLiveUpdates>
 
       {/* ---------------------------------------------------------------
           The 3 fixed admin emails, and whether each has signed in yet.
           --------------------------------------------------------------- */}
-      <div className="glass rounded-2xl p-5 mb-8 max-w-2xl">
+      <div className="glass rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
           <h2 className="font-display text-xl flex items-center gap-2">
             <ShieldCheck size={17} className="text-rtg-orange-400" /> Admin emails
@@ -192,6 +200,7 @@ export default function AdminsAdmin() {
           ))}
         </ul>
       </div>
+      </div>
 
       <div className="relative mb-5 max-w-sm">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rtg-mist" />
@@ -205,7 +214,6 @@ export default function AdminsAdmin() {
       </div>
 
       {error && <p className="text-rtg-orange-400 text-sm mb-3">{error}</p>}
-      {resyncNote && <p className="text-rtg-mist text-sm mb-3">{resyncNote}</p>}
 
       {loading ? (
         <p className="text-rtg-mist text-sm">Loading…</p>

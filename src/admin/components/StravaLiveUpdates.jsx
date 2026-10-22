@@ -18,7 +18,9 @@ async function call(method) {
   return body;
 }
 
-export default function StravaLiveUpdates() {
+// children: extra controls shown at the bottom of the card (the Members
+// page puts its full-resync link there).
+export default function StravaLiveUpdates({ children }) {
   const [state, setState] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +46,7 @@ export default function StravaLiveUpdates() {
   const elsewhere = state?.subscription && !live;
 
   return (
-    <div className="glass rounded-2xl p-5 mb-8 max-w-2xl">
+    <div className="glass rounded-2xl p-5">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
         <h2 className="font-display text-xl flex items-center gap-2">
           <Activity size={17} className="text-rtg-orange-400" /> Strava live updates
@@ -104,6 +106,7 @@ export default function StravaLiveUpdates() {
       )}
 
       {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
+      {children}
     </div>
   );
 }
