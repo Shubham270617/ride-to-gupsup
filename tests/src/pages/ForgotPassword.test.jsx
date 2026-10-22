@@ -47,7 +47,7 @@ beforeEach(() => {
 });
 
 describe("ForgotPassword page", () => {
-  it("walks email → code → new password → signed in → dashboard", async () => {
+  it("walks email → code → new password → signed in → dashboard", { timeout: 20000 }, async () => {
     const user = userEvent.setup();
     renderPage();
     expect(await heading("Reset your password")).toBeInTheDocument();

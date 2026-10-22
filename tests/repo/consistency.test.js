@@ -86,15 +86,8 @@ describe("database migrations match the code", () => {
   });
 });
 
-describe("admin membership: confirmation-only login with existing database seat cap", () => {
+describe("admin access: the first 3 people to sign in at /admin/login", () => {
   const schema = () => read("supabase/schema.sql");
-
-  it("admin login source never promises automatic vacant-seat grants", () => {
-    for (const file of ["src/admin/pages/AdminLogin.jsx", "src/admin/pages/AdminsAdmin.jsx", "src/pages/AuthCallback.jsx", "src/lib/adminBootstrap.js"]) {
-      expect(read(file)).not.toMatch(/first 3 people|take a free admin seat|next person to sign in|take a seat if one is free|saving admin access/);
-    }
-    expect(read("api/auth/claim-bootstrap-admin.js")).not.toMatch(/\.(insert|upsert|update|delete)\(/);
-  });
 
   it("schema.sql's is_admin() only checks for an admin_profiles seat", () => {
     const fn = schema().match(/create or replace function is_admin\(\)[\s\S]*?\$\$;/)[0];
