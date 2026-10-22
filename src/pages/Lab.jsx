@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { STRAVA_ENABLED, launchLabCopy, launchLabPrinciples, visibleLabProgrammes } from "../lib/launchFeatures";
 import { Link } from "react-router-dom";
 import LabBackdrop from "../components/lab/LabBackdrop";
 import LabDialog from "../components/lab/LabDialog";
@@ -148,10 +147,9 @@ export default function Lab({ editor }) {
   const nativeSettings = useSiteSettings();
   const settings = useMemo(()=>({...nativeSettings,...editor?.settings}),[nativeSettings,editor?.settings]);
   const section = (id,child)=>editor?editor.section('lab-'+id,child):child;
-  const copy = useMemo(() => launchLabCopy(buildLabCopy(settings)), [settings]);
-  const { items: allLabs } = useLabProgrammes();
-  const labs = visibleLabProgrammes(allLabs);
-  const principles = launchLabPrinciples(useLabPrinciples());
+  const copy = useMemo(() => buildLabCopy(settings), [settings]);
+  const { items: labs } = useLabProgrammes();
+  const principles = useLabPrinciples();
   // The information window: null (closed), or { title, body }.
   const [info, setInfo] = useState(null);
 
@@ -195,7 +193,7 @@ export default function Lab({ editor }) {
         <div className="hero-visual" aria-hidden="true">
           <div className="orbit orbit-a" />
           <div className="orbit orbit-b" />
-          {STRAVA_ENABLED && <StravaHighlights />}
+          <StravaHighlights />
           <div className="core">
             <div className="core-label">{copy.coreLabel}</div>
             <svg className="core-ring" viewBox="0 0 260 260">
@@ -217,7 +215,7 @@ export default function Lab({ editor }) {
         </div>
       </section>)}
 
-      {STRAVA_ENABLED && <StravaRewardPeriods copy={copy} />}
+      <StravaRewardPeriods copy={copy} />
 
       {section('labs', <section data-text-section="labs" className="shell labs-section" id="labs">
         <div className="section-heading">

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { publicAuthProviders } from "./launchFeatures";
 
 // GET /api/auth/providers -> { strava: true, xfitconnect: false } — lets a
 // "Continue with X" / "Connect X" button know whether that provider is
@@ -19,6 +18,6 @@ export default function useAuthProviders() {
       cancelled = true;
     };
   }, []);
-  return publicAuthProviders(providers);
+  return providers;
 }
 

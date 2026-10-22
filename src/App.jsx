@@ -31,7 +31,6 @@ import Calendar from "./pages/Calendar";
 import RaceResults from "./pages/RaceResults";
 import Lab from "./pages/Lab";
 import LabStrava from "./pages/LabStrava";
-import StravaLaunchGate from "./components/StravaLaunchGate";
 import LabRidge from "./pages/LabRidge";
 import Membership from "./pages/Membership";
 import MembershipCheckout from "./pages/MembershipCheckout";
@@ -86,7 +85,6 @@ const VolunteerTimerDemo = lazy(() => import('./volunteer-timer/VolunteerTimerDe
 const VolunteerTimerRoute = lazy(() => import('./volunteer-timer/VolunteerTimerRoute'));
 const INTRO_EXEMPT_PREFIXES = ["/volunteer/ridge", "/auth/callback", "/onboarding", "/admin", "/forgot-password", "/reset-password"];
 
-const PersonalStravaEntry=lazy(()=>import("./strava-personal/PersonalEntry"));
 
 export default function App() {
   const location = useLocation();
@@ -107,7 +105,6 @@ export default function App() {
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
-        <Route path="/personal-strava" element={<Suspense fallback={<AdminFallback/>}><PersonalStravaEntry/></Suspense>}/>
         <Route path="/volunteer/ridge/code" element={<Suspense fallback={<AdminFallback/>}><CodeTimerRoute/></Suspense>}/>
         <Route path="/volunteer/ridge/demo" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerDemo/></Suspense>}/>
         <Route path="/volunteer/ridge" element={<Suspense fallback={<AdminFallback/>}><VolunteerTimerRoute/></Suspense>}/>
@@ -223,7 +220,7 @@ export default function App() {
           <Route path="/race-calendar" element={<Navigate to="/calendar" replace />} />
           <Route path="/race-results" element={<RaceResults />} />
           <Route path="/lab" element={<Lab />} />
-          <Route path="/lab/strava" element={<StravaLaunchGate><LabStrava /></StravaLaunchGate>} />
+          <Route path="/lab/strava" element={<LabStrava />} />
           <Route path="/lab/ridge" element={<LabRidge />} />
           <Route path="/membership" element={<Membership />} />
           <Route path="/membership/checkout" element={<MembershipCheckout />} />

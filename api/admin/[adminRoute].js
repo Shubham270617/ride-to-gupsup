@@ -1,4 +1,3 @@
-import personalStrava from "../../api-lib/strava-personal/handler.js";
 import timingCodes from "../../api-lib/timingCodes.js";
 import ridge from "../../api-lib/admin/ridge.js";
 import stravaResync from "../../api-lib/admin/strava-resync.js";
@@ -13,7 +12,6 @@ import timingOwner from "../../api-lib/timingOwner.js";
 // Keep the dynamic parameter named adminRoute: layout operations already use
 // the independent ?action=published|draft query field.
 const ROUTES = Object.freeze({
-  "/api/admin/personal-strava": personalStrava,
   "/api/admin/ridge": ridge,
   "/api/admin/ridge-timing-codes": timingCodes,
   "/api/admin/strava-resync": stravaResync,

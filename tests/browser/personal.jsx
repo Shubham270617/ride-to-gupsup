@@ -1,7 +1,0 @@
-import React from 'react';import {createRoot} from 'react-dom/client';
-import {PersonalPanel} from '../../src/strava-personal/PersonalEntry';
-let state='disconnected',receiver;const rows=[];
-const popup={postMessage(){},close(){},location:{set href(_url){queueMicrotask(()=>receiver({origin:location.origin,source:popup,data:{type:'rtg-personal-callback',payload:{code:'synthetic',state:'synthetic',scope:'activity:read'}}}));}}};
-const browser={location,open:()=>popup,addEventListener(_type,fn){receiver=fn;},removeEventListener(){receiver=null;}};
-async function request(b){if(b.action==='begin')return {url:'https://www.strava.com/oauth/authorize?state=synthetic'};if(b.action==='complete'){state='active';return {connected:true};}if(b.action==='status')return {status:state};if(b.action==='disconnect'){state='revocation_pending';return {deleted:true,remoteRevocationConfirmed:false};}if(b.action==='activities')return [{activityId:'synthetic-1',startedAt:'2026-01-01T10:00:00Z',sport:'Ride',distanceM:20000,movingSeconds:3600,elevationM:150}];if(b.action==='rules.history')return rows;if(b.action==='rules.save'){rows.push(b.document);return b.document;}throw Error('Unsupported synthetic action');}
-createRoot(document.getElementById('root')).render(<><p>SYNTHETIC LOCAL QA — no provider requests, real credentials or data writes. Callback messaging is simulated.</p><PersonalPanel request={request} fetchImpl={async()=>({ok:true,json:async()=>({enabled:true})})} browser={browser}/></>);

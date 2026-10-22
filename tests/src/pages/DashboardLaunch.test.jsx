@@ -12,16 +12,22 @@ vi.mock("../../../src/lib/supabaseClient", () => ({
 vi.mock("../../../src/lib/useSession", () => ({ default: () => ({ user: state.user, loading: false }) }));
 vi.mock("../../../src/lib/AuthGateContext", () => ({ useAuthGate: () => ({ openAuth: vi.fn() }) }));
 
-describe("member dashboard during the Strava pause", () => {
-  it.each([null, 12345])("hides Strava for athlete id %s, preserving profile and membership reads", async (athleteId) => {
+// Strava stays live on RTG (Randeep's Strava pause was left out on purpose).
+describe("member dashboard keeps Strava", () => {
+  it("shows the connect-Strava card to a member without Strava", async () => {
     state.db = createFakeSupabase();
-    state.db.on("profiles", { data: { id: "member", full_name: "Test Rider", strava_athlete_id: athleteId } });
+    state.db.on("profiles", { data: { id: "member", full_name: "Test Rider", strava_athlete_id: null } });
     vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ strava: true }) });
-    const { container } = render(<MemoryRouter initialEntries={["/dashboard?strava=connected"]}><Dashboard /></MemoryRouter>);
-    expect(await screen.findByRole("button", { name: "Save Changes" })).toBeInTheDocument();
-    expect(container).not.toHaveTextContent(/Strava|synced activities/i);
-    expect(state.db.queries.some((q) => q.table === "profiles")).toBe(true);
-    expect(state.db.queries.some((q) => q.table === "membership_purchases")).toBe(true);
-    expect(state.db.queries.some((q) => ["strava_activities", "leaderboard_stats"].includes(q.table))).toBe(false);
+    render(<MemoryRouter><Dashboard /></MemoryRouter>);
+    expect(await screen.findByAltText("Connect with Strava")).toBeInTheDocument();
+  });
+
+  it("shows 'Strava connected' and reads Strava stats for a linked member", async () => {
+    state.db = createFakeSupabase();
+    state.db.on("profiles", { data: { id: "member", full_name: "Test Rider", strava_athlete_id: 12345 } });
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ strava: true }) });
+    render(<MemoryRouter initialEntries={["/dashboard?strava=connected"]}><Dashboard /></MemoryRouter>);
+    expect((await screen.findAllByText("Strava connected")).length).toBeGreaterThan(0);
+    expect(state.db.queries.some((q) => q.table === "leaderboard_stats")).toBe(true);
   });
 });

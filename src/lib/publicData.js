@@ -1,6 +1,5 @@
 import { PublicDataStatusContext } from './publicDataStatus';
 import { useContext, useEffect, useState } from "react";
-import { STRAVA_ENABLED } from "./launchFeatures";
 import { supabase, isSupabaseConfigured } from "./supabaseClient";
 import {
   products as staticProducts,
@@ -429,7 +428,7 @@ export function useSponsorOpportunities() {
 export function useMyStravaActivities(userId) {
   const [activities, setActivities] = useState([]);
   useEffect(() => {
-    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
+    if (!isSupabaseConfigured || !userId) {
       setActivities([]);
       return;
     }
@@ -455,7 +454,7 @@ export function useMyStravaActivities(userId) {
 export function useMyLeaderboardStats(userId) {
   const [stats, setStats] = useState(null);
   useEffect(() => {
-    if (!STRAVA_ENABLED || !isSupabaseConfigured || !userId) {
+    if (!isSupabaseConfigured || !userId) {
       setStats(null);
       return;
     }

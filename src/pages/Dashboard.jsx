@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { STRAVA_ENABLED } from "../lib/launchFeatures";
 import { Link, useSearchParams } from "react-router-dom";
 import { Loader2, User, MapPin, Activity, Save, CheckCircle2, Package, AlertTriangle, Camera, Sparkles, BadgeCheck, ArrowUpRight, Mail, Phone, Cake, AtSign, Droplet, ShieldAlert } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
@@ -243,7 +242,6 @@ export default function Dashboard() {
   // connectingStrava back to false on success — only on a failure that
   // never leaves the page.
   const handleConnectStrava = async () => {
-    if (!STRAVA_ENABLED) return;
     setConnectingStrava(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -275,8 +273,8 @@ export default function Dashboard() {
   const labelClass = "flex items-center gap-1.5 text-xs font-semibold text-rtg-mist uppercase tracking-wide mb-1.5";
 
   const name = form.full_name || "Athlete";
-  const stravaLinked = STRAVA_ENABLED && Boolean(profile?.strava_athlete_id);
-  const hasStats = STRAVA_ENABLED && Boolean(myLeaderboardStats && myLeaderboardStats.activity_count > 0);
+  const stravaLinked = Boolean(profile?.strava_athlete_id);
+  const hasStats = Boolean(myLeaderboardStats && myLeaderboardStats.activity_count > 0);
   const joinedOn = profile?.community_joined_at || profile?.created_at;
   const shortDate = (value, withYear = true) =>
     new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", ...(withYear ? { year: "numeric" } : {}) });
@@ -350,7 +348,7 @@ export default function Dashboard() {
       </header>
 
       <div className="dash-body">
-        {STRAVA_ENABLED && stravaNotice && (
+        {stravaNotice && (
           <p className={`dash-notice ${stravaNotice.tone === "good" ? "is-good" : "is-bad"}`}>
             {stravaNotice.tone === "good" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />} {stravaNotice.text}
           </p>
@@ -575,13 +573,13 @@ export default function Dashboard() {
                   {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle2 size={14} /> : <Save size={14} />}
                   {saved ? "Saved" : "Save Changes"}
                 </button>
-                {STRAVA_ENABLED && (stravaLinked ? (
+                {stravaLinked ? (
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-rtg-mist">
                     <CheckCircle2 size={13} className="text-green-600" /> Strava connected
                   </span>
                 ) : (
                   !authProviders.strava && <span className="text-xs text-rtg-mist">No Strava connected</span>
-                ))}
+                )}
               </div>
             </form>
           </div>
