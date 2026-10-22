@@ -673,8 +673,8 @@ html {
   inset: 0;
   background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.26), transparent 34%);
 }
-.rtg-merch-visual img { transition: transform 0.6s cubic-bezier(0.2, 0.65, 0.25, 1); }
-.rtg-merch-card:hover .rtg-merch-visual img { transform: scale(1.05); }
+.rtg-merch-photo { transition: transform 0.6s cubic-bezier(0.2, 0.65, 0.25, 1); }
+.rtg-merch-card:hover .rtg-merch-photo { transform: scale(1.04); }
 .rtg-merch-btn {
   background: rgba(53, 36, 111, 0.07);
   box-shadow:
@@ -6096,7 +6096,7 @@ html {
 .dash { background: var(--color-rtg-ink); padding-bottom: 5rem; }
 .dash-hero {
   position: relative; isolation: isolate; overflow: hidden;
-  padding: calc(60px + 2.25rem) 1.25rem 5.5rem;
+  padding: calc(60px + 2.25rem) 1.25rem 2.5rem;
   background:
     radial-gradient(60% 90% at 88% 0%, rgba(247, 107, 28, 0.42), transparent 62%),
     radial-gradient(50% 80% at 0% 100%, rgba(167, 123, 215, 0.35), transparent 60%),
@@ -6125,7 +6125,9 @@ html {
 .dash-stats strong { display: block; font-family: var(--font-display); font-weight: 400; font-size: calc(clamp(1.3rem, 4vw, 2.4rem) * var(--rtg-sec, 1)); line-height: 1; color: #fff; white-space: nowrap; }
 .dash-stats span { display: block; margin-top: 0.35rem; font-size: calc(0.6rem * var(--rtg-sec, 1)); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.65); }
 
-.dash-body { position: relative; max-width: 62.5rem; margin: -3rem auto 0; padding: 0 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+/* Starts below the banner: pulled up onto it, a section heading (dark text)
+   landed on the dark banner whenever no white card came first. */
+.dash-body { position: relative; max-width: 62.5rem; margin: 2.5rem auto 0; padding: 0 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
 .dash-body > * { animation: dash-rise 0.6s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .dash-card, .dash-strava, .dash-row { background: #fff; border: 1px solid var(--color-rtg-border); box-shadow: 0 14px 34px -22px rgba(53, 36, 111, 0.45); }
 .dash-card { border-radius: 1.5rem; padding: 1.5rem; }
@@ -6148,7 +6150,7 @@ html {
 .dash-danger { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; border-radius: 1.25rem; padding: 1.1rem 1.3rem; background: #fff7f7; border: 1px solid #fecaca; }
 
 @media (min-width: 768px) {
-  .dash-hero { padding: calc(60px + 3.5rem) 2rem 6.5rem; }
+  .dash-hero { padding: calc(60px + 3.5rem) 2rem 3.5rem; }
   .dash-avatar { width: 8.5rem; height: 8.5rem; }
   .dash-card { padding: 2rem; }
   .dash-stats > div { padding: 1rem 1.1rem; }

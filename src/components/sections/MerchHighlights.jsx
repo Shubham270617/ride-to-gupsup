@@ -13,6 +13,8 @@ const MIN_CARDS_PER_COPY = 4;
 
 // One backdrop per card, cycled — shown behind the product photo (and on
 // its own when a product has no photo yet).
+const formatPrice = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
+
 const VISUAL_BACKDROPS = [
   "linear-gradient(135deg, #35246f 0%, #4a2f8b 48%, #f76b1c 100%)",
   "linear-gradient(135deg, #281741 0%, #35246f 56%, #8e7acb 100%)",
@@ -41,11 +43,18 @@ function MerchCard({ product, index, copy, images, inert }) {
       <Link
         to={productPath}
         tabIndex={tabIndex}
-        className="rtg-merch-visual relative block h-[130px] sm:h-[250px] overflow-hidden"
+        className="rtg-merch-visual relative block aspect-[4/3] sm:aspect-[3/2] overflow-hidden"
         style={{ backgroundImage: VISUAL_BACKDROPS[index % VISUAL_BACKDROPS.length] }}
       >
         <span className="absolute left-1/2 top-1/2 w-[120px] h-[120px] sm:w-[220px] sm:h-[220px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[2px] bg-[radial-gradient(circle,rgba(255,255,255,0.28),rgba(255,255,255,0.03)_50%,transparent_72%)]" />
-        {image && <img src={image} alt={product.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />}
+        {/* The whole photo, never cropped; a blurred copy of it fills the
+            space either side so a tall or square photo has no bare bars. */}
+        {image && (
+          <>
+            <img src={image} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-70" />
+            <img src={image} alt={product.name} loading="lazy" className="rtg-merch-photo absolute inset-0 w-full h-full object-contain" />
+          </>
+        )}
         {product.tag && (
           <span className="absolute left-3 top-3 sm:left-9 sm:top-9 px-2 py-[5px] sm:px-2.5 sm:py-[7px] rounded-full border border-white/15 bg-white/12 backdrop-blur-sm text-[length:calc(0.5rem*var(--rtg-sec,1))] sm:text-xs font-bold leading-none tracking-[0.14em] uppercase text-white/90">
             {product.tag}
@@ -53,13 +62,16 @@ function MerchCard({ product, index, copy, images, inert }) {
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col min-h-[150px] sm:min-h-[218px] px-3 pt-3 pb-3.5 sm:px-5 sm:pt-5 sm:pb-[22px]">
+      <div className="flex flex-1 flex-col px-3 pt-3 pb-3.5 sm:px-5 sm:pt-5 sm:pb-[22px]">
         {product.eyebrow && <span className="text-[length:calc(0.4375rem*var(--rtg-sec,1))] sm:text-[length:calc(0.5625rem*var(--rtg-sec,1))] font-bold tracking-[0.16em] uppercase text-rtg-orange-500">{product.eyebrow}</span>}
         <h3 className="my-1.5 sm:my-2 font-display text-lg sm:text-3xl leading-[0.98] tracking-[0.01em] text-[#3d316e]">
           <Link to={productPath} tabIndex={tabIndex} className="hover:text-rtg-orange-500 transition-colors">
             {product.name}
           </Link>
         </h3>
+        {Number(product.price) > 0 && (
+          <p className="mb-2 sm:mb-3 font-display text-base sm:text-2xl leading-none text-rtg-orange-500">{formatPrice(product.price)}</p>
+        )}
         {product.description && <p className="mb-3 sm:mb-[18px] text-[length:calc(0.625rem*var(--rtg-sec,1))] sm:text-[length:calc(0.7813rem*var(--rtg-sec,1))] leading-normal text-[#6f6976] line-clamp-3 sm:line-clamp-2">{product.description}</p>}
         <button
           type="button"
