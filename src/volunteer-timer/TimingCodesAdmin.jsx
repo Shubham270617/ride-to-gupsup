@@ -3,6 +3,7 @@ import {supabase} from '../lib/supabaseClient';
 import {codeSetupFlow} from './codeSetupFlow';
 import './timing-codes-admin.css';
 import SecretCode from './SecretCode';
+import QuickSession from './QuickSession';
 const HOUR=3600000;
 export const indiaInput=ms=>new Date(ms+330*60000).toISOString().slice(0,16);
 export const indiaInstant=value=>Date.parse(value+'+05:30');
@@ -23,7 +24,7 @@ export async function timingCodeRequest(action,payload={},expectedOwner) {
   const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to load code management.');return result;
  } finally {clearTimeout(timer);}
 }
-export default function TimingCodesAdmin({request=timingCodeRequest}) {
+export default function TimingCodesAdmin({request=timingCodeRequest,ridgeRequest}) {
  const [items,setItems]=useState([]),[overview,setOverview]=useState(null),[scope,setScope]=useState('advanced');
  const [sessionId,setSessionId]=useState(''),[sessionCodesEnabled,setSessionCodesEnabled]=useState(false);
  const [expiry,setExpiry]=useState(()=>indiaInput(Date.now()+4*HOUR)),[message,setMessage]=useState(''),[issued,setIssued]=useState(null);
@@ -64,7 +65,8 @@ export default function TimingCodesAdmin({request=timingCodeRequest}) {
    <div className="tc-fields">
    {scope==='advanced'?<p>Use this code yourself to open owner controls in the timer.</p>:<>
     <label htmlFor="tc-session">Session<select id="tc-session" disabled={blocked||loading||!!overviewError} value={sessionId} onChange={e=>{setSessionId(e.target.value);setReview(null);}}><option value="">{loading?'Loading sessions…':'Choose a session'}</option>{sessions.map(s=><option key={s.id} value={s.id}>{s.date} · {s.mode==='testing'?'Practice':'Live'}</option>)}</select></label>
-    {overviewError?<p className="tc-notice" role="alert">Sessions could not be loaded: {overviewError} <button disabled={loading} onClick={load}>Retry</button></p>:!loading&&!sessions.length?<p className="tc-notice">No open sessions yet. <a href="/volunteer/ridge">Create a session in the timer</a>, then refresh this page.</p>:null}
+    {overviewError?<p className="tc-notice" role="alert">Sessions could not be loaded: {overviewError} <button disabled={loading} onClick={load}>Retry</button></p>:!loading&&!sessions.length?<p className="tc-notice">No open sessions yet — create one just below.</p>:null}
+    {!overviewError&&!loading&&<QuickSession riderCount={overview?.riders?.length||0} request={ridgeRequest} onReady={async id=>{await load();setSessionId(id);setReview(null);}}/>}
     {!sessionCodesEnabled&&<p role="status" className="tc-notice">Session codes are prepared but awaiting activation. No email or website account will be required.</p>}
     <p className="tc-help">Share the timer link and code with anyone you choose. They can mark attendance and record laps for this session only. No website account is needed.</p>
    </>}

@@ -2,8 +2,15 @@
 .vt-panel {
   --vt-ink: #241a3d; --vt-purple: #35246f; --vt-purple-2: #5e43a1; --vt-orange: #f45b18;
   --vt-line: #e4def0; --vt-soft: #f4f1fa; --vt-mist: #6f6681; --vt-green: #12805c; --vt-red: #c0293b;
-  box-sizing: border-box; max-width: 860px; min-height: 100vh; margin: 0 auto; padding: 20px 16px 40px;
-  color: var(--vt-ink); background: #f7f5fb; font: 15px/1.5 Montserrat, system-ui, sans-serif;
+  /* Fills the whole screen; content stays centred at a comfortable width. */
+  box-sizing: border-box; width: 100%; min-height: 100vh; margin: 0;
+  padding: 24px max(16px, calc((100% - 1120px) / 2)) 48px;
+  color: var(--vt-ink); font: 15px/1.5 Montserrat, system-ui, sans-serif;
+  background:
+    radial-gradient(48rem 30rem at 100% -10%, rgba(244, 91, 24, 0.10), transparent 70%),
+    radial-gradient(44rem 34rem at -10% 110%, rgba(94, 67, 161, 0.14), transparent 70%),
+    linear-gradient(180deg, #f8f6fc 0%, #f1edf8 100%);
+  background-attachment: fixed;
 }
 .vt-panel *, .vt-panel *::before, .vt-panel *::after { box-sizing: border-box; }
 .vt-panel h1, .vt-panel h2, .vt-panel h3 { margin: 0; line-height: 1.15; }
@@ -143,7 +150,7 @@
 .vt-login-steps { margin: 0 0 4px; padding: 0; list-style: none; display: grid; gap: 6px; color: var(--vt-mist); font-size: 14px; }
 .vt-login-steps li::before { content: counter(step); counter-increment: step; display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 8px; border-radius: 50%; background: var(--vt-soft); color: var(--vt-purple); font-size: 12px; font-weight: 800; }
 .vt-login-steps { counter-reset: step; }
-.vt-session-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; max-width: 860px; margin: 0 auto; padding: 0 16px 24px; }
+.vt-session-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 
 /* Rider photos (demo) and lap editor */
 .vt-photo-panel { padding: 18px; background: #fff; border: 1px solid var(--vt-line); border-radius: 20px; }
@@ -181,3 +188,4 @@
 @media (prefers-reduced-motion: reduce) {
   .vt-panel *, .vt-panel *::after { animation: none !important; transition: none !important; }
 }
+.vt-add-lap td { background: #fcfbfe; }

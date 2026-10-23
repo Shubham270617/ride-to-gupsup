@@ -34,7 +34,7 @@ const MODE = {
   archived: { label: 'Archived', note: 'Kept for the record — no more timing' },
 };
 
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null }) {
   const controls=demoActions || ownerActions;
   const [editing,setEditing]=useState(null);
   const [newDate,setNewDate]=useState(()=>istDate(now)),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState('');
@@ -159,18 +159,22 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
 
     {tab === 'Data' && <section className="vt-card">
       <div className="vt-row-between"><h2>Lap times</h2>{controls && <button className="vt-btn vt-btn-ghost" disabled={busy || pending} onClick={controls.refresh}><span aria-hidden="true">↻</span> Refresh</button>}</div>
-      <p className="vt-help">Every start and finish, in India time. If a time is wrong, press <b>Edit</b> on that lap{controls ? '' : ' (owner only)'}. “Accepted” is the time that counts.</p>
+      <p className="vt-help">Every lap that was timed, in India time. If a time is wrong, press <b>Edit</b> on that lap{controls ? '' : ' (owner only)'}. “Accepted” is the time that counts.</p>
       <div className="vt-table"><table><caption className="vt-sr-only">Session timing records</caption><thead><tr>{['Rider','Lap','Start · IST','Finish · IST','Recorded duration','Accepted duration','Status','Edit'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
-        <tbody>{attending.flatMap(entry => Array.from({length:LAPS},(_,i)=>entry.laps[i]||{}).map((lap, i) => <tr key={`${entry.riderId}-${i}`}>
+        <tbody>{attending.flatMap(entry => [...Array.from({length:Math.max(1,Math.min(LAPS,entry.laps.length))},(_,i)=>entry.laps[i]||{}).map((lap, i) => <tr key={`${entry.riderId}-${i}`}>
           <th scope="row">{name(entry.riderId)}</th><td>{i + 1}</td><td>{clock(lap.start)}</td><td>{clock(lap.end)}</td>
           <td>{lap.start != null && lap.end != null ? formatDuration(lap.end - lap.start) : '—'}</td><td>{formatDuration(lapDuration(lap)) || '—'}</td><td><span className={`vt-pill vt-pill-${lap.durationMs!=null?'fix':lap.end!=null?'ok':lap.start!=null?'run':'none'}`}>{lap.durationMs!=null?'Duration corrected':lap.end!=null?'Recorded':lap.start!=null?'Running':'Not started'}</span></td><td><button className="vt-btn vt-btn-small" disabled={!controls || busy || pending || !!entry.officialScore} aria-label={`Edit ${name(entry.riderId)} L${i+1}`} onClick={()=>setEditing({entry,lapIndex:i})}>Edit</button></td>
-        </tr>))}</tbody></table></div>
+        </tr>),
+        // Only laps that were recorded are listed; a lap that was missed can be added here.
+        controls && !entry.officialScore && entry.laps.length >= 1 && entry.laps.length < LAPS && <tr key={`${entry.riderId}-add`} className="vt-add-lap"><td colSpan={8}><button className="vt-btn vt-btn-small vt-btn-ghost" disabled={busy || pending} onClick={()=>setEditing({entry,lapIndex:entry.laps.length})}>+ Add lap {entry.laps.length + 1} time for {name(entry.riderId)}</button></td></tr>,
+      ].filter(Boolean))}</tbody></table></div>
       {!attending.length && <p className="vt-empty">No lap times yet for this session.</p>}
     </section>}
     </div>
 
     {editing && controls && <DemoLapEditor demoOnly={!!demoActions} key={`${session.id}-${editing.entry.riderId}-${editing.lapIndex}`} {...editing} name={name(editing.entry.riderId)} sessionId={session.id} onSave={controls.correct} onClose={()=>setEditing(null)}/>}
     {canManage && <p className="vt-links"><a href="/admin/ridge">Admin session controls</a> · <a href="/admin/ridge-codes">Access codes</a></p>}
+    {children && <div className="vt-session-bar">{children}</div>}
     <footer className="vt-foot">Every timing and correction is logged with who did it.</footer>
   </main>;
 }

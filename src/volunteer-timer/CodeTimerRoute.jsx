@@ -14,7 +14,6 @@ export default function CodeTimerRoute(){
  useEffect(()=>{alive.current=true;const c=new AbortController();fetch('/api/admin/ridge-timing-codes?action=status',{signal:c.signal}).then(r=>r.json()).then(async status=>{if(!alive.current)return;setEnabled(status.enabled===true);setMessage(status.enabled?'Enter the code issued by the owner.':'Code access is not activated. Existing account login remains available.');if(status.enabled)try{await read();}catch{/* no active cookie */}}).catch(()=>{if(alive.current)setMessage('Unable to check code access.');});const timer=setInterval(()=>setNow(Date.now()),250);return()=>{alive.current=false;c.abort();clearInterval(timer);};},[transport]); // eslint-disable-line react-hooks/exhaustive-deps
  const login=async e=>{e.preventDefault();if(flight.current)return;flight.current=true;setBusy(true);try{const result=await transport.api({action:'exchange',code});setCode('');if(result.scope!==kind){await transport.api({action:'logout'});throw new Error('That code is for the other access type.');}await read();setMessage('Code accepted.');}catch(e){setMessage(e.message);}finally{flight.current=false;setBusy(false);}};
  const send=async(command,retry=false)=>{if(flight.current||!data||data.expired)return null;flight.current=true;setBusy(true);try{await transport.write({version:data.version,requestId:crypto.randomUUID(),command},retry);const next=await read();setMessage('Saved.');return next;}catch(e){setMessage(e.message);try{await read();}catch{setData(null);}return null;}finally{flight.current=false;setBusy(false);}};
- const logout=async()=>{await transport.api({action:'logout'});setData(null);setMessage('Code session ended. Enter a code to start again.');};
 
  if(!data)return <main className="vt-panel">
   <header className="vt-hero"><p className="vt-eyebrow">RTG · Ridge Repeats</p><h1>Ridge Repeats Timer</h1><p className="vt-status" role="status"><span className="vt-role">{message}</span></p></header>
@@ -34,12 +33,11 @@ export default function CodeTimerRoute(){
 
  // Owner code: set-up, attendance and timing on one page.
  const controls={addRider:name=>send({type:'create_rider',name}),createSession:async date=>(await send({type:'create_session',date}))?.state.sessions.find(s=>s.date===date&&s.mode!=='archived')?.id,finishSession:sessionId=>send({type:'finish_session',sessionId,reason:'Owner code session closure'}),correct:send,refresh:read};
- return <>
-  <VolunteerTimerPanel connected sessions={data.state.sessions} riders={data.state.riders} ownerActions={controls} previewActions={{send,retry:()=>send(null,true)}} busy={busy} pending={!!data.pending} message={message} now={now}/>
-  <div className="vt-session-bar">
+ // Ending an owner code session goes back to the admin code page.
+ const ownerExit=async()=>{await transport.api({action:'logout'});setData(null);window.location.assign('/admin/ridge-codes');};
+ return <VolunteerTimerPanel connected sessions={data.state.sessions} riders={data.state.riders} ownerActions={controls} previewActions={{send,retry:()=>send(null,true)}} busy={busy} pending={!!data.pending} message={message} now={now}>
    {data.pending&&<button className="vt-btn vt-btn-warn" disabled={busy||data.expired} onClick={()=>send(null,true)}>Retry same owner action</button>}
    {data.expired&&<p role="alert">Recovery expired. Ask the owner to reconcile the saved request before further changes.</p>}
-   <button className="vt-btn vt-btn-ghost" disabled={busy||!!data.pending} onClick={logout}>End code session</button>
-  </div>
- </>;
+   <button className="vt-btn vt-btn-ghost" disabled={busy||!!data.pending} onClick={ownerExit}>End code session</button>
+  </VolunteerTimerPanel>;
 }

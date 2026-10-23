@@ -12,7 +12,7 @@ it("032 deletes only the sample athletes, keeps hand-entered activities, and is 
   const { rows } = await db.query("select athlete_name from lab_activities");
   expect(rows).toEqual([{ athlete_name: "Real Rider" }]);
   await db.close();
-});
+}, 30000); // an in-memory Postgres can be slow to start under a full test run
 
 it("016 no longer re-creates the sample athletes", () => {
   const sql = readFileSync(new URL("../../supabase/migrations/016_lab_and_membership.sql", import.meta.url), "utf8");
