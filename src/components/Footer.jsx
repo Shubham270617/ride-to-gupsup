@@ -37,14 +37,14 @@ const BASE = {
   grid: "gap-x-[34px] gap-y-10",
   brandColumn: "minmax(260px, 1.55fr)",
   brand: "max-w-[430px]",
-  logo: "w-[120px] h-auto mb-[15px]",
-  description: "my-3 text-xs leading-[1.65] text-white/60",
+  logo: "w-[136px] h-auto mb-[15px]",
+  description: "my-3 text-[length:calc(0.875rem*var(--rtg-sec,1))] md:text-[length:calc(0.9375rem*var(--rtg-sec,1))] leading-[1.65] text-white/70",
   contactRow: "flex flex-wrap lg:flex-nowrap items-end justify-between gap-x-3 gap-y-4 mt-[22px]",
-  heading: "mb-3 font-display font-normal text-[length:calc(1.0625rem*var(--rtg-sec,1))] leading-tight tracking-[0.02em] text-rtg-orange-400",
-  contactItem: "flex items-center gap-2 mb-2 text-[length:calc(0.625rem*var(--rtg-sec,1))] text-white/60 hover:text-white",
-  social: "w-[34px] h-[34px] border-white/10 bg-white/5",
-  link: "mb-2.5 text-[length:calc(0.6563rem*var(--rtg-sec,1))] leading-[1.35] text-white/60",
-  bottom: "mt-6 pt-3.5 border-white/8 text-[length:calc(0.5625rem*var(--rtg-sec,1))] text-white/45",
+  heading: "mb-3.5 font-display font-normal text-[length:calc(1.25rem*var(--rtg-sec,1))] md:text-[length:calc(1.375rem*var(--rtg-sec,1))] leading-tight tracking-[0.02em] text-rtg-orange-400",
+  contactItem: "flex items-center gap-2 mb-2.5 text-[length:calc(0.8125rem*var(--rtg-sec,1))] md:text-[length:calc(0.875rem*var(--rtg-sec,1))] text-white/70 hover:text-white",
+  social: "w-[38px] h-[38px] border-white/10 bg-white/5",
+  link: "mb-3 text-[length:calc(0.875rem*var(--rtg-sec,1))] md:text-[length:calc(0.9375rem*var(--rtg-sec,1))] leading-[1.4] text-white/70",
+  bottom: "mt-8 pt-4 border-white/8 text-[length:calc(0.75rem*var(--rtg-sec,1))] md:text-[length:calc(0.8125rem*var(--rtg-sec,1))] text-white/55",
 };
 
 const PADDING = "px-6 md:px-10 xl:px-[74px]";
@@ -79,19 +79,19 @@ export default function Footer({ variant = "solid" }) {
       <h4 className={look.heading}>{footer.contactHeading}</h4>
       {footer.email && (
         <a href={`mailto:${footer.email}`} className={look.contactItem}>
-          <Mail size={12} className="shrink-0" />
+          <Mail size={14} className="shrink-0" />
           {footer.email}
         </a>
       )}
       {footer.phone && (
         <a href={`tel:${footer.phone.replace(/\s+/g, "")}`} className={look.contactItem}>
-          <Phone size={12} className="shrink-0" />
+          <Phone size={14} className="shrink-0" />
           {footer.phone}
         </a>
       )}
       {footer.location && (
         <span className={look.contactItem.replace(" hover:text-white", "")}>
-          <MapPin size={12} className="shrink-0" />
+          <MapPin size={14} className="shrink-0" />
           {footer.location}
         </span>
       )}
@@ -109,7 +109,7 @@ export default function Footer({ variant = "solid" }) {
           aria-label={name}
           className={`${look.social} rounded-full grid place-items-center border text-white transition-colors hover:text-rtg-orange-400 hover:border-rtg-orange-400/60`}
         >
-          <Icon size={13} />
+          <Icon size={15} />
         </a>
       ))}
     </div>

@@ -9,6 +9,17 @@ export const FEATURE_KEYS = {
   volunteer: "feature.volunteer.enabled",
 };
 
+// Parts of the site switched off in code. Their code all stays; set one
+// to true (and deploy) to bring that part back everywhere at once.
+//
+// CHAT_READY  — live chat: the /chat page, "Chat" in the menu, the floating
+//               chat button, the chat connection, and the admin dashboard's
+//               "Open chat" button.
+// TAPRI_READY — the Tapri AI assistant: its floating button on every page
+//               and Admin -> AI Assistant.
+export const CHAT_READY = false;
+export const TAPRI_READY = false;
+
 // Layout Studio and the Site visual editor (from Randeep's branch) need the
 // page_layout_* tables, which exist only in his TEST project
 // (docs/proposals/page-layouts.sql). Hidden until those are a migration.

@@ -19,7 +19,7 @@ import About from "./pages/About";
 import Community from "./pages/Community";
 import Volunteer from "./pages/ConnectedVolunteer";
 import FeatureGate from "./components/FeatureGate";
-import { FEATURE_KEYS, SITE_EDITOR_READY } from "./lib/features";
+import { CHAT_READY, FEATURE_KEYS, SITE_EDITOR_READY, TAPRI_READY } from "./lib/features";
 import CommunityDetail from "./pages/CommunityDetail";
 import WeeklyRides from "./pages/WeeklyRides";
 import WeeklySessionDetail from "./pages/WeeklySessionDetail";
@@ -50,6 +50,8 @@ import LegalPage from "./pages/legal/LegalPage";
 import { privacyPolicy, termsOfService, communityGuidelines } from "./data/legalContent";
 import { resources } from "./admin/resourceConfig";
 
+const ChatShell = CHAT_READY ? ChatProvider : ({ children }) => children;
+
 // The whole /admin area is only ever used by RTG staff — keep it out of the
 // bundle every public visitor downloads.
 const ProtectedRoute = lazy(() => import("./admin/ProtectedRoute"));
@@ -61,7 +63,6 @@ const OrdersAdmin = lazy(() => import("./admin/pages/OrdersAdmin"));
 const GalleryAdmin = lazy(() => import("./admin/pages/GalleryAdmin"));
 const SiteImagesAdmin = lazy(() => import("./admin/pages/SiteImagesAdmin"));
 const SiteContentAdmin = lazy(() => import("./admin/pages/SiteContentAdmin"));
-const RidgeImportPreview = lazy(() => import("./admin/pages/RidgeImportPreview"));
 const RidgeAdmin = lazy(() => import("./admin/pages/RidgeAdmin"));
 const VolunteerAdmin = lazy(() => import("./admin/pages/VolunteerRolesAdmin"));
 const LayoutStudioAdmin = lazy(() => import("./admin/pages/ConnectedLayoutStudioAdmin"));
@@ -105,7 +106,8 @@ export default function App() {
   return (
     <CartProvider>
       <AuthGateProvider>
-        <ChatProvider>
+        {/* No chat connection at all while chat is switched off. */}
+        <ChatShell>
         {!exempt && !introDone && <Preloader onFinish={() => setIntroDone(true)} />}
         {!exempt && introDone && <AuthGate />}
         <Routes>
@@ -162,7 +164,6 @@ export default function App() {
           <Route path="ridge-codes" element={<Suspense fallback={<AdminFallback/>}><TimingCodesAdmin/></Suspense>}/>
           <Route path="ridge-volunteers" element={<Navigate to="/admin/ridge-codes" replace/>} />
           <Route path="ridge-sessions" element={<RidgeAdmin />} />
-          <Route path="ridge-import" element={<RidgeImportPreview />} />
           <Route path="ridge-results" element={<RidgeAdmin />} />
           <Route path="ridge-awards" element={<RidgeAdmin />} />
           <Route path="ridge-spotlight" element={<RidgeAdmin />} />
@@ -236,7 +237,7 @@ export default function App() {
           <Route path="/sponsors" element={<Sponsors />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/chat" element={<Chat />} />
+          {CHAT_READY && <Route path="/chat" element={<Chat />} />}
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<LegalPage {...privacyPolicy} />} />
           <Route path="/terms" element={<LegalPage {...termsOfService} />} />
@@ -244,7 +245,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
         </Routes>
-        </ChatProvider>
+        </ChatShell>
       </AuthGateProvider>
     </CartProvider>
   );

@@ -9,6 +9,7 @@ import CartDrawer from "./CartDrawer";
 import SiteBackground from "./ui/SiteBackground";
 import { JoinCommunityProvider, useJoinCommunity } from "../lib/JoinCommunityContext";
 import useVisitTracker from "../lib/useVisitTracker";
+import { CHAT_READY, TAPRI_READY } from "../lib/features";
 
 // Pages that end with the photo-backed "Join the Movement" band, which
 // carries the footer inside it. Every other page ends with the plain dark
@@ -40,8 +41,8 @@ function Page() {
       ) : (
         <Footer />
       )}
-      <ChatLauncher />
-      <AiWidget />
+      {CHAT_READY && <ChatLauncher />}
+      {TAPRI_READY && <AiWidget />}
       <CartDrawer />
     </div>
   );

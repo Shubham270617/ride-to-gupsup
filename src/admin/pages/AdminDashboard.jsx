@@ -31,6 +31,7 @@ import { supabase } from "../../lib/supabaseClient";
 import useAdminSession from "../useAdminSession";
 import { sumGroups, visitsOn } from "../visitorStats";
 import { Legend, Sparkline, StackedBars } from "../components/VisitorCharts";
+import { CHAT_READY } from "../../lib/features";
 
 // The admin home: a live snapshot (members, who's online, this week's
 // visits, what's waiting for an admin), recent activity, and every content
@@ -203,9 +204,11 @@ export default function AdminDashboard() {
             <Link to="/admin/visitors" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/20">
               <TrendingUp size={16} /> Visitors
             </Link>
-            <a href="/chat" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/20">
-              <MessagesSquare size={16} /> Open chat
-            </a>
+            {CHAT_READY && (
+              <a href="/chat" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold backdrop-blur transition-colors hover:bg-white/20">
+                <MessagesSquare size={16} /> Open chat
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -246,7 +249,7 @@ export default function AdminDashboard() {
           label="Waiting for you"
           value={stats.pendingOrders == null ? undefined : waitingTotal}
           accent="linear-gradient(135deg,#d94f0e,#ff8a3d)"
-          note={stats.chat24h != null ? `${stats.chat24h} chat message${stats.chat24h === 1 ? "" : "s"} in the last 24h` : "orders, payments and messages"}
+          note={CHAT_READY && stats.chat24h != null ? `${stats.chat24h} chat message${stats.chat24h === 1 ? "" : "s"} in the last 24h` : "orders, payments and messages"}
         />
       </div>
 

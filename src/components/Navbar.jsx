@@ -19,7 +19,7 @@ import useMyAvatar from "../lib/useMyAvatar";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useCart } from "../lib/CartContext";
 import { supabase } from "../lib/supabaseClient";
-import { FEATURE_KEYS, useFeature } from "../lib/features";
+import { CHAT_READY, FEATURE_KEYS, useFeature } from "../lib/features";
 
 /* =========================================================
    NAVIGATION LINKS
@@ -281,7 +281,7 @@ export default function Navbar() {
   const images = useSiteImages();
   // "Volunteer" only while the RTG Crew page is switched on (Admin -> Volunteer roles).
   const volunteerOn = useFeature(FEATURE_KEYS.volunteer).on;
-  const shownLinks = links.filter((link) => link.to !== "/volunteer" || volunteerOn);
+  const shownLinks = links.filter((link) => (link.to !== "/volunteer" || volunteerOn) && (link.to !== "/chat" || CHAT_READY));
 
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);

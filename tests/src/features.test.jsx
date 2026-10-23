@@ -62,3 +62,16 @@ describe("RTG Crew page switch (feature.volunteer.enabled)", () => {
     expect(allLinks.map((l) => l.to)).toContain("/admin/volunteer");
   });
 });
+
+describe("parts switched off in code", () => {
+  it("Chat and Tapri are hidden, and Ridge Import is gone from the admin menu", async () => {
+    const { CHAT_READY, TAPRI_READY } = await load();
+    expect(CHAT_READY).toBe(false);
+    expect(TAPRI_READY).toBe(false);
+    const { allLinks, groups } = await import("../../src/admin/adminNav");
+    const paths = allLinks.map((l) => l.to);
+    expect(paths).not.toContain("/admin/ridge-import");
+    expect(paths).not.toContain("/admin/ai");
+    expect(groups.every((g) => g.links.length > 0)).toBe(true);
+  });
+});

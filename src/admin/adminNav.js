@@ -1,6 +1,6 @@
 // The admin menu: every screen, its group and icon. Used by the sidebar
 // (AdminLayout.jsx) and by each page header (AdminPageHeader.jsx).
-import { SITE_EDITOR_READY } from "../lib/features";
+import { SITE_EDITOR_READY, TAPRI_READY } from "../lib/features";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -78,7 +78,6 @@ export const groups = [
     title: "RTG Lab & Ridge",
     icon: Mountain,
     links: [
-      { to: "/admin/ridge-import", label: "Ridge Import (dry run)", icon: Repeat },
       { to: "/admin/ridge", label: "Ridge — Session control", icon: Repeat },
       { to: "/admin/ridge-codes", label: "Ridge — Access codes (owner)", icon: Repeat },
       { to: "/admin/lab-labs", label: "Lab — Labs", icon: Medal },
@@ -161,9 +160,9 @@ export const groups = [
   {
     title: "Tools",
     icon: Bot,
-    links: [{ to: "/admin/ai", label: "AI Assistant", icon: Bot }],
+    links: TAPRI_READY ? [{ to: "/admin/ai", label: "AI Assistant", icon: Bot }] : [],
   },
-];
+].filter((group) => group.links.length > 0); // e.g. Tools, while Tapri is switched off
 
 export const allLinks = groups.flatMap((g) => g.links.map((l) => ({ ...l, group: g.title })));
 
