@@ -669,8 +669,8 @@ where not exists (select 1 from lab_age_groups);
 -- people (is_sample = true), NOT members: eighteen athletes with a ride and a
 -- run on about half the days from 500 days back to 250 days ahead. The page
 -- labels them "sample", and they disappear from the board by themselves the
--- moment the first member registers. To remove them for good, run:
---     delete from lab_activities where is_sample;
+-- moment the first member registers. REMOVED for good by migration 032;
+-- this block no longer inserts anything (see "and false" below).
 insert into lab_activities (athlete_name, city, gender, age, sport_slug, activity_date, distance_km, moving_minutes, elevation_m, is_sample)
 select
   a.athlete_name,
@@ -709,7 +709,10 @@ cross join lateral (
 ) v
 where (d.idx + a.i + sp.salt) % 7 < 4
   and k.seed % 13 <> 0
-  and not exists (select 1 from lab_activities);
+  and not exists (select 1 from lab_activities)
+  -- Switched off: the owner removed the sample athletes for good (migration
+  -- 032). Kept so the history of this file still reads correctly.
+  and false;
 
 -- Ridge Repeats --------------------------------------------------------------
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, CheckCircle2, AlertCircle, UserPlus } from "lucide-react";
+import { Loader2, AlertCircle, UserPlus } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 import { claimBootstrapAdmin } from "../lib/adminBootstrap";
+import { useSiteImages } from "../lib/publicData";
 
 const ERROR_MESSAGES = {
   not_configured: "That sign-in method isn't connected yet — please check back soon.",
@@ -17,12 +18,19 @@ const ERROR_MESSAGES = {
   unexpected_error: "Something went wrong. Please try again.",
 };
 
+// How long the welcome screen shows before moving on (its progress bar
+// fills over the same time; see .rtg-welcome-bar in index.css).
+const WELCOME_MS = 1600;
+
 export default function AuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState("working");
   const [noAccountEmail, setNoAccountEmail] = useState("");
   const [adminRefusal, setAdminRefusal] = useState({ reason: "", message: "", email: "" });
+  // First name for the welcome screen, when the account has one.
+  const [firstName, setFirstName] = useState("");
+  const images = useSiteImages();
 
   const providerError = params.get("error");
   const isAdminFlow = params.get("admin") === "1";
@@ -60,6 +68,7 @@ export default function AuthCallback() {
       // that as "no account exists" and bounce them to Sign Up instead of
       // silently letting a brand-new account through a Log In button.
       const user = data.session.user;
+      setFirstName(String(user.user_metadata?.full_name || user.user_metadata?.name || "").trim().split(/\s+/)[0] || "");
       const isBrandNewAccount =
         user.created_at &&
         user.last_sign_in_at &&
@@ -93,7 +102,7 @@ export default function AuthCallback() {
           return;
         }
         setStatus("success");
-        setTimeout(() => navigate("/admin", { replace: true }), 900);
+        setTimeout(() => navigate("/admin", { replace: true }), WELCOME_MS);
         return;
       }
 
@@ -110,7 +119,7 @@ export default function AuthCallback() {
 
       setStatus("success");
       const destination = profileRow && !profileRow.onboarding_complete ? "/onboarding" : "/";
-      setTimeout(() => navigate(destination, { replace: true }), 900);
+      setTimeout(() => navigate(destination, { replace: true }), WELCOME_MS);
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -126,8 +135,16 @@ export default function AuthCallback() {
   }, [providerError, navigate]);
 
   return (
-    <div className="min-h-svh flex items-center justify-center bg-rtg-ink px-6 text-center">
-      <div className="max-w-sm w-full rounded-[2rem] border border-rtg-border bg-white px-8 py-11 shadow-[0_30px_80px_-30px_rgba(53,36,111,0.35)]">
+    <div className="rtg-welcome relative isolate min-h-svh flex flex-col items-center justify-center overflow-hidden px-6 text-center">
+      {/* Animated backdrop: drifting glows, faint lines and a slow ring. */}
+      <div aria-hidden="true" className="rtg-welcome-bg">
+        <span className="rtg-welcome-glow rtg-welcome-glow-a" />
+        <span className="rtg-welcome-glow rtg-welcome-glow-b" />
+        <span className="rtg-welcome-glow rtg-welcome-glow-c" />
+        <span className="rtg-welcome-ring" />
+      </div>
+      {images.logoNav && <img src={images.logoNav} alt="Ride Tea GupShup" className="rtg-welcome-logo mb-6 h-10 w-auto brightness-0 invert" />}
+      <div className="rtg-welcome-card max-w-sm w-full rounded-[2rem] border border-white/40 bg-white/95 px-8 py-11 shadow-[0_40px_100px_-30px_rgba(10,4,24,0.7)] backdrop-blur">
         {status === "working" && (
           <>
             <Loader2 className="animate-spin mx-auto mb-4 text-rtg-orange-400" size={32} />
@@ -136,9 +153,19 @@ export default function AuthCallback() {
         )}
         {status === "success" && (
           <>
-            <CheckCircle2 className="mx-auto mb-4 text-rtg-orange-400" size={32} />
-            <p className="font-display text-2xl mb-1">Welcome to RTG</p>
-            <p className="text-rtg-mist text-sm">Taking you to the site…</p>
+            <svg className="rtg-welcome-check mx-auto mb-5" width="72" height="72" viewBox="0 0 72 72" aria-hidden="true">
+              <circle className="rtg-welcome-check-ring" cx="36" cy="36" r="32" />
+              <path className="rtg-welcome-check-tick" d="M23 37.5 32 46l17-19" />
+            </svg>
+            <p className="rtg-welcome-rise font-display text-3xl leading-none mb-2">
+              {firstName ? `Welcome back, ${firstName}` : "Welcome to RTG"}
+            </p>
+            <p className="rtg-welcome-rise rtg-welcome-rise-2 text-rtg-mist text-sm">
+              {isAdminFlow ? "Opening the RTG control room…" : "Taking you to the site…"}
+            </p>
+            <div className="rtg-welcome-rise rtg-welcome-rise-2 mx-auto mt-6 h-1.5 w-40 overflow-hidden rounded-full bg-rtg-purple-950/10">
+              <span className="rtg-welcome-bar block h-full rounded-full bg-gradient-to-r from-[#f45b18] via-[#ff8a3d] to-[#a77bd7]" />
+            </div>
           </>
         )}
         {status === "error" && (
