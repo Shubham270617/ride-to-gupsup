@@ -4,3 +4,12 @@ it('disabled feature denies everything before credentials or database',async()=>
 it('refuses wrong origin and non-owner issuance with no store mutation',async()=>{expect((await call({action:'issue'},{origin:'https://evil.invalid'})).statusCode).toBe(403);authorize.mockResolvedValue({ok:true,user:{id:'other'}});expect((await call({action:'issue'})).statusCode).toBe(403);expect(db.rpc).not.toHaveBeenCalled();});
 it('requires one well-formed cookie and never accepts client-selected identity',async()=>{expect((await call({action:'read',userId:owner})).statusCode).toBe(401);expect((await call({action:'read'},{origin:'https://test.invalid',cookie:'__Host-rtg-timing=x; __Host-rtg-timing=y'})).statusCode).toBe(401);expect(db.rpc).not.toHaveBeenCalled();});
 it('checks role metadata server-side and denies expired or removed owner codes',async()=>{db.rpc.mockResolvedValue({data:{issuerId:'removed-owner',scope:'advanced',expiresAt:Date.now()+1000}});const res=await call({action:'read'},{origin:'https://test.invalid',cookie:'__Host-rtg-timing='+'a'.repeat(43)});expect(res.statusCode).toBe(401);expect(db.queries).toHaveLength(0);});
+it('accepts a Vercel origin value pasted with a newline, spaces, quotes or a trailing slash — and still refuses other sites',async()=>{
+ for(const value of ['https://test.invalid\n',' https://test.invalid/ ','"https://test.invalid"']){
+  vi.stubEnv('RTG_TIMING_CODE_ORIGIN',value);
+  const res=await call({action:'capabilities'},{origin:'https://TEST.invalid'});
+  expect(res.statusCode,JSON.stringify(value)).toBe(200);
+ }
+ expect((await call({action:'capabilities'},{origin:'https://test.invalid.evil'})).statusCode).toBe(403);
+ expect((await call({action:'capabilities'},{})).statusCode).toBe(403);
+});

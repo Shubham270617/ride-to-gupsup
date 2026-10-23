@@ -4,14 +4,18 @@ import {requireAdmin} from './requireAdmin.js';
 import {createTimingCodeAuth} from './proposals/timingCodeAuth.js';
 import {applyRidgeCommand} from '../src/lib/ridge/engine.js';
 import {projectVolunteerWorkspace,validateVolunteerCommand} from './volunteerRidge.js';
+// Vercel values pasted with a stray space, newline, quotes or trailing "/"
+// (and an Origin header in different case) used to fail the exact match and
+// refuse every request ("Request refused."). Compare cleaned values instead.
+const cleanOrigin=v=>String(v??"").trim().replace(/^["']+|["']+$/g,"").trim().replace(/\/+$/,"").toLowerCase();
 const owners=()=>new Set((process.env.RTG_LAYOUT_EDITOR_ADMIN_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
 export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requireAdmin}={}){return async(req,res)=>{
  res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
  if(process.env.RTG_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Code access is not activated.',enabled:false});
- const origin=process.env.RTG_TIMING_CODE_ORIGIN,pepper=process.env.RTG_TIMING_CODE_PEPPER;
+ const origin=cleanOrigin(process.env.RTG_TIMING_CODE_ORIGIN),pepper=String(process.env.RTG_TIMING_CODE_PEPPER??"").trim(),requestOrigin=cleanOrigin(req.headers.origin);
  if(!origin||!pepper)return res.status(503).json({error:'Code access unavailable.'});
  if(req.method==='GET'&&req.query?.action==='status')return res.status(200).json({enabled:true});
- if(req.method!=='POST'||req.headers.origin!==origin)return res.status(403).json({error:'Request refused.'});
+ if(req.method!=='POST'||requestOrigin!==origin)return res.status(403).json({error:'Request refused.'});
  const b=req.body;if(!b||JSON.stringify(b).length>20000)return res.status(400).json({error:'Invalid request.'});
  const db=getDb();if(!db)return res.status(503).json({error:'Code access unavailable.'});
  const hash=(kind,value)=>createHmac('sha256',pepper).update(kind+'\0'+value).digest('hex');
@@ -32,7 +36,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   }
   if(b.action==='exchange'){
    // Per-code plus global rate limits; no trust in caller-supplied IP headers.
-   const result=await auth.exchange({origin:req.headers.origin,code:b.code,networkKey:hash('attempt',String(b.code||'').slice(0,64))});
+   const result=await auth.exchange({origin:requestOrigin,code:b.code,networkKey:hash('attempt',String(b.code||'').slice(0,64))});
    res.setHeader('Set-Cookie',result.cookie);return res.status(200).json({scope:result.scope,expiresAt:result.expiresAt});
   }
   const cookies=String(req.headers.cookie||'').split(';').map(x=>x.trim()).filter(x=>x.startsWith('__Host-rtg-timing='));
@@ -50,7 +54,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   }
   if(b.action!=='write'||!Number.isSafeInteger(b.version)||!/^[0-9a-f-]{36}$/i.test(b.requestId||''))return res.status(400).json({error:'Invalid request.'});
   if(b.credentialId!==access.credentialId)return res.status(409).json({error:'Code session changed. Preserve this request for owner reconciliation.'});
-  await auth.authorize({origin:req.headers.origin,token,command:b.command});
+  await auth.authorize({origin:requestOrigin,token,command:b.command});
   if(access.scope==='timing')validateVolunteerCommand(b.command,{session_id:access.sessionId,roster_rider_ids:access.rosterIds});
   const prior=await db.from('ridge_audit').select('request_id').eq('request_id',b.requestId).maybeSingle();if(prior.error)throw new Error('Unable to reconcile request.');
   let result;
