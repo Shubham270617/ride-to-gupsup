@@ -62,6 +62,6 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   const committed=await db.rpc('ridge_code_commit',{p_session_hash:sessionHash,p_credential:b.credentialId,p_expected:b.version,p_request:b.requestId,p_command:b.command,p_state:result?.state||workspace.state,p_feed:result?.feed||{},p_audit:result?.audit||{type:b.command.type,command:b.command}});
   if(committed.error){const definite=['40001','23505'].includes(committed.error.code);return res.status(definite?409:503).json({error:definite?'Access or records changed. Reconcile before another action.':'Save outcome unknown. Retry the same request.',definitive:definite,rebaseAllowed:committed.error.code==='40001'});}
   return res.status(200).json({ok:true,version:committed.data});
- }catch{return res.status(403).json({error:'Code or operation unavailable. No new action should be repeated without reconciliation.'});}
+ }catch(error){console.error('[timing-codes]',b?.action,error?.message||error);return res.status(403).json({error:'Code or operation unavailable. No new action should be repeated without reconciliation.'});}
 };}
 export default createTimingCodeHandler();

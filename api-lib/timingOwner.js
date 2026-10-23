@@ -13,7 +13,9 @@ export function createTimingOwnerHandler(authorize=requireAdmin) {
   try {
    if(req.method==='GET'&&action==='overview'){
     const [workspace,assignments]=await Promise.all([db.from('ridge_workspace').select('state').eq('singleton',true).single(),db.from('ridge_timing_assignments').select('user_id,session_id,roster_rider_ids,expires_at,revoked_at,revision')]);
-    if(workspace.error)return res.status(503).json({error:'Unable to load Ridge sessions.'});
+    // Owner-only endpoint, so the database's own reason is safe to show and
+    // is the only way to tell "no workspace row" from a permission problem.
+    if(workspace.error){console.error('[timing-owner] ridge_workspace read failed',workspace.error);return res.status(503).json({error:`Unable to load Ridge sessions (${workspace.error.code||'db'}: ${workspace.error.message||'unknown'}).`});}
     return res.status(200).json({activationReady:!assignments.error&&process.env.RTG_VOLUNTEER_TIMING_ACCESS_ENABLED==='true',assignments:assignments.error?[]:assignments.data,
      sessions:workspace.data.state.sessions.map(s=>({id:s.id,date:s.date,mode:s.mode,finished:s.finished})),riders:workspace.data.state.riders.map(r=>({id:r.id,name:r.name}))});
    }
