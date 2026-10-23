@@ -17,7 +17,7 @@ export function createTimingOwnerHandler(authorize=requireAdmin) {
     // is the only way to tell "no workspace row" from a permission problem.
     if(workspace.error){console.error('[timing-owner] ridge_workspace read failed',workspace.error);return res.status(503).json({error:`Unable to load Ridge sessions (${workspace.error.code||'db'}: ${workspace.error.message||'unknown'}).`});}
     return res.status(200).json({activationReady:!assignments.error&&process.env.RTG_VOLUNTEER_TIMING_ACCESS_ENABLED==='true',assignments:assignments.error?[]:assignments.data,
-     sessions:workspace.data.state.sessions.map(s=>({id:s.id,date:s.date,mode:s.mode,finished:s.finished})),riders:workspace.data.state.riders.map(r=>({id:r.id,name:r.name}))});
+     sessions:workspace.data.state.sessions.map(s=>({id:s.id,date:s.date,name:s.name||'',mode:s.mode,finished:s.finished})),riders:workspace.data.state.riders.map(r=>({id:r.id,name:r.name}))});
    }
    if(req.method==='POST'&&action==='resolve'){
     const email=String(req.body.email||'').trim().toLowerCase();

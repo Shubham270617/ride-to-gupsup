@@ -466,7 +466,7 @@ export function buildRidgeFeed({ sessions = [], results = [], awards = [], spotl
   });
   // Undated legacy sessions stay visible, but cannot establish progress over time.
   const list = sessions.map(s => ({
-    slug: s.slug, name: s.name, awardDefinitions: s.award_definitions || [], date: validRidgeDate(s.session_date) ? s.session_date : null,
+    slug: s.slug, name: s.name, label: s.label || "", awardDefinitions: s.award_definitions || [], date: validRidgeDate(s.session_date) ? s.session_date : null,
     stamp: validRidgeDate(s.session_date) ? Date.parse(`${s.session_date}T00:00:00Z`) : 0,
     riders: (bySession.get(s.slug) || []).map(row => ({ ...row, date: validRidgeDate(s.session_date) ? s.session_date : null })),
   })).sort((a, b) => b.stamp - a.stamp);

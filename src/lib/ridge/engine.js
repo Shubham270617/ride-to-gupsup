@@ -45,6 +45,27 @@ function nameOf(value) {
     throw new Error("Enter a rider name of 1–100 characters.");
   return s;
 }
+// A session's short name ("Session 2", "Morning"). Optional: blank gets
+// "Session N" for its date, so several sessions on one day stay distinct.
+function sessionNameOf(value) {
+  const s = String(value ?? "").trim();
+  if (s.length > 60) throw new Error("Use a session name of up to 60 characters.");
+  return s;
+}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Riding time, break time (gaps between a finished lap and the next start)
+// and elapsed time (riding + breaks) for one rider in one session.
+export function rideTotals(entry) {
+  const laps = entry?.laps || [];
+  let totalMs = 0, breakMs = 0;
+  laps.forEach((lap, i) => {
+    const d = lapDuration(lap);
+    if (Number.isFinite(d) && d > 0) totalMs += d;
+    const prev = laps[i - 1];
+    if (i > 0 && prev?.end != null && lap?.start != null && lap.start > prev.end) breakMs += lap.start - prev.end;
+  });
+  return { totalMs, breakMs, elapsedMs: totalMs + breakMs };
+}
 function reasonOf(value) {
   const s = String(value || "").trim();
   if (!s || s.length > 500)
@@ -130,12 +151,13 @@ export function buildPublicFeed(state) {
   const photosIncluded = new Set();
   for (const session of state.sessions
     .filter((s) => s.mode === "live")
-    .sort((a, b) => b.date.localeCompare(a.date))) {
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0))) {
     const awards = sessionSpotlight(state, session);
     feed.sessions.push({
       id: session.id,
       slug: session.id,
-      name: "Ridge Repeats · " + session.date,
+      name: "Ridge Repeats · " + session.date + (session.name ? " · " + session.name : ""),
+      label: session.name || "",
       session_date: session.date,
       award_definitions: awards.map(({id,title,criterion,description,winners,metric}) => ({id,title,criterion,description,winners:[...winners],metric})),
       published: true,
@@ -172,6 +194,8 @@ export function buildPublicFeed(state) {
         // Provenance belongs to private workspace/audit only. Every native
         // mutation regenerates this allowlisted display projection.
         loop_times: score.times.map(formatDuration).join(","),
+        ...(() => { const t = rideTotals(entry); return { total_ms: t.totalMs, break_ms: t.breakMs, elapsed_ms: t.elapsedMs }; })(),
+        finished: Boolean(entry.done),
         lap_points: score.points,
         completed_laps: score.completed,
         progress_points: score.progress,
@@ -227,13 +251,36 @@ export function applyRidgeCommand(
     detail = { before: { ...rider }, reason: reasonOf(command.reason) };
     rider.name = name;
     if (command.photo !== undefined) rider.photo = photoOf(command.photo);
+  } else if (type === "link_rider") {
+    // Joins a Ridge rider to their RTG member account (or unlinks with null),
+    // so their sessions show on that member's dashboard. Owner/admin only.
+    const rider = state.riders.find((r) => r.id === riderId);
+    if (!rider) throw new Error("Rider not found.");
+    const profileId = command.profileId ?? null;
+    if (profileId !== null && !UUID.test(String(profileId))) throw new Error("Choose a member account.");
+    if (profileId && state.riders.some((r) => r.id !== riderId && r.profileId === profileId))
+      throw new Error("That member is already linked to another rider.");
+    detail = { before: { profileId: rider.profileId ?? null } };
+    if (profileId) {
+      rider.profileId = profileId;
+      rider.memberName = String(command.memberName || "").trim().slice(0, 120);
+    } else {
+      delete rider.profileId;
+      delete rider.memberName;
+    }
   } else if (type === "create_session") {
+    // Any number of sessions per day; each keeps its own attendance, laps
+    // and results. Blank names become "Session N" for that date.
     const date = dateOnly(command.date);
-    if (state.sessions.some((s) => s.date === date && s.mode !== "archived"))
-      throw new Error("A session already exists for that date.");
+    const sameDay = state.sessions.filter((s) => s.date === date && s.mode !== "archived");
+    const name = sessionNameOf(command.name) || `Session ${sameDay.length + 1}`;
+    if (sameDay.some((s) => keyOf(s.name) === keyOf(name)))
+      throw new Error("That date already has a session with this name.");
     state.sessions.push({
       id: newId(),
       date,
+      name,
+      createdAt: now,
       mode: "testing",
       finished: false,
       entries: [],
@@ -275,6 +322,23 @@ export function applyRidgeCommand(
         throw new Error("This session has test recordings. Archive it and create a clean live session.");
       detail = { before: session.mode, reason: reasonOf(command.reason) };
       session.mode = command.mode;
+    } else if (type === "rider_finish" || type === "rider_resume") {
+      // A rider who is done for the day is marked finished (the page asks
+      // first); one taking a break is simply left open. Completed laps are
+      // never touched either way.
+      if (!entry) throw new Error("Rider not present.");
+      if (session.finished || session.mode === "archived")
+        throw new Error("This session is locked. Reopen it first.");
+      if (type === "rider_finish") {
+        if (entry.laps.some((l) => l.start != null && l.end == null && l.durationMs == null))
+          throw new Error("Finish the running lap first.");
+        if (!entry.laps.some((l) => lapDuration(l) > 0))
+          throw new Error("This rider has no completed lap yet.");
+        entry.done = true;
+      } else {
+        if (!entry.done) throw new Error("This rider is not marked finished.");
+        entry.done = false;
+      }
     } else if (type === "finish_session" || type === "reopen_session") {
       detail.reason = reasonOf(command.reason);
       session.finished = type === "finish_session";
@@ -361,6 +425,8 @@ export function applyRidgeCommand(
         throw new Error("Historical published records require an explicitly accepted source revision before timing changes.");
       if (session.finished || session.mode === "archived")
         throw new Error("This session is locked. Reopen it before timing.");
+      if (entry?.done)
+        throw new Error("This rider is marked finished. Resume the rider to record more laps.");
       const at = Number(command.at);
       if (
         !Number.isFinite(at) ||

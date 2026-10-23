@@ -14,7 +14,7 @@ export default function VolunteerTimerDemo(){
  const apply=(command,throwError=false)=>{try{const next=applyRidgeCommand(current.current,command).state;current.current=next;setState(next);setMessage('Saved in this demo only.');return next;}catch(e){setMessage(e.message);if(throwError)throw e;return null;}};
  const demoActions={correct:command=>apply(command,true),setPhoto,photos,refresh:()=>setMessage('Local demo records refreshed. No server request.'),
   addRider:name=>!!apply({type:'create_rider',name}),
-  createSession:(date,mode)=>{const next=apply({type:'create_session',date});if(!next)return null;const id=next.sessions.at(-1).id;if(mode==='live')apply({type:'session_mode',sessionId:id,mode,reason:'Synthetic demo mode'});return id;},
+  createSession:(date,mode,name)=>{const next=apply({type:'create_session',date,...(name?{name}:{})});if(!next)return null;const id=next.sessions.at(-1).id;if(mode==='live')apply({type:'session_mode',sessionId:id,mode,reason:'Synthetic demo mode'});return id;},
   finishSession:sessionId=>apply({type:'finish_session',sessionId,reason:'Synthetic demo close'}),
  };
  return <VolunteerTimerPanel sessions={state.sessions} riders={state.riders} previewActions={{send:apply}} demoActions={demoActions} now={now} message={message}/>;

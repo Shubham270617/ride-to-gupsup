@@ -25,35 +25,30 @@ it("creates a Live session for today and hands it back", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Create session" }));
   await waitFor(() => expect(onReady).toHaveBeenCalled());
   const s = ridge.state.sessions[0];
-  expect(s).toMatchObject({ date: today, mode: "live", finished: false });
+  expect(s).toMatchObject({ date: today, name: "Session 1", mode: "live", finished: false });
   expect(onReady).toHaveBeenCalledWith(s.id);
 });
 
-it("a finished session on that date is archived (kept) only after asking, then a fresh one is made", async () => {
+it("a second session on the same day is created alongside, with its own name", async () => {
   const start = empty();
-  start.sessions.push({ id: "old", date: today, mode: "testing", finished: true, entries: [], awardOverrides: [] });
+  start.sessions.push({ id: "old", date: today, name: "Session 1", mode: "testing", finished: true, entries: [], awardOverrides: [] });
   const ridge = fakeRidge(start);
   const onReady = vi.fn();
   render(<QuickSession riderCount={1} request={ridge.request} onReady={onReady} />);
+  fireEvent.change(screen.getByLabelText("Name (optional)"), { target: { value: "Evening" } });
   fireEvent.click(screen.getByRole("button", { name: "Create session" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/already has a Testing session that is finished/);
-  expect(onReady).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Archive old & create new" }));
   await waitFor(() => expect(onReady).toHaveBeenCalled());
-  expect(ridge.state.sessions.find((s) => s.id === "old").mode).toBe("archived");
-  const fresh = ridge.state.sessions.find((s) => s.id !== "old");
-  expect(fresh).toMatchObject({ date: today, mode: "live", finished: false });
+  expect(ridge.state.sessions.map((s) => [s.name, s.mode])).toEqual([["Session 1", "testing"], ["Evening", "live"]]);
+  expect(onReady).toHaveBeenCalledWith(ridge.state.sessions[1].id);
 });
 
-it("an open session on that date is simply selected", async () => {
-  const start = empty();
-  start.sessions.push({ id: "open", date: today, mode: "live", finished: false, entries: [], awardOverrides: [] });
-  const ridge = fakeRidge(start);
-  const onReady = vi.fn();
-  render(<QuickSession riderCount={1} request={ridge.request} onReady={onReady} />);
+it("Testing sessions stay private", async () => {
+  const ridge = fakeRidge(empty());
+  render(<QuickSession riderCount={1} request={ridge.request} onReady={vi.fn()} />);
+  fireEvent.change(screen.getByLabelText("Type"), { target: { value: "testing" } });
   fireEvent.click(screen.getByRole("button", { name: "Create session" }));
-  await waitFor(() => expect(onReady).toHaveBeenCalledWith("open"));
-  expect(ridge.state.sessions).toHaveLength(1);
+  await waitFor(() => expect(ridge.state.sessions).toHaveLength(1));
+  expect(ridge.state.sessions[0].mode).toBe("testing");
 });
 
 it("warns when there are no riders yet", () => {

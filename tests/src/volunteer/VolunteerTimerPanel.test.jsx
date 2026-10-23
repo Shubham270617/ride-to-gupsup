@@ -69,7 +69,7 @@ it('demo supports local session and rider creation without any fetch',async()=>{
  fireEvent.change(screen.getByRole('textbox',{name:'New rider name'}),{target:{value:'Example rider C'}});
  fireEvent.click(screen.getByRole('button',{name:'Add rider'}));expect(screen.getByRole('checkbox',{name:'Example rider C'})).toBeInTheDocument();
  fireEvent.change(screen.getByLabelText('New session date'),{target:{value:'2026-11-05'}});
- fireEvent.click(screen.getByRole('button',{name:'Create session'}));expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue('5 Nov 2026 · Testing');
+ fireEvent.click(screen.getByRole('button',{name:'Create session'}));expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue('5 Nov 2026 · Session 1 · Testing');
  fireEvent.click(screen.getByRole('checkbox',{name:'Example rider C'}));fireEvent.click(screen.getByRole('button',{name:'Save attendance'}));
  vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-11-05T06:00:00+05:30'));
  fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));fireEvent.click(screen.getByRole('button',{name:'Start all · Lap 1'}));expect(screen.getByText('Running L1')).toBeInTheDocument();

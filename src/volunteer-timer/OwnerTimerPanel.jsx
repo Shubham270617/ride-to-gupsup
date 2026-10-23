@@ -30,7 +30,7 @@ export default function OwnerTimerPanel({requestTransport}){
  const controls={
   refresh:()=>{if(!flight.current&&!uncertain.current&&!queue.current?.pending)return refresh();},
   addRider:name=>send({type:'create_rider',name}),
-  createSession:async date=>{const next=await send({type:'create_session',date});return next?.state.sessions.find(s=>s.date===date&&s.mode!=='archived')?.id;},
+  createSession:async(date,_mode,name)=>{const next=await send({type:'create_session',date,...(name?{name}:{})});return next?.state.sessions.at(-1)?.id;},
   finishSession:sessionId=>send({type:'finish_session',sessionId,reason:'Owner finished session from standalone timer'}),
   correct:send,
  };

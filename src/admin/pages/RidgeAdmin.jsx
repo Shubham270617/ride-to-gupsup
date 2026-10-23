@@ -10,6 +10,7 @@ import {
   sessionSpotlight,
 } from "../../lib/ridge/engine";
 import ImageUploadField from "../components/ImageUploadField";
+import RiderMemberLink from "../components/RiderMemberLink";
 import "../../styles/ridge-admin.css";
 
 const TABS = [
@@ -265,7 +266,7 @@ export default function RidgeAdmin({ requestTransport } = {}) {
                   .sort((a, b) => b.date.localeCompare(a.date))
                   .map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.date} · {s.mode}
+                      {s.date}{s.name ? ` · ${s.name}` : ""} · {s.mode}
                       {s.finished ? " · finished" : ""}
                     </option>
                   ))}
@@ -538,6 +539,13 @@ export default function RidgeAdmin({ requestTransport } = {}) {
                     >
                       Name / photo
                     </button>
+                    <RiderMemberLink
+                      rider={r}
+                      busy={busy}
+                      onSave={(profileId, memberName) =>
+                        send({ type: "link_rider", riderId: r.id, profileId, memberName })
+                      }
+                    />
                   </article>
                 ))}
               </div>
@@ -870,9 +878,12 @@ export default function RidgeAdmin({ requestTransport } = {}) {
                 className="ra-inline"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  const form = new FormData(e.currentTarget);
+                  const name = String(form.get("name") || "").trim();
                   send({
                     type: "create_session",
-                    date: new FormData(e.currentTarget).get("date"),
+                    date: form.get("date"),
+                    ...(name ? { name } : {}),
                   });
                 }}
               >
@@ -880,11 +891,16 @@ export default function RidgeAdmin({ requestTransport } = {}) {
                   New session date
                   <input name="date" type="date" required />
                 </label>
+                <label>
+                  Name (optional)
+                  <input name="name" maxLength={60} placeholder="Morning, Evening…" />
+                </label>
                 <button className="primary" disabled={busy}>
                   Create testing session
                 </button>
               </form>
               <p>
+                A day can have several sessions — name them (Morning, Evening…) or leave blank for “Session 1, 2…”.
                 Testing sessions remain in the admin panel. Publish a session to
                 show its results on the website.
               </p>

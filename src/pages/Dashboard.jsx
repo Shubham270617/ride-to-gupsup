@@ -6,6 +6,7 @@ import useSession from "../lib/useSession";
 import { useAuthGate } from "../lib/AuthGateContext";
 import { useMyStravaActivities, useMyLeaderboardStats } from "../lib/publicData";
 import { useMyMemberships, isActiveClub } from "../lib/labData";
+import MyRidgeResults, { useMyRidgeResults } from "../components/MyRidgeResults";
 import { GENDERS, RIDER_TYPES, RIDE_FREQUENCIES, ageFromDob } from "../lib/profileFields";
 import useAuthProviders from "../lib/useAuthProviders";
 import Section from "../components/ui/Section";
@@ -115,6 +116,7 @@ const STRAVA_NOTICES = {
 export default function Dashboard() {
   const { user, loading: sessionLoading } = useSession();
   const myStravaActivities = useMyStravaActivities(user?.id);
+  const myRidgeResults = useMyRidgeResults(user?.id);
   const myLeaderboardStats = useMyLeaderboardStats(user?.id);
   const myMemberships = useMyMemberships(user?.id);
   const clubMember = isActiveClub(myMemberships);
@@ -454,6 +456,8 @@ export default function Dashboard() {
             )}
           </section>
         )}
+
+        <MyRidgeResults rows={myRidgeResults} />
 
         {/* ---- Profile ---- */}
         <section data-text-section="profile">

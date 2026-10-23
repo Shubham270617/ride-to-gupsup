@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatDuration, lapDuration, istDate } from '../lib/ridge/engine';
+import { formatDuration, lapDuration, istDate, rideTotals } from '../lib/ridge/engine';
 import './volunteer-timer.css';
 import DemoLapEditor from './DemoLapEditor';
 import DemoRiderPhotos from './DemoRiderPhotos';
@@ -34,14 +34,15 @@ const MODE = {
   archived: { label: 'Archived', note: 'Kept for the record — no more timing' },
 };
 
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null, canFinishRiders = true }) {
   const controls=demoActions || ownerActions;
   const [editing,setEditing]=useState(null);
-  const [newDate,setNewDate]=useState(()=>istDate(now)),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState('');
+  const [newDate,setNewDate]=useState(()=>istDate(now)),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState(''),[newSessionName,setNewSessionName]=useState('');
+  const [confirmFor,setConfirmFor]=useState(null); // rider waiting for "mark finished?" confirmation
   const [tab, setTab] = useState('Riders');
   const [sessionId, setSessionId] = useState('');
   const [selection, setSelection] = useState(null);
-  const session = sessions.find(s => s.id === sessionId) || [...sessions].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const session = sessions.find(s => s.id === sessionId) || [...sessions].sort((a,b)=>b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0))[0];
   const attending = session?.entries || [];
   const name = id => riders.find(r => r.id === id)?.name || 'Unknown rider';
   const selected = selection || attending.map(e => e.riderId);
@@ -76,7 +77,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         <label className="vt-field vt-grow"><span>Session</span>
           <select disabled={busy || pending || !sessions.length} value={session?.id || ''} onChange={e => {setSessionId(e.target.value);setSelection(null);}}>
             {!sessions.length && <option value="">{ownerActions ? 'No sessions yet — create one below' : 'No session assigned yet'}</option>}
-            {sessions.map(s => <option key={s.id} value={s.id}>{niceDate(s.date)} · {(MODE[s.mode] || MODE.testing).label}{s.finished ? ' · finished' : ''}</option>)}
+            {sessions.map(s => <option key={s.id} value={s.id}>{niceDate(s.date)}{s.name ? ` · ${s.name}` : ''} · {(MODE[s.mode] || MODE.testing).label}{s.finished ? ' · finished' : ''}</option>)}
           </select>
         </label>
         {onRefresh && <button className="vt-btn vt-btn-ghost" onClick={onRefresh}><span aria-hidden="true">↻</span> Refresh sessions</button>}
@@ -87,10 +88,11 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         <summary><span aria-hidden="true">＋</span> Start a new session</summary>
         <div className="vt-inline">
           <input aria-label="New session date" type="date" disabled={busy || pending || managementPending} value={newDate} onChange={e=>setNewDate(e.target.value)}/>
+          <input aria-label="New session name" placeholder="Name (optional) — e.g. Morning" maxLength={60} disabled={busy || pending || managementPending} value={newSessionName} onChange={e=>setNewSessionName(e.target.value)}/>
           {demoActions && <select aria-label="New session mode" disabled={busy || pending} value={newMode} onChange={e=>setNewMode(e.target.value)}><option value="testing">Testing · private</option><option value="live">Live · public (demo only)</option></select>}
-          <button className="vt-btn vt-btn-primary" disabled={busy || pending || !newDate} onClick={async()=>{const id=await controls.createSession(newDate,newMode);if(id){setSessionId(id);setSelection(null);}}}>Create session</button>
+          <button className="vt-btn vt-btn-primary" disabled={busy || pending || !newDate} onClick={async()=>{const id=await controls.createSession(newDate,newMode,newSessionName.trim());if(id){setSessionId(id);setSelection(null);setNewSessionName('');}}}>Create session</button>
         </div>
-        <small>New sessions start as <b>Testing</b> (private). Publish them from Admin → Ridge — Session control when results are ready.</small>
+        <small>You can make several sessions on the same day — give each a name (Morning, Evening…) or leave it blank for "Session 1, 2…". New sessions start as <b>Testing</b> (private); publish them from Admin → Ridge — Session control.</small>
       </details>}
     </section>}
 
@@ -121,7 +123,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
 
     {tab === 'Timer' && <section aria-label="Lap timing" className="vt-card">
       <h2>Time the laps</h2>
-      <p className="vt-help">Press <b>Start all</b> when the group sets off. On each lap press <b>Pass</b>; on the last lap press <b>Finish</b>. Every tap is saved with the exact time.</p>
+      <p className="vt-help">Press <b>Start all</b> when the group sets off. Rider goes straight into the next lap → <b>Pass</b>. Rider stops for a break → <b>Finish</b>, then <b>Start</b> when they ride again (the break is timed separately). Done for the day → <b>Rider done</b>.</p>
       {wrongDate && <p className="vt-alert" role="alert">Timing is unavailable: this session is dated {session.date}, but today in India is {istDate(now)}. Pick today's session to time now. Attendance stays saved.</p>}
       <button className="vt-btn vt-btn-primary vt-btn-big" disabled={timingBlocked || !attending.length || attending.some(e => e.laps.length || e.officialScore)} onClick={() => send({type:'group_start',at:Date.now()})}><span aria-hidden="true">▶</span> Start all · Lap 1</button>
       <div className="vt-cards">{attending.map((entry, i) => {
@@ -130,6 +132,9 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         const index = entry.laps.findIndex(lap => !lapDuration(lap));
         const next = index < 0 ? entry.laps.length : index;
         const running = entry.laps[next]?.start != null && !lapDuration(entry.laps[next]);
+        const lastEnd = !running && next > 0 ? entry.laps[next - 1]?.end : null;
+        const onBreak = !locked && !entry.done && !running && next > 0 && next < LAPS && lastEnd != null;
+        const canFinish = canFinishRiders && !locked && !entry.done && !running && next > 0;
         const photo = demoActions?.photos[entry.riderId] || riders.find(r => r.id === entry.riderId)?.photo;
         return <article key={entry.riderId} className={`vt-timer${running ? ' is-running' : ''}${locked ? ' is-locked' : ''}`} style={{ '--i': i }}>
           <div className="vt-timer-head">
@@ -138,12 +143,18 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
             {queuedCommands.some(c=>c.type==='group_start'||c.riderId===entry.riderId)&&<span className="vt-badge" role="status">Pending save</span>}
           </div>
           <ol className="vt-laps" aria-label="Laps">{Array.from({length:LAPS},(_,l)=>{const lap=entry.laps[l];const done=lap&&lapDuration(lap);return <li key={l} className={done?'is-done':l===next&&running?'is-now':''}>{done?formatDuration(lapDuration(lap)):`L${l+1}`}</li>;})}</ol>
-          <p className="vt-timer-state">{locked ? 'Locked timing record' : next >= LAPS ? `${LAPS} loops complete` : `${running ? 'Running' : 'Ready'} L${next + 1}`}</p>
+          <p className="vt-timer-state">{locked ? 'Locked timing record' : entry.done ? `Finished · ${next} lap${next === 1 ? '' : 's'}` : next >= LAPS ? `${LAPS} loops complete` : `${running ? 'Running' : 'Ready'} L${next + 1}`}</p>
+          {onBreak && <p className="vt-break">On a break · {formatDuration(now - lastEnd) || '0:00.000'}</p>}
           {running && !locked && <p className="vt-clock">{formatDuration(now - entry.laps[next].start) || '0:00.000'}</p>}
-          {!locked && next < LAPS && <div className="vt-timer-btns">
+          {!locked && !entry.done && next < LAPS && <div className="vt-timer-btns">
             {running && next < LAPS - 1 && <button className="vt-btn vt-btn-go" disabled={timingBlocked} onClick={() => send({type:'pass',riderId:entry.riderId,lap:next+1,at:Date.now()})}>Pass → L{next + 2}</button>}
             <button className={`vt-btn ${running ? 'vt-btn-stop' : 'vt-btn-go'}`} disabled={timingBlocked} onClick={() => send({type:running ? 'end' : 'start',riderId:entry.riderId,lap:next+1,at:Date.now()})}>{running ? 'FINISH' : 'START'} · L{next + 1}</button>
           </div>}
+          {canFinish && (confirmFor === entry.riderId
+            ? <div className="vt-confirm" role="alert"><p>Mark <b>{name(entry.riderId)}</b> as finished for this session? Their {next} lap{next === 1 ? '' : 's'} stay saved; you can resume later.</p>
+                <div className="vt-timer-btns"><button className="vt-btn vt-btn-danger" disabled={timingBlocked} onClick={() => { setConfirmFor(null); send({type:'rider_finish',riderId:entry.riderId}); }}>Yes, finished</button><button className="vt-btn" onClick={() => setConfirmFor(null)}>Cancel</button></div></div>
+            : <button className="vt-btn vt-btn-small vt-btn-ghost vt-done-btn" disabled={timingBlocked} onClick={() => setConfirmFor(entry.riderId)}>✓ Rider done</button>)}
+          {entry.done && !locked && canFinishRiders && <button className="vt-btn vt-btn-small" disabled={blocked || wrongDate} onClick={() => send({type:'rider_resume',riderId:entry.riderId})}>Resume rider</button>}
         </article>;
       })}</div>
       {!attending.length && <p className="vt-empty">No riders in this session yet. Go to <b>1 · Riders</b>, tick who is here and save.</p>}
@@ -160,13 +171,14 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
     {tab === 'Data' && <section className="vt-card">
       <div className="vt-row-between"><h2>Lap times</h2>{controls && <button className="vt-btn vt-btn-ghost" disabled={busy || pending} onClick={controls.refresh}><span aria-hidden="true">↻</span> Refresh</button>}</div>
       <p className="vt-help">Every lap that was timed, in India time. If a time is wrong, press <b>Edit</b> on that lap{controls ? '' : ' (owner only)'}. “Accepted” is the time that counts.</p>
-      <div className="vt-table"><table><caption className="vt-sr-only">Session timing records</caption><thead><tr>{['Rider','Lap','Start · IST','Finish · IST','Recorded duration','Accepted duration','Status','Edit'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
+      <div className="vt-table"><table><caption className="vt-sr-only">Session timing records</caption><thead><tr>{['Rider','Lap','Start · IST','Finish · IST','Recorded duration','Accepted duration','Break before','Status','Edit'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
         <tbody>{attending.flatMap(entry => [...Array.from({length:Math.max(1,Math.min(LAPS,entry.laps.length))},(_,i)=>entry.laps[i]||{}).map((lap, i) => <tr key={`${entry.riderId}-${i}`}>
           <th scope="row">{name(entry.riderId)}</th><td>{i + 1}</td><td>{clock(lap.start)}</td><td>{clock(lap.end)}</td>
-          <td>{lap.start != null && lap.end != null ? formatDuration(lap.end - lap.start) : '—'}</td><td>{formatDuration(lapDuration(lap)) || '—'}</td><td><span className={`vt-pill vt-pill-${lap.durationMs!=null?'fix':lap.end!=null?'ok':lap.start!=null?'run':'none'}`}>{lap.durationMs!=null?'Duration corrected':lap.end!=null?'Recorded':lap.start!=null?'Running':'Not started'}</span></td><td><button className="vt-btn vt-btn-small" disabled={!controls || busy || pending || !!entry.officialScore} aria-label={`Edit ${name(entry.riderId)} L${i+1}`} onClick={()=>setEditing({entry,lapIndex:i})}>Edit</button></td>
+          <td>{lap.start != null && lap.end != null ? formatDuration(lap.end - lap.start) : '—'}</td><td>{formatDuration(lapDuration(lap)) || '—'}</td><td>{i > 0 && entry.laps[i - 1]?.end != null && lap.start != null && lap.start > entry.laps[i - 1].end ? formatDuration(lap.start - entry.laps[i - 1].end) : '—'}</td><td><span className={`vt-pill vt-pill-${lap.durationMs!=null?'fix':lap.end!=null?'ok':lap.start!=null?'run':'none'}`}>{lap.durationMs!=null?'Duration corrected':lap.end!=null?'Recorded':lap.start!=null?'Running':'Not started'}</span></td><td><button className="vt-btn vt-btn-small" disabled={!controls || busy || pending || !!entry.officialScore} aria-label={`Edit ${name(entry.riderId)} L${i+1}`} onClick={()=>setEditing({entry,lapIndex:i})}>Edit</button></td>
         </tr>),
         // Only laps that were recorded are listed; a lap that was missed can be added here.
-        controls && !entry.officialScore && entry.laps.length >= 1 && entry.laps.length < LAPS && <tr key={`${entry.riderId}-add`} className="vt-add-lap"><td colSpan={8}><button className="vt-btn vt-btn-small vt-btn-ghost" disabled={busy || pending} onClick={()=>setEditing({entry,lapIndex:entry.laps.length})}>+ Add lap {entry.laps.length + 1} time for {name(entry.riderId)}</button></td></tr>,
+        (() => { const t = rideTotals(entry); return t.totalMs > 0 && <tr key={`${entry.riderId}-total`} className="vt-total-row"><td colSpan={9}><b>{name(entry.riderId)}</b> · Riding {formatDuration(t.totalMs)} · Breaks {formatDuration(t.breakMs) || '0:00.000'} · Elapsed {formatDuration(t.elapsedMs)}{entry.done ? ' · Finished' : ''}</td></tr>; })(),
+        controls && !entry.officialScore && entry.laps.length >= 1 && entry.laps.length < LAPS && <tr key={`${entry.riderId}-add`} className="vt-add-lap"><td colSpan={9}><button className="vt-btn vt-btn-small vt-btn-ghost" disabled={busy || pending} onClick={()=>setEditing({entry,lapIndex:entry.laps.length})}>+ Add lap {entry.laps.length + 1} time for {name(entry.riderId)}</button></td></tr>,
       ].filter(Boolean))}</tbody></table></div>
       {!attending.length && <p className="vt-empty">No lap times yet for this session.</p>}
     </section>}

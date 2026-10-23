@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from './supabaseAdmin.js';
 import { applyRidgeCommand } from '../src/lib/ridge/engine.js';
-const keys = {attendance:['type','sessionId','riderIds'],group_start:['type','sessionId','at'],start:['type','sessionId','riderId','lap','at'],end:['type','sessionId','riderId','lap','at'],pass:['type','sessionId','riderId','lap','at']};
+const keys = {attendance:['type','sessionId','riderIds'],group_start:['type','sessionId','at'],start:['type','sessionId','riderId','lap','at'],end:['type','sessionId','riderId','lap','at'],pass:['type','sessionId','riderId','lap','at'],rider_finish:['type','sessionId','riderId'],rider_resume:['type','sessionId','riderId']};
 export function validateVolunteerCommand(command, assignment) {
   if (!command || !Object.hasOwn(keys,command.type) || command.sessionId !== assignment.session_id ||
     Object.keys(command).some(key=>!keys[command.type].includes(key))) throw new Error('Action not permitted.');

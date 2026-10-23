@@ -635,7 +635,7 @@ export default function LabRidge() {
   const kicker = aggregate
     ? copy.kickerAll
     : session
-      ? `${dateLabel(session.date).toUpperCase()}${session.slug === latest?.slug ? ` · ${copy.kickerLatest}` : ""}`
+      ? `${dateLabel(session.date).toUpperCase()}${session.label ? ` · ${session.label.toUpperCase()}` : ""}${session.slug === latest?.slug ? ` · ${copy.kickerLatest}` : ""}`
       : "";
   const summary = `${fill(copy.summary, { riders: rows.length, loops: totalLoops, km: km(totalLoops) })}${
     aggregate ? ` · ${fill(copy.summarySessions, { count: feed.sessions.length })}` : ""
@@ -693,6 +693,7 @@ export default function LabRidge() {
                   feed.sessions.map((s, i) => (
                     <option key={s.slug} value={s.slug}>
                       {dateLabel(s.date)}
+                      {s.label ? ` · ${s.label}` : ""}
                       {i === 0 ? ` · ${copy.latestTag}` : ""}
                     </option>
                   ))
@@ -941,6 +942,7 @@ export default function LabRidge() {
                     {feed.sessions.map((s, i) => (
                       <option key={s.slug} value={s.slug}>
                         {dateLabel(s.date)}
+                        {s.label ? ` · ${s.label}` : ""}
                         {i === 0 ? ` · ${copy.latestTag}` : ""}
                       </option>
                     ))}

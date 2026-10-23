@@ -189,3 +189,11 @@
   .vt-panel *, .vt-panel *::after { animation: none !important; transition: none !important; }
 }
 .vt-add-lap td { background: #fcfbfe; }
+
+.vt-break { margin: 2px 0 6px; font: 700 14px/1.3 ui-monospace, Menlo, monospace; color: #8a5a00; }
+.vt-done-btn { width: 100%; margin-top: 8px; }
+.vt-confirm { margin-top: 10px; padding: 12px; border-radius: 14px; background: #fff1ec; border: 1px solid #ffd2bf; }
+.vt-confirm p { margin: 0 0 8px; font-size: 13px; }
+.vt-total-row td { background: #f7f4fc; font-size: 12px; color: var(--vt-mist); }
+.vt-total-row b { color: var(--vt-ink); }
+.vt-new .vt-inline > input[aria-label="New session name"] { flex: 1 1 180px; }

@@ -1,9 +1,9 @@
 // Hash-only code authentication. Session bearer scope is separately activation-gated.
 import {randomBytes,createHmac} from 'node:crypto';
-const timingCommands=new Set(['attendance','group_start','start','end','pass']);
+const timingCommands=new Set(['attendance','group_start','start','end','pass','rider_finish','rider_resume']);
 // The owner code can run a whole session on its own: set-up and corrections,
 // plus attendance and lap timing (migration 033 allows the same in the database).
-const advancedCommands=new Set(['create_session','create_rider','edit_rider','correct_lap','correct_points','finish_session','reopen_session','attendance','group_start','start','pass','end']);
+const advancedCommands=new Set(['create_session','create_rider','edit_rider','correct_lap','correct_points','finish_session','reopen_session','attendance','group_start','start','pass','end','link_rider','rider_finish','rider_resume']);
 export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=randomBytes}){
  if(typeof pepper!=='string'||Buffer.byteLength(pepper)<32)throw new Error('A dedicated server secret is required.');
  if(!origin?.startsWith('https://'))throw new Error('HTTPS origin is required.');
