@@ -120,3 +120,35 @@ it("a workspace whose version fell behind its audit trail refuses saves until mi
   const saved = await api({ action: "write", credentialId: credential, version: read.body.version, requestId: crypto.randomUUID(), command: { type: "create_rider", name: "Simran" } });
   expect(saved.statusCode, JSON.stringify(saved.body)).toBe(200);
 });
+
+it("033: the owner code can take attendance and time a lap on its own", async () => {
+  await db.exec("reset role");
+  await db.exec(sql("033_owner_code_timing.sql"));
+  await db.exec(sql("033_owner_code_timing.sql")); // safe to re-run
+  await db.exec("set role service_role");
+  let read = await api({ action: "read" });
+  const session = read.body.state.sessions[0];
+  const riderIds = read.body.state.riders.map((r) => r.id);
+  const write = async (command) => {
+    const r = await api({ action: "write", credentialId: credential, version: read.body.version, requestId: crypto.randomUUID(), command: { sessionId: session.id, ...command } });
+    expect(r.statusCode, JSON.stringify(r.body)).toBe(200);
+    read = await api({ action: "read" });
+  };
+  const t = Date.now() - 5000;
+  await write({ type: "attendance", riderIds });
+  await write({ type: "group_start", at: t });
+  await write({ type: "pass", riderId: riderIds[0], lap: 1, at: t + 1000 });
+  await write({ type: "end", riderId: riderIds[0], lap: 2, at: t + 2000 });
+  const entry = read.body.state.sessions[0].entries.find((e) => e.riderId === riderIds[0]);
+  expect(entry.laps).toHaveLength(2);
+});
+
+it("the clean-up script empties riders, sessions and codes but keeps versions moving", async () => {
+  await db.exec("reset role");
+  const before = (await db.query("select version from ridge_workspace")).rows[0].version;
+  await db.exec(readFileSync(new URL("../../supabase/scripts/reset-ridge-test-data.sql", import.meta.url), "utf8"));
+  const after = (await db.query("select version, state from ridge_workspace")).rows[0];
+  expect(after.version).toBe(before);
+  expect(after.state).toEqual({ schemaVersion: 1, riders: [], sessions: [] });
+  expect((await db.query("select count(*)::int n from ridge_timing_codes")).rows[0].n).toBe(0);
+});

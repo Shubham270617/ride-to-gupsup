@@ -4,7 +4,7 @@ import OwnerTimerPanel from '../../../src/volunteer-timer/OwnerTimerPanel';
 const state={schemaVersion:1,riders:Array.from({length:19},(_,i)=>({id:`synthetic-${i}`,name:`Synthetic ${i}`})),sessions:[{id:'old',date:'2026-09-19',mode:'live',entries:[]},{id:'recent',date:'2026-10-17',mode:'live',entries:[]}]};
 it('loads the existing admin workspace without requiring self-assignment',async()=>{
  const request=vi.fn().mockResolvedValue({state,version:2});render(<OwnerTimerPanel requestTransport={request}/>);
- await screen.findByRole('checkbox',{name:'Synthetic 18'});expect(screen.getAllByRole('checkbox')).toHaveLength(19);expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue('RR 2026-10-17');expect(screen.getByRole('status')).toHaveTextContent('Owner');expect(request).toHaveBeenCalledWith(undefined,expect.any(AbortSignal));expect(request.mock.calls.every(c=>c[0]===undefined)).toBe(true);
+ await screen.findByRole('checkbox',{name:'Synthetic 18'});expect(screen.getAllByRole('checkbox')).toHaveLength(19);expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue(/17 Oct 2026/);expect(screen.getByRole('status')).toHaveTextContent('Owner');expect(request).toHaveBeenCalledWith(undefined,expect.any(AbortSignal));expect(request.mock.calls.every(c=>c[0]===undefined)).toBe(true);
 });
 it('keeps uncertain writes blocked and retries the exact original body',async()=>{
  const request=vi.fn().mockImplementation(async body=>{if(body)throw Object.assign(new Error('Unconfirmed'),{uncertain:true});return{state,version:2};});

@@ -830,6 +830,7 @@ Copy `.env.example` to `.env.local` and `api/.env.example` to `api/.env.local`. 
 | 027 | Ridge volunteer assignments survive an admin's removal (`assigned_by` set to empty) and are deleted with a deleted account. Run after Randeep's four `2026…` Ridge migrations. |
 | 028 | RTG Crew roles: `volunteer_roles` (public) and `volunteer_role_drafts` (admins only). |
 | 029 | Admins are 3 fixed emails: `admin_email_allowed()`, `is_admin()` requires a confirmed listed email, `admin_email_guard` trigger. **Deletes** admin rows of anyone not on the list. |
+| 033 | The owner code ("Owner Advanced Settings") can also take attendance and time laps, so one code runs a whole session; volunteer codes still time only their one session. Replaces `ridge_code_commit()`. To wipe test riders/sessions/codes, run `supabase/scripts/reset-ridge-test-data.sql` (one-off, never after real results). |
 | 032 | Removes the ~13,000 made-up sample activities (18 fake athletes, `is_sample = true`) from Lab — Manual Activities; hand-entered activities stay. 016 no longer re-creates them. |
 | 031 | Ridge repair: makes sure the single `ridge_workspace` / `ridge_publication` rows exist and moves their version past the newest `ridge_audit` entry. Fixes "Unable to load Ridge sessions", "Code or operation unavailable" and "Access or records changed" on every save. Deletes nothing; safe to re-run. |
 | 030 | `profiles.strava_checked_at`: when a member was last checked for new Strava rides (member refresh and nightly job). |

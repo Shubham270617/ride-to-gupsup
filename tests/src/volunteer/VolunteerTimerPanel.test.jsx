@@ -5,11 +5,11 @@ import SyntheticTimerPreview from '../../../src/volunteer-timer/SyntheticTimerPr
 const riders = [{id:'synthetic-rider',name:'Synthetic rider'}];
 it('keeps all mutations inactive and exposes reference step navigation', () => {
   render(<VolunteerTimerPanel riders={riders}/>);
-  expect(screen.getByRole('status')).toHaveTextContent('saving are not enabled');
+  expect(screen.getByRole('status')).toHaveTextContent('saving is switched off');
   expect(screen.getByRole('button',{name:'Save attendance'})).toBeDisabled();
   fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));
   expect(screen.getByRole('button',{name:'Start all · Lap 1'})).toBeDisabled();
-  expect(screen.getByRole('button',{name:'■ FINISH SESSION'})).toBeDisabled();
+  expect(screen.queryByRole('button',{name:'Finish session'})).toBeNull(); // owner-only, hidden for others
 });
 it('runs attendance, group start, pass, finish and late arrival through the native engine with synthetic records', async()=>{
   vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-21T06:00:00+05:30'));
@@ -32,7 +32,7 @@ it('runs attendance, group start, pass, finish and late arrival through the nati
     fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));
     await act(async()=>fireEvent.click(screen.getByRole('button',{name:'START · L1'})));
     expect(screen.getByText('Running L1')).toBeInTheDocument();
-    expect(screen.getByRole('button',{name:'■ FINISH SESSION'})).toBeDisabled();
+    expect(screen.queryByRole('button',{name:'Finish session'})).toBeNull(); // owner-only, hidden for others
   } finally {vi.useRealTimers();}
 });
 it('preserves missing historical timestamps and locks official history', () => {
@@ -42,26 +42,26 @@ it('preserves missing historical timestamps and locks official history', () => {
   fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));
   expect(screen.getByText('Locked timing record')).toBeInTheDocument();
   expect(screen.queryByRole('button',{name:/START ·/})).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button',{name:'4 · Data'}));
+  fireEvent.click(screen.getByRole('button',{name:'4 · Lap times'}));
   expect(screen.getAllByRole('cell',{name:'—'}).length).toBeGreaterThanOrEqual(3);
   expect(screen.getByRole('cell',{name:'1:00.000'})).toBeInTheDocument();
   expect(JSON.stringify(sessions)).toBe(before);
 });
 it('keeps unassigned shell navigable with disabled writes and an actionable empty state',()=>{
  const refresh=vi.fn();render(<VolunteerTimerPanel connected message="No active timing sessions are assigned to this account." onRefresh={refresh}/>);
- expect(screen.getByRole('heading',{name:'RTG RIDGE REPEATS'})).toBeInTheDocument();
- expect(screen.getByRole('button',{name:'Create session'})).toBeDisabled();
- expect(screen.getByRole('button',{name:'Add rider'})).toBeDisabled();
+ expect(screen.getByRole('heading',{name:'Ridge Repeats Timer'})).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Create session'})).toBeNull(); // owner-only, hidden for volunteers
+ expect(screen.queryByRole('button',{name:'Add rider'})).toBeNull();
  expect(screen.getByRole('button',{name:'Save attendance'})).toBeDisabled();
- expect(screen.queryByRole('link',{name:'Volunteer assignments'})).toBeNull();
- fireEvent.click(screen.getByRole('button',{name:'Refresh assigned sessions'}));expect(refresh).toHaveBeenCalledOnce();
- for(const name of ['2 · Timer','3 · Rider Photos','4 · Data','1 · Riders'])fireEvent.click(screen.getByRole('button',{name}));
- expect(screen.getByText(/No roster is loaded/)).toBeInTheDocument();
+ expect(screen.queryByRole('link',{name:'Access codes'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Refresh sessions'}));expect(refresh).toHaveBeenCalledOnce();
+ for(const name of ['2 · Timer','3 · Photos','4 · Lap times','1 · Riders'])fireEvent.click(screen.getByRole('button',{name}));
+ expect(screen.getByText(/Ask the owner/)).toBeInTheDocument();
 });
 it('shows secondary owner navigation only when explicitly verified',()=>{
  render(<VolunteerTimerPanel canManage/>);
- expect(screen.getByRole('link',{name:'Owner session controls',hidden:true})).toHaveAttribute('href','/admin/ridge');
- expect(screen.getByRole('link',{name:'Volunteer assignments',hidden:true})).toHaveAttribute('href','/admin/ridge-volunteers');
+ expect(screen.getByRole('link',{name:'Admin session controls',hidden:true})).toHaveAttribute('href','/admin/ridge');
+ expect(screen.getByRole('link',{name:'Access codes',hidden:true})).toHaveAttribute('href','/admin/ridge-codes');
 });
 it('demo supports local session and rider creation without any fetch',async()=>{
  const {default:Demo}=await import('../../../src/volunteer-timer/VolunteerTimerDemo');
@@ -69,7 +69,7 @@ it('demo supports local session and rider creation without any fetch',async()=>{
  fireEvent.change(screen.getByRole('textbox',{name:'New rider name'}),{target:{value:'Example rider C'}});
  fireEvent.click(screen.getByRole('button',{name:'Add rider'}));expect(screen.getByRole('checkbox',{name:'Example rider C'})).toBeInTheDocument();
  fireEvent.change(screen.getByLabelText('New session date'),{target:{value:'2026-11-05'}});
- fireEvent.click(screen.getByRole('button',{name:'Create session'}));expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue('RR 2026-11-05');
+ fireEvent.click(screen.getByRole('button',{name:'Create session'}));expect(screen.getByRole('combobox',{name:'Session'})).toHaveDisplayValue('5 Nov 2026 · Testing');
  fireEvent.click(screen.getByRole('checkbox',{name:'Example rider C'}));fireEvent.click(screen.getByRole('button',{name:'Save attendance'}));
  vi.spyOn(Date,'now').mockReturnValue(Date.parse('2026-11-05T06:00:00+05:30'));
  fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));fireEvent.click(screen.getByRole('button',{name:'Start all · Lap 1'}));expect(screen.getByText('Running L1')).toBeInTheDocument();
