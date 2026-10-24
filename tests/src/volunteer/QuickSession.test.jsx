@@ -35,7 +35,7 @@ it("a second session on the same day is created alongside, with its own name", a
   const ridge = fakeRidge(start);
   const onReady = vi.fn();
   render(<QuickSession riderCount={1} request={ridge.request} onReady={onReady} />);
-  fireEvent.change(screen.getByLabelText("Name (optional)"), { target: { value: "Evening" } });
+  fireEvent.change(screen.getByLabelText("Session name"), { target: { value: "Evening" } });
   fireEvent.click(screen.getByRole("button", { name: "Create session" }));
   await waitFor(() => expect(onReady).toHaveBeenCalled());
   expect(ridge.state.sessions.map((s) => [s.name, s.mode])).toEqual([["Session 1", "testing"], ["Evening", "live"]]);
@@ -49,6 +49,21 @@ it("Testing sessions stay private", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Create session" }));
   await waitFor(() => expect(ridge.state.sessions).toHaveLength(1));
   expect(ridge.state.sessions[0].mode).toBe("testing");
+});
+
+it("saves the from–to time and refuses an end before the start", async () => {
+  const ridge = fakeRidge(empty());
+  const onReady = vi.fn();
+  render(<QuickSession riderCount={1} request={ridge.request} onReady={onReady} />);
+  fireEvent.change(screen.getByLabelText("Session starts"), { target: { value: "10:00" } });
+  fireEvent.change(screen.getByLabelText("Session ends"), { target: { value: "09:00" } });
+  fireEvent.click(screen.getByRole("button", { name: "Create session" }));
+  expect(await screen.findByText("The session must end after it starts.")).toBeInTheDocument();
+  expect(ridge.request).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText("Session ends"), { target: { value: "13:30" } });
+  fireEvent.click(screen.getByRole("button", { name: "Create session" }));
+  await waitFor(() => expect(onReady).toHaveBeenCalled());
+  expect(ridge.state.sessions[0]).toMatchObject({ startTime: "10:00", endTime: "13:30" });
 });
 
 it("warns when there are no riders yet", () => {

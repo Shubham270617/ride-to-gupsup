@@ -22,7 +22,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
  const rpc=async(action,data)=>{const result=await db.rpc('ridge_code_access',{p_action:action,p_data:data});if(result.error)throw new Error('Code operation unavailable.');return result.data;};
  const store={
   consumeRateLimits:async limits=>rpc('rate',{keys:limits.map(x=>x.key),global:limits[1].key}),
-  insertCredential:async data=>{const split=data.assignmentId?.indexOf(':');return rpc('issue',{actor:data.issuerId,scope:data.scope,codeHash:data.codeHash,expiresAt:new Date(data.expiresAt).toISOString(),userId:split>0?data.assignmentId.slice(0,split):null,sessionId:data.scope==='session_timing'?data.sessionId:split>0?data.assignmentId.slice(split+1):null});},
+  insertCredential:async data=>{const split=data.assignmentId?.indexOf(':');return rpc('issue',{actor:data.issuerId,scope:data.scope,codeHash:data.codeHash,expiresAt:new Date(data.expiresAt).toISOString(),userId:split>0?data.assignmentId.slice(0,split):null,sessionId:data.scope==='session_timing'?data.sessionId:split>0?data.assignmentId.slice(split+1):null,volunteerName:data.volunteerName||null});},
   exchangeCredential:async data=>{const access=await rpc('exchange',data);return access?.codeKind==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true'?null:access;},
   readActiveSession:async sessionHash=>{const access=await rpc('read',{sessionHash});return access&&owners().has(access.issuerId)&&(access.codeKind!=='session_timing'||process.env.RTG_SESSION_TIMING_CODES_ENABLED==='true')?access:null;},
  };
@@ -31,7 +31,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   if(['issue','revoke','list','capabilities'].includes(b.action)){
    const owner=await authorize(req);if(!owner.ok||!owners().has(owner.user?.id))return res.status(403).json({error:'Owner login required.'});
    if(b.action==='capabilities')return res.status(200).json({sessionCodesEnabled:process.env.RTG_SESSION_TIMING_CODES_ENABLED==='true'});
-   if(b.action==='issue'){if(b.scope==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Session code activation is pending.'});const result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,sessionId:b.sessionId,expiresAt:Date.parse(b.expiresAt)});return res.status(200).json(result);}
+   if(b.action==='issue'){if(b.scope==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Session code activation is pending.'});const result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,sessionId:b.sessionId,expiresAt:Date.parse(b.expiresAt),volunteerName:b.volunteerName});return res.status(200).json(result);}
    return res.status(200).json(await rpc(b.action,{actor:owner.user.id,id:b.id}));
   }
   if(b.action==='exchange'){
@@ -49,8 +49,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   const workspace=loaded.data;
   if(b.action==='read'){
    if(!await store.readActiveSession(sessionHash))return res.status(401).json({error:'Code expired or revoked.'});
-   if(access.scope==='advanced')return res.status(200).json({credentialId:access.credentialId,scope:'advanced',...workspace});
-   return res.status(200).json({credentialId:access.credentialId,scope:'timing',...projectVolunteerWorkspace(workspace,[{session_id:access.sessionId,roster_rider_ids:access.rosterIds,expires_at:new Date(access.expiresAt).toISOString()}])});
+   return res.status(200).json({credentialId:access.credentialId,scope:'timing',volunteerName:access.volunteerName||null,...projectVolunteerWorkspace(workspace,[{session_id:access.sessionId,roster_rider_ids:access.rosterIds,expires_at:new Date(access.expiresAt).toISOString()}])});
   }
   if(b.action!=='write'||!Number.isSafeInteger(b.version)||!/^[0-9a-f-]{36}$/i.test(b.requestId||''))return res.status(400).json({error:'Invalid request.'});
   if(b.credentialId!==access.credentialId)return res.status(409).json({error:'Code session changed. Preserve this request for owner reconciliation.'});
@@ -60,7 +59,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   let result;
   if(!prior.data){if(workspace.version!==b.version)return res.status(409).json({error:'Records changed. Reload before another action.',definitive:true,rebaseAllowed:true});try{result=applyRidgeCommand(workspace.state,b.command);}catch(error){return res.status(400).json({error:error.message,definitive:true});}}
   const committed=await db.rpc('ridge_code_commit',{p_session_hash:sessionHash,p_credential:b.credentialId,p_expected:b.version,p_request:b.requestId,p_command:b.command,p_state:result?.state||workspace.state,p_feed:result?.feed||{},p_audit:result?.audit||{type:b.command.type,command:b.command}});
-  if(committed.error){const definite=['40001','23505'].includes(committed.error.code);return res.status(definite?409:503).json({error:definite?'Access or records changed. Reconcile before another action.':'Save outcome unknown. Retry the same request.',definitive:definite,rebaseAllowed:committed.error.code==='40001'});}
+  if(committed.error){console.error('[timing-codes] commit failed',committed.error.code,committed.error.message);const definite=['40001','23505'].includes(committed.error.code);return res.status(definite?409:503).json({error:definite?'Access or records changed. Reconcile before another action.':'Save outcome unknown. Retry the same request.',definitive:definite,rebaseAllowed:committed.error.code==='40001'});}
   return res.status(200).json({ok:true,version:committed.data});
  }catch(error){console.error('[timing-codes]',b?.action,error?.message||error);return res.status(403).json({error:'Code or operation unavailable. No new action should be repeated without reconciliation.'});}
 };}

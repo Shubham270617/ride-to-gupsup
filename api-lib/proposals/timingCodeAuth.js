@@ -1,9 +1,8 @@
 // Hash-only code authentication. Session bearer scope is separately activation-gated.
 import {randomBytes,createHmac} from 'node:crypto';
 const timingCommands=new Set(['attendance','group_start','start','end','pass','rider_finish','rider_resume']);
-// The owner code can run a whole session on its own: set-up and corrections,
-// plus attendance and lap timing (migration 033 allows the same in the database).
-const advancedCommands=new Set(['create_session','create_rider','edit_rider','correct_lap','correct_points','finish_session','reopen_session','attendance','group_start','start','pass','end','link_rider','rider_finish','rider_resume']);
+// Owner ("Advanced Settings") codes were removed (migration 035): the only
+// codes are volunteer timing codes. The owner works in Admin -> Ridge.
 export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=randomBytes}){
  if(typeof pepper!=='string'||Buffer.byteLength(pepper)<32)throw new Error('A dedicated server secret is required.');
  if(!origin?.startsWith('https://'))throw new Error('HTTPS origin is required.');
@@ -11,15 +10,17 @@ export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=ra
  const fail=()=>{throw new Error('Code unavailable or invalid.');};
  const checkOrigin=req=>{if(req.origin!==origin)throw new Error('Request origin refused.');};
  return {
-  async issue({issuer,scope,assignmentId=null,sessionId=null,expiresAt}){
+  async issue({issuer,scope,assignmentId=null,sessionId=null,expiresAt,volunteerName=null}){
    // Adapter must resolve this from established server-verified owner identity,
    // never from client claims. Recheck owner/assignment in the atomic insert.
-   if(!issuer?.verifiedOwner||!['timing','session_timing','advanced'].includes(scope)||!Number.isFinite(expiresAt)||expiresAt<=now()||expiresAt>now()+86400000)throw new Error('Invalid owner issuance request.');
+   if(!issuer?.verifiedOwner||!['timing','session_timing'].includes(scope)||!Number.isFinite(expiresAt)||expiresAt<=now()||expiresAt>now()+86400000)throw new Error('Invalid owner issuance request.');
    if(scope==='timing'&&!assignmentId)throw new Error('An existing explicit assignment is required.');
    if(scope==='session_timing'&&(typeof sessionId!=='string'||!sessionId||sessionId.length>200))throw new Error('Choose one session.');
    const code=random(24).toString('base64url');
-   const result=await store.insertCredential({issuerId:issuer.id,scope,assignmentId,sessionId,expiresAt,codeHash:digest('code',code)});
-   return {id:result.id,code,expiresAt:result.expiresAt ? Date.parse(result.expiresAt) : expiresAt}; // one-time display only, never log
+   // Who the code is for, shown in the code list and on their timer.
+   const name=typeof volunteerName==='string'?volunteerName.trim().slice(0,80):'';
+   const result=await store.insertCredential({issuerId:issuer.id,scope,assignmentId,sessionId,expiresAt,codeHash:digest('code',code),volunteerName:name||null});
+   return {id:result.id,code,volunteerName:name||null,expiresAt:result.expiresAt ? Date.parse(result.expiresAt) : expiresAt}; // one-time display only, never log
   },
   async exchange({code,networkKey,...req}){
    checkOrigin(req);
@@ -47,7 +48,7 @@ export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=ra
     if(!timingCommands.has(command?.type)||command.sessionId!==session.sessionId)throw new Error('Timing scope refused.');
     const ids=command.type==='attendance'?command.riderIds:[command.riderId].filter(Boolean);
     if(!Array.isArray(ids)||ids.some(id=>!session.rosterIds.includes(id)))throw new Error('Roster scope refused.');
-   }else if(session.scope!=='advanced'||!advancedCommands.has(command?.type))throw new Error('Advanced scope refused.');
+   }else throw new Error('Code scope refused.');
    return {credentialId:session.credentialId,actorId:session.issuerId,scope:session.scope,assignmentId:session.assignmentId};
   },
  };

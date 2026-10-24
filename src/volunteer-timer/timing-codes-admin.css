@@ -3,3 +3,19 @@
 .tc-secret-row{display:flex;align-items:stretch;gap:8px;margin:16px 0}.tc-secret-row .tc-secret{flex:1;min-width:0;margin:0;border-radius:12px;letter-spacing:.04em}.timing-codes-admin .tc-icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:10px 14px}@media(max-width:600px){.tc-secret-row{flex-wrap:wrap}.tc-secret-row .tc-secret{flex-basis:100%}}
 .tc-quick{margin:14px 0 6px;padding:16px;border:1px dashed #cdbfe0;border-radius:16px;background:#fbf9fe}.tc-quick-title{margin:0 0 6px!important;font-weight:750;color:#4b2f7c}.tc-quick-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr) auto;gap:10px;align-items:end}.timing-codes-admin .tc-quick-row label{margin-top:0}.tc-quick .tc-notice p{margin:0 0 10px}@media(max-width:600px){.tc-quick-row{grid-template-columns:1fr}}
 .tc-presets{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}.timing-codes-admin .tc-presets button{min-height:36px;padding:6px 14px;font-size:13px}
+/* Three-step layout (2026-10). */
+.tc-flow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px;padding:0;list-style:none;counter-reset:tcf}.tc-flow li{counter-increment:tcf;padding:6px 12px;border-radius:999px;background:#ffffff1f;border:1px solid #ffffff2e;font-size:13px;font-weight:650}.tc-flow li::before{content:counter(tcf) " · ";color:#ffd0ad}
+.tc-step{animation:tc-in .4s ease both}.tc-step:nth-of-type(2){animation-delay:.05s}.tc-step:nth-of-type(3){animation-delay:.1s}
+.tc-step-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}.tc-step-head h2{margin:2px 0 0}.tc-step-head .tc-help{margin:4px 0 8px}
+.tc-step-num{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f45b18,#ff8a3d);color:#fff;font-weight:800;box-shadow:0 8px 18px -10px #f45b18}
+.tc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.timing-codes-admin .tc-grid label{margin-top:8px}.tc-grid .tc-wide{grid-column:1/-1}
+.tc-quick .tc-grid{grid-template-columns:2fr 1.2fr 1fr 1fr}.tc-quick .tc-primary{margin-top:14px}
+.tc-label{margin:18px 0 8px!important;font-weight:650}
+.tc-hours{display:flex;flex-wrap:wrap;gap:8px}.timing-codes-admin .tc-hours button{min-height:42px;padding:8px 16px}.timing-codes-admin .tc-hours button[aria-pressed=true]{background:#35246f;border-color:#35246f;color:#fff}
+.timing-codes-admin .tc-big{min-height:52px;padding:12px 28px;font-size:16px;margin-top:8px}
+.tc-result{border:2px solid #f45b18;background:linear-gradient(180deg,#fff7f2,#fff);animation:tc-pop .45s ease both}
+.tc-state{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800}.tc-state-active{background:#e6f6ef;color:#12805c}.tc-state-expired{background:#f2eef7;color:#675b74}.tc-state-revoked{background:#fdecee;color:#c0293b}
+@keyframes tc-in{from{opacity:0;transform:translateY(10px)}}@keyframes tc-pop{0%{opacity:0;transform:scale(.97)}100%{opacity:1;transform:none}}
+@media(max-width:700px){.tc-grid,.tc-quick .tc-grid{grid-template-columns:1fr 1fr}.tc-quick .tc-grid label:first-child{grid-column:1/-1}}
+@media(max-width:420px){.tc-grid,.tc-quick .tc-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.tc-step,.tc-result{animation:none}}

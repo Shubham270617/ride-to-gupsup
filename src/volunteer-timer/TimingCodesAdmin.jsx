@@ -4,10 +4,22 @@ import {codeSetupFlow} from './codeSetupFlow';
 import './timing-codes-admin.css';
 import SecretCode from './SecretCode';
 import QuickSession from './QuickSession';
+
+// Admin -> Ridge — Access codes. Three plain steps:
+//   1. Create a session (name, date, from–to time, Live/Testing)
+//   2. Create a volunteer code: pick the session, the volunteer's name and
+//      how many hours it works (1–24) — one click, no review dialog
+//   3. Share it, and see/revoke every code issued
+// codeSetupFlow keeps the safety rule: if a code's response is lost, no
+// second code is made until the first is accounted for.
 const HOUR=3600000;
+const HOURS=[1,2,4,6,12,24];
 export const indiaInput=ms=>new Date(ms+330*60000).toISOString().slice(0,16);
 export const indiaInstant=value=>Date.parse(value+'+05:30');
 const displayTime=value=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}).format(new Date(value))+' IST';
+const niceDate=date=>{const d=new Date(`${date}T00:00:00Z`);return Number.isNaN(d.getTime())?date:d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});};
+export const sessionLabel=s=>[niceDate(s.date),s.name,s.startTime||s.endTime?`${s.startTime||'…'}–${s.endTime||'…'}`:'',s.mode==='testing'?'Practice':'Live'].filter(Boolean).join(' · ');
+
 export async function timingCodeRequest(action,payload={},expectedOwner) {
  const {data}=await supabase.auth.getSession();
  if(!data.session)throw Error('Owner login required.');
@@ -24,12 +36,21 @@ export async function timingCodeRequest(action,payload={},expectedOwner) {
   const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to load code management.');return result;
  } finally {clearTimeout(timer);}
 }
+
+function Step({n,title,hint,children}){
+ return <section className="tc-card tc-step" aria-labelledby={`tc-step-${n}`}>
+  <div className="tc-step-head"><span className="tc-step-num" aria-hidden="true">{n}</span><div><h2 id={`tc-step-${n}`}>{title}</h2>{hint&&<p className="tc-help">{hint}</p>}</div></div>
+  {children}
+ </section>;
+}
+
 export default function TimingCodesAdmin({request=timingCodeRequest,ridgeRequest}) {
- const [items,setItems]=useState([]),[overview,setOverview]=useState(null),[scope,setScope]=useState('advanced');
- const [sessionId,setSessionId]=useState(''),[sessionCodesEnabled,setSessionCodesEnabled]=useState(false);
- const [expiry,setExpiry]=useState(()=>indiaInput(Date.now()+4*HOUR)),[message,setMessage]=useState(''),[issued,setIssued]=useState(null);
- const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[overviewError,setOverviewError]=useState(''),[listError,setListError]=useState(''),[review,setReview]=useState(null),[pending,setPending]=useState(null),[flowReady,setFlowReady]=useState(false);
- const dialog=useRef(null),lock=useRef(false),flow=useMemo(()=>codeSetupFlow({request}),[request]);
+ const [items,setItems]=useState([]),[overview,setOverview]=useState(null),[loading,setLoading]=useState(true);
+ const [overviewError,setOverviewError]=useState(''),[listError,setListError]=useState(''),[sessionCodesEnabled,setSessionCodesEnabled]=useState(false);
+ const [sessionId,setSessionId]=useState(''),[volunteerName,setVolunteerName]=useState(''),[hours,setHours]=useState(6);
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[issued,setIssued]=useState(null),[pending,setPending]=useState(null),[flowReady,setFlowReady]=useState(false),[copied,setCopied]=useState(false);
+ const lock=useRef(false),flow=useMemo(()=>codeSetupFlow({request}),[request]);
+
  const load=useCallback(async()=>{
   setLoading(true);setOverviewError('');setListError('');
   const results=await Promise.allSettled([request('list'),request('overview'),request('capabilities')]);
@@ -38,47 +59,77 @@ export default function TimingCodesAdmin({request=timingCodeRequest,ridgeRequest
   setSessionCodesEnabled(results[2].status==='fulfilled'&&results[2].value.sessionCodesEnabled===true);
   setLoading(false);
  },[request]);
+ // After creating a session only the session list needs refreshing.
+ const loadSessions=async()=>{try{setOverview(await request('overview'));setOverviewError('');}catch(e){setOverviewError(e.message);}};
  useEffect(()=>{load();let active=true;flow.load().then(value=>{if(active){setPending(value);setFlowReady(true);}}).catch(e=>{if(active)setMessage('Cannot safely prepare access: '+e.message);});return()=>{active=false;};},[load,flow]);
- useEffect(()=>{if(review)dialog.current?.showModal?.();else dialog.current?.close?.();},[review]);
- const expiresAt=indiaInstant(expiry),sessions=(overview?.sessions||[]).filter(s=>!s.finished&&['testing','live'].includes(s.mode)),selected=sessions.find(s=>s.id===sessionId);
- const expiryError=!Number.isFinite(expiresAt)?'Choose an expiry in India time.':expiresAt<=Date.now()?'Expiry must be in the future.':expiresAt>Date.now()+24*HOUR?'Expiry must be within the next 24 hours.':'';
- const blocked=busy||!!pending;
- const prepare=()=>{
-  if(expiryError||!flowReady||pending||(scope==='session_timing'&&(!selected||!sessionCodesEnabled)))return;
-  setReview({label:scope==='advanced'?'My owner code':`Session timing code · ${selected.date} · ${selected.mode==='testing'?'Practice':'Live'}`,code:{scope,sessionId:scope==='session_timing'?sessionId:undefined,expiresAt:new Date(expiresAt).toISOString()},mode:selected?.mode});
- };
- const run=async fresh=>{
-  if(lock.current)return;lock.current=true;setBusy(true);setMessage('');setIssued(null);
-  try {
-   if(fresh)await flow.begin(fresh);
-   setPending(flow.current);setReview(null);
-   const result=await flow.run();setPending(null);setIssued(result);setMessage('Code ready. Share it privately with the operator.');await load();
-  }catch(e){setPending(flow.current);setReview(null);setMessage(e.message);}
+
+ const sessions=useMemo(()=>(overview?.sessions||[]).filter(s=>!s.finished&&['testing','live'].includes(s.mode)).sort((a,b)=>b.date.localeCompare(a.date)||(a.startTime||'').localeCompare(b.startTime||'')),[overview]);
+ const selected=sessions.find(s=>s.id===sessionId);
+ const expiresAt=Date.now()+hours*HOUR-(hours===24?60000:0);
+ const canCreate=flowReady&&!pending&&!busy&&!!selected&&sessionCodesEnabled&&!loading;
+
+ const create=async()=>{
+  if(!canCreate||lock.current)return;lock.current=true;setBusy(true);setMessage('');setIssued(null);setCopied(false);
+  const name=volunteerName.trim();
+  const plan={label:`Volunteer timing code · ${name||'volunteer'} · ${sessionLabel(selected)}`,code:{scope:'session_timing',sessionId,expiresAt:new Date(Date.now()+hours*HOUR-(hours===24?60000:0)).toISOString(),...(name?{volunteerName:name}:{})}};
+  try{
+   await flow.begin(plan);setPending(flow.current);
+   const result=await flow.run();setPending(null);
+   const item={id:result.id,scope:'session_timing',sessionId,expiresAt:new Date(result.expiresAt).toISOString(),volunteerName:result.volunteerName??(name||null),createdAt:new Date().toISOString()};
+   setIssued({...result,volunteerName:item.volunteerName,session:selected});
+   setItems(list=>[item,...list.filter(x=>x.id!==item.id)]);
+   setVolunteerName('');
+  }catch(e){setPending(flow.current);setMessage(e.message);}
   finally{lock.current=false;setBusy(false);}
  };
+ const resume=async()=>{if(lock.current)return;lock.current=true;setBusy(true);try{const result=await flow.run();setPending(null);setIssued(result);await load();}catch(e){setPending(flow.current);setMessage(e.message);}finally{lock.current=false;setBusy(false);}};
+ const shareText=issued&&`RTG Ridge Repeats timer\nOpen: ${window.location.origin}/volunteer/ridge/code\nCode: ${issued.code}\n${issued.session?`Session: ${sessionLabel(issued.session)}\n`:''}Valid until: ${displayTime(issued.expiresAt)}`;
+ const copyMessage=async()=>{try{await navigator.clipboard.writeText(shareText);setCopied(true);setTimeout(()=>setCopied(false),2000);}catch{setMessage('Copy failed — select the code and copy it by hand.');}};
+ const revoke=async id=>{if(lock.current)return;lock.current=true;setBusy(true);try{await request('revoke',{id});setItems(await request('list'));}catch(e){setMessage('Revocation could not be confirmed. Refresh the list before trying again. '+e.message);}finally{lock.current=false;setBusy(false);}};
+ const sessionOf=id=>(overview?.sessions||[]).find(s=>s.id===id);
+
  return <main className="timing-codes-admin">
-  <header className="tc-banner"><p>RIDGE · OWNER ACCESS</p><h1>Create a timer code</h1><p>Choose who will use the timer.</p><a href="/volunteer/ridge/code">Open timer code entry →</a></header>
+  <header className="tc-banner">
+   <p>RIDGE · VOLUNTEER ACCESS</p><h1>Volunteer timing codes</h1>
+   <ol className="tc-flow"><li>Create a session</li><li>Create the volunteer's code</li><li>Share it</li></ol>
+   <a href="/volunteer/ridge/code">Open timer code entry →</a>
+  </header>
   {message&&<p className="tc-notice" role="status">{message}</p>}
-  {pending&&<section className="tc-card" aria-label="Pending code setup"><h2>Finish your previous request</h2><p>{pending.label}</p>{pending.phase==='issuing'?<p>The code response was not confirmed. Do not generate another code. Refresh the list below and revoke any newly created code you cannot retrieve. This request remains blocked until {displayTime(pending.code.expiresAt)} so an in-flight response cannot cause duplicate access.</p>:<><p>{pending.phase==='grant'?'Session approval needs confirmation. Continuing reuses the same request; it does not create a second approval.':'Session access is approved. Continue to generate the code.'}</p><button disabled={busy} onClick={()=>run()}>Continue previous request</button></>}{Date.parse(pending.code.expiresAt)<=Date.now()&&<button disabled={busy} onClick={async()=>{try{await flow.clearExpired();setPending(null);}catch(e){setMessage(e.message);}}}>Clear expired request</button>}</section>}
-  <section className="tc-card" aria-labelledby="tc-create"><h2 id="tc-create">Who is this code for?</h2>
-   <div className="tc-choices" role="group" aria-label="Code type"><button aria-pressed={scope==='advanced'} disabled={blocked} onClick={()=>{setScope('advanced');setReview(null);}}>My owner code<span>Session setup and advanced controls</span></button><button aria-pressed={scope==='session_timing'} disabled={blocked} onClick={()=>{setScope('session_timing');setReview(null);}}>Volunteer timing code<span>Attendance and laps for one session</span></button></div>
-   <div className="tc-fields">
-   {scope==='advanced'?<p>Use this code yourself to open owner controls in the timer.</p>:<>
-    <label htmlFor="tc-session">Session<select id="tc-session" disabled={blocked||loading||!!overviewError} value={sessionId} onChange={e=>{setSessionId(e.target.value);setReview(null);}}><option value="">{loading?'Loading sessions…':'Choose a session'}</option>{sessions.map(s=><option key={s.id} value={s.id}>{s.date}{s.name?` · ${s.name}`:''} · {s.mode==='testing'?'Practice':'Live'}</option>)}</select></label>
-    {overviewError?<p className="tc-notice" role="alert">Sessions could not be loaded: {overviewError} <button disabled={loading} onClick={load}>Retry</button></p>:!loading&&!sessions.length?<p className="tc-notice">No open sessions yet — create one just below.</p>:null}
-    {!overviewError&&!loading&&<QuickSession riderCount={overview?.riders?.length||0} request={ridgeRequest} onReady={async id=>{await load();setSessionId(id);setReview(null);}}/>}
-    {!sessionCodesEnabled&&<p role="status" className="tc-notice">Session codes are prepared but awaiting activation. No email or website account will be required.</p>}
-    <p className="tc-help">Share the timer link and code with anyone you choose. They can mark attendance and record laps for this session only. No website account is needed.</p>
-   </>}
-   <label htmlFor="tc-expiry">Code expiry · India time (IST, UTC+05:30)<input id="tc-expiry" type="datetime-local" disabled={blocked} value={expiry} min={indiaInput(Date.now()+60000)} max={indiaInput(Date.now()+24*HOUR)} aria-describedby="tc-expiry-help" aria-invalid={!!expiryError} onChange={e=>{setExpiry(e.target.value);setReview(null);}}/></label>
-   <div className="tc-presets" role="group" aria-label="Quick expiry">{[2,6,12,24].map(h=><button key={h} type="button" disabled={blocked} onClick={()=>{setExpiry(indiaInput(Date.now()+h*HOUR-(h===24?60000:0)));setReview(null);}}>{h} hours</button>)}</div><p id="tc-expiry-help" className="tc-help">{expiryError||`Expires ${displayTime(expiresAt)}. Maximum 24 hours — for a 5-hour event, 6 hours leaves a 1-hour buffer.`}</p></div>
-   <button className="tc-primary" disabled={blocked||!flowReady||!!expiryError||(scope==='session_timing'&&(!selected||!sessionCodesEnabled||!!overviewError||loading))} onClick={prepare}>Review and create code</button>
-  </section>
-  <dialog ref={dialog} className="tc-dialog" aria-labelledby="tc-review-title" onCancel={e=>{if(busy)e.preventDefault();else setReview(null);}}>{review&&<><h2 id="tc-review-title">{review.code.scope==='session_timing'?'Create a session timing code':'Create your owner code'}</h2><p><strong>{review.label}</strong></p><p>Expires {displayTime(review.code.expiresAt)}.</p>{review.code.scope==='session_timing'&&<><p>Anyone you share this code with can mark attendance and record laps for this session. No registration or login is required.</p><p>It does not grant corrections, photos, closing, publishing, or main admin access.</p>{review.mode==='live'&&<p>Live-session timing updates the public results.</p>}</>}<p>Anyone holding the code can use these actions until expiry or revocation. Share it privately.</p><div className="tc-actions"><button disabled={busy} onClick={()=>setReview(null)}>Cancel</button><button className="tc-primary" disabled={busy} onClick={()=>run(review)}>{busy?'Creating…':review.code.scope==='session_timing'?'Create session code':'Create my owner code'}</button></div></>}</dialog>
-  {issued&&<section className="tc-card"><h2>Your new code</h2><p>Shown once in this view. Share privately with the intended operator. Reloading hides it.</p><SecretCode code={issued.code}/><button onClick={()=>setIssued(null)}>Hide code</button></section>}
-  <section className="tc-card" aria-labelledby="tc-list"><div className="tc-actions"><h2 id="tc-list">Issued codes</h2><button disabled={busy||loading} onClick={load}>{loading?'Loading…':'Refresh codes'}</button></div>
-   {listError&&<p role="alert" className="tc-notice">{listError}</p>}{!loading&&!listError&&!items.length&&<p>No codes have been issued.</p>}
-   {items.map(item=><article className="tc-code" key={item.id}><div><strong>{item.scope==='advanced'?'My owner code':'Volunteer timing code'}</strong><p>{item.sessionId||'Owner controls'} · {item.revokedAt?'Revoked':Date.parse(item.expiresAt)<=Date.now()?'Expired':'Active'}</p><p>Expires {displayTime(item.expiresAt)}</p><small>Code ID: {item.id}</small></div><button disabled={busy||!!item.revokedAt} onClick={async()=>{if(lock.current)return;lock.current=true;setBusy(true);try{await request('revoke',{id:item.id});setItems(await request('list'));}catch(e){setMessage('Revocation could not be confirmed. Refresh the list before trying again. '+e.message);}finally{lock.current=false;setBusy(false);}}}>Revoke code</button></article>)}
-  </section>
+  {pending&&<section className="tc-card" aria-label="Pending code setup"><h2>Finish your previous request</h2><p>{pending.label}</p>{pending.phase==='issuing'?<p>The last code's response was not confirmed. Check the list below and revoke any code you didn't receive. A new code can be made after {displayTime(pending.code.expiresAt)}, so the same request can never create two codes.</p>:<button disabled={busy} onClick={resume}>Continue previous request</button>}{Date.parse(pending.code.expiresAt)<=Date.now()&&<button disabled={busy} onClick={async()=>{try{await flow.clearExpired();setPending(null);}catch(e){setMessage(e.message);}}}>Clear expired request</button>}</section>}
+
+  <Step n={1} title="Create a session" hint="Skip this if the session already exists.">
+   {!overviewError&&<QuickSession riderCount={overview?.riders?.length||0} request={ridgeRequest} onReady={async id=>{await loadSessions();setSessionId(id);}}/>}
+  </Step>
+
+  <Step n={2} title="Create the volunteer's code" hint="The volunteer can mark attendance and time laps for this one session. No website account needed.">
+   <div className="tc-grid">
+    <label htmlFor="tc-session" className="tc-wide">Session<select id="tc-session" disabled={busy||loading||!!overviewError} value={sessionId} onChange={e=>setSessionId(e.target.value)}><option value="">{loading?'Loading sessions…':sessions.length?'Choose a session':'No open sessions — create one in step 1'}</option>{sessions.map(s=><option key={s.id} value={s.id}>{sessionLabel(s)}</option>)}</select></label>
+    <label htmlFor="tc-volunteer" className="tc-wide">Volunteer's name<input id="tc-volunteer" maxLength={80} placeholder="e.g. Rohit Kumar" disabled={busy} value={volunteerName} onChange={e=>setVolunteerName(e.target.value)}/></label>
+   </div>
+   {overviewError&&<p className="tc-notice" role="alert">Sessions could not be loaded: {overviewError} <button disabled={loading} onClick={load}>Retry</button></p>}
+   <p className="tc-label" id="tc-hours-label">Code works for</p>
+   <div className="tc-hours" role="group" aria-labelledby="tc-hours-label">{HOURS.map(h=><button key={h} type="button" aria-pressed={hours===h} disabled={busy} onClick={()=>setHours(h)}>{h} {h===1?'hour':'hours'}</button>)}</div>
+   <p className="tc-help">Expires {displayTime(expiresAt)}. For a 5-hour event, 6 hours leaves a 1-hour buffer.</p>
+   {!loading&&!sessionCodesEnabled&&<p role="status" className="tc-notice">Volunteer codes are awaiting activation (RTG_SESSION_TIMING_CODES_ENABLED in Vercel).</p>}
+   <button className="tc-primary tc-big" disabled={!canCreate} onClick={create}>{busy?'Creating code…':'Create code'}</button>
+  </Step>
+
+  {issued&&<section className="tc-card tc-result" aria-labelledby="tc-new-code">
+   <h2 id="tc-new-code">✓ Code ready{issued.volunteerName?` for ${issued.volunteerName}`:''}</h2>
+   <p className="tc-help">{issued.session?sessionLabel(issued.session)+' · ':''}valid until {displayTime(issued.expiresAt)}. It's shown only here — copy it now.</p>
+   <SecretCode code={issued.code}/>
+   <div className="tc-actions"><button className="tc-primary" onClick={copyMessage}>{copied?'Copied ✓':'Copy message for the volunteer'}</button><button onClick={()=>setIssued(null)}>Hide code</button></div>
+   <p className="tc-help">The message has the timer link, the code and when it expires — paste it into WhatsApp.</p>
+  </section>}
+
+  <Step n={3} title="Issued codes" hint="Newest first. Revoke a code to stop it at once.">
+   <div className="tc-actions"><span/><button disabled={busy||loading} onClick={load}>Refresh codes</button></div>
+   {listError?<p className="tc-notice" role="alert">{listError}</p>:items.length===0?<p>No codes have been issued.</p>:
+   items.map(item=>{const s=sessionOf(item.sessionId);const state=item.revokedAt?'Revoked':Date.parse(item.expiresAt)<=Date.now()?'Expired':'Active';return <article className="tc-code" key={item.id}>
+    <div><strong>{item.volunteerName||'Volunteer'}</strong> <span className={`tc-state tc-state-${state.toLowerCase()}`}>{state}</span>
+     <p>{s?sessionLabel(s):'Session'}</p><small>Expires {displayTime(item.expiresAt)} · Code ID {item.id.slice(0,8)}</small></div>
+    <button disabled={busy||!!item.revokedAt||state==='Expired'} onClick={()=>revoke(item.id)}>Revoke code</button>
+   </article>;})}
+  </Step>
  </main>;
 }

@@ -25,7 +25,7 @@ export default function SecretCode({ code }) {
   return (
     <div className="tc-secret-row">
       <output className="tc-secret" aria-label={shown ? "Timer code" : "Timer code (hidden)"}>
-        {shown ? code : "•".repeat(Math.min(code.length, 24))}
+        {shown ? code : "•".repeat(Math.min(code.length, 12))}
       </output>
       <button type="button" className="tc-icon-btn" onClick={() => setShown((s) => !s)} aria-label={shown ? "Hide code" : "Show code"} title={shown ? "Hide code" : "Show code"}>
         {shown ? <EyeOff size={18} /> : <Eye size={18} />}

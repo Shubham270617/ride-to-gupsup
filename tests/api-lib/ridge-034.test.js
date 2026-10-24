@@ -2,11 +2,13 @@ import { beforeAll, beforeEach, afterAll, it, expect, vi } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { createTimingCodeHandler } from "../../api-lib/timingCodes";
+import { applyRidgeCommand, istDate } from "../../src/lib/ridge/engine.js";
 import { mockReq, mockRes } from "../helpers/http";
 
-// Migration 034 end to end: the real API handler + every Ridge migration on
-// an in-memory Postgres. Owner code and volunteer (session) code both go
-// through the database's own checks, so app and database must agree.
+// Migrations 034 + 035 end to end on an in-memory Postgres with every Ridge
+// migration. The owner works through the admin path (engine + ridge_commit,
+// as Admin -> Ridge does); volunteers through the real code API, so the
+// database's own checks must agree with the app.
 const owner = "00000000-0000-4000-8000-000000000001";
 const member = "00000000-0000-4000-8000-000000000002";
 const stranger = "00000000-0000-4000-8000-000000000003";
@@ -14,7 +16,7 @@ const pepper = "synthetic-only-pepper-0000000000000000000";
 const origin = "https://test.invalid";
 const sql = (p) => readFileSync(new URL("../../supabase/migrations/" + p, import.meta.url), "utf8");
 let db;
-const cookies = {};
+let cookie = null;
 
 const adapter = {
   from(table) {
@@ -42,21 +44,25 @@ const adapter = {
   },
 };
 const handler = createTimingCodeHandler({ getDb: () => adapter, authorize: async () => ({ ok: true, user: { id: owner } }) });
-const api = async (who, body) => {
+const api = async (body) => {
   const res = mockRes();
-  await handler(mockReq({ method: "POST", headers: { origin, ...(cookies[who] ? { cookie: cookies[who] } : {}) }, body }), res);
+  await handler(mockReq({ method: "POST", headers: { origin, ...(cookie ? { cookie } : {}) }, body }), res);
   return res;
 };
-const enter = async (who, issueBody) => {
-  const issued = await api(who, { action: "issue", expiresAt: new Date(Date.now() + 3600_000).toISOString(), ...issueBody });
-  expect(issued.statusCode, JSON.stringify(issued.body)).toBe(200);
-  const ex = await api(who, { action: "exchange", code: issued.body.code });
-  expect(ex.statusCode, JSON.stringify(ex.body)).toBe(200);
-  cookies[who] = ex.headers["set-cookie"].split(";")[0];
+// The owner's change, saved the way Admin -> Ridge saves it.
+const admin = async (command) => {
+  await db.exec("reset role");
+  try {
+    const w = (await db.query("select state, version from ridge_workspace")).rows[0];
+    const r = applyRidgeCommand(w.state, command);
+    await db.query("select ridge_commit($1,$2,$3,$4,$5,$6)", [w.version, crypto.randomUUID(), owner, r.state, r.feed, r.audit]);
+  } finally {
+    await db.exec("set role service_role");
+  }
 };
-const write = async (who, command) => {
-  const read = await api(who, { action: "read" });
-  return api(who, { action: "write", credentialId: read.body.credentialId, version: read.body.version, requestId: crypto.randomUUID(), command });
+const volunteer = async (command) => {
+  const read = await api({ action: "read" });
+  return api({ action: "write", credentialId: read.body.credentialId, version: read.body.version, requestId: crypto.randomUUID(), command });
 };
 const state = async () => (await db.query("select state from ridge_workspace")).rows[0].state;
 
@@ -76,7 +82,8 @@ beforeAll(async () => {
     "20261021170333_ridge_scoped_code_access_and_testing_dates.sql", "20261021174900_session_timing_codes.sql",
     "027_ridge_timing_account_removal.sql", "029_fixed_admin_emails.sql", "030_strava_checked_at.sql",
     "031_ridge_version_repair.sql", "033_owner_code_timing.sql", "034_ridge_rider_finish_and_members.sql",
-    "034_ridge_rider_finish_and_members.sql", // safe to re-run
+    "035_remove_owner_codes.sql", "035_remove_owner_codes.sql", // safe to re-run
+    "036_volunteer_code_names.sql", "036_volunteer_code_names.sql",
   ]) await db.exec(sql(p));
   await db.exec("set role service_role");
 }, 60000);
@@ -89,40 +96,32 @@ beforeEach(() => {
 afterAll(async () => { vi.unstubAllEnvs(); await db?.close(); });
 
 it("owner sets up two sessions on the same day, with names", async () => {
-  await enter("owner", { scope: "advanced" });
-  for (const command of [
-    { type: "create_rider", name: "Rohit" },
-    { type: "create_session", date: "2026-10-24" },
-    { type: "create_session", date: "2026-10-24", name: "Evening" },
-  ]) expect((await write("owner", command)).statusCode).toBe(200);
-  const s = await state();
-  expect(s.sessions.map((x) => x.name)).toEqual(["Session 1", "Evening"]);
+  await admin({ type: "create_rider", name: "Rohit" });
+  await admin({ type: "create_session", date: "2026-10-24" });
+  await admin({ type: "create_session", date: "2026-10-24", name: "Evening" });
+  expect((await state()).sessions.map((x) => x.name)).toEqual(["Session 1", "Evening"]);
 }, 30000);
 
-it("owner: a finished rider takes no more taps until resumed; laps are kept", async () => {
-  const s = await state();
-  const [session] = s.sessions, rider = s.riders[0].id;
-  const t = Date.now() - 4000;
-  for (const command of [
-    { type: "attendance", sessionId: session.id, riderIds: [rider] },
-    { type: "group_start", sessionId: session.id, at: t },
-    { type: "end", sessionId: session.id, riderId: rider, lap: 1, at: t + 1000 },
-    { type: "rider_finish", sessionId: session.id, riderId: rider },
-  ]) { const r = await write("owner", command); expect(r.statusCode, JSON.stringify(r.body)).toBe(200); }
-  const refused = await write("owner", { type: "start", sessionId: session.id, riderId: rider, lap: 2, at: t + 2000 });
-  expect(refused.statusCode).toBe(400);
-  expect(refused.body.error).toMatch(/marked finished/);
-  expect((await write("owner", { type: "rider_resume", sessionId: session.id, riderId: rider })).statusCode).toBe(200);
-  expect((await write("owner", { type: "start", sessionId: session.id, riderId: rider, lap: 2, at: t + 3000 })).statusCode).toBe(200);
-  const entry = (await state()).sessions[0].entries[0];
-  expect(entry).toMatchObject({ done: false });
-  expect(entry.laps).toHaveLength(2);
-}, 30000);
+it("owner codes can no longer be issued", async () => {
+  const res = await api({ action: "issue", scope: "advanced", expiresAt: new Date(Date.now() + 3600_000).toISOString() });
+  expect(res.statusCode).not.toBe(200);
+  await db.exec("reset role");
+  expect((await db.query("select count(*)::int n from ridge_timing_codes where scope='advanced'")).rows[0].n).toBe(0);
+  await db.exec("set role service_role");
+});
 
-it("volunteer session code: finish and resume pass the database's own checks", async () => {
+it("volunteer session code: timing, break, finish and resume pass the database's own checks", async () => {
   const s = await state();
   const evening = s.sessions[1], rider = s.riders[0].id;
-  await enter("volunteer", { scope: "session_timing", sessionId: evening.id });
+  const issued = await api({ action: "issue", scope: "session_timing", sessionId: evening.id, volunteerName: "  Rohit Kumar  ", expiresAt: new Date(Date.now() + 3600_000).toISOString() });
+  expect(issued.statusCode, JSON.stringify(issued.body)).toBe(200);
+  expect(issued.body.volunteerName).toBe("Rohit Kumar");
+  // 036: the name is stored, listed (newest first) and given to the volunteer's timer.
+  const list = await api({ action: "list" });
+  expect(list.body[0]).toMatchObject({ volunteerName: "Rohit Kumar", scope: "session_timing" });
+  const ex = await api({ action: "exchange", code: issued.body.code });
+  cookie = ex.headers["set-cookie"].split(";")[0];
+  expect((await api({ action: "read" })).body.volunteerName).toBe("Rohit Kumar");
   const t = Date.now() - 3000;
   for (const command of [
     { type: "attendance", sessionId: evening.id, riderIds: [rider] },
@@ -132,32 +131,27 @@ it("volunteer session code: finish and resume pass the database's own checks", a
     { type: "rider_finish", sessionId: evening.id, riderId: rider },
     { type: "rider_resume", sessionId: evening.id, riderId: rider },
     { type: "rider_finish", sessionId: evening.id, riderId: rider },
-  ]) { const r = await write("volunteer", command); expect(r.statusCode, `${command.type}: ${JSON.stringify(r.body)}`).toBe(200); }
+  ]) { const r = await volunteer(command); expect(r.statusCode, `${command.type}: ${JSON.stringify(r.body)}`).toBe(200); }
   expect((await state()).sessions[1].entries[0].done).toBe(true);
-  // The volunteer still can't do owner things.
-  expect((await write("volunteer", { type: "link_rider", riderId: rider, profileId: member })).statusCode).not.toBe(200);
+  // A finished rider takes no more taps.
+  expect((await volunteer({ type: "start", sessionId: evening.id, riderId: rider, lap: 3, at: Date.now() })).statusCode).not.toBe(200);
+  // Volunteers still can't do owner things.
+  expect((await volunteer({ type: "link_rider", riderId: rider, profileId: member })).statusCode).not.toBe(200);
 }, 30000);
 
 it("owner links the rider to a member, who then sees only their own published results", async () => {
-  const { applyRidgeCommand, istDate } = await import("../../src/lib/ridge/engine.js");
   const rider = (await state()).riders[0].id;
-  expect((await write("owner", { type: "link_rider", riderId: rider, profileId: member, memberName: "Rohit K" })).statusCode).toBe(200);
-  // A clean session for today, published (Live) by the admin panel before timing.
-  expect((await write("owner", { type: "create_session", date: istDate(Date.now()), name: "Race" })).statusCode).toBe(200);
+  await admin({ type: "link_rider", riderId: rider, profileId: member, memberName: "Rohit K" });
+  await admin({ type: "create_session", date: istDate(Date.now()), name: "Race" });
   const race = (await state()).sessions.find((x) => x.name === "Race");
-  await db.exec("reset role");
-  const w = (await db.query("select state, version from ridge_workspace")).rows[0];
-  const r = applyRidgeCommand(w.state, { type: "session_mode", sessionId: race.id, mode: "live", reason: "test" });
-  await db.query("select ridge_commit($1,$2,$3,$4,$5,$6)", [w.version, crypto.randomUUID(), owner, r.state, r.feed, r.audit]);
-  await db.exec("set role service_role");
+  await admin({ type: "session_mode", sessionId: race.id, mode: "live", reason: "test" });
   const t = Date.now() - 3000;
-  for (const command of [
-    { type: "attendance", sessionId: race.id, riderIds: [rider] },
-    { type: "group_start", sessionId: race.id, at: t },
-    { type: "pass", sessionId: race.id, riderId: rider, lap: 1, at: t + 1000 },
-    { type: "end", sessionId: race.id, riderId: rider, lap: 2, at: t + 2000 },
-    { type: "rider_finish", sessionId: race.id, riderId: rider },
-  ]) { const res = await write("owner", command); expect(res.statusCode, JSON.stringify(res.body)).toBe(200); }
+  await admin({ type: "attendance", sessionId: race.id, riderIds: [rider] });
+  await admin({ type: "group_start", sessionId: race.id, at: t });
+  await admin({ type: "pass", sessionId: race.id, riderId: rider, lap: 1, at: t + 1000 });
+  await admin({ type: "end", sessionId: race.id, riderId: rider, lap: 2, at: t + 2000 });
+  await admin({ type: "rider_finish", sessionId: race.id, riderId: rider });
+  await expect(admin({ type: "start", sessionId: race.id, riderId: rider, lap: 3, at: Date.now() })).rejects.toThrow(/marked finished/);
   await db.exec("reset role");
   const ask = async (uid) => {
     await db.query("select set_config('request.jwt.claim.sub',$1,false)", [uid]);
@@ -165,7 +159,6 @@ it("owner links the rider to a member, who then sees only their own published re
   };
   const mine = await ask(member);
   expect(mine).toHaveLength(1);
-  expect(mine[0]).toMatchObject({ athlete_name: "Rohit", completed_laps: 2, session_label: "Race", finished: true });
-  expect(mine[0].total_ms).toBe(2000);
+  expect(mine[0]).toMatchObject({ athlete_name: "Rohit", completed_laps: 2, session_label: "Race", finished: true, total_ms: 2000 });
   expect(await ask(stranger)).toEqual([]);
 }, 30000);

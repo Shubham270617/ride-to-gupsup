@@ -52,6 +52,13 @@ function sessionNameOf(value) {
   if (s.length > 60) throw new Error("Use a session name of up to 60 characters.");
   return s;
 }
+// Optional session time window, "HH:MM" in India time.
+function timeOf(value, label) {
+  const s = String(value ?? "").trim();
+  if (!s) return "";
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(s)) throw new Error(`Use a ${label} time like 06:30.`);
+  return s;
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Riding time, break time (gaps between a finished lap and the next start)
 // and elapsed time (riding + breaks) for one rider in one session.
@@ -276,10 +283,14 @@ export function applyRidgeCommand(
     const name = sessionNameOf(command.name) || `Session ${sameDay.length + 1}`;
     if (sameDay.some((s) => keyOf(s.name) === keyOf(name)))
       throw new Error("That date already has a session with this name.");
+    const startTime = timeOf(command.startTime, "start"), endTime = timeOf(command.endTime, "end");
+    if (startTime && endTime && endTime <= startTime) throw new Error("The session must end after it starts.");
     state.sessions.push({
       id: newId(),
       date,
       name,
+      ...(startTime ? { startTime } : {}),
+      ...(endTime ? { endTime } : {}),
       createdAt: now,
       mode: "testing",
       finished: false,

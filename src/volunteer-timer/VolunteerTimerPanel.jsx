@@ -4,7 +4,7 @@ import './volunteer-timer.css';
 import DemoLapEditor from './DemoLapEditor';
 import DemoRiderPhotos from './DemoRiderPhotos';
 
-// The Ridge Repeats timer: owner code, volunteer code, volunteer account,
+// The Ridge Repeats timer: volunteer code, volunteer account,
 // admin and demo all render this one page. Laid out as four plain-language
 // steps so someone who has never seen it can run a session:
 //   1 Riders    pick the session, tick who is riding, save
@@ -34,7 +34,7 @@ const MODE = {
   archived: { label: 'Archived', note: 'Kept for the record — no more timing' },
 };
 
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null, canFinishRiders = true }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null, canFinishRiders = true, volunteerName = '' }) {
   const controls=demoActions || ownerActions;
   const [editing,setEditing]=useState(null);
   const [newDate,setNewDate]=useState(()=>istDate(now)),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState(''),[newSessionName,setNewSessionName]=useState('');
@@ -52,7 +52,7 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   const role = !connected
     ? previewActions ? 'Demo — practice freely, nothing is saved' : 'Preview — saving is switched off'
-    : ownerActions ? 'Owner — you can set up and time sessions' : 'Volunteer — mark who is here and time their laps';
+    : ownerActions ? 'Owner — you can set up and time sessions' : `Volunteer${volunteerName ? ` — ${volunteerName}` : ''} · mark who is here and time their laps`;
   const mode = session ? MODE[session.mode] || MODE.testing : null;
   const lockedEntry = entry => entry.officialScore || entry.laps.some(lap => lap.start != null || lapDuration(lap));
 
