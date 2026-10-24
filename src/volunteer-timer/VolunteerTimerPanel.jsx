@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatDuration, lapDuration, istDate, rideTotals } from '../lib/ridge/engine';
+import { formatDuration, lapDuration, istDate, rideTotals, keyOf } from '../lib/ridge/engine';
 import './volunteer-timer.css';
 import DemoLapEditor from './DemoLapEditor';
 import DemoRiderPhotos from './DemoRiderPhotos';
@@ -34,7 +34,7 @@ const MODE = {
   archived: { label: 'Archived', note: 'Kept for the record — no more timing' },
 };
 
-export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null, canFinishRiders = true, volunteerName = '' }) {
+export default function VolunteerTimerPanel({ sessions = [], riders = [], previewActions = null, connected = false, busy = false, pending = false, message = '', canManage = false, onRefresh = null, demoActions = null, ownerActions = null, now = Date.now(), timingPaused = false, queuedCommands = [], managementPending = false, children = null, canFinishRiders = true, canAddRiders = false, volunteerName = '' }) {
   const controls=demoActions || ownerActions;
   const [editing,setEditing]=useState(null);
   const [newDate,setNewDate]=useState(()=>istDate(now)),[newMode,setNewMode]=useState('testing'),[newName,setNewName]=useState(''),[newSessionName,setNewSessionName]=useState('');
@@ -45,11 +45,22 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const session = sessions.find(s => s.id === sessionId) || [...sessions].sort((a,b)=>b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0))[0];
   const attending = session?.entries || [];
   const name = id => riders.find(r => r.id === id)?.name || 'Unknown rider';
-  const selected = selection || attending.map(e => e.riderId);
+  const selected = (selection || attending.map(e => e.riderId)).filter(id => riders.some(r => r.id === id));
   const blocked = !previewActions || busy || pending || !session || session.finished || session.mode === 'archived';
   const wrongDate = connected && session && session.mode !== 'testing' && session.date !== istDate(now);
   const timingBlocked = blocked || wrongDate || timingPaused;
   const send = command => previewActions?.send({sessionId: session.id, ...command});
+  // Owner/demo add through their own controls; a volunteer code queues
+  // create_rider with its own id and ticks the new rider as present.
+  const addingBlocked = controls ? busy || pending : blocked || timingPaused;
+  const addRider = async () => {
+    const typed = newName.trim();
+    if (!typed || addingBlocked) return;
+    if (controls) { if (await controls.addRider(newName)) setNewName(''); return; }
+    const riderId = crypto.randomUUID();
+    send({type:'create_rider', name:typed, riderId});
+    if (!riders.some(r => keyOf(r.name) === keyOf(typed))) { setSelection([...selected, riderId]); setNewName(''); }
+  };
   const role = !connected
     ? previewActions ? 'Demo — practice freely, nothing is saved' : 'Preview — saving is switched off'
     : ownerActions ? 'Owner — you can set up and time sessions' : `Volunteer${volunteerName ? ` — ${volunteerName}` : ''} · mark who is here and time their laps`;
@@ -100,11 +111,11 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
     {tab === 'Riders' && <section aria-label="Attendance" className="vt-card">
       <h2>Who is riding today?</h2>
       <p className="vt-help">Tap each rider who is here, then press <b>Save attendance</b>. Riders who already have lap times stay ticked.</p>
-      {controls && <div className="vt-inline vt-add">
-        <input aria-label="New rider name" placeholder="Add a new rider — type their name" disabled={busy || pending} value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={async e=>{if(e.key==='Enter'&&newName.trim()&&!busy&&!pending){if(await controls.addRider(newName))setNewName('');}}}/>
-        <button className="vt-btn" disabled={busy || pending || !newName.trim()} onClick={async()=>{if(await controls.addRider(newName))setNewName('');}}>Add rider</button>
+      {(controls || canAddRiders) && <div className="vt-inline vt-add">
+        <input aria-label="New rider name" placeholder={controls ? 'Add a new rider — type their name' : 'Rider missing? Type their name'} maxLength={100} disabled={addingBlocked} value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addRider();}}/>
+        <button className="vt-btn" disabled={addingBlocked || !newName.trim()} onClick={addRider}>Add rider</button>
       </div>}
-      {!riders.length && <p className="vt-empty">No riders yet.{controls ? ' Type a name above and press Add rider.' : ''}</p>}
+      {!riders.length && <p className="vt-empty">No riders yet.{controls || canAddRiders ? ' Type a name above and press Add rider.' : ''}</p>}
       <div className="vt-riders">{riders.map((rider, i) => {
         const checked = selected.includes(rider.id);
         return <label className={`vt-rider${checked ? ' is-on' : ''}`} key={rider.id} style={{ '--i': i }}>

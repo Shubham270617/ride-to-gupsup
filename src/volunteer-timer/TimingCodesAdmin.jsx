@@ -33,7 +33,7 @@ export async function timingCodeRequest(action,payload={},expectedOwner) {
    method:overview?'GET':'POST',headers:{Authorization:`Bearer ${data.session.access_token}`,'Content-Type':'application/json'},
    ...(!overview?{body:JSON.stringify({action,...payload})}:{}),signal:controller.signal
   });
-  const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to load code management.');return result;
+  const result=await response.json();if(!response.ok)throw Object.assign(Error(result.error||'Unable to load code management.'),{status:response.status,definitive:result.definitive===true});return result;
  } finally {clearTimeout(timer);}
 }
 

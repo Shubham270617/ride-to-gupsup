@@ -244,7 +244,16 @@ export function applyRidgeCommand(
     const name = nameOf(command.name);
     if (state.riders.some((r) => keyOf(r.name) === keyOf(name)))
       throw new Error("That rider already exists.");
-    state.riders.push({ id: newId(), name, photo: "" });
+    // A volunteer's browser picks the id, so queued offline taps can name the
+    // rider before the server has saved it.
+    if (
+      riderId !== undefined &&
+      (typeof riderId !== "string" ||
+        !/^[A-Za-z0-9_-]{8,200}$/.test(riderId) ||
+        state.riders.some((r) => r.id === riderId))
+    )
+      throw new Error("Invalid rider id.");
+    state.riders.push({ id: riderId ?? newId(), name, photo: "" });
   } else if (type === "edit_rider") {
     const rider = state.riders.find((r) => r.id === riderId);
     if (!rider) throw new Error("Rider not found.");

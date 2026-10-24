@@ -75,3 +75,23 @@ it("the clean-up script empties riders, sessions and codes but keeps versions mo
   expect((await db.query("select count(*)::int n from ridge_timing_codes")).rows[0].n).toBe(0);
   await expect(commit({ type: "create_rider", name: "After reset" })).resolves.toBeDefined();
 });
+
+it("037: a volunteer code can be made with no riders, and sees riders added later", async () => {
+  await db.exec(sql("036_volunteer_code_names.sql"));
+  await db.exec(sql("037_volunteer_codes_any_riders.sql"));
+  await db.exec(sql("037_volunteer_codes_any_riders.sql")); // safe to re-run
+  // Start from no riders at all.
+  await db.exec(file("scripts/reset-ridge-test-data.sql"));
+  await commit({ type: "create_session", date: "2026-10-24", name: "Race" });
+  const state = (await db.query("select state from ridge_workspace")).rows[0].state;
+  expect(state.riders).toHaveLength(0);
+  const session = state.sessions.at(-1).id;
+  const expiresAt = new Date(Date.now() + 3600_000).toISOString();
+  await db.query("select ridge_code_access('issue', $1)", [{ actor: owner, scope: "session_timing", sessionId: session, codeHash: "e".repeat(64), expiresAt, volunteerName: "Astha Kumari" }]);
+  await db.query("select ridge_code_access('exchange', $1)", [{ codeHash: "e".repeat(64), sessionHash: "f".repeat(64), networkKey: "g".repeat(64), expiresAt }]);
+  const read = async () => (await db.query("select ridge_code_access('read', $1) as r", [{ sessionHash: "f".repeat(64) }])).rows[0].r;
+  expect(await read()).toMatchObject({ volunteerName: "Astha Kumari", rosterIds: [] });
+  await commit({ type: "create_rider", name: "Rohit" });
+  const riderId = (await db.query("select state from ridge_workspace")).rows[0].state.riders[0].id;
+  expect((await read()).rosterIds).toEqual([riderId]);
+});

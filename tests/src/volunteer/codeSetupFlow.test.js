@@ -19,3 +19,22 @@ it('storage failure stops all mutations and secrets are never persisted',async()
 it('owner code never grants session access and persists no returned credential',async()=>{
  const storage=store(),request=vi.fn(async a=>a==='identity'?'owner':{code:'private-test-code'}),flow=codeSetupFlow({request,storage});await flow.load();await flow.begin({label:'Owner',code:{scope:'advanced',expiresAt:new Date(Date.now()+3600000).toISOString()}});expect(await flow.run()).toEqual({code:'private-test-code'});expect(request.mock.calls.some(([a])=>a==='grant')).toBe(false);expect(storage.getItem('rtg-code-setup:owner')).toBeNull();
 });
+
+it('a definitive refusal (no code was stored) does not leave the flow blocked', async () => {
+  const data = new Map();
+  const storage = { getItem: k => data.get(k) ?? null, setItem: (k, v) => data.set(k, v), removeItem: k => data.delete(k) };
+  const request = vi.fn(async a => {
+    if (a === 'identity') return 'owner';
+    throw Object.assign(new Error('Could not create the code: no session'), { definitive: true });
+  });
+  const flow = codeSetupFlow({ request, storage });
+  await flow.load();
+  await flow.begin({ label: 'Volunteer', code: { scope: 'session_timing', sessionId: 's', expiresAt: new Date(Date.now() + 3600000).toISOString() } });
+  await expect(flow.run()).rejects.toThrow(/no session/);
+  expect(flow.current).toBeNull();
+  // A lost response (not definitive) still blocks a second code.
+  request.mockImplementation(async a => { if (a === 'identity') return 'owner'; throw new Error('network'); });
+  await flow.begin({ label: 'Volunteer', code: { scope: 'session_timing', sessionId: 's', expiresAt: new Date(Date.now() + 3600000).toISOString() } });
+  await expect(flow.run()).rejects.toThrow('network');
+  expect(flow.current?.phase).toBe('issuing');
+});

@@ -1,6 +1,6 @@
 // Hash-only code authentication. Session bearer scope is separately activation-gated.
 import {randomBytes,createHmac} from 'node:crypto';
-const timingCommands=new Set(['attendance','group_start','start','end','pass','rider_finish','rider_resume']);
+const timingCommands=new Set(['create_rider','attendance','group_start','start','end','pass','rider_finish','rider_resume']);
 // Owner ("Advanced Settings") codes were removed (migration 035): the only
 // codes are volunteer timing codes. The owner works in Admin -> Ridge.
 export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=randomBytes}){
@@ -46,7 +46,8 @@ export function createTimingCodeAuth({store,pepper,origin,now=Date.now,random=ra
    if(!session||session.expiresAt<=now())return fail();
    if(session.scope==='timing'){
     if(!timingCommands.has(command?.type)||command.sessionId!==session.sessionId)throw new Error('Timing scope refused.');
-    const ids=command.type==='attendance'?command.riderIds:[command.riderId].filter(Boolean);
+    // A volunteer may add a missing rider (migration 038); the new id is not on the roster yet.
+    const ids=command.type==='attendance'?command.riderIds:command.type==='create_rider'?[]:[command.riderId].filter(Boolean);
     if(!Array.isArray(ids)||ids.some(id=>!session.rosterIds.includes(id)))throw new Error('Roster scope refused.');
    }else throw new Error('Code scope refused.');
    return {credentialId:session.credentialId,actorId:session.issuerId,scope:session.scope,assignmentId:session.assignmentId};

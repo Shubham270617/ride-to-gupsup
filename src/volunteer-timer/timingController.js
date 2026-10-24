@@ -1,5 +1,5 @@
 // Local protocol foundation only. No API endpoint or credentials are connected.
-const allowed = new Set(['attendance', 'group_start', 'start', 'pass', 'end', 'rider_finish', 'rider_resume']);
+const allowed = new Set(['create_rider', 'attendance','group_start', 'start', 'pass', 'end', 'rider_finish', 'rider_resume']);
 export function assertTimingAssignment({ userId, assignment, command, now = Date.now() }) {
   if (!userId || !assignment || assignment.userId !== userId || assignment.revoked ||
       !Number.isFinite(assignment.expiresAt) || assignment.expiresAt <= now ||

@@ -167,3 +167,14 @@ describe("native Ridge timing and scoring", () => {
   });
 });
 
+
+describe("create_rider with a chosen id (volunteer, migration 038)", () => {
+  it("keeps the id the browser picked, and refuses a bad or reused one", () => {
+    const s = emptyRidgeState();
+    const next = applyRidgeCommand(s, { type: "create_rider", name: " Cara ", riderId: "abcd-1234-efgh" }).state;
+    expect(next.riders).toEqual([{ id: "abcd-1234-efgh", name: "Cara", photo: "" }]);
+    expect(() => applyRidgeCommand(next, { type: "create_rider", name: "Dev", riderId: "abcd-1234-efgh" })).toThrow(/rider id/);
+    expect(() => applyRidgeCommand(s, { type: "create_rider", name: "Dev", riderId: "x" })).toThrow(/rider id/);
+    expect(applyRidgeCommand(s, { type: "create_rider", name: "Dev" }).state.riders[0].id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});

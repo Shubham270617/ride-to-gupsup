@@ -19,7 +19,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
  const b=req.body;if(!b||JSON.stringify(b).length>20000)return res.status(400).json({error:'Invalid request.'});
  const db=getDb();if(!db)return res.status(503).json({error:'Code access unavailable.'});
  const hash=(kind,value)=>createHmac('sha256',pepper).update(kind+'\0'+value).digest('hex');
- const rpc=async(action,data)=>{const result=await db.rpc('ridge_code_access',{p_action:action,p_data:data});if(result.error)throw new Error('Code operation unavailable.');return result.data;};
+ const rpc=async(action,data)=>{const result=await db.rpc('ridge_code_access',{p_action:action,p_data:data});if(result.error){console.error('[timing-codes] rpc',action,result.error.code,result.error.message);throw Object.assign(new Error('Code operation unavailable.'),{dbMessage:result.error.message});}return result.data;};
  const store={
   consumeRateLimits:async limits=>rpc('rate',{keys:limits.map(x=>x.key),global:limits[1].key}),
   insertCredential:async data=>{const split=data.assignmentId?.indexOf(':');return rpc('issue',{actor:data.issuerId,scope:data.scope,codeHash:data.codeHash,expiresAt:new Date(data.expiresAt).toISOString(),userId:split>0?data.assignmentId.slice(0,split):null,sessionId:data.scope==='session_timing'?data.sessionId:split>0?data.assignmentId.slice(split+1):null,volunteerName:data.volunteerName||null});},
@@ -31,7 +31,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   if(['issue','revoke','list','capabilities'].includes(b.action)){
    const owner=await authorize(req);if(!owner.ok||!owners().has(owner.user?.id))return res.status(403).json({error:'Owner login required.'});
    if(b.action==='capabilities')return res.status(200).json({sessionCodesEnabled:process.env.RTG_SESSION_TIMING_CODES_ENABLED==='true'});
-   if(b.action==='issue'){if(b.scope==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Session code activation is pending.'});const result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,sessionId:b.sessionId,expiresAt:Date.parse(b.expiresAt),volunteerName:b.volunteerName});return res.status(200).json(result);}
+   if(b.action==='issue'){if(b.scope==='session_timing'&&process.env.RTG_SESSION_TIMING_CODES_ENABLED!=='true')return res.status(503).json({error:'Session code activation is pending.'});let result;try{result=await auth.issue({issuer:{id:owner.user.id,verifiedOwner:true},scope:b.scope,assignmentId:b.assignmentId,sessionId:b.sessionId,expiresAt:Date.parse(b.expiresAt),volunteerName:b.volunteerName});}catch(e){return res.status(400).json({error:`Could not create the code: ${e.dbMessage||e.message}`,definitive:true});}return res.status(200).json(result);}
    return res.status(200).json(await rpc(b.action,{actor:owner.user.id,id:b.id}));
   }
   if(b.action==='exchange'){
@@ -54,7 +54,7 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   if(b.action!=='write'||!Number.isSafeInteger(b.version)||!/^[0-9a-f-]{36}$/i.test(b.requestId||''))return res.status(400).json({error:'Invalid request.'});
   if(b.credentialId!==access.credentialId)return res.status(409).json({error:'Code session changed. Preserve this request for owner reconciliation.'});
   await auth.authorize({origin:requestOrigin,token,command:b.command});
-  if(access.scope==='timing')validateVolunteerCommand(b.command,{session_id:access.sessionId,roster_rider_ids:access.rosterIds});
+  if(access.scope==='timing')validateVolunteerCommand(b.command,{session_id:access.sessionId,roster_rider_ids:access.rosterIds},{canAddRider:access.codeKind==='session_timing'});
   const prior=await db.from('ridge_audit').select('request_id').eq('request_id',b.requestId).maybeSingle();if(prior.error)throw new Error('Unable to reconcile request.');
   let result;
   if(!prior.data){if(workspace.version!==b.version)return res.status(409).json({error:'Records changed. Reload before another action.',definitive:true,rebaseAllowed:true});try{result=applyRidgeCommand(workspace.state,b.command);}catch(error){return res.status(400).json({error:error.message,definitive:true});}}

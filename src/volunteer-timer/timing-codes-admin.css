@@ -9,7 +9,7 @@
 .tc-step-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}.tc-step-head h2{margin:2px 0 0}.tc-step-head .tc-help{margin:4px 0 8px}
 .tc-step-num{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f45b18,#ff8a3d);color:#fff;font-weight:800;box-shadow:0 8px 18px -10px #f45b18}
 .tc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.timing-codes-admin .tc-grid label{margin-top:8px}.tc-grid .tc-wide{grid-column:1/-1}
-.tc-quick .tc-grid{grid-template-columns:2fr 1.2fr 1fr 1fr}.tc-quick .tc-primary{margin-top:14px}
+.tc-quick .tc-grid{grid-template-columns:2fr 1fr}.tc-quick .tc-primary{margin-top:14px}
 .tc-label{margin:18px 0 8px!important;font-weight:650}
 .tc-hours{display:flex;flex-wrap:wrap;gap:8px}.timing-codes-admin .tc-hours button{min-height:42px;padding:8px 16px}.timing-codes-admin .tc-hours button[aria-pressed=true]{background:#35246f;border-color:#35246f;color:#fff}
 .timing-codes-admin .tc-big{min-height:52px;padding:12px 28px;font-size:16px;margin-top:8px}

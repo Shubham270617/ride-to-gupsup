@@ -18,7 +18,9 @@ export function codeSetupFlow({request,storage=sessionStorage}) {
    }
    await sameOwner();
    persist({...current,phase:'issuing'});
-   const result=await request('issue',current.code,owner);
+   let result;
+   try{result=await request('issue',current.code,owner);}
+   catch(e){if(e.definitive){storage.removeItem(key());current=null;}throw e;}
    storage.removeItem(key());current=null;return result;
   },
   async clearExpired(){await sameOwner();if(!current||Date.parse(current.code.expiresAt)>Date.now())throw Error('This request has not expired.');storage.removeItem(key());current=null;}

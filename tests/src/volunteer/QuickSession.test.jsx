@@ -42,28 +42,18 @@ it("a second session on the same day is created alongside, with its own name", a
   expect(onReady).toHaveBeenCalledWith(ridge.state.sessions[1].id);
 });
 
-it("Testing sessions stay private", async () => {
-  const ridge = fakeRidge(empty());
-  render(<QuickSession riderCount={1} request={ridge.request} onReady={vi.fn()} />);
-  fireEvent.change(screen.getByLabelText("Type"), { target: { value: "testing" } });
-  fireEvent.click(screen.getByRole("button", { name: "Create session" }));
-  await waitFor(() => expect(ridge.state.sessions).toHaveLength(1));
-  expect(ridge.state.sessions[0].mode).toBe("testing");
+it("has no Type choice — sessions made here are always Live", () => {
+  render(<QuickSession riderCount={1} request={vi.fn()} onReady={vi.fn()} />);
+  expect(screen.queryByLabelText("Type")).toBeNull();
+  expect(screen.queryByRole("combobox")).toBeNull();
 });
 
-it("saves the from–to time and refuses an end before the start", async () => {
-  const ridge = fakeRidge(empty());
-  const onReady = vi.fn();
-  render(<QuickSession riderCount={1} request={ridge.request} onReady={onReady} />);
-  fireEvent.change(screen.getByLabelText("Session starts"), { target: { value: "10:00" } });
-  fireEvent.change(screen.getByLabelText("Session ends"), { target: { value: "09:00" } });
-  fireEvent.click(screen.getByRole("button", { name: "Create session" }));
-  expect(await screen.findByText("The session must end after it starts.")).toBeInTheDocument();
-  expect(ridge.request).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByLabelText("Session ends"), { target: { value: "13:30" } });
-  fireEvent.click(screen.getByRole("button", { name: "Create session" }));
-  await waitFor(() => expect(onReady).toHaveBeenCalled());
-  expect(ridge.state.sessions[0]).toMatchObject({ startTime: "10:00", endTime: "13:30" });
+it("asks only for a name and a date (no from/to time)", () => {
+  render(<QuickSession riderCount={1} request={vi.fn()} onReady={vi.fn()} />);
+  expect(screen.getByLabelText("Session name")).toBeInTheDocument();
+  expect(screen.getByLabelText("Date")).toBeInTheDocument();
+  expect(screen.queryByLabelText("Session starts")).toBeNull();
+  expect(screen.queryByLabelText("Session ends")).toBeNull();
 });
 
 it("warns when there are no riders yet", () => {

@@ -83,7 +83,8 @@ beforeAll(async () => {
     "027_ridge_timing_account_removal.sql", "029_fixed_admin_emails.sql", "030_strava_checked_at.sql",
     "031_ridge_version_repair.sql", "033_owner_code_timing.sql", "034_ridge_rider_finish_and_members.sql",
     "035_remove_owner_codes.sql", "035_remove_owner_codes.sql", // safe to re-run
-    "036_volunteer_code_names.sql", "036_volunteer_code_names.sql",
+    "036_volunteer_code_names.sql", "036_volunteer_code_names.sql", "037_volunteer_codes_any_riders.sql",
+    "038_volunteer_add_rider.sql", "038_volunteer_add_rider.sql",
   ]) await db.exec(sql(p));
   await db.exec("set role service_role");
 }, 60000);
@@ -137,6 +138,30 @@ it("volunteer session code: timing, break, finish and resume pass the database's
   expect((await volunteer({ type: "start", sessionId: evening.id, riderId: rider, lap: 3, at: Date.now() })).statusCode).not.toBe(200);
   // Volunteers still can't do owner things.
   expect((await volunteer({ type: "link_rider", riderId: rider, profileId: member })).statusCode).not.toBe(200);
+}, 30000);
+
+it("038: a volunteer adds a missing rider, ticks them present and times them", async () => {
+  const evening = (await state()).sessions[1], first = (await state()).riders[0].id;
+  // The volunteer's view keeps the session name and who is marked done.
+  const view = (await api({ action: "read" })).body.state;
+  expect(view.sessions[0]).toMatchObject({ id: evening.id, name: "Evening" });
+  expect(view.sessions[0].entries[0]).toMatchObject({ riderId: first, done: true });
+  const riderId = crypto.randomUUID();
+  const added = await volunteer({ type: "create_rider", sessionId: evening.id, name: "  Astha  ", riderId });
+  expect(added.statusCode, JSON.stringify(added.body)).toBe(200);
+  expect((await state()).riders.at(-1)).toEqual({ id: riderId, name: "Astha", photo: "" });
+  // The same name twice, or a stray field, is refused.
+  expect((await volunteer({ type: "create_rider", sessionId: evening.id, name: "astha", riderId: crypto.randomUUID() })).statusCode).not.toBe(200);
+  expect((await volunteer({ type: "create_rider", sessionId: evening.id, name: "Mona", riderId: crypto.randomUUID(), photo: "x" })).statusCode).not.toBe(200);
+  const t = Date.now() - 2000;
+  for (const command of [
+    { type: "attendance", sessionId: evening.id, riderIds: [first, riderId] },
+    { type: "start", sessionId: evening.id, riderId, lap: 1, at: t },
+    { type: "end", sessionId: evening.id, riderId, lap: 1, at: t + 1000 },
+  ]) { const r = await volunteer(command); expect(r.statusCode, `${command.type}: ${JSON.stringify(r.body)}`).toBe(200); }
+  expect((await state()).sessions[1].entries.find((e) => e.riderId === riderId).laps[0]).toMatchObject({ start: t, end: t + 1000 });
+  // Adding is all: renaming stays with the admin.
+  expect((await volunteer({ type: "edit_rider", sessionId: evening.id, riderId, name: "Astha K" })).statusCode).not.toBe(200);
 }, 30000);
 
 it("owner links the rider to a member, who then sees only their own published results", async () => {

@@ -1,9 +1,12 @@
 import { getSupabaseAdmin } from './supabaseAdmin.js';
 import { applyRidgeCommand } from '../src/lib/ridge/engine.js';
 const keys = {attendance:['type','sessionId','riderIds'],group_start:['type','sessionId','at'],start:['type','sessionId','riderId','lap','at'],end:['type','sessionId','riderId','lap','at'],pass:['type','sessionId','riderId','lap','at'],rider_finish:['type','sessionId','riderId'],rider_resume:['type','sessionId','riderId']};
-export function validateVolunteerCommand(command, assignment) {
-  if (!command || !Object.hasOwn(keys,command.type) || command.sessionId !== assignment.session_id ||
-    Object.keys(command).some(key=>!keys[command.type].includes(key))) throw new Error('Action not permitted.');
+// Volunteer session codes may also add a missing rider (migration 038).
+export function validateVolunteerCommand(command, assignment, {canAddRider=false}={}) {
+  const allowed=canAddRider?{...keys,create_rider:['type','sessionId','name','riderId']}:keys;
+  if (!command || !Object.hasOwn(allowed,command.type) || command.sessionId !== assignment.session_id ||
+    Object.keys(command).some(key=>!allowed[command.type].includes(key))) throw new Error('Action not permitted.');
+  if (command.type==='create_rider') return;
   const roster=new Set(assignment.roster_rider_ids);
   if (command.type==='attendance' && (!Array.isArray(command.riderIds) || command.riderIds.some(id=>!roster.has(id)))) throw new Error('Rider not assigned.');
   if (command.riderId && !roster.has(command.riderId)) throw new Error('Rider not assigned.');
@@ -13,7 +16,7 @@ export function projectVolunteerWorkspace(workspace, assignments) {
   return {version:workspace.version,assignments:assignments.map(a=>({sessionId:a.session_id,expiresAt:Date.parse(a.expires_at)})),state:{riders:workspace.state.riders.filter(r=>roster.has(r.id)).map(r=>({id:r.id,name:r.name})),
     sessions:workspace.state.sessions.filter(s=>assignments.some(a=>a.session_id===s.id)).map(s=>{
       const allowed=new Set(assignments.find(a=>a.session_id===s.id).roster_rider_ids);
-      return {id:s.id,date:s.date,mode:s.mode,finished:s.finished,entries:s.entries.filter(e=>allowed.has(e.riderId)).map(e=>({riderId:e.riderId,officialScore:e.officialScore?true:undefined,laps:e.laps.map(l=>({start:l.start??null,end:l.end??null,durationMs:l.durationMs??null}))}))};
+      return {id:s.id,date:s.date,name:s.name,createdAt:s.createdAt,mode:s.mode,finished:s.finished,entries:s.entries.filter(e=>allowed.has(e.riderId)).map(e=>({riderId:e.riderId,officialScore:e.officialScore?true:undefined,done:e.done||undefined,laps:e.laps.map(l=>({start:l.start??null,end:l.end??null,durationMs:l.durationMs??null}))}))};
     })}};
 }
 export function createVolunteerHandler(getDb=getSupabaseAdmin) {
