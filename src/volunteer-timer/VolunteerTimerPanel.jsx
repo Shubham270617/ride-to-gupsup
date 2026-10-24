@@ -20,8 +20,7 @@ const STEPS = [
 const LAPS = 5;
 const clock = value => {
   if(value==null)return '—';
-  const iso=new Date(value+19800000).toISOString();
-  return iso.slice(8,10)+'-'+iso.slice(5,7)+'-'+iso.slice(0,4)+' '+iso.slice(11,23);
+  return new Date(value+19800000).toISOString().slice(11,23);
 };
 const initials = name => name.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
 const niceDate = date => {
@@ -51,15 +50,15 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
   const timingBlocked = blocked || wrongDate || timingPaused;
   const send = command => previewActions?.send({sessionId: session.id, ...command});
   // Owner/demo add through their own controls; a volunteer code queues
-  // create_rider with its own id and ticks the new rider as present.
+  // create_rider with its own id. The new rider is not ticked — the
+  // volunteer ticks who is here.
   const addingBlocked = controls ? busy || pending : blocked || timingPaused;
   const addRider = async () => {
     const typed = newName.trim();
     if (!typed || addingBlocked) return;
     if (controls) { if (await controls.addRider(newName)) setNewName(''); return; }
-    const riderId = crypto.randomUUID();
-    send({type:'create_rider', name:typed, riderId});
-    if (!riders.some(r => keyOf(r.name) === keyOf(typed))) { setSelection([...selected, riderId]); setNewName(''); }
+    send({type:'create_rider', name:typed, riderId:crypto.randomUUID()});
+    if (!riders.some(r => keyOf(r.name) === keyOf(typed))) setNewName('');
   };
   const role = !connected
     ? previewActions ? 'Demo — practice freely, nothing is saved' : 'Preview — saving is switched off'
@@ -147,13 +146,18 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
         const onBreak = !locked && !entry.done && !running && next > 0 && next < LAPS && lastEnd != null;
         const canFinish = canFinishRiders && !locked && !entry.done && !running && next > 0;
         const photo = demoActions?.photos[entry.riderId] || riders.find(r => r.id === entry.riderId)?.photo;
-        return <article key={entry.riderId} className={`vt-timer${running ? ' is-running' : ''}${locked ? ' is-locked' : ''}`} style={{ '--i': i }}>
+        const completed = entry.laps.filter(lap => lapDuration(lap)).length;
+        return <article key={entry.riderId} className={`vt-timer${running ? ' is-running' : ''}${locked ? ' is-locked' : ''}${entry.done ? ' is-finished' : ''}`} style={{ '--i': i }}>
           <div className="vt-timer-head">
             {photo ? <img className="vt-timer-photo" src={photo} alt=""/> : <span className="vt-avatar" aria-hidden="true">{initials(name(entry.riderId))}</span>}
-            <h3>{name(entry.riderId)}</h3>
-            {queuedCommands.some(c=>c.type==='group_start'||c.riderId===entry.riderId)&&<span className="vt-badge" role="status">Pending save</span>}
+            <div className="vt-timer-who">
+              <h3>{name(entry.riderId)}</h3>
+              {queuedCommands.some(c=>c.type==='group_start'||c.riderId===entry.riderId)&&<span className="vt-badge" role="status">Pending save</span>}
+            </div>
+            <span className="vt-lap-count" aria-hidden="true">{completed}/{LAPS}</span>
           </div>
-          <ol className="vt-laps" aria-label="Laps">{Array.from({length:LAPS},(_,l)=>{const lap=entry.laps[l];const done=lap&&lapDuration(lap);return <li key={l} className={done?'is-done':l===next&&running?'is-now':''}>{done?formatDuration(lapDuration(lap)):`L${l+1}`}</li>;})}</ol>
+          <div className="vt-progress" aria-hidden="true"><span style={{width:`${completed / LAPS * 100}%`}}/></div>
+          <ol className="vt-laps" aria-label="Laps">{Array.from({length:LAPS},(_,l)=>{const lap=entry.laps[l];const done=lap&&lapDuration(lap);return <li key={l} data-lap={`L${l+1}`} className={done?'is-done':l===next&&running?'is-now':''}>{done?formatDuration(lapDuration(lap)):`L${l+1}`}</li>;})}</ol>
           <p className="vt-timer-state">{locked ? 'Locked timing record' : entry.done ? `Finished · ${next} lap${next === 1 ? '' : 's'}` : next >= LAPS ? `${LAPS} loops complete` : `${running ? 'Running' : 'Ready'} L${next + 1}`}</p>
           {onBreak && <p className="vt-break">On a break · {formatDuration(now - lastEnd) || '0:00.000'}</p>}
           {running && !locked && <p className="vt-clock">{formatDuration(now - entry.laps[next].start) || '0:00.000'}</p>}
@@ -181,16 +185,38 @@ export default function VolunteerTimerPanel({ sessions = [], riders = [], previe
 
     {tab === 'Data' && <section className="vt-card">
       <div className="vt-row-between"><h2>Lap times</h2>{controls && <button className="vt-btn vt-btn-ghost" disabled={busy || pending} onClick={controls.refresh}><span aria-hidden="true">↻</span> Refresh</button>}</div>
-      <p className="vt-help">Every lap that was timed, in India time. If a time is wrong, press <b>Edit</b> on that lap{controls ? '' : ' (owner only)'}. “Accepted” is the time that counts.</p>
-      <div className="vt-table"><table><caption className="vt-sr-only">Session timing records</caption><thead><tr>{['Rider','Lap','Start · IST','Finish · IST','Recorded duration','Accepted duration','Break before','Status','Edit'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
-        <tbody>{attending.flatMap(entry => [...Array.from({length:Math.max(1,Math.min(LAPS,entry.laps.length))},(_,i)=>entry.laps[i]||{}).map((lap, i) => <tr key={`${entry.riderId}-${i}`}>
-          <th scope="row">{name(entry.riderId)}</th><td>{i + 1}</td><td>{clock(lap.start)}</td><td>{clock(lap.end)}</td>
-          <td>{lap.start != null && lap.end != null ? formatDuration(lap.end - lap.start) : '—'}</td><td>{formatDuration(lapDuration(lap)) || '—'}</td><td>{i > 0 && entry.laps[i - 1]?.end != null && lap.start != null && lap.start > entry.laps[i - 1].end ? formatDuration(lap.start - entry.laps[i - 1].end) : '—'}</td><td><span className={`vt-pill vt-pill-${lap.durationMs!=null?'fix':lap.end!=null?'ok':lap.start!=null?'run':'none'}`}>{lap.durationMs!=null?'Duration corrected':lap.end!=null?'Recorded':lap.start!=null?'Running':'Not started'}</span></td><td><button className="vt-btn vt-btn-small" disabled={!controls || busy || pending || !!entry.officialScore} aria-label={`Edit ${name(entry.riderId)} L${i+1}`} onClick={()=>setEditing({entry,lapIndex:i})}>Edit</button></td>
-        </tr>),
-        // Only laps that were recorded are listed; a lap that was missed can be added here.
-        (() => { const t = rideTotals(entry); return t.totalMs > 0 && <tr key={`${entry.riderId}-total`} className="vt-total-row"><td colSpan={9}><b>{name(entry.riderId)}</b> · Riding {formatDuration(t.totalMs)} · Breaks {formatDuration(t.breakMs) || '0:00.000'} · Elapsed {formatDuration(t.elapsedMs)}{entry.done ? ' · Finished' : ''}</td></tr>; })(),
-        controls && !entry.officialScore && entry.laps.length >= 1 && entry.laps.length < LAPS && <tr key={`${entry.riderId}-add`} className="vt-add-lap"><td colSpan={9}><button className="vt-btn vt-btn-small vt-btn-ghost" disabled={busy || pending} onClick={()=>setEditing({entry,lapIndex:entry.laps.length})}>+ Add lap {entry.laps.length + 1} time for {name(entry.riderId)}</button></td></tr>,
-      ].filter(Boolean))}</tbody></table></div>
+      <p className="vt-help">Every timed lap{session ? ` on ${niceDate(session.date)}` : ''}, in India time. {controls ? <>If a time is wrong, press <b>Edit</b> on that lap.</> : 'If a time looks wrong, tell the admin — they can correct it.'}</p>
+      <div className="vt-sheets">{attending.map((entry, r) => {
+        const rider = name(entry.riderId), t = rideTotals(entry);
+        const laps = Array.from({length:Math.max(1,Math.min(LAPS,entry.laps.length))},(_,i)=>entry.laps[i]||{});
+        const timed = entry.laps.filter(lap => lapDuration(lap)).length;
+        return <section key={entry.riderId} className={`vt-sheet${entry.done ? ' is-finished' : ''}`} style={{ '--i': r }} aria-label={`${rider} lap times`}>
+          <header className="vt-sheet-head">
+            <span className="vt-avatar" aria-hidden="true">{initials(rider)}</span>
+            <div className="vt-sheet-who"><h3>{rider}</h3><p>{timed} of {LAPS} laps{entry.done ? ' · Finished' : ''}</p></div>
+            {t.totalMs > 0 && <dl className="vt-totals">
+              <div><dt>Riding</dt><dd>{formatDuration(t.totalMs)}</dd></div>
+              <div><dt>Breaks</dt><dd>{formatDuration(t.breakMs) || '0:00.000'}</dd></div>
+              <div><dt>Elapsed</dt><dd>{formatDuration(t.elapsedMs)}</dd></div>
+            </dl>}
+          </header>
+          <div className="vt-table"><table><caption className="vt-sr-only">{rider} — laps</caption>
+            <thead><tr>{['Lap','Start','Finish','Lap time','Break before','Status',...(controls ? ['Edit'] : [])].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
+            <tbody>{laps.map((lap, i) => {
+              const accepted = lapDuration(lap), recorded = lap.start != null && lap.end != null ? lap.end - lap.start : null;
+              const gap = i > 0 && entry.laps[i - 1]?.end != null && lap.start != null && lap.start > entry.laps[i - 1].end ? lap.start - entry.laps[i - 1].end : null;
+              return <tr key={i} style={{ '--i': i }}>
+                <th scope="row"><span className="vt-lap-no">L{i + 1}</span></th><td>{clock(lap.start)}</td><td>{clock(lap.end)}</td>
+                <td className="vt-lap-time">{formatDuration(accepted) || '—'}{lap.durationMs != null && recorded != null && <small> (timed {formatDuration(recorded)})</small>}</td>
+                <td>{gap ? formatDuration(gap) : '—'}</td>
+                <td><span className={`vt-pill vt-pill-${lap.durationMs!=null?'fix':lap.end!=null?'ok':lap.start!=null?'run':'none'}`}>{lap.durationMs!=null?'Duration corrected':lap.end!=null?'Recorded':lap.start!=null?'Running':'Not started'}</span></td>
+                {controls && <td><button className="vt-btn vt-btn-small" disabled={busy || pending || !!entry.officialScore} aria-label={`Edit ${rider} L${i+1}`} onClick={()=>setEditing({entry,lapIndex:i})}>Edit</button></td>}
+              </tr>;
+            })}</tbody></table></div>
+          {/* Only laps that were recorded are listed; a lap that was missed can be added here. */}
+          {controls && !entry.officialScore && entry.laps.length >= 1 && entry.laps.length < LAPS && <button className="vt-btn vt-btn-small vt-btn-ghost vt-add-lap" disabled={busy || pending} onClick={()=>setEditing({entry,lapIndex:entry.laps.length})}>+ Add lap {entry.laps.length + 1} time for {rider}</button>}
+        </section>;
+      })}</div>
       {!attending.length && <p className="vt-empty">No lap times yet for this session.</p>}
     </section>}
     </div>

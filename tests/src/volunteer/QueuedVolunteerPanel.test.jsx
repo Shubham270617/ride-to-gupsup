@@ -10,11 +10,13 @@ for(const identity of ['assigned-login','synthetic-code'])it(`${identity} keeps 
 it('revoked assignment leaves roster mounted and preserves queued action for reconciliation',async()=>{
  const data=make(),write=vi.fn().mockRejectedValue(Error('Assignment revoked'));render(<QueuedVolunteerPanel initial={data} identity="revoked-fixture" read={async()=>data} write={write} checkIdentity={async()=>'revoked-fixture'}/>);fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));fireEvent.click(screen.getAllByRole('button',{name:'START · L1'})[0]);await screen.findByRole('button',{name:'Reconcile queued taps'});expect(screen.getByRole('heading',{name:'Synthetic a'})).toBeInTheDocument();expect(screen.getByRole('heading',{name:'Synthetic b'})).toBeInTheDocument();expect(screen.getByRole('button',{name:'START · L1'})).toBeDisabled();expect(write).toHaveBeenCalledOnce();
 });
-it('a volunteer code adds a missing rider, who is ticked and saved with attendance in order',async()=>{
+it('a volunteer code adds a missing rider (not ticked), then ticks them and saves attendance in order',async()=>{
  let data=make(),calls=[];const write=async body=>{calls.push(body.command);data={...data,version:data.version+1,state:applyRidgeCommand(data.state,body.command).state};};
  render(<QueuedVolunteerPanel canAddRiders initial={data} identity="add-rider" read={async()=>data} write={write} checkIdentity={async()=>'add-rider'} storage={sessionStorage}/>);
  fireEvent.change(screen.getByLabelText('New rider name'),{target:{value:'  Cara '}});fireEvent.click(screen.getByRole('button',{name:'Add rider'}));
- expect(screen.getByRole('checkbox',{name:/Cara/})).toBeChecked();
+ expect(screen.getByRole('checkbox',{name:/Cara/})).not.toBeChecked();
+ expect(screen.getByLabelText('New rider name')).toHaveValue('');
+ fireEvent.click(screen.getByRole('checkbox',{name:/Cara/}));
  await waitFor(()=>expect(screen.getByRole('button',{name:'Save attendance'})).toBeEnabled());
  fireEvent.click(screen.getByRole('button',{name:'Save attendance'}));
  await waitFor(()=>expect(calls.map(c=>c.type)).toEqual(['create_rider','attendance']));
@@ -24,4 +26,10 @@ it('a volunteer code adds a missing rider, who is ticked and saved with attendan
 it('without canAddRiders a volunteer sees no Add rider box',()=>{
  render(<QueuedVolunteerPanel initial={make()} identity="no-add" read={async()=>make()} write={vi.fn()} checkIdentity={async()=>'no-add'} storage={sessionStorage}/>);
  expect(screen.queryByLabelText('New rider name')).toBeNull();
+});
+it('a save that returns the new records needs no extra read',async()=>{
+ let data=make();const read=vi.fn(async()=>data);const write=async body=>{data={...data,version:data.version+1,state:applyRidgeCommand(data.state,body.command).state};return data;};
+ render(<QueuedVolunteerPanel initial={data} identity="fast" read={read} write={write} checkIdentity={async()=>'fast'} storage={sessionStorage}/>);
+ fireEvent.click(screen.getByRole('button',{name:'2 · Timer'}));fireEvent.click(screen.getAllByRole('button',{name:'START · L1'})[0]);
+ await waitFor(()=>expect(screen.queryAllByText('Pending save')).toHaveLength(0));expect(read).not.toHaveBeenCalled();expect(data.version).toBe(1);
 });

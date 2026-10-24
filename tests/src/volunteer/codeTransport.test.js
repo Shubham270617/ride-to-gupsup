@@ -6,7 +6,9 @@ it('refuses replay after cookie identity switch or recovery expiry',async()=>{co
 it('retains original uncertain request after lost response then code revocation',async()=>{
  const s=storage();let revoked=false;const fetcher=async(_u,o)=>{const b=JSON.parse(o.body);if(revoked)return{ok:false,json:async()=>({error:'Code expired or revoked.'})};if(b.action==='read')return reply({credentialId:'a'});throw Error('Response lost after commit');};const t=createCodeTransport({fetcher,storage:s});await t.read();await expect(t.write({requestId:'original',command:{type:'attendance'}})).rejects.toThrow('Response lost');const pending=s.getItem('rtg-code-pending:a');revoked=true;await expect(t.write(null,true)).rejects.toThrow('revoked');expect(s.getItem('rtg-code-pending:a')).toBe(pending);
 });
-it('captures code identity before preflight even when concurrent read changes mutable session',async()=>{
- const s=storage();let count=0,release;const fetcher=vi.fn(async(_u,o)=>{const b=JSON.parse(o.body);if(b.action==='read'){count++;if(count===1)return reply({credentialId:'A'});if(count===2)return new Promise(resolve=>{release=()=>resolve(reply({credentialId:'B'}));});return reply({credentialId:'B'});}return reply({ok:true});});
- const t=createCodeTransport({fetcher,storage:s});await t.read();const pending=t.write({requestId:'A-request'});await t.read();release();await expect(pending).rejects.toThrow('changed');expect(fetcher.mock.calls.filter(c=>JSON.parse(c[1].body).action==='write')).toHaveLength(0);expect(s.getItem('rtg-code-pending:B')).toBeNull();
+it('a write stays bound to the code it was queued under, even after the cookie switches (the server refuses it)',async()=>{
+ const s=storage(),writes=[];let active='A';const fetcher=vi.fn(async(_u,o)=>{const b=JSON.parse(o.body);if(b.action==='read')return reply({credentialId:active});writes.push(b);if(b.credentialId!==active)return{ok:false,json:async()=>({error:'Code session changed.'})};return reply({ok:true});});
+ const t=createCodeTransport({fetcher,storage:s});await t.read();active='B';await expect(t.write({requestId:'A-request'})).rejects.toThrow('changed');expect(writes.map(w=>w.credentialId)).toEqual(['A']);expect(s.getItem('rtg-code-pending:A')).not.toBeNull();expect(s.getItem('rtg-code-pending:B')).toBeNull();
+ // One request per tap: no extra read before a first write.
+ expect(fetcher.mock.calls.map(c=>JSON.parse(c[1].body).action)).toEqual(['read','write']);
 });

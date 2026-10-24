@@ -150,6 +150,9 @@ it("038: a volunteer adds a missing rider, ticks them present and times them", a
   const added = await volunteer({ type: "create_rider", sessionId: evening.id, name: "  Astha  ", riderId });
   expect(added.statusCode, JSON.stringify(added.body)).toBe(200);
   expect((await state()).riders.at(-1)).toEqual({ id: riderId, name: "Astha", photo: "" });
+  // The save answers with the new records, so the timer needs no extra read.
+  expect(added.body.version).toBe((await db.query("select version from ridge_workspace")).rows[0].version);
+  expect(added.body.state.riders.map((r) => r.name)).toContain("Astha");
   // The same name twice, or a stray field, is refused.
   expect((await volunteer({ type: "create_rider", sessionId: evening.id, name: "astha", riderId: crypto.randomUUID() })).statusCode).not.toBe(200);
   expect((await volunteer({ type: "create_rider", sessionId: evening.id, name: "Mona", riderId: crypto.randomUUID(), photo: "x" })).statusCode).not.toBe(200);

@@ -92,7 +92,7 @@ export default function TimingCodesAdmin({request=timingCodeRequest,ridgeRequest
   <header className="tc-banner">
    <p>RIDGE · VOLUNTEER ACCESS</p><h1>Volunteer timing codes</h1>
    <ol className="tc-flow"><li>Create a session</li><li>Create the volunteer's code</li><li>Share it</li></ol>
-   <a href="/volunteer/ridge/code">Open timer code entry →</a>
+   <a href="/volunteer/ridge/code" target="_blank" rel="noopener noreferrer">Open timer code entry ↗</a>
   </header>
   {message&&<p className="tc-notice" role="status">{message}</p>}
   {pending&&<section className="tc-card" aria-label="Pending code setup"><h2>Finish your previous request</h2><p>{pending.label}</p>{pending.phase==='issuing'?<p>The last code's response was not confirmed. Check the list below and revoke any code you didn't receive. A new code can be made after {displayTime(pending.code.expiresAt)}, so the same request can never create two codes.</p>:<button disabled={busy} onClick={resume}>Continue previous request</button>}{Date.parse(pending.code.expiresAt)<=Date.now()&&<button disabled={busy} onClick={async()=>{try{await flow.clearExpired();setPending(null);}catch(e){setMessage(e.message);}}}>Clear expired request</button>}</section>}

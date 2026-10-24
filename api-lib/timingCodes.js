@@ -60,7 +60,10 @@ export function createTimingCodeHandler({getDb=getSupabaseAdmin,authorize=requir
   if(!prior.data){if(workspace.version!==b.version)return res.status(409).json({error:'Records changed. Reload before another action.',definitive:true,rebaseAllowed:true});try{result=applyRidgeCommand(workspace.state,b.command);}catch(error){return res.status(400).json({error:error.message,definitive:true});}}
   const committed=await db.rpc('ridge_code_commit',{p_session_hash:sessionHash,p_credential:b.credentialId,p_expected:b.version,p_request:b.requestId,p_command:b.command,p_state:result?.state||workspace.state,p_feed:result?.feed||{},p_audit:result?.audit||{type:b.command.type,command:b.command}});
   if(committed.error){console.error('[timing-codes] commit failed',committed.error.code,committed.error.message);const definite=['40001','23505'].includes(committed.error.code);return res.status(definite?409:503).json({error:definite?'Access or records changed. Reconcile before another action.':'Save outcome unknown. Retry the same request.',definitive:definite,rebaseAllowed:committed.error.code==='40001'});}
-  return res.status(200).json({ok:true,version:committed.data});
+  // Hand back the records as they now stand, so the timer needn't read again
+  // after every tap. A replayed request returns the current records.
+  const saved=result?{state:result.state,version:committed.data}:workspace;
+  return res.status(200).json({ok:true,credentialId:access.credentialId,scope:'timing',volunteerName:access.volunteerName||null,...projectVolunteerWorkspace(saved,[{session_id:access.sessionId,roster_rider_ids:saved.state.riders.map(r=>r.id),expires_at:new Date(access.expiresAt).toISOString()}])});
  }catch(error){console.error('[timing-codes]',b?.action,error?.message||error);return res.status(403).json({error:'Code or operation unavailable. No new action should be repeated without reconciliation.'});}
 };}
 export default createTimingCodeHandler();

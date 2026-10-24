@@ -30,9 +30,10 @@ it("break, confirm before finishing a rider, resume — completed laps kept", ()
   fireEvent.click(within(card("Example rider A")).getByRole("button", { name: "Resume rider" }));
   expect(within(card("Example rider A")).getByRole("button", { name: "START · L2" })).toBeInTheDocument();
 
-  // Lap times shows the per-rider totals line.
+  // Lap times shows the per-rider totals.
   fireEvent.click(screen.getByRole("button", { name: "4 · Lap times" }));
-  expect(screen.getByText(/Riding .* · Breaks .* · Elapsed/)).toBeInTheDocument();
+  const sheet = screen.getByRole("region", { name: "Example rider A lap times" });
+  for (const total of ["Riding", "Breaks", "Elapsed"]) expect(within(sheet).getByText(total)).toBeInTheDocument();
 });
 
 it("several sessions can be created on the same day, each named", () => {

@@ -28,5 +28,9 @@ export default function CodeTimerRoute(){
 
  // The queued timer is offline-safe: taps are kept in localStorage (so
  // closing the tab doesn't lose them) and saved in order once online.
- return <QueuedVolunteerPanel canFinishRiders canAddRiders storage={window.localStorage} key={data.credentialId} identity={data.credentialId} initial={data} read={()=>transport.read()} checkIdentity={transport.identity} write={(body,{retry})=>transport.write(body,retry,data.credentialId)} restore={body=>transport.restorePending(body,data.credentialId)} existingPending={!!data.pending} onExit={async()=>{await transport.api({action:'logout'});setData(null);setMessage('Code session ended. Enter a code to start again.');}}/>;
+ return <QueuedVolunteerPanel canFinishRiders canAddRiders storage={window.localStorage} key={data.credentialId} identity={data.credentialId} initial={data} read={()=>transport.read()} checkIdentity={transport.identity} write={(body,{retry})=>transport.write(body,retry,data.credentialId)} restore={body=>transport.restorePending(body,data.credentialId)} existingPending={!!data.pending} onExit={async()=>{
+  // Back to the code entry on this same page (/volunteer/ridge/code), even if the network is down.
+  try{await transport.api({action:'logout'});}catch{/* the cookie expires on its own */}
+  setData(null);setMessage('Code session ended. Enter a code to start again.');
+  if(window.location.pathname!=='/volunteer/ridge/code')window.history.replaceState(null,'','/volunteer/ridge/code');window.scrollTo({top:0,behavior:'smooth'});}}/>;
 }

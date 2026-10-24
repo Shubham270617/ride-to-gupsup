@@ -12,15 +12,28 @@ const owner = { addRider: vi.fn(), createSession: vi.fn(), finishSession: vi.fn(
 const open = (props) => {
   render(<VolunteerTimerPanel connected sessions={sessions} riders={riders} previewActions={{ send: vi.fn() }} now={t + 60000} {...props} />);
   fireEvent.click(screen.getByRole("button", { name: "4 · Lap times" }));
-  return screen.getByRole("table");
 };
-const rowsFor = (table, rider) => within(table).getAllByRole("rowheader", { name: rider });
+// One card per rider, each with its own table of laps.
+const sheet = (rider) => screen.getByRole("region", { name: `${rider} lap times` });
+const lapRows = (rider) => within(sheet(rider)).getAllByRole("rowheader");
 
 it("lists only the laps that were timed (one row for a rider with none yet)", () => {
-  const table = open({ ownerActions: owner });
-  expect(rowsFor(table, "Shubham Sinha")).toHaveLength(1);
-  expect(rowsFor(table, "Rohit")).toHaveLength(1);
-  expect(within(table).getAllByRole("cell", { name: "0:19.027" })).toHaveLength(2); // recorded and accepted
+  open({ ownerActions: owner });
+  expect(lapRows("Shubham Sinha")).toHaveLength(1);
+  expect(lapRows("Rohit")).toHaveLength(1);
+  expect(within(sheet("Shubham Sinha")).getByRole("cell", { name: "0:19.027" })).toBeInTheDocument();
+  // Times of day only; the date is said once above.
+  expect(within(sheet("Shubham Sinha")).getByRole("cell", { name: "22:24:57.000" })).toBeInTheDocument();
+});
+
+it("volunteers get no Edit column; the owner does", () => {
+  open({});
+  expect(within(sheet("Shubham Sinha")).queryByRole("columnheader", { name: "Edit" })).toBeNull();
+});
+
+it("the owner can edit each lap", () => {
+  open({ ownerActions: owner });
+  expect(screen.getByRole("button", { name: "Edit Shubham Sinha L1" })).toBeInTheDocument();
 });
 
 it("lets the owner add a missed lap, but not a volunteer", () => {
